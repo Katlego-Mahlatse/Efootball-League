@@ -14,13 +14,154 @@
     body {
       background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 100%);
       font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
-      padding: 2rem 1.5rem;
+      padding: 0;
       color: #f5f0ff;
+    }
+
+    /* ----- GOLD NAVBAR ----- */
+    .gold-navbar {
+      background: linear-gradient(135deg, #d4af37, #f5d742);
+      padding: 0.8rem 2rem;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    /* purple circle hamburger button */
+    .hamburger-btn {
+      background: #6a3bb5;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background 0.2s;
+      border: 2px solid #f5d742;
+    }
+
+    .hamburger-btn:hover {
+      transform: scale(1.05);
+      background: #7e4acf;
+    }
+
+    .hamburger-btn span {
+      display: block;
+      width: 24px;
+      height: 3px;
+      background-color: #f5d742;
+      border-radius: 2px;
+    }
+
+    /* modal overlay */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      backdrop-filter: blur(5px);
+      z-index: 200;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0.2s, opacity 0.2s;
+    }
+
+    .modal-overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .modal-content {
+      background: linear-gradient(145deg, #2d1b4e, #1f0f3a);
+      border-radius: 2rem;
+      padding: 2rem;
+      width: 90%;
+      max-width: 380px;
+      text-align: center;
+      border: 2px solid #f5d742;
+      box-shadow: 0 20px 35px rgba(0,0,0,0.5);
+      animation: fadeInUp 0.3s ease;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-content h3 {
+      font-size: 1.8rem;
+      color: #f5d742;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid #f5d742;
+      display: inline-block;
+      padding-bottom: 0.3rem;
+    }
+
+    .modal-options {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .modal-option {
+      background: rgba(106, 59, 181, 0.6);
+      padding: 0.8rem;
+      border-radius: 60px;
+      text-decoration: none;
+      color: #f5e6ff;
+      font-weight: 600;
+      font-size: 1.1rem;
+      transition: all 0.2s;
+      border: 1px solid #f5d742;
+      display: block;
+    }
+
+    .modal-option:hover {
+      background: #6a3bb5;
+      transform: translateX(5px);
+      color: #f5d742;
+    }
+
+    .close-modal {
+      background: #f5d742;
+      color: #2d1b4e;
+      border: none;
+      padding: 0.5rem 1.2rem;
+      border-radius: 40px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .close-modal:hover {
+      background: #e6c42c;
     }
 
     .dashboard {
       max-width: 1400px;
       margin: 0 auto;
+      padding: 2rem 1.5rem;
     }
 
     /* header */
@@ -98,14 +239,9 @@
       color: #f5e6ff;
     }
 
-    .card-header-left span {
-      font-size: 1.5rem;
-    }
-
     .toggle-icon {
       font-size: 1.3rem;
       color: #f5d742;
-      transition: transform 0.3s;
     }
 
     .card-content {
@@ -170,7 +306,6 @@
       color: #fff0f0;
     }
 
-    /* yellow dashed line between 6th and 7th */
     .dashed-separator {
       border-bottom: 2px dashed #f5d742 !important;
     }
@@ -191,10 +326,6 @@
     .pts-cell {
       font-weight: 800;
       color: #f5d742;
-      text-align: center;
-    }
-
-    .stat-number {
       text-align: center;
     }
 
@@ -242,16 +373,6 @@
       font-style: italic;
     }
 
-    .round-badge {
-      background: #5e3a9e;
-      padding: 0.2rem 0.7rem;
-      border-radius: 30px;
-      font-size: 0.7rem;
-      font-weight: 600;
-      display: inline-block;
-      color: #f5e6ff;
-    }
-
     .date-badge {
       font-size: 0.7rem;
       background: rgba(0,0,0,0.4);
@@ -270,7 +391,7 @@
     }
 
     @media (max-width: 780px) {
-      body {
+      .dashboard {
         padding: 1rem;
       }
       .two-col-grid {
@@ -284,232 +405,248 @@
       .card-header-left h2 {
         font-size: 1.3rem;
       }
+      .gold-navbar {
+        padding: 0.6rem 1.2rem;
+      }
     }
   </style>
 </head>
 <body>
-<div class="dashboard">
-  <div class="hero">
-    <h1>EFOOTBALL 412</h1>
-    <p>official standings · fixtures & results hub</p>
+
+  <!-- GOLD NAVBAR with purple circle hamburger menu -->
+  <div class="gold-navbar">
+    <div class="hamburger-btn" id="hamburgerBtn">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
   </div>
 
-  <div class="two-col-grid">
-    <!-- LEFT: LEAGUE TABLE (real data from screenshot) -->
-    <div class="card">
-      <div class="card-header" style="cursor: default;">
-        <div class="card-header-left">
-          <h2>LEAGUE TABLE</h2>
+  <!-- MODAL POPUP -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content">
+      <h3>⚽ TOURNAMENTS</h3>
+      <div class="modal-options">
+        <a href="fifa-club-world-cup.html" class="modal-option">FIFA CLUB WORLD CUP</a>
+        <a href="uefa-champions-league.html" class="modal-option">UEFA CHAMPIONS LEAGUE</a>
+        <a href="uefa-europa-league.html" class="modal-option">UEFA EUROPA LEAGUE</a>
+      </div>
+      <button class="close-modal" id="closeModalBtn">CLOSE</button>
+    </div>
+  </div>
+
+  <div class="dashboard">
+    <div class="hero">
+      <h1>EFOOTBALL 412</h1>
+      <p>official standings · fixtures & results hub</p>
+    </div>
+
+    <div class="two-col-grid">
+      <!-- LEAGUE TABLE -->
+      <div class="card">
+        <div class="card-header" style="cursor: default;">
+          <div class="card-header-left">
+            <h2>LEAGUE TABLE</h2>
+          </div>
+        </div>
+        <div class="card-content">
+          <div style="overflow-x: auto;">
+            <table class="stats-table" id="leagueTable">
+              <thead>
+                <tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th></tr>
+              </thead>
+              <tbody id="leagueTableBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
-      <div class="card-content">
+
+      <!-- RIGHT placeholder card -->
+      <div class="card">
+        <div class="card-header" style="cursor: default;">
+          <div class="card-header-left">
+            <h2>MATCHDAY 7 · TODAY</h2>
+          </div>
+        </div>
+        <div class="card-content">
+          <!-- intentionally empty -->
+        </div>
+      </div>
+    </div>
+
+    <!-- FIXTURES CARD -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <div class="card-header" id="fixturesHeader">
+        <div class="card-header-left">
+          <h2>FIXTURES</h2>
+        </div>
+        <div class="toggle-icon" id="fixturesToggleIcon">▼</div>
+      </div>
+      <div class="card-content" id="fixturesContent">
         <div style="overflow-x: auto;">
-          <table class="stats-table" id="leagueTable">
+          <table class="inner-table" id="fixturesTable">
             <thead>
-              <tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th></tr>
+              <tr><th>Home</th><th>Away</th><th>Date</th></tr>
             </thead>
-            <tbody id="leagueTableBody"></tbody>
+            <tbody id="fixturesTableBody"></tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- RIGHT: empty placeholder for spacing -->
-    <div class="card">
-      <div class="card-header" style="cursor: default;">
+    <!-- RESULTS CARD (empty placeholder) -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <div class="card-header" id="resultsHeader">
         <div class="card-header-left">
-          <h2>MATCHDAY 7 · TODAY</h2>
+          <h2>RESULTS · PREVIOUS ROUNDS</h2>
+        </div>
+        <div class="toggle-icon" id="resultsToggleIcon">▼</div>
+      </div>
+      <div class="card-content" id="resultsContent">
+        <div class="empty-message" style="padding: 2rem; text-align: center;">
+          from match day 7 onwards results will be displayed here
         </div>
       </div>
-      <div class="card-content">
-        <!-- Intentionally left empty -->
+    </div>
+
+    <!-- SEASON TOP SCORERS CARD (empty placeholder) -->
+    <div class="card">
+      <div class="card-header" id="scorersHeader">
+        <div class="card-header-left">
+          <h2>SEASON TOP SCORERS</h2>
+        </div>
+        <div class="toggle-icon" id="scorersToggleIcon">▼</div>
       </div>
+      <div class="card-content" id="scorersContent">
+        <div class="empty-message" style="padding: 2rem; text-align: center;">
+          Season's Leading Top Scorers Will Go Here For Golden Boot
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      click on FIXTURES or RESULTS or TOP SCORERS cards to expand/collapse · results will be added soon
     </div>
   </div>
 
-  <!-- FIXTURES CARD -->
-  <div class="card" style="margin-bottom: 1.5rem;">
-    <div class="card-header" id="fixturesHeader">
-      <div class="card-header-left">
-        <h2>FIXTURES</h2>
-      </div>
-      <div class="toggle-icon" id="fixturesToggleIcon">▼</div>
-    </div>
-    <div class="card-content" id="fixturesContent">
-      <div style="overflow-x: auto;">
-        <table class="inner-table" id="fixturesTable">
-          <thead>
-            <tr><th>Home</th><th>Away</th><th>Date</th></tr>
-          </thead>
-          <tbody id="fixturesTableBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+  <script>
+    // LEAGUE DATA (real from screenshot)
+    const LEAGUE_DATA = [
+      { pos: 1, club: "Liverpool", p: 6, gd: 23, pts: 18 },
+      { pos: 2, club: "Real Madrid", p: 6, gd: 13, pts: 18 },
+      { pos: 3, club: "Dortmund", p: 6, gd: 12, pts: 15 },
+      { pos: 4, club: "Man City", p: 6, gd: 9, pts: 15 },
+      { pos: 5, club: "Barcelona", p: 6, gd: -3, pts: 9 },
+      { pos: 6, club: "Arsenal", p: 6, gd: -1, pts: 7 },
+      { pos: 7, club: "PSG", p: 6, gd: -7, pts: 6 },
+      { pos: 8, club: "AC Milan", p: 6, gd: -5, pts: 6 },
+      { pos: 9, club: "Napoli", p: 6, gd: 3, pts: 3 },
+      { pos: 10, club: "Chelsea", p: 6, gd: 1, pts: 3 },
+      { pos: 11, club: "Juventus", p: 6, gd: -1, pts: 3 },
+      { pos: 12, club: "Newcastle", p: 6, gd: -15, pts: 3 },
+      { pos: 13, club: "Atletico", p: 6, gd: -10, pts: 1 },
+      { pos: 14, club: "Aston Villa", p: 6, gd: -9, pts: 0 }
+    ];
 
-  <!-- RESULTS CARD (empty now, with placeholder message) -->
-  <div class="card" style="margin-bottom: 1.5rem;">
-    <div class="card-header" id="resultsHeader">
-      <div class="card-header-left">
-        <h2>RESULTS · PREVIOUS ROUNDS</h2>
-      </div>
-      <div class="toggle-icon" id="resultsToggleIcon">▼</div>
-    </div>
-    <div class="card-content" id="resultsContent">
-      <div class="empty-message" style="padding: 2rem; text-align: center;">
-        from match day 7 onwards results will be displayed here
-      </div>
-    </div>
-  </div>
+    // FIXTURES MATCHDAY 7
+    const FIXTURES_MD7 = [
+      { home: "FC Barcelona", homePlayer: "~Rea🫡", away: "Aston Villa", awayPlayer: "Mali", date: "Today · Apr 19, 2026" },
+      { home: "Borussia Dortmund", homePlayer: "~Qhawe 🤍", away: "Juventus", awayPlayer: "~Lawree ✨", date: "Today · Apr 19, 2026" },
+      { home: "Atlético Madrid", homePlayer: "~Stalker.", away: "Paris Saint-Germain", awayPlayer: "~MJ", date: "Today · Apr 19, 2026" },
+      { home: "Napoli", homePlayer: "~PrettyBoy Tendancies. 👅", away: "Real Madrid", awayPlayer: "~Karabo", date: "Today · Apr 19, 2026" },
+      { home: "Arsenal", homePlayer: "Kath", away: "AC Milan", awayPlayer: "~Ntsiki", date: "Today · Apr 19, 2026" },
+      { home: "Chelsea", homePlayer: "~Zazo", away: "Manchester City", awayPlayer: "gry", date: "Today · Apr 19, 2026" },
+      { home: "Liverpool", homePlayer: "🅿️", away: "Newcastle United", awayPlayer: "~Oratile", date: "Today · Apr 19, 2026" }
+    ];
 
-  <!-- NEW CARD: SEASON TOP SCORERS (empty for now) -->
-  <div class="card">
-    <div class="card-header" id="scorersHeader">
-      <div class="card-header-left">
-        <h2>SEASON TOP SCORERS</h2>
-      </div>
-      <div class="toggle-icon" id="scorersToggleIcon">▼</div>
-    </div>
-    <div class="card-content" id="scorersContent">
-      <div class="empty-message" style="padding: 2rem; text-align: center;">
-        Season's Leading Top Scorers Will Go Here For Golden Boot
-      </div>
-    </div>
-  </div>
+    function renderLeagueTable() {
+      const tbody = document.getElementById("leagueTableBody");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+      LEAGUE_DATA.forEach(team => {
+        const row = tbody.insertRow();
+        if (team.pos === 1) row.classList.add("gold-row");
+        if (team.pos === 13 || team.pos === 14) row.classList.add("red-row");
+        if (team.pos === 6) row.classList.add("dashed-separator");
+        
+        const posCell = row.insertCell(0);
+        posCell.className = "rank-cell";
+        posCell.innerText = team.pos;
+        const clubCell = row.insertCell(1);
+        clubCell.innerHTML = `<div class="team-name">${team.club}</div>`;
+        row.insertCell(2).innerText = team.p;
+        const gdValue = team.gd;
+        row.insertCell(3).innerText = gdValue > 0 ? `+${gdValue}` : `${gdValue}`;
+        const ptsCell = row.insertCell(4);
+        ptsCell.className = "pts-cell";
+        ptsCell.innerText = team.pts;
+      });
+    }
 
-  <div class="footer-note">
-    click on FIXTURES or RESULTS or TOP SCORERS cards to expand/collapse · results will be added soon
-  </div>
-</div>
+    function renderFixtures() {
+      const tbody = document.getElementById("fixturesTableBody");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+      FIXTURES_MD7.forEach(fix => {
+        const row = tbody.insertRow();
+        const homeCell = row.insertCell(0);
+        homeCell.innerHTML = `<strong>${fix.home}</strong><span class="player-name">${fix.homePlayer}</span>`;
+        const awayCell = row.insertCell(1);
+        awayCell.innerHTML = `<strong>${fix.away}</strong><span class="player-name">${fix.awayPlayer}</span>`;
+        const dateCell = row.insertCell(2);
+        dateCell.innerHTML = `<span class="date-badge">${fix.date}</span>`;
+      });
+    }
 
-<script>
-  // --------------------------------------------------------------
-  // 1. REAL LEAGUE TABLE (from screenshot, Matchday 6)
-  // --------------------------------------------------------------
-  const LEAGUE_DATA = [
-    { pos: 1, club: "Liverpool", p: 6, gd: 23, pts: 18 },
-    { pos: 2, club: "Real Madrid", p: 6, gd: 13, pts: 18 },
-    { pos: 3, club: "Dortmund", p: 6, gd: 12, pts: 15 },
-    { pos: 4, club: "Man City", p: 6, gd: 9, pts: 15 },
-    { pos: 5, club: "Barcelona", p: 6, gd: -3, pts: 9 },
-    { pos: 6, club: "Arsenal", p: 6, gd: -1, pts: 7 },
-    { pos: 7, club: "PSG", p: 6, gd: -7, pts: 6 },
-    { pos: 8, club: "AC Milan", p: 6, gd: -5, pts: 6 },
-    { pos: 9, club: "Napoli", p: 6, gd: 3, pts: 3 },
-    { pos: 10, club: "Chelsea", p: 6, gd: 1, pts: 3 },
-    { pos: 11, club: "Juventus", p: 6, gd: -1, pts: 3 },
-    { pos: 12, club: "Newcastle", p: 6, gd: -15, pts: 3 },
-    { pos: 13, club: "Atletico", p: 6, gd: -10, pts: 1 },
-    { pos: 14, club: "Aston Villa", p: 6, gd: -9, pts: 0 }
-  ];
+    // Collapsible functionality
+    function setupCollapsible(headerId, contentId, toggleIconId) {
+      const header = document.getElementById(headerId);
+      const content = document.getElementById(contentId);
+      const icon = document.getElementById(toggleIconId);
+      if (!header || !content) return;
+      let isCollapsed = false;
+      header.addEventListener("click", (e) => {
+        isCollapsed = !isCollapsed;
+        if (isCollapsed) {
+          content.classList.add("collapsed");
+          if (icon) icon.innerHTML = "▶";
+        } else {
+          content.classList.remove("collapsed");
+          if (icon) icon.innerHTML = "▼";
+        }
+      });
+    }
 
-  // --------------------------------------------------------------
-  // 2. FIXTURES: Matchday 7 with team names + player @names (today's date)
-  // --------------------------------------------------------------
-  const FIXTURES_MD7 = [
-    { home: "FC Barcelona", homePlayer: "~Rea🫡", away: "Aston Villa", awayPlayer: "Mali", date: "Today · Apr 19, 2026" },
-    { home: "Borussia Dortmund", homePlayer: "~Qhawe 🤍", away: "Juventus", awayPlayer: "~Lawree ✨", date: "Today · Apr 19, 2026" },
-    { home: "Atlético Madrid", homePlayer: "~Stalker.", away: "Paris Saint-Germain", awayPlayer: "~MJ", date: "Today · Apr 19, 2026" },
-    { home: "Napoli", homePlayer: "~PrettyBoy Tendancies. 👅", away: "Real Madrid", awayPlayer: "~Karabo", date: "Today · Apr 19, 2026" },
-    { home: "Arsenal", homePlayer: "Kath", away: "AC Milan", awayPlayer: "~Ntsiki", date: "Today · Apr 19, 2026" },
-    { home: "Chelsea", homePlayer: "~Zazo", away: "Manchester City", awayPlayer: "gry", date: "Today · Apr 19, 2026" },
-    { home: "Liverpool", homePlayer: "🅿️", away: "Newcastle United", awayPlayer: "~Oratile", date: "Today · Apr 19, 2026" }
-  ];
+    // MODAL controls
+    const hamburger = document.getElementById("hamburgerBtn");
+    const modal = document.getElementById("modalOverlay");
+    const closeBtn = document.getElementById("closeModalBtn");
 
-  // render league table with special styling: gold for pos1, red for pos13 & 14, dashed line after pos6
-  function renderLeagueTable() {
-    const tbody = document.getElementById("leagueTableBody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-    
-    LEAGUE_DATA.forEach((team, idx) => {
-      const row = tbody.insertRow();
-      // apply special classes
-      if (team.pos === 1) {
-        row.classList.add("gold-row");
-      }
-      if (team.pos === 13 || team.pos === 14) {
-        row.classList.add("red-row");
-      }
-      // add dashed border after the 6th position (index 5, since pos 6 is Arsenal)
-      if (team.pos === 6) {
-        row.classList.add("dashed-separator");
-      }
-      
-      const posCell = row.insertCell(0);
-      posCell.className = "rank-cell";
-      posCell.innerText = team.pos;
-      const clubCell = row.insertCell(1);
-      clubCell.innerHTML = `<div class="team-name">${team.club}</div>`;
-      row.insertCell(2).innerText = team.p;
-      const gdValue = team.gd;
-      row.insertCell(3).innerText = gdValue > 0 ? `+${gdValue}` : `${gdValue}`;
-      const ptsCell = row.insertCell(4);
-      ptsCell.className = "pts-cell";
-      ptsCell.innerText = team.pts;
+    function openModal() {
+      modal.classList.add("active");
+    }
+    function closeModal() {
+      modal.classList.remove("active");
+    }
+    if (hamburger) hamburger.addEventListener("click", openModal);
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+    // close modal when clicking outside content
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
     });
-  }
 
-  // render fixtures (today's games with player names)
-  function renderFixtures() {
-    const tbody = document.getElementById("fixturesTableBody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-    FIXTURES_MD7.forEach(fix => {
-      const row = tbody.insertRow();
-      const homeCell = row.insertCell(0);
-      homeCell.innerHTML = `<strong>${fix.home}</strong><span class="player-name">${fix.homePlayer}</span>`;
-      const awayCell = row.insertCell(1);
-      awayCell.innerHTML = `<strong>${fix.away}</strong><span class="player-name">${fix.awayPlayer}</span>`;
-      const dateCell = row.insertCell(2);
-      dateCell.innerHTML = `<span class="date-badge">${fix.date}</span>`;
-    });
-  }
-
-  // --------------------------------------------------------------
-  // Collapsible functionality for all cards
-  // --------------------------------------------------------------
-  function setupCollapsible(headerId, contentId, toggleIconId) {
-    const header = document.getElementById(headerId);
-    const content = document.getElementById(contentId);
-    const icon = document.getElementById(toggleIconId);
-    if (!header || !content) return;
-    
-    let isCollapsed = false;
-    header.addEventListener("click", (e) => {
-      isCollapsed = !isCollapsed;
-      if (isCollapsed) {
-        content.classList.add("collapsed");
-        icon.innerHTML = "▶";
-      } else {
-        content.classList.remove("collapsed");
-        icon.innerHTML = "▼";
-      }
-    });
-  }
-
-  // Initialize everything
-  function init() {
-    renderLeagueTable();
-    renderFixtures();
-    
-    // setup collapsible cards: fixtures, results, top scorers
-    setupCollapsible("fixturesHeader", "fixturesContent", "fixturesToggleIcon");
-    setupCollapsible("resultsHeader", "resultsContent", "resultsToggleIcon");
-    setupCollapsible("scorersHeader", "scorersContent", "scorersToggleIcon");
-    
-    // ensure league table card content is always visible
-    const leagueContent = document.querySelector(".two-col-grid .card:first-child .card-content");
-    if (leagueContent) leagueContent.classList.remove("collapsed");
-  }
-
-  init();
-  
-  window.refreshAllData = function() {
-    renderLeagueTable();
-    renderFixtures();
-    console.log("All data refreshed (hardcoded)");
-  };
-</script>
+    // Initialize everything
+    function init() {
+      renderLeagueTable();
+      renderFixtures();
+      setupCollapsible("fixturesHeader", "fixturesContent", "fixturesToggleIcon");
+      setupCollapsible("resultsHeader", "resultsContent", "resultsToggleIcon");
+      setupCollapsible("scorersHeader", "scorersContent", "scorersToggleIcon");
+      // ensure league table card is not collapsible
+      const leagueContent = document.querySelector(".two-col-grid .card:first-child .card-content");
+      if (leagueContent) leagueContent.classList.remove("collapsed");
+    }
+    init();
+  </script>
 </body>
-  </html>
+</html>
