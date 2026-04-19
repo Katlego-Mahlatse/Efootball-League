@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>eFootball Clubhouse · Tables & Fixtures</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(145deg, #0a1a1f 0%, #0c2a2c 100%);
+      font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
+      padding: 2rem 1.5rem;
+      color: #eef4ff;
+    }
+
+    /* main container */
+    .dashboard {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* header style */
+    .hero {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .hero h1 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #f0f9ff, #b2f0e0);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: -0.5px;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .hero p {
+      font-size: 1.1rem;
+      color: #b6e6da;
+      margin-top: 0.5rem;
+      font-weight: 500;
+      backdrop-filter: blur(2px);
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      background: rgba(10, 40, 35, 0.7);
+      backdrop-filter: blur(4px);
+      padding: 0.3rem 1rem;
+      border-radius: 60px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid #2faa8b;
+      color: #c0f2e4;
+    }
+
+    /* card grid */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+      gap: 2rem;
+    }
+
+    /* universal card style */
+    .card {
+      background: rgba(12, 28, 28, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 2rem;
+      border: 1px solid rgba(72, 187, 160, 0.35);
+      box-shadow: 0 20px 35px -12px rgba(0,0,0,0.5);
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 25px 40px -14px black;
+      border-color: rgba(80, 210, 180, 0.6);
+    }
+
+    .card-header {
+      padding: 1.2rem 1.8rem;
+      background: rgba(0, 20, 18, 0.7);
+      border-bottom: 2px solid #2eaa89;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .card-header h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .card-header span {
+      font-size: 1.4rem;
+    }
+
+    /* table styling */
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+
+    .stats-table th {
+      text-align: left;
+      padding: 1rem 1rem 0.75rem 1.5rem;
+      font-weight: 600;
+      color: #baf5e6;
+      background: rgba(10, 35, 32, 0.5);
+      border-bottom: 1px solid #2e7f6b;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+    }
+
+    .stats-table td {
+      padding: 0.85rem 1rem 0.85rem 1.5rem;
+      border-bottom: 1px solid rgba(50, 130, 110, 0.3);
+      font-weight: 500;
+      color: #eef5f2;
+    }
+
+    .stats-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* ranking column small badge */
+    .rank-cell {
+      font-weight: 700;
+      width: 55px;
+      color: #eac67e;
+    }
+
+    .team-name {
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .team-icon {
+      font-size: 1.2rem;
+    }
+
+    .pts {
+      font-weight: 800;
+      color: #f5cd94;
+      text-align: center;
+    }
+
+    .stat-number {
+      text-align: center;
+      font-family: monospace;
+      font-weight: 600;
+    }
+
+    /* fixtures specific table */
+    .fixture-table td {
+      padding: 0.9rem 1rem 0.9rem 1.5rem;
+      vertical-align: middle;
+    }
+
+    .match-result {
+      background: #1e3a36;
+      border-radius: 40px;
+      padding: 0.25rem 0.75rem;
+      font-weight: 700;
+      font-size: 0.85rem;
+      display: inline-block;
+      min-width: 64px;
+      text-align: center;
+      color: #e6f7f2;
+      border: 1px solid #419e86;
+    }
+
+    .vs-text {
+      font-weight: 600;
+      color: #85cfbc;
+      margin: 0 4px;
+    }
+
+    .match-date {
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: rgba(0,0,0,0.4);
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 30px;
+      letter-spacing: 0.3px;
+    }
+
+    .round-tag {
+      background: #2b5d52;
+      color: white;
+      font-size: 0.7rem;
+      padding: 0.2rem 0.7rem;
+      border-radius: 40px;
+      margin-left: 12px;
+      font-weight: 500;
+    }
+
+    /* foot note */
+    .footer-note {
+      text-align: center;
+      margin-top: 3rem;
+      font-size: 0.8rem;
+      color: #7daea0;
+      border-top: 1px dashed #2e6b5e;
+      padding-top: 2rem;
+    }
+
+    @media (max-width: 680px) {
+      body {
+        padding: 1rem;
+      }
+      .grid-2 {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      .stats-table th, .stats-table td {
+        padding: 0.7rem 0.5rem 0.7rem 1rem;
+        font-size: 0.8rem;
+      }
+      .card-header h2 {
+        font-size: 1.3rem;
+      }
+      .hero h1 {
+        font-size: 2rem;
+      }
+    }
+
+    /* extra smoothness */
+    tr:hover td {
+      background: rgba(60, 140, 120, 0.2);
+      transition: 0.1s;
+    }
+  </style>
+</head>
+<body>
+<div class="dashboard">
+  <div class="hero">
+    <h1>⚽ eFootball LEGACY ⚽</h1>
+    <p>official table · results & upcoming fixtures — hardcoded glory</p>
+    <div class="badge-group">
+      <span class="badge">🏆 Season 2026</span>
+      <span class="badge">👥 6 players</span>
+      <span class="badge">📅 double round-robin</span>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- LEFT CARD: LEAGUE TABLE (standings) -->
+    <div class="card">
+      <div class="card-header">
+        <span>📊</span>
+        <h2>LEAGUE TABLE</h2>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="stats-table" id="standings-table">
+          <thead>
+            <tr><th>#</th><th>Team</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>PTS</th></tr>
+          </thead>
+          <tbody id="standings-body">
+            <!-- dynamic JS fill from hardcoded data -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIGHT CARD: FIXTURES & RESULTS (all matches in order) -->
+    <div class="card">
+      <div class="card-header">
+        <span>📅</span>
+        <h2>FIXTURES & RESULTS</h2>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="stats-table fixture-table">
+          <thead>
+            <tr><th>Round</th><th>Match</th><th>Result / Kickoff</th></tr>
+          </thead>
+          <tbody id="fixtures-body">
+            <!-- JS will populate all matches -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="footer-note">
+    ✨ all data hardcoded | manual updates reflect real eFootball battles | last updated: April 19, 2026
+  </div>
+</div>
+
+<script>
+  // --------------------------------------------------------------
+  // 1. HARDCODED TEAMS (6 players)
+  // --------------------------------------------------------------
+  const TEAMS = [
+    { id: 0, name: "FC Blaze", short: "BLA", icon: "🔥" },
+    { id: 1, name: "Phantom FC", short: "PHM", icon: "👻" },
+    { id: 2, name: "Vortex United", short: "VOR", icon: "🌀" },
+    { id: 3, name: "Iron Wolves", short: "IRN", icon: "🐺" },
+    { id: 4, name: "Stallions eS", short: "STL", icon: "🐎" },
+    { id: 5, name: "Apex Warriors", short: "APX", icon: "⚡" }
+  ];
+
+  // --------------------------------------------------------------
+  // 2. HARDCODED MATCHES (fixtures + results)
+  //    each match: round, homeTeamId, awayTeamId, homeScore, awayScore, isPlayed, dateLabel
+  //    for fixtures without result: homeScore = null, awayScore = null, isPlayed = false
+  // --------------------------------------------------------------
+  const MATCHES = [
+    // === ROUND 1 ===
+    { round: 1, homeId: 0, awayId: 1, homeScore: 2, awayScore: 1, isPlayed: true, date: "Apr 5, 2026" },
+    { round: 1, homeId: 2, awayId: 3, homeScore: 0, awayScore: 0, isPlayed: true, date: "Apr 5, 2026" },
+    { round: 1, homeId: 4, awayId: 5, homeScore: 3, awayScore: 2, isPlayed: true, date: "Apr 6, 2026" },
+    // === ROUND 2 ===
+    { round: 2, homeId: 1, awayId: 2, homeScore: 1, awayScore: 1, isPlayed: true, date: "Apr 8, 2026" },
+    { round: 2, homeId: 3, awayId: 4, homeScore: 1, awayScore: 3, isPlayed: true, date: "Apr 8, 2026" },
+    { round: 2, homeId: 5, awayId: 0, homeScore: 0, awayScore: 2, isPlayed: true, date: "Apr 9, 2026" },
+    // === ROUND 3 ===
+    { round: 3, homeId: 0, awayId: 2, homeScore: 2, awayScore: 2, isPlayed: true, date: "Apr 12, 2026" },
+    { round: 3, homeId: 1, awayId: 4, homeScore: 0, awayScore: 1, isPlayed: true, date: "Apr 12, 2026" },
+    { round: 3, homeId: 3, awayId: 5, homeScore: 1, awayScore: 2, isPlayed: true, date: "Apr 13, 2026" },
+    // === ROUND 4 ===
+    { round: 4, homeId: 2, awayId: 5, homeScore: 3, awayScore: 0, isPlayed: true, date: "Apr 15, 2026" },
+    { round: 4, homeId: 4, awayId: 0, homeScore: 1, awayScore: 1, isPlayed: true, date: "Apr 15, 2026" },
+    { round: 4, homeId: 1, awayId: 3, homeScore: 2, awayScore: 0, isPlayed: true, date: "Apr 16, 2026" },
+    // === ROUND 5 (first leg ends) ===
+    { round: 5, homeId: 5, awayId: 1, homeScore: 1, awayScore: 2, isPlayed: true, date: "Apr 18, 2026" },
+    { round: 5, homeId: 0, awayId: 3, homeScore: 3, awayScore: 1, isPlayed: true, date: "Apr 18, 2026" },
+    { round: 5, homeId: 2, awayId: 4, homeScore: 1, awayScore: 2, isPlayed: true, date: "Apr 19, 2026" },
+    
+    // === SECOND HALF (ROUND 6 to 10) some played, some upcoming fixtures ===
+    // ROUND 6 (reverse of round 1)
+    { round: 6, homeId: 1, awayId: 0, homeScore: null, awayScore: null, isPlayed: false, date: "Apr 23, 2026" },
+    { round: 6, homeId: 3, awayId: 2, homeScore: null, awayScore: null, isPlayed: false, date: "Apr 23, 2026" },
+    { round: 6, homeId: 5, awayId: 4, homeScore: null, awayScore: null, isPlayed: false, date: "Apr 24, 2026" },
+    // ROUND 7
+    { round: 7, homeId: 2, awayId: 1, homeScore: null, awayScore: null, isPlayed: false, date: "Apr 26, 2026" },
+    { round: 7, homeId: 4, awayId: 3, homeScore: 2, awayScore: 0, isPlayed: true, date: "Apr 25, 2026" },   // already played
+    { round: 7, homeId: 0, awayId: 5, homeScore: null, awayScore: null, isPlayed: false, date: "Apr 27, 2026" },
+    // ROUND 8
+    { round: 8, homeId: 2, awayId: 0, homeScore: null, awayScore: null, isPlayed: false, date: "Apr 30, 2026" },
+    { round: 8, homeId: 4, awayId: 1, homeScore: null, awayScore: null, isPlayed: false, date: "May 1, 2026" },
+    { round: 8, homeId: 5, awayId: 3, homeScore: null, awayScore: null, isPlayed: false, date: "May 2, 2026" },
+    // ROUND 9
+    { round: 9, homeId: 5, awayId: 2, homeScore: null, awayScore: null, isPlayed: false, date: "May 5, 2026" },
+    { round: 9, homeId: 0, awayId: 4, homeScore: null, awayScore: null, isPlayed: false, date: "May 6, 2026" },
+    { round: 9, homeId: 3, awayId: 1, homeScore: null, awayScore: null, isPlayed: false, date: "May 4, 2026" },
+    // ROUND 10 (final round)
+    { round: 10, homeId: 1, awayId: 5, homeScore: null, awayScore: null, isPlayed: false, date: "May 9, 2026" },
+    { round: 10, homeId: 3, awayId: 0, homeScore: null, awayScore: null, isPlayed: false, date: "May 10, 2026" },
+    { round: 10, homeId: 4, awayId: 2, homeScore: null, awayScore: null, isPlayed: false, date: "May 11, 2026" }
+  ];
+
+  // --------------------------------------------------------------
+  // Helper: get team name + icon by id
+  function getTeamById(id) {
+    return TEAMS.find(t => t.id === id) || { name: "Unknown", icon: "❓", short: "??" };
+  }
+
+  // --------------------------------------------------------------
+  // 3. Compute STANDINGS based on played matches (isPlayed === true)
+  // --------------------------------------------------------------
+  function computeStandings() {
+    // init stats map
+    const stats = new Map();
+    TEAMS.forEach(team => {
+      stats.set(team.id, {
+        id: team.id,
+        name: team.name,
+        icon: team.icon,
+        mp: 0, w: 0, d: 0, l: 0,
+        gf: 0, ga: 0, gd: 0, pts: 0
+      });
+    });
+
+    MATCHES.forEach(match => {
+      if (!match.isPlayed) return;
+      const { homeId, awayId, homeScore, awayScore } = match;
+      if (homeScore === null || awayScore === null) return; // safety
+      
+      const homeStat = stats.get(homeId);
+      const awayStat = stats.get(awayId);
+      if (!homeStat || !awayStat) return;
+      
+      // update matches played
+      homeStat.mp += 1;
+      awayStat.mp += 1;
+      // goals
+      homeStat.gf += homeScore;
+      homeStat.ga += awayScore;
+      awayStat.gf += awayScore;
+      awayStat.ga += homeScore;
+      
+      if (homeScore > awayScore) {
+        homeStat.w += 1;
+        awayStat.l += 1;
+        homeStat.pts += 3;
+      } else if (homeScore < awayScore) {
+        awayStat.w += 1;
+        homeStat.l += 1;
+        awayStat.pts += 3;
+      } else {
+        homeStat.d += 1;
+        awayStat.d += 1;
+        homeStat.pts += 1;
+        awayStat.pts += 1;
+      }
+    });
+    
+    // compute GD for each team
+    const standingsArray = Array.from(stats.values()).map(team => {
+      team.gd = team.gf - team.ga;
+      return team;
+    });
+    
+    // sort: pts descending, then GD, then GF, then name
+    standingsArray.sort((a,b) => {
+      if (a.pts !== b.pts) return b.pts - a.pts;
+      if (a.gd !== b.gd) return b.gd - a.gd;
+      if (a.gf !== b.gf) return b.gf - a.gf;
+      return a.name.localeCompare(b.name);
+    });
+    
+    return standingsArray;
+  }
+
+  // --------------------------------------------------------------
+  // 4. Render LEAGUE TABLE into DOM
+  // --------------------------------------------------------------
+  function renderStandings() {
+    const standings = computeStandings();
+    const tbody = document.getElementById("standings-body");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    
+    standings.forEach((team, idx) => {
+      const row = tbody.insertRow();
+      // rank
+      const rankCell = row.insertCell(0);
+      rankCell.className = "rank-cell";
+      rankCell.innerText = (idx + 1).toString();
+      // team name with icon
+      const teamCell = row.insertCell(1);
+      teamCell.innerHTML = `<div class="team-name"><span class="team-icon">${team.icon}</span> ${team.name}</div>`;
+      // MP, W, D, L
+      row.insertCell(2).innerText = team.mp;
+      row.insertCell(3).innerText = team.w;
+      row.insertCell(4).innerText = team.d;
+      row.insertCell(5).innerText = team.l;
+      // GF, GA, GD
+      row.insertCell(6).innerText = team.gf;
+      row.insertCell(7).innerText = team.ga;
+      row.insertCell(8).innerText = team.gd > 0 ? `+${team.gd}` : team.gd.toString();
+      // PTS
+      const ptsCell = row.insertCell(9);
+      ptsCell.className = "pts";
+      ptsCell.innerText = team.pts;
+    });
+  }
+  
+  // --------------------------------------------------------------
+  // 5. Render FIXTURES & RESULTS (all matches chronological by round & date)
+  // --------------------------------------------------------------
+  function renderFixtures() {
+    const tbody = document.getElementById("fixtures-body");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    
+    // sort matches by round then by date string (simple sort)
+    const sortedMatches = [...MATCHES].sort((a,b) => {
+      if (a.round !== b.round) return a.round - b.round;
+      // if same round, keep given order but date string works for display
+      return 0;
+    });
+    
+    sortedMatches.forEach(match => {
+      const homeTeam = getTeamById(match.homeId);
+      const awayTeam = getTeamById(match.awayId);
+      const round = match.round;
+      const isPlayed = match.isPlayed;
+      const dateStr = match.date;
+      
+      // create match representation
+      let matchDisplay = `${homeTeam.icon} ${homeTeam.name}  vs  ${awayTeam.icon} ${awayTeam.name}`;
+      let resultHtml = "";
+      
+      if (isPlayed && match.homeScore !== null && match.awayScore !== null) {
+        // played match: show result
+        resultHtml = `<div class="match-result">${match.homeScore} – ${match.awayScore}</div> 
+                      <div style="margin-top: 5px;"><span class="match-date">📆 ${dateStr}</span></div>`;
+      } else {
+        // upcoming fixture: show date & placeholder
+        resultHtml = `<div style="background:#2c4b44; padding: 0.25rem 0.9rem; border-radius: 30px; display:inline-block; font-weight:500;">🕒 TBD</div>
+                      <div style="margin-top: 5px;"><span class="match-date">⏳ ${dateStr}</span></div>`;
+      }
+      
+      const row = tbody.insertRow();
+      // round column
+      const roundCell = row.insertCell(0);
+      roundCell.innerHTML = `<span class="round-tag">R${round}</span>`;
+      // match column
+      const matchCell = row.insertCell(1);
+      matchCell.innerHTML = `<strong>${matchDisplay}</strong>`;
+      matchCell.style.fontWeight = "500";
+      // result column
+      const resultCell = row.insertCell(2);
+      resultCell.innerHTML = resultHtml;
+    });
+  }
+  
+  // --------------------------------------------------------------
+  // EXTRA: also produce a summary of upcoming matches (but fixtures already shows all)
+  // Also, ensure after any "manual update" concept, we re-render everything.
+  // Since everything hardcoded, we call both functions on load.
+  // --------------------------------------------------------------
+  
+  // small bonus: if any new match gets manually edited in future (devs can change MATCHES array)
+  // we provide a helper to refresh. For now, just initial render.
+  
+  // For better UX, recompute table & fixtures on page load
+  document.addEventListener("DOMContentLoaded", () => {
+    renderStandings();
+    renderFixtures();
+  });
+  
+  // Optional: expose a global refresh (just in case you'd like to tweak data from console later)
+  window.refreshAllData = function() {
+    renderStandings();
+    renderFixtures();
+    console.log("🏁 Tables & fixtures refreshed (hardcoded data)");
+  };
+  
+  // additional: you can modify MATCHES array and then call refreshAllData()
+  // for future seasons or update results.
+</script>
+</body>
+  </html>
