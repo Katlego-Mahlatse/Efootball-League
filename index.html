@@ -1,6 +1,3 @@
-Here's the updated HTML with purple/yellow theme, separate collapsible cards for Fixtures and Results, and today's Matchday 7 fixtures with player names.
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -48,25 +45,6 @@ Here's the updated HTML with purple/yellow theme, separate collapsible cards for
       color: #e6d5ff;
       margin-top: 0.5rem;
       font-weight: 500;
-    }
-
-    .badge-group {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      margin-top: 1rem;
-      flex-wrap: wrap;
-    }
-
-    .badge {
-      background: rgba(75, 40, 120, 0.8);
-      backdrop-filter: blur(4px);
-      padding: 0.3rem 1.2rem;
-      border-radius: 60px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      border: 1px solid #f5d742;
-      color: #ffeaa7;
     }
 
     /* two column grid for league table and first card */
@@ -285,13 +263,8 @@ Here's the updated HTML with purple/yellow theme, separate collapsible cards for
 <body>
 <div class="dashboard">
   <div class="hero">
-    <h1>⚽ EFOOTBALL 412 ⚽</h1>
-    <p>matchday 7 · official standings · fixtures & results hub</p>
-    <div class="badge-group">
-      <span class="badge">🏆 SEASON 1</span>
-      <span class="badge">📊 MATCHDAY 7</span>
-      <span class="badge">👥 14 CLUBS</span>
-    </div>
+    <h1>EFOOTBALL 412</h1>
+    <p>official standings · fixtures & results hub</p>
   </div>
 
   <div class="two-col-grid">
@@ -299,7 +272,6 @@ Here's the updated HTML with purple/yellow theme, separate collapsible cards for
     <div class="card">
       <div class="card-header" style="cursor: default;">
         <div class="card-header-left">
-          <span>📋</span>
           <h2>LEAGUE TABLE</h2>
         </div>
       </div>
@@ -315,18 +287,15 @@ Here's the updated HTML with purple/yellow theme, separate collapsible cards for
       </div>
     </div>
 
-    <!-- RIGHT: empty placeholder for spacing, but we'll keep structure -->
+    <!-- RIGHT: empty placeholder for spacing -->
     <div class="card">
       <div class="card-header" style="cursor: default;">
         <div class="card-header-left">
-          <span>🏆</span>
           <h2>MATCHDAY 7 · TODAY</h2>
         </div>
       </div>
       <div class="card-content">
-        <div style="padding: 1rem; text-align: center; color: #f5d742;">
-          🟡 April 19, 2026 — all fixtures listed below 🟣
-        </div>
+        <!-- This block is intentionally left empty as requested -->
       </div>
     </div>
   </div>
@@ -335,8 +304,7 @@ Here's the updated HTML with purple/yellow theme, separate collapsible cards for
   <div class="card" style="margin-bottom: 1.5rem;">
     <div class="card-header" id="fixturesHeader">
       <div class="card-header-left">
-        <span>📅</span>
-        <h2>FIXTURES · MATCHDAY 7</h2>
+        <h2>FIXTURES</h2>
       </div>
       <div class="toggle-icon" id="fixturesToggleIcon">▼</div>
     </div>
@@ -356,7 +324,6 @@ Here's the updated HTML with purple/yellow theme, separate collapsible cards for
   <div class="card">
     <div class="card-header" id="resultsHeader">
       <div class="card-header-left">
-        <span>🏆</span>
         <h2>RESULTS · PREVIOUS ROUNDS</h2>
       </div>
       <div class="toggle-icon" id="resultsToggleIcon">▼</div>
@@ -374,7 +341,7 @@ Here's the updated HTML with purple/yellow theme, separate collapsible cards for
   </div>
 
   <div class="footer-note">
-    ⚡ click on "FIXTURES" or "RESULTS" cards to expand/collapse · results will be added soon · purple & yellow era
+    click on FIXTURES or RESULTS cards to expand/collapse · results will be added soon
   </div>
 </div>
 
@@ -457,13 +424,13 @@ Here's the updated HTML with purple/yellow theme, separate collapsible cards for
       const row = tbody.insertRow();
       // home team cell with player name
       const homeCell = row.insertCell(0);
-      homeCell.innerHTML = `<strong>${fix.home}</strong><span class="player-name">@ ${fix.homePlayer}</span>`;
+      homeCell.innerHTML = `<strong>${fix.home}</strong><span class="player-name">${fix.homePlayer}</span>`;
       // away team cell with player name
       const awayCell = row.insertCell(1);
-      awayCell.innerHTML = `<strong>${fix.away}</strong><span class="player-name">@ ${fix.awayPlayer}</span>`;
+      awayCell.innerHTML = `<strong>${fix.away}</strong><span class="player-name">${fix.awayPlayer}</span>`;
       // date cell
       const dateCell = row.insertCell(2);
-      dateCell.innerHTML = `<span class="date-badge">📅 ${fix.date}</span>`;
+      dateCell.innerHTML = `<span class="date-badge">${fix.date}</span>`;
     });
   }
 
@@ -486,7 +453,7 @@ Here's the updated HTML with purple/yellow theme, separate collapsible cards for
     const noteCell = noteRow.insertCell(0);
     noteCell.colSpan = 3;
     noteCell.className = "empty-message";
-    noteCell.innerHTML = "📋 RESULTS WILL GO HERE — stay tuned for updates after matches are played!";
+    noteCell.innerHTML = "results will go here — stay tuned for updates after matches are played!";
     noteCell.style.textAlign = "center";
   }
 
@@ -501,7 +468,6 @@ Here's the updated HTML with purple/yellow theme, separate collapsible cards for
     
     let isCollapsed = false;
     header.addEventListener("click", (e) => {
-      // prevent toggling if clicking on inner interactive elements? fine as is
       isCollapsed = !isCollapsed;
       if (isCollapsed) {
         content.classList.add("collapsed");
@@ -537,9 +503,8 @@ Here's the updated HTML with purple/yellow theme, separate collapsible cards for
     renderLeagueTable();
     renderFixtures();
     renderResults();
-    console.log("✅ All data refreshed (hardcoded)");
+    console.log("All data refreshed (hardcoded)");
   };
 </script>
 </body>
 </html>
-```
