@@ -187,59 +187,6 @@
       font-weight: 500;
     }
 
-    /* league table header with key/legend */
-    .table-header-with-legend {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      flex-wrap: wrap;
-      margin-bottom: 0.5rem;
-      padding: 0 0.5rem;
-    }
-    .league-title {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: #f5e6ff;
-    }
-    .legend {
-      display: flex;
-      gap: 1.2rem;
-      font-size: 0.7rem;
-      background: rgba(30, 15, 55, 0.6);
-      padding: 0.3rem 0.9rem;
-      border-radius: 40px;
-      flex-wrap: wrap;
-    }
-    .legend-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .blue-bar-legend {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      background: #3b82f6;
-      border-radius: 3px;
-    }
-    .orange-bar-legend {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      background: #f97316;
-      border-radius: 3px;
-    }
-    .dashed-legend {
-      display: inline-block;
-      width: 20px;
-      height: 2px;
-      border-bottom: 2px dashed #f5d742;
-      vertical-align: middle;
-    }
-    .legend-text {
-      color: #e6d5ff;
-    }
-
     /* two column grid for league table and first card */
     .two-col-grid {
       display: grid;
@@ -336,21 +283,26 @@
       border-bottom: none;
     }
 
-    /* colored bars for qualification */
-    .qualification-bar {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border-radius: 2px;
-      margin-right: 8px;
+    /* vertical qualification bar (left side of position) */
+    .pos-with-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
-    .blue-bar {
+    .vertical-bar {
+      width: 4px;
+      height: 18px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+    .blue-bar-vertical {
       background-color: #3b82f6;
     }
-    .orange-bar {
+    .orange-bar-vertical {
       background-color: #f97316;
     }
-
+    /* no bar for others */
+    
     /* special row styling */
     .gold-row {
       background: linear-gradient(90deg, #d4af37, #b8960c);
@@ -379,7 +331,7 @@
 
     .rank-cell {
       font-weight: 700;
-      width: 50px;
+      width: 60px;
       color: #f5d742;
     }
 
@@ -394,6 +346,47 @@
       font-weight: 800;
       color: #f5d742;
       text-align: center;
+    }
+
+    /* legend under table */
+    .legend-under-table {
+      margin-top: 1rem;
+      padding: 0.8rem 1.2rem;
+      background: rgba(30, 15, 55, 0.5);
+      border-radius: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      justify-content: center;
+      font-size: 0.7rem;
+      border-top: 1px solid rgba(245, 215, 66, 0.3);
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-vertical-bar {
+      width: 4px;
+      height: 16px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+    .legend-blue {
+      background-color: #3b82f6;
+    }
+    .legend-orange {
+      background-color: #f97316;
+    }
+    .legend-dashed {
+      display: inline-block;
+      width: 20px;
+      height: 2px;
+      border-bottom: 2px dashed #f5d742;
+      vertical-align: middle;
+    }
+    .legend-text {
+      color: #e6d5ff;
     }
 
     /* fixtures and results inner tables */
@@ -481,11 +474,6 @@
         min-width: 180px;
         padding: 0.8rem 1rem;
       }
-      .table-header-with-legend {
-        flex-direction: column;
-        gap: 0.5rem;
-        align-items: flex-start;
-      }
     }
   </style>
 </head>
@@ -520,7 +508,7 @@
     </div>
 
     <div class="two-col-grid">
-      <!-- LEAGUE TABLE CARD with Premier League title and legend -->
+      <!-- LEAGUE TABLE CARD with Premier League title -->
       <div class="card">
         <div class="card-header" style="cursor: default;">
           <div class="card-header-left">
@@ -528,14 +516,6 @@
           </div>
         </div>
         <div class="card-content">
-          <!-- Legend / Key -->
-          <div class="table-header-with-legend">
-            <div class="legend">
-              <span class="legend-item"><span class="blue-bar-legend"></span><span class="legend-text">UEFA Champions League</span></span>
-              <span class="legend-item"><span class="orange-bar-legend"></span><span class="legend-text">Europa League</span></span>
-              <span class="legend-item"><span class="dashed-legend"></span><span class="legend-text">FIFA Club World Cup</span></span>
-            </div>
-          </div>
           <div style="overflow-x: auto;">
             <table class="stats-table" id="leagueTable">
               <thead>
@@ -543,6 +523,12 @@
               </thead>
               <tbody id="leagueTableBody"></tbody>
             </table>
+          </div>
+          <!-- Legend placed UNDER the table -->
+          <div class="legend-under-table">
+            <span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span class="legend-text">UEFA Champions League</span></span>
+            <span class="legend-item"><span class="legend-vertical-bar legend-orange"></span><span class="legend-text">Europa League</span></span>
+            <span class="legend-item"><span class="legend-dashed"></span><span class="legend-text">FIFA Club World Cup</span></span>
           </div>
         </div>
       </div>
@@ -652,34 +638,34 @@
       LEAGUE_DATA.forEach(team => {
         const row = tbody.insertRow();
         
-        // Apply qualification colors: blue for pos 1-4, orange for pos 5-8
+        // Determine vertical bar for position cell (left side of number)
         let barClass = "";
         if (team.pos >= 1 && team.pos <= 4) {
-          barClass = "blue-bar";
+          barClass = "blue-bar-vertical";
         } else if (team.pos >= 5 && team.pos <= 8) {
-          barClass = "orange-bar";
+          barClass = "orange-bar-vertical";
         }
         
         // Special row styling (gold for 1st, red for last two)
         if (team.pos === 1) row.classList.add("gold-row");
         if (team.pos === 13 || team.pos === 14) row.classList.add("red-row");
         
-        // Dashed line between 8th and 9th place (moved from 6-7 to 8-9)
+        // Dashed line between 8th and 9th place
         if (team.pos === 8) {
           row.classList.add("dashed-separator");
         }
         
         const posCell = row.insertCell(0);
         posCell.className = "rank-cell";
-        posCell.innerText = team.pos;
+        // Create position cell with vertical bar on the left
+        if (barClass) {
+          posCell.innerHTML = `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${team.pos}</div>`;
+        } else {
+          posCell.innerText = team.pos;
+        }
         
         const clubCell = row.insertCell(1);
-        // Add colored bar before team name if applicable
-        let barHtml = "";
-        if (barClass) {
-          barHtml = `<span class="qualification-bar ${barClass}"></span>`;
-        }
-        clubCell.innerHTML = `<div class="team-name">${barHtml}${team.club}</div>`;
+        clubCell.innerHTML = `<div class="team-name">${team.club}</div>`;
         
         row.insertCell(2).innerText = team.p;
         const gdValue = team.gd;
