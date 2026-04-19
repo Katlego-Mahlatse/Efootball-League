@@ -413,6 +413,15 @@
       margin-top: 2px;
     }
 
+    .match-highlight {
+      background: #3d2a6b;
+      border-radius: 20px;
+      padding: 0.2rem 0.8rem;
+      display: inline-block;
+      font-size: 0.8rem;
+      color: #f5d742;
+    }
+
     .empty-message {
       text-align: center;
       padding: 2rem;
@@ -535,6 +544,7 @@
       </div>
     </div>
 
+    <!-- FIXTURES CARD (removed played matches) -->
     <div class="card" style="margin-bottom: 1.5rem;">
       <div class="card-header" id="fixturesHeader">
         <div class="card-header-left"><h2>FIXTURES</h2></div>
@@ -552,7 +562,7 @@
       </div>
     </div>
 
-    <!-- RESULTS CARD with actual results -->
+    <!-- RESULTS CARD with clean format: "Team A 1 - 2 Team B" -->
     <div class="card" style="margin-bottom: 1.5rem;">
       <div class="card-header" id="resultsHeader">
         <div class="card-header-left"><h2>RESULTS · PREVIOUS ROUNDS</h2></div>
@@ -562,7 +572,7 @@
         <div style="overflow-x: auto;">
           <table class="inner-table" id="resultsTable">
             <thead>
-              <tr><th>Round</th><th>Match</th><th>Score</th></tr>
+              <tr><th>Match</th><th>Score</th></tr>
             </thead>
             <tbody id="resultsTableBody"></tbody>
           </table>
@@ -649,20 +659,19 @@
       { pos: 14, club: "Aston Villa", p: 6, gd: -9, pts: 0 }
     ];
 
+    // FIXTURES - removed matches that have been played (Real Madrid vs Napoli, Arsenal vs AC Milan, Liverpool vs Newcastle)
     const FIXTURES_MD7 = [
       { home: "FC Barcelona", homePlayer: "~Rea🫡", away: "Aston Villa", awayPlayer: "Mali", date: "Today · Apr 19, 2026" },
       { home: "Borussia Dortmund", homePlayer: "~Qhawe 🤍", away: "Juventus", awayPlayer: "~Lawree ✨", date: "Today · Apr 19, 2026" },
       { home: "Atlético Madrid", homePlayer: "~Stalker.", away: "Paris Saint-Germain", awayPlayer: "~MJ", date: "Today · Apr 19, 2026" },
-      { home: "Napoli", homePlayer: "~PrettyBoy Tendancies. 👅", away: "Real Madrid", awayPlayer: "~Karabo", date: "Today · Apr 19, 2026" },
-      { home: "Arsenal", homePlayer: "Kath", away: "AC Milan", awayPlayer: "~Ntsiki", date: "Today · Apr 19, 2026" },
-      { home: "Chelsea", homePlayer: "~Zazo", away: "Manchester City", awayPlayer: "gry", date: "Today · Apr 19, 2026" },
-      { home: "Liverpool", homePlayer: "🅿️", away: "Newcastle United", awayPlayer: "~Oratile", date: "Today · Apr 19, 2026" }
+      { home: "Chelsea", homePlayer: "~Zazo", away: "Manchester City", awayPlayer: "gry", date: "Today · Apr 19, 2026" }
     ];
 
+    // RESULTS in clean format: "Team A 1 - 2 Team B"
     const RESULTS_DATA = [
-      { round: 7, home: "Real Madrid", away: "Napoli", score: "3 - 2" },
-      { round: 7, home: "Arsenal", away: "AC Milan", score: "0 - 0" },
-      { round: 7, home: "Liverpool", away: "Newcastle United", score: "3 - 0" }
+      { matchText: "Real Madrid 3 - 2 Napoli" },
+      { matchText: "Arsenal 0 - 0 AC Milan" },
+      { matchText: "Liverpool 3 - 0 Newcastle United" }
     ];
 
     function renderLeagueTable() {
@@ -714,12 +723,11 @@
       tbody.innerHTML = "";
       RESULTS_DATA.forEach(res => {
         const row = tbody.insertRow();
-        const roundCell = row.insertCell(0);
-        roundCell.innerHTML = `<span class="round-badge" style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px; font-size:0.7rem;">R${res.round}</span>`;
-        const matchCell = row.insertCell(1);
-        matchCell.innerHTML = `<strong>${res.home} vs ${res.away}</strong>`;
-        const scoreCell = row.insertCell(2);
-        scoreCell.innerHTML = `<span class="match-highlight" style="background:#3d2a6b; border-radius:20px; padding:0.2rem 0.8rem;">${res.score}</span>`;
+        const matchCell = row.insertCell(0);
+        matchCell.innerHTML = `<strong>${res.matchText}</strong>`;
+        // Empty second column to keep table consistent (only two columns now)
+        const scoreCell = row.insertCell(1);
+        scoreCell.innerHTML = `<span class="match-highlight">FINAL</span>`;
       });
     }
 
