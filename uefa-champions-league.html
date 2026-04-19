@@ -155,7 +155,7 @@
     }
 
     .container {
-      max-width: 1100px;
+      max-width: 1000px;
       margin: 0 auto;
       padding: 2rem 1.5rem;
     }
@@ -174,106 +174,64 @@
       color: transparent;
     }
 
-    /* BRACKET: left match, center final, right match */
+    /* BRACKET LAYOUT - EXACTLY as you drew */
     .bracket {
       display: flex;
       justify-content: center;
-      align-items: stretch;
-      gap: 2rem;
-      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
       background: rgba(30, 15, 55, 0.3);
       border-radius: 2rem;
-      padding: 2rem;
+      padding: 2rem 1rem;
     }
 
-    /* Left match */
-    .left-match {
-      flex: 1;
-      min-width: 220px;
+    /* Left side column */
+    .left-side {
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      gap: 2rem;
+      text-align: right;
     }
 
-    /* Right match */
-    .right-match {
-      flex: 1;
-      min-width: 220px;
+    /* Right side column */
+    .right-side {
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      gap: 2rem;
+      text-align: left;
     }
 
-    /* Center final */
-    .center-final {
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    .match-card {
-      background: rgba(45, 25, 75, 0.85);
+    .team-box {
+      background: rgba(45, 25, 75, 0.8);
       border: 1px solid #f5d742;
-      border-radius: 1rem;
-      padding: 1rem;
-      text-align: center;
+      border-radius: 10px;
+      padding: 8px 20px;
+      min-width: 100px;
+      font-size: 1rem;
+      display: inline-block;
     }
 
-    .match-title {
-      font-size: 0.7rem;
+    .connector {
+      font-size: 1.5rem;
       color: #f5d742;
-      margin-bottom: 0.5rem;
+      letter-spacing: 2px;
     }
 
-    .team {
-      padding: 0.4rem;
-    }
-
-    .team small {
-      font-size: 0.65rem;
-      color: #d4baff;
-      display: block;
-    }
-
-    .vs {
-      font-size: 0.7rem;
-      color: #f5d742;
-      margin: 0.2rem 0;
-    }
-
-    .final-card {
+    .final-box {
       background: linear-gradient(135deg, #d4af37, #b8960c);
-      border-radius: 1rem;
-      padding: 1.2rem;
+      border-radius: 12px;
+      padding: 12px 20px;
       text-align: center;
-      min-width: 180px;
       color: #2d1b4e;
-    }
-
-    .final-title {
       font-weight: bold;
-      font-size: 1.1rem;
-    }
-
-    .winner-slot {
-      background: rgba(45, 25, 75, 0.3);
-      border-radius: 0.5rem;
-      padding: 0.4rem;
-      margin: 0.5rem 0;
+      min-width: 120px;
     }
 
     .champion {
-      margin-top: 0.5rem;
-      font-size: 0.8rem;
-      font-weight: bold;
-    }
-
-    .connector-line {
-      text-align: center;
-      font-size: 2rem;
-      color: #f5d742;
-      margin: 0.5rem 0;
+      font-size: 0.7rem;
+      margin-top: 5px;
     }
 
     .info-note {
@@ -285,17 +243,18 @@
       font-size: 0.8rem;
     }
 
-    @media (max-width: 850px) {
-      .bracket {
-        flex-direction: column;
-        align-items: center;
+    @media (max-width: 700px) {
+      .team-box {
+        padding: 4px 10px;
+        font-size: 0.8rem;
+        min-width: 70px;
       }
-      .left-match, .right-match, .center-final {
-        width: 100%;
-        max-width: 300px;
+      .connector {
+        font-size: 1rem;
       }
-      .connector-line {
-        transform: rotate(90deg);
+      .final-box {
+        padding: 8px 12px;
+        min-width: 90px;
       }
     }
   </style>
@@ -327,44 +286,42 @@
       <h1>🏆 UEFA CHAMPIONS LEAGUE</h1>
     </div>
 
+    <!-- EXACT BRACKET AS DRAWN -->
     <div class="bracket">
-      <!-- LEFT MATCH: Pos 1 vs Pos 4 -->
-      <div class="left-match">
-        <div class="match-card">
-          <div class="match-title">SEMI-FINAL 1</div>
-          <div class="team"><small>POSITION 1</small> Pos 1</div>
-          <div class="vs">VS</div>
-          <div class="team"><small>POSITION 4</small> Pos 4</div>
-        </div>
-        <div class="connector-line">────▶</div>
+      <!-- LEFT SIDE: Pos 1 and Pos 4 -->
+      <div class="left-side">
+        <div class="team-box">Pos 1</div>
+        <div class="team-box">Pos 4</div>
       </div>
 
-      <!-- CENTER FINAL -->
-      <div class="center-final">
-        <div class="final-card">
-          <div class="final-title">🏆 FINAL 🏆</div>
-          <div class="winner-slot">Winner SF1<br><small>(Pos 1 vs Pos 4)</small></div>
-          <div class="vs">VS</div>
-          <div class="winner-slot">Winner SF2<br><small>(Pos 2 vs Pos 3)</small></div>
-          <div class="champion">⭐ CHAMPION ⭐</div>
-        </div>
+      <!-- CONNECTORS -->
+      <div class="connector">
+        <div>────</div>
+        <div>────</div>
       </div>
 
-      <!-- RIGHT MATCH: Pos 2 vs Pos 3 -->
-      <div class="right-match">
-        <div class="connector-line">◀────</div>
-        <div class="match-card">
-          <div class="match-title">SEMI-FINAL 2</div>
-          <div class="team"><small>POSITION 2</small> Pos 2</div>
-          <div class="vs">VS</div>
-          <div class="team"><small>POSITION 3</small> Pos 3</div>
-        </div>
+      <!-- FINAL IN CENTER -->
+      <div class="final-box">
+        FINAL<br>
+        <span class="champion">🏆 CHAMPION 🏆</span>
+      </div>
+
+      <!-- CONNECTORS -->
+      <div class="connector">
+        <div>────</div>
+        <div>────</div>
+      </div>
+
+      <!-- RIGHT SIDE: Pos 2 and Pos 3 -->
+      <div class="right-side">
+        <div class="team-box">Pos 2</div>
+        <div class="team-box">Pos 3</div>
       </div>
     </div>
 
     <div class="info-note">
       📌 Champions League qualification: <strong>Position 1, 2, 3, 4</strong><br>
-      Matchups: <strong>1st vs 4th</strong> (left) · <strong>2nd vs 3rd</strong> (right)
+      Matchups: <strong>Pos 1 vs Pos 4</strong> (left) · <strong>Pos 2 vs Pos 3</strong> (right)
     </div>
   </div>
 
