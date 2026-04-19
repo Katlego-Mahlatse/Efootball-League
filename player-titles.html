@@ -1,1 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Player Titles · eFootball 412</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
+    body {
+      background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 100%);
+      font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
+      padding: 0;
+      color: #f5f0ff;
+      min-height: 100vh;
+    }
+
+    /* GOLD NAVBAR */
+    .gold-navbar {
+      background: linear-gradient(135deg, #d4af37, #f5d742);
+      padding: 0.4rem 1.2rem;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .hamburger-btn {
+      background: #6a3bb5;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background 0.2s;
+      border: 1.5px solid #f5d742;
+    }
+
+    .hamburger-btn:hover {
+      transform: scale(1.05);
+      background: #7e4acf;
+    }
+
+    .hamburger-btn span {
+      display: block;
+      width: 18px;
+      height: 2.5px;
+      background-color: #f5d742;
+      border-radius: 2px;
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: transparent;
+      z-index: 200;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .modal-overlay.active {
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      position: absolute;
+      top: 60px;
+      right: 20px;
+      background: linear-gradient(135deg, #f5d742, #e6c42c);
+      border-radius: 1.2rem;
+      padding: 1rem 1.2rem;
+      width: auto;
+      min-width: 200px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      animation: fadeInDown 0.2s ease;
+      border: 1px solid #6a3bb5;
+    }
+
+    @keyframes fadeInDown {
+      from {
+        transform: translateY(-15px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-content h3 {
+      font-size: 1.1rem;
+      color: #4a1d8c;
+      margin-bottom: 0.8rem;
+      font-weight: 800;
+      border-bottom: 1px solid #6a3bb5;
+      display: inline-block;
+      padding-bottom: 0.2rem;
+    }
+
+    .modal-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin: 0.8rem 0;
+    }
+
+    .modal-option {
+      background: rgba(106, 59, 181, 0.15);
+      padding: 0.4rem 0.8rem;
+      border-radius: 40px;
+      text-decoration: none;
+      color: #3c1a70;
+      font-weight: 700;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+      border: 1px solid #6a3bb5;
+      display: block;
+    }
+
+    .modal-option:hover {
+      background: #6a3bb5;
+      color: #f5d742;
+      transform: translateX(3px);
+    }
+
+    .close-modal {
+      background: #4a1d8c;
+      color: #f5d742;
+      border: none;
+      padding: 0.3rem 0.9rem;
+      border-radius: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      font-size: 0.7rem;
+    }
+
+    .close-modal:hover {
+      background: #2d0f5a;
+    }
+
+    /* MAIN CONTAINER */
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .page-header h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #f5d742, #d4aaff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .page-header p {
+      font-size: 1rem;
+      color: #e6d5ff;
+      margin-top: 0.5rem;
+    }
+
+    /* TABLE STYLES (same as Premier League table) */
+    .titles-table-wrapper {
+      overflow-x: auto;
+      background: rgba(45, 25, 75, 0.85);
+      backdrop-filter: blur(10px);
+      border-radius: 2rem;
+      border: 1px solid rgba(245, 215, 66, 0.4);
+      padding: 0.5rem;
+    }
+
+    .titles-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .titles-table th {
+      text-align: center;
+      padding: 1rem 0.8rem;
+      font-weight: 600;
+      color: #f5e6ff;
+      background: rgba(55, 35, 95, 0.7);
+      border-bottom: 1px solid #f5d742;
+      font-size: 0.8rem;
+      letter-spacing: 0.3px;
+    }
+
+    .titles-table th:first-child {
+      text-align: left;
+    }
+
+    .titles-table td {
+      text-align: center;
+      padding: 0.75rem 0.8rem;
+      border-bottom: 1px solid rgba(245, 215, 66, 0.2);
+      font-weight: 500;
+      color: #f0eaff;
+    }
+
+    .titles-table td:first-child {
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .titles-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Special styling for total column */
+    .total-cell {
+      font-weight: 800;
+      color: #f5d742;
+      font-size: 1rem;
+    }
+
+    /* Gold row for top player (if any) - optional */
+    .gold-row {
+      background: linear-gradient(90deg, #d4af37, #b8960c);
+      color: #1e1a0c;
+    }
+    .gold-row td {
+      color: #1e1a0c;
+    }
+    .gold-row .total-cell {
+      color: #2c2400;
+    }
+
+    .info-note {
+      text-align: center;
+      margin-top: 2rem;
+      padding: 1rem;
+      background: rgba(30, 15, 55, 0.5);
+      border-radius: 1rem;
+      font-size: 0.8rem;
+      color: #c4b0ff;
+    }
+
+    @media (max-width: 850px) {
+      .container {
+        padding: 1rem;
+      }
+      .titles-table th, .titles-table td {
+        padding: 0.5rem 0.3rem;
+        font-size: 0.7rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- GOLD NAVBAR -->
+  <div class="gold-navbar">
+    <div class="hamburger-btn" id="hamburgerBtn">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+
+  <!-- MODAL POPUP -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content">
+      <h3>TOURNAMENTS</h3>
+      <div class="modal-options">
+        <a href="fifa-club-world-cup.html" class="modal-option">FIFA CLUB WORLD CUP</a>
+        <a href="uefa-champions-league.html" class="modal-option">UEFA CHAMPIONS LEAGUE</a>
+        <a href="uefa-europa-league.html" class="modal-option">UEFA EUROPA LEAGUE</a>
+        <a href="uefa-super-league.html" class="modal-option">UEFA SUPER LEAGUE</a>
+        <a href="uefa-conference-league.html" class="modal-option">UEFA CONFERENCE LEAGUE</a>
+        <a href="player-titles.html" class="modal-option">PLAYER TITLES</a>
+      </div>
+      <button class="close-modal" id="closeModalBtn">CLOSE</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="page-header">
+      <h1>🏆 PLAYER TITLES 🏆</h1>
+      <p>honours board · career titles by competition</p>
+    </div>
+
+    <div class="titles-table-wrapper">
+      <table class="titles-table" id="titlesTable">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>UCL</th>
+            <th>UEL</th>
+            <th>USL</th>
+            <th>UECL</th>
+            <th>PL</th>
+            <th>FIFA CWC</th>
+            <th>TOTAL</th>
+          </tr>
+        </thead>
+        <tbody id="titlesTableBody">
+          <!-- JS will populate -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="info-note">
+      📌 UCL = UEFA Champions League · UEL = UEFA Europa League · USL = UEFA Super League<br>
+      UECL = UEFA Conference League · PL = Premier League · FIFA CWC = FIFA Club World Cup
+    </div>
+  </div>
+
+  <script>
+    // Player list (all 14 players)
+    const PLAYERS = [
+      "~Rea🫡",
+      "Mali",
+      "~Qhawe 🤍",
+      "~Lawree ✨",
+      "~Stalker.",
+      "~MJ",
+      "~PrettyBoy Tendancies. 👅",
+      "~Karabo",
+      "Kath",
+      "~Ntsiki",
+      "~Zazo",
+      "gry",
+      "🅿️",
+      "~Oratile"
+    ];
+
+    // Title counts for each player
+    // Order: [UCL, UEL, USL, UECL, PL, FIFA CWC]
+    const TITLES_DATA = {
+      "~Rea🫡": [0, 0, 0, 0, 1, 0],
+      "Mali": [0, 0, 0, 0, 0, 0],
+      "~Qhawe 🤍": [0, 0, 0, 0, 0, 0],
+      "~Lawree ✨": [0, 0, 0, 0, 0, 0],
+      "~Stalker.": [0, 0, 0, 0, 0, 0],
+      "~MJ": [0, 0, 0, 0, 0, 0],
+      "~PrettyBoy Tendancies. 👅": [0, 0, 0, 0, 0, 0],
+      "~Karabo": [1, 0, 0, 0, 0, 0],
+      "Kath": [0, 0, 0, 0, 0, 0],
+      "~Ntsiki": [0, 0, 0, 0, 0, 0],
+      "~Zazo": [0, 0, 0, 0, 0, 0],
+      "gry": [0, 0, 0, 0, 0, 0],
+      "🅿️": [0, 0, 0, 0, 0, 0],
+      "~Oratile": [0, 0, 0, 0, 0, 0]
+    };
+
+    // Calculate total titles for a player
+    function calculateTotal(titles) {
+      return titles.reduce((sum, num) => sum + num, 0);
+    }
+
+    // Find player with most titles for gold row
+    let maxTotal = 0;
+    let playerWithMaxTotal = null;
+    for (const player of PLAYERS) {
+      const total = calculateTotal(TITLES_DATA[player]);
+      if (total > maxTotal) {
+        maxTotal = total;
+        playerWithMaxTotal = player;
+      }
+    }
+
+    // Render the table
+    function renderTitlesTable() {
+      const tbody = document.getElementById("titlesTableBody");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+
+      // Sort players by total titles (descending) then by name
+      const sortedPlayers = [...PLAYERS].sort((a, b) => {
+        const totalA = calculateTotal(TITLES_DATA[a]);
+        const totalB = calculateTotal(TITLES_DATA[b]);
+        if (totalA !== totalB) return totalB - totalA;
+        return a.localeCompare(b);
+      });
+
+      for (const player of sortedPlayers) {
+        const titles = TITLES_DATA[player];
+        const total = calculateTotal(titles);
+        const row = tbody.insertRow();
+
+        // Add gold row styling if this player has the most titles (and at least 1)
+        if (maxTotal > 0 && total === maxTotal) {
+          row.classList.add("gold-row");
+        }
+
+        // Player name
+        const playerCell = row.insertCell(0);
+        playerCell.innerText = player;
+
+        // Title counts for each competition
+        row.insertCell(1).innerText = titles[0]; // UCL
+        row.insertCell(2).innerText = titles[1]; // UEL
+        row.insertCell(3).innerText = titles[2]; // USL
+        row.insertCell(4).innerText = titles[3]; // UECL
+        row.insertCell(5).innerText = titles[4]; // PL
+        row.insertCell(6).innerText = titles[5]; // FIFA CWC
+
+        // Total column
+        const totalCell = row.insertCell(7);
+        totalCell.innerText = total;
+        totalCell.className = "total-cell";
+      }
+    }
+
+    // Modal controls (same as index)
+    const hamburger = document.getElementById("hamburgerBtn");
+    const modalOverlay = document.getElementById("modalOverlay");
+    const closeBtn = document.getElementById("closeModalBtn");
+
+    function openModal() {
+      modalOverlay.classList.add("active");
+    }
+    function closeModal() {
+      modalOverlay.classList.remove("active");
+    }
+    if (hamburger) hamburger.addEventListener("click", openModal);
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+    modalOverlay.addEventListener("click", (e) => {
+      if (e.target === modalOverlay) closeModal();
+    });
+
+    // Initialize
+    renderTitlesTable();
+  </script>
+</body>
+</html>
