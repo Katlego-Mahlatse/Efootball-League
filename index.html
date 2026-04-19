@@ -148,6 +148,33 @@
       border-bottom: none;
     }
 
+    /* special row styling */
+    .gold-row {
+      background: linear-gradient(90deg, #d4af37, #b8960c);
+      color: #1e1a0c;
+      font-weight: bold;
+    }
+    .gold-row td {
+      color: #1e1a0c;
+      font-weight: 700;
+    }
+    .gold-row .rank-cell, .gold-row .pts-cell {
+      color: #2c2400;
+    }
+
+    .red-row {
+      background: rgba(180, 40, 40, 0.8);
+      color: #ffe0e0;
+    }
+    .red-row td {
+      color: #fff0f0;
+    }
+
+    /* yellow dashed line between 6th and 7th */
+    .dashed-separator {
+      border-bottom: 2px dashed #f5d742 !important;
+    }
+
     .rank-cell {
       font-weight: 700;
       width: 50px;
@@ -295,12 +322,12 @@
         </div>
       </div>
       <div class="card-content">
-        <!-- This block is intentionally left empty as requested -->
+        <!-- Intentionally left empty -->
       </div>
     </div>
   </div>
 
-  <!-- SEPARATE CARD: FIXTURES (collapsible dropdown) -->
+  <!-- FIXTURES CARD -->
   <div class="card" style="margin-bottom: 1.5rem;">
     <div class="card-header" id="fixturesHeader">
       <div class="card-header-left">
@@ -320,8 +347,8 @@
     </div>
   </div>
 
-  <!-- SEPARATE CARD: RESULTS (collapsible dropdown, empty for now) -->
-  <div class="card">
+  <!-- RESULTS CARD (empty now, with placeholder message) -->
+  <div class="card" style="margin-bottom: 1.5rem;">
     <div class="card-header" id="resultsHeader">
       <div class="card-header-left">
         <h2>RESULTS · PREVIOUS ROUNDS</h2>
@@ -329,19 +356,29 @@
       <div class="toggle-icon" id="resultsToggleIcon">▼</div>
     </div>
     <div class="card-content" id="resultsContent">
-      <div style="overflow-x: auto;">
-        <table class="inner-table" id="resultsTable">
-          <thead>
-            <tr><th>Round</th><th>Match</th><th>Score</th></tr>
-          </thead>
-          <tbody id="resultsTableBody"></tbody>
-        </table>
+      <div class="empty-message" style="padding: 2rem; text-align: center;">
+        from match day 7 onwards results will be displayed here
+      </div>
+    </div>
+  </div>
+
+  <!-- NEW CARD: SEASON TOP SCORERS (empty for now) -->
+  <div class="card">
+    <div class="card-header" id="scorersHeader">
+      <div class="card-header-left">
+        <h2>SEASON TOP SCORERS</h2>
+      </div>
+      <div class="toggle-icon" id="scorersToggleIcon">▼</div>
+    </div>
+    <div class="card-content" id="scorersContent">
+      <div class="empty-message" style="padding: 2rem; text-align: center;">
+        Season's Leading Top Scorers Will Go Here For Golden Boot
       </div>
     </div>
   </div>
 
   <div class="footer-note">
-    click on FIXTURES or RESULTS cards to expand/collapse · results will be added soon
+    click on FIXTURES or RESULTS or TOP SCORERS cards to expand/collapse · results will be added soon
   </div>
 </div>
 
@@ -368,7 +405,6 @@
 
   // --------------------------------------------------------------
   // 2. FIXTURES: Matchday 7 with team names + player @names (today's date)
-  //    Format: homeTeam (player), awayTeam (player)
   // --------------------------------------------------------------
   const FIXTURES_MD7 = [
     { home: "FC Barcelona", homePlayer: "~Rea🫡", away: "Aston Villa", awayPlayer: "Mali", date: "Today · Apr 19, 2026" },
@@ -380,27 +416,26 @@
     { home: "Liverpool", homePlayer: "🅿️", away: "Newcastle United", awayPlayer: "~Oratile", date: "Today · Apr 19, 2026" }
   ];
 
-  // --------------------------------------------------------------
-  // 3. RESULTS: empty for now (placeholder)
-  // --------------------------------------------------------------
-  const RESULTS_PLACEHOLDER = [
-    { round: 1, match: "Liverpool vs Ipswich", score: "—" },
-    { round: 1, match: "Real Madrid vs Mallorca", score: "—" },
-    { round: 2, match: "Man City vs Chelsea", score: "—" },
-    { round: 2, match: "Barcelona vs Athletic", score: "—" },
-    { round: 3, match: "PSG vs Monaco", score: "—" },
-    { round: 4, match: "Napoli vs Roma", score: "—" },
-    { round: 5, match: "Newcastle vs West Ham", score: "—" },
-    { round: 6, match: "Liverpool vs Everton", score: "—" }
-  ];
-
-  // render league table
+  // render league table with special styling: gold for pos1, red for pos13 & 14, dashed line after pos6
   function renderLeagueTable() {
     const tbody = document.getElementById("leagueTableBody");
     if (!tbody) return;
     tbody.innerHTML = "";
-    LEAGUE_DATA.forEach(team => {
+    
+    LEAGUE_DATA.forEach((team, idx) => {
       const row = tbody.insertRow();
+      // apply special classes
+      if (team.pos === 1) {
+        row.classList.add("gold-row");
+      }
+      if (team.pos === 13 || team.pos === 14) {
+        row.classList.add("red-row");
+      }
+      // add dashed border after the 6th position (index 5, since pos 6 is Arsenal)
+      if (team.pos === 6) {
+        row.classList.add("dashed-separator");
+      }
+      
       const posCell = row.insertCell(0);
       posCell.className = "rank-cell";
       posCell.innerText = team.pos;
@@ -422,43 +457,17 @@
     tbody.innerHTML = "";
     FIXTURES_MD7.forEach(fix => {
       const row = tbody.insertRow();
-      // home team cell with player name
       const homeCell = row.insertCell(0);
       homeCell.innerHTML = `<strong>${fix.home}</strong><span class="player-name">${fix.homePlayer}</span>`;
-      // away team cell with player name
       const awayCell = row.insertCell(1);
       awayCell.innerHTML = `<strong>${fix.away}</strong><span class="player-name">${fix.awayPlayer}</span>`;
-      // date cell
       const dateCell = row.insertCell(2);
       dateCell.innerHTML = `<span class="date-badge">${fix.date}</span>`;
     });
   }
 
-  // render results (empty for now, placeholder)
-  function renderResults() {
-    const tbody = document.getElementById("resultsTableBody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-    RESULTS_PLACEHOLDER.forEach(res => {
-      const row = tbody.insertRow();
-      const roundCell = row.insertCell(0);
-      roundCell.innerHTML = `<span class="round-badge">R${res.round}</span>`;
-      const matchCell = row.insertCell(1);
-      matchCell.innerHTML = `<strong>${res.match}</strong>`;
-      const scoreCell = row.insertCell(2);
-      scoreCell.innerHTML = `<span class="match-highlight">${res.score}</span>`;
-    });
-    // add an extra note row to indicate results will be added
-    const noteRow = tbody.insertRow();
-    const noteCell = noteRow.insertCell(0);
-    noteCell.colSpan = 3;
-    noteCell.className = "empty-message";
-    noteCell.innerHTML = "results will go here — stay tuned for updates after matches are played!";
-    noteCell.style.textAlign = "center";
-  }
-
   // --------------------------------------------------------------
-  // Collapsible functionality for Fixtures & Results cards
+  // Collapsible functionality for all cards
   // --------------------------------------------------------------
   function setupCollapsible(headerId, contentId, toggleIconId) {
     const header = document.getElementById(headerId);
@@ -472,11 +481,9 @@
       if (isCollapsed) {
         content.classList.add("collapsed");
         icon.innerHTML = "▶";
-        icon.style.transform = "rotate(0deg)";
       } else {
         content.classList.remove("collapsed");
         icon.innerHTML = "▼";
-        icon.style.transform = "rotate(0deg)";
       }
     });
   }
@@ -485,26 +492,24 @@
   function init() {
     renderLeagueTable();
     renderFixtures();
-    renderResults();
     
-    // setup collapsible cards
+    // setup collapsible cards: fixtures, results, top scorers
     setupCollapsible("fixturesHeader", "fixturesContent", "fixturesToggleIcon");
     setupCollapsible("resultsHeader", "resultsContent", "resultsToggleIcon");
+    setupCollapsible("scorersHeader", "scorersContent", "scorersToggleIcon");
     
-    // ensure league table card content is always visible (no collapse for league)
+    // ensure league table card content is always visible
     const leagueContent = document.querySelector(".two-col-grid .card:first-child .card-content");
     if (leagueContent) leagueContent.classList.remove("collapsed");
   }
 
   init();
   
-  // optional refresh helper
   window.refreshAllData = function() {
     renderLeagueTable();
     renderFixtures();
-    renderResults();
     console.log("All data refreshed (hardcoded)");
   };
 </script>
 </body>
-</html>
+  </html>
