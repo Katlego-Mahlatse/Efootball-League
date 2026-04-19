@@ -552,13 +552,21 @@
       </div>
     </div>
 
+    <!-- RESULTS CARD with actual results -->
     <div class="card" style="margin-bottom: 1.5rem;">
       <div class="card-header" id="resultsHeader">
         <div class="card-header-left"><h2>RESULTS · PREVIOUS ROUNDS</h2></div>
         <div class="toggle-icon" id="resultsToggleIcon">▼</div>
       </div>
       <div class="card-content" id="resultsContent">
-        <div class="empty-message" style="padding: 2rem; text-align: center;">from match day 7 onwards results will be displayed here</div>
+        <div style="overflow-x: auto;">
+          <table class="inner-table" id="resultsTable">
+            <thead>
+              <tr><th>Round</th><th>Match</th><th>Score</th></tr>
+            </thead>
+            <tbody id="resultsTableBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -588,7 +596,6 @@
     const slideshowImg = document.getElementById("slideshow-img");
     const dotsContainer = document.getElementById("dotsContainer");
 
-    // Create dots
     function createDots() {
       dotsContainer.innerHTML = "";
       for (let i = 0; i < images.length; i++) {
@@ -621,23 +628,23 @@
         currentIndex = (currentIndex + 1) % images.length;
         slideshowImg.src = images[currentIndex];
         updateDots();
-      }, 2000); // 2 seconds
+      }, 2000);
     }
 
-    // LEAGUE DATA
+    // UPDATED LEAGUE DATA after Matchday 7 results
     const LEAGUE_DATA = [
-      { pos: 1, club: "Liverpool", p: 6, gd: 23, pts: 18 },
-      { pos: 2, club: "Real Madrid", p: 6, gd: 13, pts: 18 },
+      { pos: 1, club: "Liverpool", p: 7, gd: 26, pts: 21 },
+      { pos: 2, club: "Real Madrid", p: 7, gd: 14, pts: 21 },
       { pos: 3, club: "Dortmund", p: 6, gd: 12, pts: 15 },
       { pos: 4, club: "Man City", p: 6, gd: 9, pts: 15 },
       { pos: 5, club: "Barcelona", p: 6, gd: -3, pts: 9 },
-      { pos: 6, club: "Arsenal", p: 6, gd: -1, pts: 7 },
-      { pos: 7, club: "PSG", p: 6, gd: -7, pts: 6 },
-      { pos: 8, club: "AC Milan", p: 6, gd: -5, pts: 6 },
-      { pos: 9, club: "Napoli", p: 6, gd: 3, pts: 3 },
+      { pos: 6, club: "Arsenal", p: 7, gd: -1, pts: 8 },
+      { pos: 7, club: "AC Milan", p: 7, gd: -5, pts: 7 },
+      { pos: 8, club: "PSG", p: 6, gd: -7, pts: 6 },
+      { pos: 9, club: "Napoli", p: 7, gd: 2, pts: 3 },
       { pos: 10, club: "Chelsea", p: 6, gd: 1, pts: 3 },
       { pos: 11, club: "Juventus", p: 6, gd: -1, pts: 3 },
-      { pos: 12, club: "Newcastle", p: 6, gd: -15, pts: 3 },
+      { pos: 12, club: "Newcastle", p: 7, gd: -18, pts: 3 },
       { pos: 13, club: "Atletico", p: 6, gd: -10, pts: 1 },
       { pos: 14, club: "Aston Villa", p: 6, gd: -9, pts: 0 }
     ];
@@ -650,6 +657,12 @@
       { home: "Arsenal", homePlayer: "Kath", away: "AC Milan", awayPlayer: "~Ntsiki", date: "Today · Apr 19, 2026" },
       { home: "Chelsea", homePlayer: "~Zazo", away: "Manchester City", awayPlayer: "gry", date: "Today · Apr 19, 2026" },
       { home: "Liverpool", homePlayer: "🅿️", away: "Newcastle United", awayPlayer: "~Oratile", date: "Today · Apr 19, 2026" }
+    ];
+
+    const RESULTS_DATA = [
+      { round: 7, home: "Real Madrid", away: "Napoli", score: "3 - 2" },
+      { round: 7, home: "Arsenal", away: "AC Milan", score: "0 - 0" },
+      { round: 7, home: "Liverpool", away: "Newcastle United", score: "3 - 0" }
     ];
 
     function renderLeagueTable() {
@@ -695,6 +708,21 @@
       });
     }
 
+    function renderResults() {
+      const tbody = document.getElementById("resultsTableBody");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+      RESULTS_DATA.forEach(res => {
+        const row = tbody.insertRow();
+        const roundCell = row.insertCell(0);
+        roundCell.innerHTML = `<span class="round-badge" style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px; font-size:0.7rem;">R${res.round}</span>`;
+        const matchCell = row.insertCell(1);
+        matchCell.innerHTML = `<strong>${res.home} vs ${res.away}</strong>`;
+        const scoreCell = row.insertCell(2);
+        scoreCell.innerHTML = `<span class="match-highlight" style="background:#3d2a6b; border-radius:20px; padding:0.2rem 0.8rem;">${res.score}</span>`;
+      });
+    }
+
     function setupCollapsible(headerId, contentId, toggleIconId) {
       const header = document.getElementById(headerId);
       const content = document.getElementById(contentId);
@@ -720,6 +748,7 @@
     function init() {
       renderLeagueTable();
       renderFixtures();
+      renderResults();
       setupCollapsible("fixturesHeader", "fixturesContent", "fixturesToggleIcon");
       setupCollapsible("resultsHeader", "resultsContent", "resultsToggleIcon");
       setupCollapsible("scorersHeader", "scorersContent", "scorersToggleIcon");
