@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>UEFA Champions League · Knockout Bracket</title>
+  <title>UEFA Champions League · Bracket</title>
   <style>
     * {
       margin: 0;
@@ -19,7 +19,6 @@
       min-height: 100vh;
     }
 
-    /* GOLD NAVBAR */
     .gold-navbar {
       background: linear-gradient(135deg, #d4af37, #f5d742);
       padding: 0.4rem 1.2rem;
@@ -61,7 +60,6 @@
       border-radius: 2px;
     }
 
-    /* modal overlay */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -157,7 +155,7 @@
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 900px;
       margin: 0 auto;
       padding: 2rem 1.5rem;
     }
@@ -168,174 +166,134 @@
     }
 
     .page-header h1 {
-      font-size: 2.8rem;
+      font-size: 2.5rem;
       font-weight: 800;
       background: linear-gradient(135deg, #3b82f6, #d4aaff);
       background-clip: text;
       -webkit-background-clip: text;
       color: transparent;
-      letter-spacing: -0.5px;
     }
 
-    .page-header p {
-      font-size: 1rem;
-      color: #e6d5ff;
-      margin-top: 0.5rem;
-    }
-
-    /* BRACKET - exact like drawing */
-    .bracket-container {
+    /* SIMPLE BRACKET DIAGRAM */
+    .bracket {
       display: flex;
       justify-content: center;
       align-items: center;
       gap: 0;
-      background: rgba(30, 15, 55, 0.3);
-      border-radius: 2rem;
-      padding: 3rem 1rem;
-      margin: 2rem 0;
+      font-family: monospace;
+      font-size: 1.2rem;
     }
 
-    /* Semi finals column */
-    .semi-col {
+    .column {
       display: flex;
       flex-direction: column;
-      gap: 4rem;
-      width: 280px;
     }
 
-    .match-card {
-      background: rgba(45, 25, 75, 0.9);
-      border-radius: 1rem;
+    .left-col {
+      align-items: flex-end;
+    }
+
+    .right-col {
+      align-items: flex-start;
+    }
+
+    .match-row {
+      display: flex;
+      align-items: center;
+      height: 80px;
+    }
+
+    .team-box {
+      background: rgba(45, 25, 75, 0.8);
       border: 1px solid #f5d742;
-      padding: 1rem;
+      border-radius: 8px;
+      padding: 8px 20px;
+      min-width: 180px;
       text-align: center;
-      position: relative;
-    }
-
-    .match-title {
-      font-size: 0.7rem;
-      color: #f5d742;
-      margin-bottom: 0.5rem;
       font-weight: 600;
-    }
-
-    .team-row {
-      background: rgba(30, 15, 55, 0.8);
-      border-radius: 0.5rem;
-      padding: 0.6rem;
-      margin: 0.5rem 0;
+      font-size: 1rem;
     }
 
     .team-pos {
-      font-size: 0.65rem;
+      font-size: 0.7rem;
       color: #d4baff;
     }
 
-    .team-name {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #f5e6ff;
+    .line-h {
+      width: 40px;
+      height: 2px;
+      background: #f5d742;
     }
 
-    .vs-text {
-      font-size: 0.7rem;
-      color: #f5d742;
-      font-weight: bold;
+    .line-v {
+      width: 2px;
+      background: #f5d742;
     }
 
-    /* Connector column with lines */
-    .connector-col {
-      width: 100px;
-      position: relative;
+    .v-connector {
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
     }
 
-    .line-diagram {
-      width: 100%;
-      height: 260px;
-      position: relative;
+    .v-line-top {
+      width: 2px;
+      height: 40px;
+      background: #f5d742;
     }
 
-    .line-diagram svg {
-      width: 100%;
-      height: 100%;
+    .v-line-bottom {
+      width: 2px;
+      height: 40px;
+      background: #f5d742;
     }
 
-    /* Final column */
-    .final-col {
-      width: 280px;
+    .h-line-to-final {
+      width: 50px;
+      height: 2px;
+      background: #f5d742;
     }
 
-    .final-card {
+    .final-box {
       background: linear-gradient(135deg, #d4af37, #b8960c);
-      border-radius: 1rem;
-      padding: 1.2rem;
+      border-radius: 8px;
+      padding: 12px 25px;
       text-align: center;
+      color: #2d1b4e;
+      font-weight: bold;
     }
 
-    .final-title {
+    .champion {
+      margin-top: 10px;
       font-size: 0.8rem;
-      color: #2d1b4e;
-      font-weight: bold;
-      margin-bottom: 0.5rem;
-    }
-
-    .final-team-slot {
-      background: rgba(45, 25, 75, 0.4);
-      border-radius: 0.5rem;
-      padding: 0.6rem;
-      margin: 0.5rem 0;
-    }
-
-    .final-team-slot .name {
-      font-size: 0.9rem;
-      color: #2d1b4e;
-      font-weight: 700;
-    }
-
-    .champion-text {
-      margin-top: 0.8rem;
-      padding-top: 0.8rem;
-      border-top: 1px dashed #2d1b4e;
-      font-weight: bold;
-      color: #2d1b4e;
-    }
-
-    .trophy-icon {
-      font-size: 1.5rem;
     }
 
     .info-note {
       text-align: center;
-      margin-top: 2rem;
+      margin-top: 3rem;
       padding: 1rem;
       background: rgba(30, 15, 55, 0.5);
       border-radius: 1rem;
       font-size: 0.8rem;
-      color: #c4b0ff;
     }
 
-    @media (max-width: 850px) {
-      .bracket-container {
-        flex-direction: column;
-        gap: 1rem;
+    @media (max-width: 700px) {
+      .team-box {
+        padding: 4px 10px;
+        min-width: 120px;
+        font-size: 0.7rem;
       }
-      .connector-col {
-        transform: rotate(90deg);
-        width: 60px;
-        height: 60px;
+      .line-h {
+        width: 20px;
       }
-      .line-diagram {
-        height: 60px;
+      .h-line-to-final {
+        width: 25px;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- GOLD NAVBAR -->
   <div class="gold-navbar">
     <div class="hamburger-btn" id="hamburgerBtn">
       <span></span>
@@ -344,7 +302,6 @@
     </div>
   </div>
 
-  <!-- MODAL POPUP -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal-content">
       <h3>TOURNAMENTS</h3>
@@ -360,91 +317,81 @@
   <div class="container">
     <div class="page-header">
       <h1>🏆 UEFA CHAMPIONS LEAGUE</h1>
-      <p>knockout bracket · semi-finals → final</p>
     </div>
 
-    <div class="bracket-container">
-      <!-- LEFT COLUMN: Semi-finals -->
-      <div class="semi-col">
+    <!-- BRACKET DIAGRAM - EXACTLY LIKE YOUR DRAWING -->
+    <div class="bracket">
+      <!-- LEFT SIDE: Semi-finals -->
+      <div class="column left-col">
         <!-- Top match: Pos 1 vs Pos 4 -->
-        <div class="match-card">
-          <div class="match-title">SEMI-FINAL 1</div>
-          <div class="team-row">
-            <div class="team-pos">POSITION 1</div>
-            <div class="team-name">League Position 1</div>
+        <div class="match-row">
+          <div class="team-box">
+            Pos 1
           </div>
-          <div class="vs-text">VS</div>
-          <div class="team-row">
-            <div class="team-pos">POSITION 4</div>
-            <div class="team-name">League Position 4</div>
-          </div>
+          <div class="line-h"></div>
         </div>
-
-        <!-- Bottom match: Pos 2 vs Pos 3 -->
-        <div class="match-card">
-          <div class="match-title">SEMI-FINAL 2</div>
-          <div class="team-row">
-            <div class="team-pos">POSITION 2</div>
-            <div class="team-name">League Position 2</div>
+        <div class="v-connector">
+          <div class="v-line-top"></div>
+        </div>
+        <div class="match-row">
+          <div class="team-box">
+            Pos 4
           </div>
-          <div class="vs-text">VS</div>
-          <div class="team-row">
-            <div class="team-pos">POSITION 3</div>
-            <div class="team-name">League Position 3</div>
-          </div>
+          <div class="line-h"></div>
         </div>
       </div>
 
-      <!-- CONNECTOR COLUMN: Lines showing bracket connection -->
-      <div class="connector-col">
-        <div class="line-diagram">
-          <svg viewBox="0 0 100 260" preserveAspectRatio="none">
-            <!-- Horizontal line from top match -->
-            <line x1="0" y1="30" x2="50" y2="30" stroke="#f5d742" stroke-width="3"/>
-            <!-- Horizontal line from bottom match -->
-            <line x1="0" y1="230" x2="50" y2="230" stroke="#f5d742" stroke-width="3"/>
-            <!-- Vertical line connecting both -->
-            <line x1="50" y1="30" x2="50" y2="230" stroke="#f5d742" stroke-width="3"/>
-            <!-- Arrow pointing to final -->
-            <line x1="50" y1="130" x2="100" y2="130" stroke="#f5d742" stroke-width="4" marker-end="url(#arrow)"/>
-            <defs>
-              <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
-                <path d="M0,0 L10,5 L0,10 Z" fill="#f5d742"/>
-              </marker>
-            </defs>
-          </svg>
+      <!-- MIDDLE: Vertical connector and line to final -->
+      <div class="column">
+        <div class="v-line-top" style="height: 40px;"></div>
+        <div class="line-h" style="width: 50px;"></div>
+        <div class="v-line-bottom" style="height: 40px;"></div>
+      </div>
+
+      <!-- RIGHT SIDE: Bottom semi-finals -->
+      <div class="column left-col">
+        <div class="match-row">
+          <div class="team-box">
+            Pos 2
+          </div>
+          <div class="line-h"></div>
+        </div>
+        <div class="v-connector">
+          <div class="v-line-top"></div>
+        </div>
+        <div class="match-row">
+          <div class="team-box">
+            Pos 3
+          </div>
+          <div class="line-h"></div>
         </div>
       </div>
 
-      <!-- RIGHT COLUMN: Final -->
-      <div class="final-col">
-        <div class="final-card">
-          <div class="trophy-icon">🏆</div>
-          <div class="final-title">CHAMPIONS LEAGUE FINAL</div>
-          <div class="final-team-slot">
-            <div class="name">Winner SF1</div>
-            <div style="font-size:0.6rem; color:#2d1b4e;">(Pos 1 vs Pos 4)</div>
-          </div>
-          <div class="vs-text" style="color:#2d1b4e;">VS</div>
-          <div class="final-team-slot">
-            <div class="name">Winner SF2</div>
-            <div style="font-size:0.6rem; color:#2d1b4e;">(Pos 2 vs Pos 3)</div>
-          </div>
-          <div class="champion-text">
-            🏆 CHAMPION 🏆
+      <!-- CONNECTOR TO FINAL -->
+      <div class="column">
+        <div class="v-line-top" style="height: 80px;"></div>
+        <div class="h-line-to-final"></div>
+        <div class="v-line-bottom" style="height: 80px;"></div>
+      </div>
+
+      <!-- FINAL & CHAMPION -->
+      <div class="column">
+        <div class="match-row">
+          <div class="final-box">
+            FINAL
+            <div class="champion">🏆 CHAMPION 🏆</div>
           </div>
         </div>
       </div>
     </div>
 
     <div class="info-note">
-      📌 Based on current Premier League standings: <strong>Position 1, 2, 3, 4</strong> qualify for UEFA Champions League.<br>
-      Semi-final matchups: <strong>1st vs 4th</strong> (top) and <strong>2nd vs 3rd</strong> (bottom). Winners advance to the Final.
+      📌 Champions League qualification: <strong>Position 1, 2, 3, 4</strong><br>
+      Semi-final matchups: <strong>1st vs 4th</strong> | <strong>2nd vs 3rd</strong>
     </div>
   </div>
 
   <script>
-    // Modal controls
     const hamburger = document.getElementById("hamburgerBtn");
     const modalOverlay = document.getElementById("modalOverlay");
     const closeBtn = document.getElementById("closeModalBtn");
