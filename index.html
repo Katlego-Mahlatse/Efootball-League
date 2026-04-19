@@ -174,6 +174,31 @@
       transition: opacity 0.3s ease-in-out;
     }
 
+    /* Dots container */
+    .dots-container {
+      text-align: center;
+      margin-top: 0.8rem;
+      position: absolute;
+      bottom: 12px;
+      left: 0;
+      right: 0;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #f5d742;
+      margin: 0 4px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .dot.active {
+      background-color: #6a3bb5;
+    }
+
     .two-col-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
@@ -436,6 +461,14 @@
         min-width: 180px;
         padding: 0.8rem 1rem;
       }
+      .dots-container {
+        bottom: 8px;
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        margin: 0 3px;
+      }
     }
   </style>
 </head>
@@ -465,9 +498,10 @@
   </div>
 
   <div class="dashboard">
-    <!-- SLIDESHOW: cycles between two images every 1 second -->
+    <!-- SLIDESHOW with 3 images and dots -->
     <div class="slideshow-container">
       <img id="slideshow-img" class="slideshow-img" src="images - 2026-04-19T121231.816.jpeg" alt="Slideshow image">
+      <div class="dots-container" id="dotsContainer"></div>
     </div>
 
     <div class="two-col-grid">
@@ -542,18 +576,50 @@
   </div>
 
   <script>
-    // Slideshow: two images, change every 1 second
+    // Slideshow: 3 images, change every 2 seconds
     const images = [
       "images - 2026-04-19T121231.816.jpeg",
-      "12871.jpg"
+      "images - 2026-04-19T155746.715.jpeg",
+      "37686bb3-06ce-401b-a022-026933c165e7.jpeg"
     ];
     let currentIndex = 0;
     const slideshowImg = document.getElementById("slideshow-img");
+    const dotsContainer = document.getElementById("dotsContainer");
+
+    // Create dots
+    function createDots() {
+      dotsContainer.innerHTML = "";
+      for (let i = 0; i < images.length; i++) {
+        const dot = document.createElement("span");
+        dot.classList.add("dot");
+        if (i === currentIndex) dot.classList.add("active");
+        dot.addEventListener("click", () => {
+          currentIndex = i;
+          slideshowImg.src = images[currentIndex];
+          updateDots();
+        });
+        dotsContainer.appendChild(dot);
+      }
+    }
+
+    function updateDots() {
+      const dots = document.querySelectorAll(".dot");
+      dots.forEach((dot, idx) => {
+        if (idx === currentIndex) {
+          dot.classList.add("active");
+        } else {
+          dot.classList.remove("active");
+        }
+      });
+    }
+
     if (slideshowImg) {
+      createDots();
       setInterval(() => {
         currentIndex = (currentIndex + 1) % images.length;
         slideshowImg.src = images[currentIndex];
-      }, 1000);
+        updateDots();
+      }, 2000); // 2 seconds
     }
 
     // LEAGUE DATA
