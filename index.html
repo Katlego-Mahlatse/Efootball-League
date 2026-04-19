@@ -159,15 +159,19 @@
       padding: 2rem 1.5rem;
     }
 
-    .hero-image {
+    /* Slideshow container */
+    .slideshow-container {
+      position: relative;
       text-align: center;
       margin-bottom: 2.5rem;
     }
-    .hero-image img {
+
+    .slideshow-img {
       max-width: 100%;
       height: auto;
       border-radius: 1.5rem;
       box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      transition: opacity 0.3s ease-in-out;
     }
 
     .two-col-grid {
@@ -274,15 +278,9 @@
       border-radius: 2px;
       display: inline-block;
     }
-    .blue-bar-vertical {
-      background-color: #3b82f6;
-    }
-    .orange-bar-vertical {
-      background-color: #f97316;
-    }
-    .green-bar-vertical {
-      background-color: #22c55e;
-    }
+    .blue-bar-vertical { background-color: #3b82f6; }
+    .orange-bar-vertical { background-color: #f97316; }
+    .green-bar-vertical { background-color: #22c55e; }
     
     .gold-row {
       background: linear-gradient(90deg, #d4af37, #b8960c);
@@ -351,15 +349,9 @@
       border-radius: 2px;
       display: inline-block;
     }
-    .legend-blue {
-      background-color: #3b82f6;
-    }
-    .legend-orange {
-      background-color: #f97316;
-    }
-    .legend-green {
-      background-color: #22c55e;
-    }
+    .legend-blue { background-color: #3b82f6; }
+    .legend-orange { background-color: #f97316; }
+    .legend-green { background-color: #22c55e; }
     .legend-dashed {
       display: inline-block;
       width: 20px;
@@ -367,9 +359,7 @@
       border-bottom: 2px dashed #f5d742;
       vertical-align: middle;
     }
-    .legend-text {
-      color: #e6d5ff;
-    }
+    .legend-text { color: #e6d5ff; }
 
     .inner-table {
       width: 100%;
@@ -475,16 +465,15 @@
   </div>
 
   <div class="dashboard">
-    <div class="hero-image">
-      <img src="images - 2026-04-19T121231.816.jpeg" alt="eFootball 412 header">
+    <!-- SLIDESHOW: cycles between two images every 1 second -->
+    <div class="slideshow-container">
+      <img id="slideshow-img" class="slideshow-img" src="images - 2026-04-19T121231.816.jpeg" alt="Slideshow image">
     </div>
 
     <div class="two-col-grid">
       <div class="card">
         <div class="card-header" style="cursor: default;">
-          <div class="card-header-left">
-            <h2>PREMIER LEAGUE</h2>
-          </div>
+          <div class="card-header-left"><h2>PREMIER LEAGUE</h2></div>
         </div>
         <div class="card-content">
           <div style="overflow-x: auto;">
@@ -506,9 +495,7 @@
 
       <div class="card">
         <div class="card-header" style="cursor: default;">
-          <div class="card-header-left">
-            <h2>MATCHDAY 7 · TODAY</h2>
-          </div>
+          <div class="card-header-left"><h2>MATCHDAY 7 · TODAY</h2></div>
         </div>
         <div class="card-content"></div>
       </div>
@@ -516,9 +503,7 @@
 
     <div class="card" style="margin-bottom: 1.5rem;">
       <div class="card-header" id="fixturesHeader">
-        <div class="card-header-left">
-          <h2>FIXTURES</h2>
-        </div>
+        <div class="card-header-left"><h2>FIXTURES</h2></div>
         <div class="toggle-icon" id="fixturesToggleIcon">▼</div>
       </div>
       <div class="card-content" id="fixturesContent">
@@ -535,38 +520,43 @@
 
     <div class="card" style="margin-bottom: 1.5rem;">
       <div class="card-header" id="resultsHeader">
-        <div class="card-header-left">
-          <h2>RESULTS · PREVIOUS ROUNDS</h2>
-        </div>
+        <div class="card-header-left"><h2>RESULTS · PREVIOUS ROUNDS</h2></div>
         <div class="toggle-icon" id="resultsToggleIcon">▼</div>
       </div>
       <div class="card-content" id="resultsContent">
-        <div class="empty-message" style="padding: 2rem; text-align: center;">
-          from match day 7 onwards results will be displayed here
-        </div>
+        <div class="empty-message" style="padding: 2rem; text-align: center;">from match day 7 onwards results will be displayed here</div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-header" id="scorersHeader">
-        <div class="card-header-left">
-          <h2>SEASON TOP SCORERS</h2>
-        </div>
+        <div class="card-header-left"><h2>SEASON TOP SCORERS</h2></div>
         <div class="toggle-icon" id="scorersToggleIcon">▼</div>
       </div>
       <div class="card-content" id="scorersContent">
-        <div class="empty-message" style="padding: 2rem; text-align: center;">
-          Season's Leading Top Scorers Will Go Here For Golden Boot
-        </div>
+        <div class="empty-message" style="padding: 2rem; text-align: center;">Season's Leading Top Scorers Will Go Here For Golden Boot</div>
       </div>
     </div>
 
-    <div class="footer-note">
-      click on FIXTURES or RESULTS or TOP SCORERS cards to expand/collapse · results will be added soon
-    </div>
+    <div class="footer-note">click on FIXTURES or RESULTS or TOP SCORERS cards to expand/collapse · results will be added soon</div>
   </div>
 
   <script>
+    // Slideshow: two images, change every 1 second
+    const images = [
+      "images - 2026-04-19T121231.816.jpeg",
+      "12871.jpg"
+    ];
+    let currentIndex = 0;
+    const slideshowImg = document.getElementById("slideshow-img");
+    if (slideshowImg) {
+      setInterval(() => {
+        currentIndex = (currentIndex + 1) % images.length;
+        slideshowImg.src = images[currentIndex];
+      }, 1000);
+    }
+
+    // LEAGUE DATA
     const LEAGUE_DATA = [
       { pos: 1, club: "Liverpool", p: 6, gd: 23, pts: 18 },
       { pos: 2, club: "Real Madrid", p: 6, gd: 13, pts: 18 },
@@ -604,19 +594,13 @@
         if (team.pos >= 1 && team.pos <= 4) barClass = "blue-bar-vertical";
         else if (team.pos >= 5 && team.pos <= 8) barClass = "orange-bar-vertical";
         else if (team.pos >= 9 && team.pos <= 12) barClass = "green-bar-vertical";
-        
         if (team.pos === 1) row.classList.add("gold-row");
         if (team.pos === 13 || team.pos === 14) row.classList.add("red-row");
         if (team.pos === 8) row.classList.add("dashed-separator");
-        
         const posCell = row.insertCell(0);
         posCell.className = "rank-cell";
-        if (barClass) {
-          posCell.innerHTML = `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${team.pos}</div>`;
-        } else {
-          posCell.innerText = team.pos;
-        }
-        
+        if (barClass) posCell.innerHTML = `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${team.pos}</div>`;
+        else posCell.innerText = team.pos;
         const clubCell = row.insertCell(1);
         clubCell.innerHTML = `<div class="team-name">${team.club}</div>`;
         row.insertCell(2).innerText = team.p;
@@ -651,20 +635,14 @@
       let isCollapsed = false;
       header.addEventListener("click", () => {
         isCollapsed = !isCollapsed;
-        if (isCollapsed) {
-          content.classList.add("collapsed");
-          if (icon) icon.innerHTML = "▶";
-        } else {
-          content.classList.remove("collapsed");
-          if (icon) icon.innerHTML = "▼";
-        }
+        if (isCollapsed) { content.classList.add("collapsed"); if (icon) icon.innerHTML = "▶"; }
+        else { content.classList.remove("collapsed"); if (icon) icon.innerHTML = "▼"; }
       });
     }
 
     const hamburger = document.getElementById("hamburgerBtn");
     const modalOverlay = document.getElementById("modalOverlay");
     const closeBtn = document.getElementById("closeModalBtn");
-
     function openModal() { modalOverlay.classList.add("active"); }
     function closeModal() { modalOverlay.classList.remove("active"); }
     if (hamburger) hamburger.addEventListener("click", openModal);
