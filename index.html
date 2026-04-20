@@ -512,22 +512,24 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // ----- LEAGUE STANDINGS after Matchday 7 (with Inter Milan replacing Aston Villa, -6 pts, 0 GD) -----
+    // ----- LEAGUE STANDINGS after Matchday 7 + today's MD8 results (Liverpool 0-0 Chelsea, Inter 3-3 PSG) -----
+    // Original after MD7: Liverpool 21 pts, Chelsea 4 pts, Inter -6 pts, PSG 9 pts.
+    // Updates: Liverpool +1 = 22, Chelsea +1 = 5, Inter +1 = -5, PSG +1 = 10.
     const LEAGUE_DATA = [
-      { pos: 1, club: "Liverpool", p: 7, gd: 26, pts: 21 },
+      { pos: 1, club: "Liverpool", p: 8, gd: 26, pts: 22 },
       { pos: 2, club: "Real Madrid", p: 7, gd: 14, pts: 21 },
       { pos: 3, club: "Dortmund", p: 7, gd: 12, pts: 18 },
       { pos: 4, club: "Man City", p: 7, gd: 9, pts: 16 },
       { pos: 5, club: "Barcelona", p: 7, gd: -3, pts: 12 },
-      { pos: 6, club: "PSG", p: 7, gd: -7, pts: 9 },
+      { pos: 6, club: "PSG", p: 8, gd: -7, pts: 10 },
       { pos: 7, club: "Arsenal", p: 7, gd: -1, pts: 8 },
       { pos: 8, club: "AC Milan", p: 7, gd: -5, pts: 7 },
-      { pos: 9, club: "Chelsea", p: 7, gd: 1, pts: 4 },
+      { pos: 9, club: "Chelsea", p: 8, gd: 1, pts: 5 },
       { pos: 10, club: "Napoli", p: 7, gd: 2, pts: 3 },
       { pos: 11, club: "Juventus", p: 7, gd: -1, pts: 3 },
       { pos: 12, club: "Newcastle", p: 7, gd: -18, pts: 3 },
       { pos: 13, club: "Atletico", p: 7, gd: -10, pts: 1 },
-      { pos: 14, club: "Inter Milan", p: 7, gd: 0, pts: -6 }
+      { pos: 14, club: "Inter Milan", p: 8, gd: 0, pts: -5 }
     ];
 
     // ----- Player mapping for fixtures (Mali now with Inter Milan) -----
@@ -548,16 +550,15 @@
       "Newcastle United": "~Oratile"
     };
 
-    // ----- FIXTURES from Matchday 8 to 26 (all Aston Villa replaced with Inter Milan) -----
+    // ----- FIXTURES from Matchday 8 to 26 (with Aston Villa replaced by Inter Milan) -----
+    // REMOVED: Chelsea vs Liverpool (MD8) and Inter Milan vs Paris Saint-Germain (MD8) because they are played and added to results.
     const fixtureList = [
-      // Matchday 8
+      // Matchday 8 (only remaining fixtures)
       { md: 8, home: "FC Barcelona", away: "Juventus" },
-      { md: 8, home: "Inter Milan", away: "Paris Saint-Germain" },
       { md: 8, home: "Borussia Dortmund", away: "Real Madrid" },
       { md: 8, home: "Atlético Madrid", away: "AC Milan" },
       { md: 8, home: "Napoli", away: "Manchester City" },
       { md: 8, home: "Arsenal", away: "Newcastle United" },
-      { md: 8, home: "Chelsea", away: "Liverpool" },
       // Matchday 9
       { md: 9, home: "FC Barcelona", away: "Paris Saint-Germain" },
       { md: 9, home: "Juventus", away: "Real Madrid" },
@@ -711,18 +712,14 @@
     }
 
     const fixturesWithDates = [];
-    // Start date: April 20, 2026 for MD8
-    let currentDate = new Date(2026, 3, 20); // month 3 = April
+    let currentDate = new Date(2026, 3, 20); // April 20 for MD8
     let lastMd = null;
 
     for (let i = 0; i < fixtureList.length; i++) {
       const f = fixtureList[i];
-      // If we encounter a new matchday, advance the date by 1 day (starting from MD8)
       if (lastMd === null) {
-        // first fixture: MD8
         lastMd = f.md;
       } else if (f.md !== lastMd) {
-        // new matchday: increment date by 1 day
         currentDate = new Date(currentDate);
         currentDate.setDate(currentDate.getDate() + 1);
         lastMd = f.md;
@@ -737,8 +734,10 @@
       });
     }
 
-    // ----- RESULTS (Matchday 7) with Inter Milan replacing Aston Villa -----
+    // ----- RESULTS: Matchday 7 + new Matchday 8 results (Liverpool 0-0 Chelsea, Inter 3-3 PSG) at the top -----
     const RESULTS_DATA = [
+      { matchText: "Liverpool 0 - 0 Chelsea", md: 8 },
+      { matchText: "Inter Milan 3 - 3 PSG", md: 8 },
       { matchText: "Real Madrid 3 - 2 Napoli", md: 7 },
       { matchText: "Arsenal 0 - 0 AC Milan", md: 7 },
       { matchText: "Liverpool 3 - 0 Newcastle United", md: 7 },
@@ -762,7 +761,6 @@
       tbody.innerHTML = "";
       const lowerFilter = filterText.toLowerCase();
       fixturesWithDates.forEach(f => {
-        // Apply search filter (team names or player names)
         let matchesSearch = true;
         if (lowerFilter) {
           const homeMatch = f.home.toLowerCase().includes(lowerFilter);
@@ -771,7 +769,6 @@
           const awayPlayerMatch = f.awayPlayer.toLowerCase().includes(lowerFilter);
           matchesSearch = homeMatch || awayMatch || homePlayerMatch || awayPlayerMatch;
         }
-        // Apply team filter
         let matchesTeam = true;
         if (filterTeam) {
           matchesTeam = (f.home === filterTeam || f.away === filterTeam);
@@ -875,7 +872,7 @@
     function init() {
       renderLeagueTable();
       renderResults();
-      setupFilters();   // initialises fixtures rendering with search/filter
+      setupFilters();
       setupCollapsible("fixturesHeader", "fixturesContent", "fixturesToggleIcon");
       setupCollapsible("resultsHeader", "resultsContent", "resultsToggleIcon");
       const leagueContent = document.querySelector(".two-col-grid .card:first-child .card-content");
