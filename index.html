@@ -548,13 +548,7 @@
       "Newcastle United": "~Oratile"
     };
 
-    // ----- FIXTURES from Matchday 8 to 26 with sequential dates (starting April 20, 2026) -----
-    // All "Aston Villa" replaced with "Inter Milan"
-    function formatDate(date) {
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
-    }
-
+    // ----- FIXTURES from Matchday 8 to 26 (all Aston Villa replaced with Inter Milan) -----
     const fixtureList = [
       // Matchday 8
       { md: 8, home: "FC Barcelona", away: "Juventus" },
@@ -710,16 +704,28 @@
       { md: 26, home: "Borussia Dortmund", away: "Inter Milan" }
     ];
 
-    // Assign dates sequentially starting from April 20 for MD8
+    // ----- FIXED DATE LOGIC: each matchday gets a single consecutive date starting April 20, 2026 -----
+    function formatDate(date) {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+    }
+
     const fixturesWithDates = [];
-    let currentDate = new Date(2026, 3, 20);
-    let currentMd = 8;
+    // Start date: April 20, 2026 for MD8
+    let currentDate = new Date(2026, 3, 20); // month 3 = April
+    let lastMd = null;
+
     for (let i = 0; i < fixtureList.length; i++) {
       const f = fixtureList[i];
-      if (f.md !== currentMd) {
-        currentMd = f.md;
+      // If we encounter a new matchday, advance the date by 1 day (starting from MD8)
+      if (lastMd === null) {
+        // first fixture: MD8
+        lastMd = f.md;
+      } else if (f.md !== lastMd) {
+        // new matchday: increment date by 1 day
         currentDate = new Date(currentDate);
         currentDate.setDate(currentDate.getDate() + 1);
+        lastMd = f.md;
       }
       fixturesWithDates.push({
         md: f.md,
@@ -788,7 +794,6 @@
       }
     }
 
-    // Setup search and filter event listeners
     function setupFilters() {
       const searchInput = document.getElementById("searchInput");
       const teamFilter = document.getElementById("teamFilter");
