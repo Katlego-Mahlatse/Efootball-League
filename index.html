@@ -352,7 +352,7 @@
       <div class="card">
         <div class="card-header" style="cursor:default;"><div class="card-header-left"><h2>PREMIER LEAGUE</h2></div></div>
         <div class="card-content">
-          <div style="overflow-x:auto;"><table class="stats-table" id="leagueTable"><thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody id="leagueTableBody"></tbody>}</div>
+          <div style="overflow-x:auto;"><table class="stats-table" id="leagueTable"><thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody id="leagueTableBody"></tbody></table></div>
           <div class="legend-under-table">
             <span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span class="legend-text">UEFA Champions League</span></span>
             <span class="legend-item"><span class="legend-vertical-bar legend-orange"></span><span class="legend-text">Europa League</span></span>
@@ -366,12 +366,12 @@
 
     <div class="card" style="margin-bottom:1.5rem">
       <div class="card-header" id="fixturesHeader"><div class="card-header-left"><h2>FIXTURES</h2></div><div class="toggle-icon" id="fixturesToggleIcon">▼</div></div>
-      <div class="card-content" id="fixturesContent"><div style="overflow-x:auto;"><table class="inner-table" id="fixturesTable"><thead><tr><th>Matchday</th><th>Home</th><th>Away</th><th>Date</th></tr></thead><tbody id="fixturesTableBody"></tbody>}</div></div>
+      <div class="card-content" id="fixturesContent"><div style="overflow-x:auto;"><table class="inner-table" id="fixturesTable"><thead><tr><th>Matchday</th><th>Home</th><th>Away</th><th>Date</th></tr></thead><tbody id="fixturesTableBody"></tbody></table></div></div>
     </div>
 
     <div class="card" style="margin-bottom:1.5rem">
       <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS · MATCHDAY 7</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
-      <div class="card-content" id="resultsContent"><div style="overflow-x:auto;"><table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Score</th></tr></thead><tbody id="resultsTableBody"></tbody>}</div></div>
+      <div class="card-content" id="resultsContent"><div style="overflow-x:auto;"><table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Score</th></tr></thead><tbody id="resultsTableBody"></tbody></table></div></div>
     </div>
 
     <div class="card"><div class="card-header" id="scorersHeader"><div class="card-header-left"><h2>SEASON TOP SCORERS</h2></div><div class="toggle-icon" id="scorersToggleIcon">▼</div></div><div class="card-content" id="scorersContent"><div class="empty-message">Season's Leading Top Scorers Will Go Here For Golden Boot</div></div></div>
@@ -397,7 +397,7 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // ----- LEAGUE STANDINGS AFTER MATCHDAY 7 (with forfeits: no GD change) -----
+    // ----- LEAGUE STANDINGS AFTER MATCHDAY 7 (forfeits: +3 points, no GD change) -----
     const LEAGUE_DATA = [
       { pos: 1, club: "Liverpool", p: 7, gd: 26, pts: 21 },
       { pos: 2, club: "Real Madrid", p: 7, gd: 14, pts: 21 },
@@ -416,7 +416,7 @@
     ];
 
     // ----- FIXTURES from Matchday 8 to 26 with sequential dates (starting April 20, 2026) -----
-    const today = new Date(2026, 3, 20); // April 20, 2026 (month is 0-indexed)
+    const today = new Date(2026, 3, 20); // April 20, 2026
     function formatDate(date) {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
@@ -471,7 +471,7 @@
       { md: 13, home: "Paris Saint-Germain", away: "Napoli" },
       { md: 13, home: "Juventus", away: "Atlético Madrid" },
       { md: 13, home: "Aston Villa", away: "Borussia Dortmund" },
-      // Matchday 14 (reverse fixtures start)
+      // Matchday 14 (reverse fixtures)
       { md: 14, home: "Liverpool", away: "FC Barcelona" },
       { md: 14, home: "Chelsea", away: "Newcastle United" },
       { md: 14, home: "Arsenal", away: "Manchester City" },
@@ -579,7 +579,7 @@
 
     // Assign dates sequentially starting from April 20 for MD8
     const fixturesWithDates = [];
-    let currentDate = new Date(2026, 3, 20); // April 20
+    let currentDate = new Date(2026, 3, 20);
     let currentMd = 8;
     for (let i = 0; i < fixtureList.length; i++) {
       const f = fixtureList[i];
@@ -640,7 +640,8 @@
       tbody.innerHTML = "";
       fixturesWithDates.forEach(f => {
         const row = tbody.insertRow();
-        row.insertCell(0).innerHTML = `<span class="round-badge" style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px; font-size:0.7rem;">MD ${f.md}</span>`;
+        const mdCell = row.insertCell(0);
+        mdCell.innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px; font-size:0.7rem;">MD ${f.md}</span>`;
         row.insertCell(1).innerHTML = `<strong>${f.home}</strong>`;
         row.insertCell(2).innerHTML = `<strong>${f.away}</strong>`;
         row.insertCell(3).innerHTML = `<span class="date-badge">📅 ${f.date}</span>`;
