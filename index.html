@@ -512,27 +512,32 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // ----- LEAGUE STANDINGS after Matchday 7 + today's MD8 results (Liverpool 0-0 Chelsea, Inter 3-3 PSG) -----
-    // Original after MD7: Liverpool 21 pts, Chelsea 4 pts, Inter -6 pts, PSG 9 pts.
-    // Updates: Liverpool +1 = 22, Chelsea +1 = 5, Inter +1 = -5, PSG +1 = 10.
+    // ----- LEAGUE STANDINGS after MD7 + MD8 results so far: 
+    // Liverpool 0-0 Chelsea, Inter 3-3 PSG, Newcastle 1-6 Arsenal.
+    // Previous after MD7: Liverpool 21, Chelsea 4, Inter -6, PSG 9, Arsenal 8, Newcastle 3.
+    // After Liverpool-Chelsea: Liverpool 22, Chelsea 5.
+    // After Inter-PSG: Inter -5, PSG 10.
+    // After Newcastle-Arsenal: Arsenal +3 = 11 pts, GD from -1 to +4; Newcastle GD from -18 to -23.
+    // Played matches: Liverpool 8, Chelsea 8, Inter 8, PSG 8, Arsenal 8, Newcastle 8.
+    // Others remain at 7 matches.
     const LEAGUE_DATA = [
       { pos: 1, club: "Liverpool", p: 8, gd: 26, pts: 22 },
       { pos: 2, club: "Real Madrid", p: 7, gd: 14, pts: 21 },
       { pos: 3, club: "Dortmund", p: 7, gd: 12, pts: 18 },
       { pos: 4, club: "Man City", p: 7, gd: 9, pts: 16 },
       { pos: 5, club: "Barcelona", p: 7, gd: -3, pts: 12 },
-      { pos: 6, club: "PSG", p: 8, gd: -7, pts: 10 },
-      { pos: 7, club: "Arsenal", p: 7, gd: -1, pts: 8 },
+      { pos: 6, club: "Arsenal", p: 8, gd: 4, pts: 11 },      // moved above PSG
+      { pos: 7, club: "PSG", p: 8, gd: -7, pts: 10 },
       { pos: 8, club: "AC Milan", p: 7, gd: -5, pts: 7 },
       { pos: 9, club: "Chelsea", p: 8, gd: 1, pts: 5 },
       { pos: 10, club: "Napoli", p: 7, gd: 2, pts: 3 },
       { pos: 11, club: "Juventus", p: 7, gd: -1, pts: 3 },
-      { pos: 12, club: "Newcastle", p: 7, gd: -18, pts: 3 },
+      { pos: 12, club: "Newcastle", p: 8, gd: -23, pts: 3 },
       { pos: 13, club: "Atletico", p: 7, gd: -10, pts: 1 },
       { pos: 14, club: "Inter Milan", p: 8, gd: 0, pts: -5 }
     ];
 
-    // ----- Player mapping for fixtures (Mali now with Inter Milan) -----
+    // ----- Player mapping for fixtures -----
     const playerMap = {
       "FC Barcelona": "~Rea🫡",
       "Inter Milan": "Mali",
@@ -551,14 +556,13 @@
     };
 
     // ----- FIXTURES from Matchday 8 to 26 (with Aston Villa replaced by Inter Milan) -----
-    // REMOVED: Chelsea vs Liverpool (MD8) and Inter Milan vs Paris Saint-Germain (MD8) because they are played and added to results.
+    // REMOVED: Chelsea vs Liverpool (MD8), Inter Milan vs PSG (MD8), Arsenal vs Newcastle United (MD8)
     const fixtureList = [
       // Matchday 8 (only remaining fixtures)
       { md: 8, home: "FC Barcelona", away: "Juventus" },
       { md: 8, home: "Borussia Dortmund", away: "Real Madrid" },
       { md: 8, home: "Atlético Madrid", away: "AC Milan" },
       { md: 8, home: "Napoli", away: "Manchester City" },
-      { md: 8, home: "Arsenal", away: "Newcastle United" },
       // Matchday 9
       { md: 9, home: "FC Barcelona", away: "Paris Saint-Germain" },
       { md: 9, home: "Juventus", away: "Real Madrid" },
@@ -734,8 +738,9 @@
       });
     }
 
-    // ----- RESULTS: Matchday 7 + new Matchday 8 results (Liverpool 0-0 Chelsea, Inter 3-3 PSG) at the top -----
+    // ----- RESULTS: Matchday 7 + new MD8 results (Newcastle 1-6 Arsenal at the top) -----
     const RESULTS_DATA = [
+      { matchText: "Newcastle United 1 - 6 Arsenal", md: 8 },
       { matchText: "Liverpool 0 - 0 Chelsea", md: 8 },
       { matchText: "Inter Milan 3 - 3 PSG", md: 8 },
       { matchText: "Real Madrid 3 - 2 Napoli", md: 7 },
