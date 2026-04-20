@@ -352,7 +352,7 @@
       <div class="card">
         <div class="card-header" style="cursor:default;"><div class="card-header-left"><h2>PREMIER LEAGUE</h2></div></div>
         <div class="card-content">
-          <div style="overflow-x:auto;"><table class="stats-table" id="leagueTable"><thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody id="leagueTableBody"></tbody></table></div>
+          <div style="overflow-x:auto;"><table class="stats-table" id="leagueTable"><thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody id="leagueTableBody"></tbody>}</div>
           <div class="legend-under-table">
             <span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span class="legend-text">UEFA Champions League</span></span>
             <span class="legend-item"><span class="legend-vertical-bar legend-orange"></span><span class="legend-text">Europa League</span></span>
@@ -366,12 +366,12 @@
 
     <div class="card" style="margin-bottom:1.5rem">
       <div class="card-header" id="fixturesHeader"><div class="card-header-left"><h2>FIXTURES</h2></div><div class="toggle-icon" id="fixturesToggleIcon">▼</div></div>
-      <div class="card-content" id="fixturesContent"><div style="overflow-x:auto;"><table class="inner-table" id="fixturesTable"><thead><tr><th>Home</th><th>Away</th><th>Date</th></tr></thead><tbody id="fixturesTableBody"></tbody></table></div></div>
+      <div class="card-content" id="fixturesContent"><div style="overflow-x:auto;"><table class="inner-table" id="fixturesTable"><thead><tr><th>Matchday</th><th>Home</th><th>Away</th><th>Date</th></tr></thead><tbody id="fixturesTableBody"></tbody>}</div></div>
     </div>
 
     <div class="card" style="margin-bottom:1.5rem">
       <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS · MATCHDAY 7</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
-      <div class="card-content" id="resultsContent"><div style="overflow-x:auto;"><table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Score</th></tr></thead><tbody id="resultsTableBody"></tbody></table></div></div>
+      <div class="card-content" id="resultsContent"><div style="overflow-x:auto;"><table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Score</th></tr></thead><tbody id="resultsTableBody"></tbody>}</div></div>
     </div>
 
     <div class="card"><div class="card-header" id="scorersHeader"><div class="card-header-left"><h2>SEASON TOP SCORERS</h2></div><div class="toggle-icon" id="scorersToggleIcon">▼</div></div><div class="card-content" id="scorersContent"><div class="empty-message">Season's Leading Top Scorers Will Go Here For Golden Boot</div></div></div>
@@ -379,6 +379,7 @@
   </div>
 
   <script>
+    // Slideshow images
     const images = ["images - 2026-04-19T121231.816.jpeg","images - 2026-04-19T155746.715.jpeg","37686bb3-06ce-401b-a022-026933c165e7.jpeg","12871.jpg","1f157df7-2054-4a9d-aa14-b9941ef4a743.jpeg"];
     let currentIndex = 0;
     const slideshowImg = document.getElementById("slideshow-img");
@@ -396,34 +397,214 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // UPDATED STANDINGS after ALL Matchday 7 results (including forfeits)
+    // ----- LEAGUE STANDINGS AFTER MATCHDAY 7 (with forfeits: no GD change) -----
     const LEAGUE_DATA = [
       { pos: 1, club: "Liverpool", p: 7, gd: 26, pts: 21 },
       { pos: 2, club: "Real Madrid", p: 7, gd: 14, pts: 21 },
-      { pos: 3, club: "Dortmund", p: 7, gd: 15, pts: 18 },      // +3 GD, +3 Pts from forfeit win
+      { pos: 3, club: "Dortmund", p: 7, gd: 12, pts: 18 },
       { pos: 4, club: "Man City", p: 7, gd: 9, pts: 16 },
-      { pos: 5, club: "PSG", p: 7, gd: -4, pts: 9 },             // +3 GD, +3 Pts from forfeit win
-      { pos: 6, club: "Barcelona", p: 6, gd: -3, pts: 9 },
+      { pos: 5, club: "Barcelona", p: 7, gd: -3, pts: 12 },
+      { pos: 6, club: "PSG", p: 7, gd: -7, pts: 9 },
       { pos: 7, club: "Arsenal", p: 7, gd: -1, pts: 8 },
       { pos: 8, club: "AC Milan", p: 7, gd: -5, pts: 7 },
       { pos: 9, club: "Chelsea", p: 7, gd: 1, pts: 4 },
       { pos: 10, club: "Napoli", p: 7, gd: 2, pts: 3 },
-      { pos: 11, club: "Juventus", p: 7, gd: -4, pts: 3 },        // -3 GD, 0 Pts from forfeit loss
+      { pos: 11, club: "Juventus", p: 7, gd: -1, pts: 3 },
       { pos: 12, club: "Newcastle", p: 7, gd: -18, pts: 3 },
-      { pos: 13, club: "Atletico", p: 7, gd: -13, pts: 1 },       // -3 GD, 0 Pts from forfeit loss
-      { pos: 14, club: "Aston Villa", p: 6, gd: -9, pts: 0 }
+      { pos: 13, club: "Atletico", p: 7, gd: -10, pts: 1 },
+      { pos: 14, club: "Aston Villa", p: 7, gd: -9, pts: 0 }
     ];
 
-    // No remaining fixtures for Matchday 7 (all played)
-    const FIXTURES_MD7 = [];
+    // ----- FIXTURES from Matchday 8 to 26 with sequential dates (starting April 20, 2026) -----
+    const today = new Date(2026, 3, 20); // April 20, 2026 (month is 0-indexed)
+    function formatDate(date) {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+    }
 
+    const fixtureList = [
+      // Matchday 8
+      { md: 8, home: "FC Barcelona", away: "Juventus" },
+      { md: 8, home: "Aston Villa", away: "Paris Saint-Germain" },
+      { md: 8, home: "Borussia Dortmund", away: "Real Madrid" },
+      { md: 8, home: "Atlético Madrid", away: "AC Milan" },
+      { md: 8, home: "Napoli", away: "Manchester City" },
+      { md: 8, home: "Arsenal", away: "Newcastle United" },
+      { md: 8, home: "Chelsea", away: "Liverpool" },
+      // Matchday 9
+      { md: 9, home: "FC Barcelona", away: "Paris Saint-Germain" },
+      { md: 9, home: "Juventus", away: "Real Madrid" },
+      { md: 9, home: "Aston Villa", away: "AC Milan" },
+      { md: 9, home: "Borussia Dortmund", away: "Manchester City" },
+      { md: 9, home: "Atlético Madrid", away: "Newcastle United" },
+      { md: 9, home: "Napoli", away: "Liverpool" },
+      { md: 9, home: "Arsenal", away: "Chelsea" },
+      // Matchday 10
+      { md: 10, home: "FC Barcelona", away: "Real Madrid" },
+      { md: 10, home: "Paris Saint-Germain", away: "AC Milan" },
+      { md: 10, home: "Juventus", away: "Manchester City" },
+      { md: 10, home: "Aston Villa", away: "Newcastle United" },
+      { md: 10, home: "Borussia Dortmund", away: "Liverpool" },
+      { md: 10, home: "Atlético Madrid", away: "Chelsea" },
+      { md: 10, home: "Napoli", away: "Arsenal" },
+      // Matchday 11
+      { md: 11, home: "FC Barcelona", away: "AC Milan" },
+      { md: 11, home: "Real Madrid", away: "Manchester City" },
+      { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" },
+      { md: 11, home: "Juventus", away: "Liverpool" },
+      { md: 11, home: "Aston Villa", away: "Chelsea" },
+      { md: 11, home: "Borussia Dortmund", away: "Arsenal" },
+      { md: 11, home: "Atlético Madrid", away: "Napoli" },
+      // Matchday 12
+      { md: 12, home: "FC Barcelona", away: "Manchester City" },
+      { md: 12, home: "AC Milan", away: "Newcastle United" },
+      { md: 12, home: "Real Madrid", away: "Liverpool" },
+      { md: 12, home: "Paris Saint-Germain", away: "Chelsea" },
+      { md: 12, home: "Juventus", away: "Arsenal" },
+      { md: 12, home: "Aston Villa", away: "Napoli" },
+      { md: 12, home: "Borussia Dortmund", away: "Atlético Madrid" },
+      // Matchday 13
+      { md: 13, home: "FC Barcelona", away: "Newcastle United" },
+      { md: 13, home: "Manchester City", away: "Liverpool" },
+      { md: 13, home: "AC Milan", away: "Chelsea" },
+      { md: 13, home: "Real Madrid", away: "Arsenal" },
+      { md: 13, home: "Paris Saint-Germain", away: "Napoli" },
+      { md: 13, home: "Juventus", away: "Atlético Madrid" },
+      { md: 13, home: "Aston Villa", away: "Borussia Dortmund" },
+      // Matchday 14 (reverse fixtures start)
+      { md: 14, home: "Liverpool", away: "FC Barcelona" },
+      { md: 14, home: "Chelsea", away: "Newcastle United" },
+      { md: 14, home: "Arsenal", away: "Manchester City" },
+      { md: 14, home: "Napoli", away: "AC Milan" },
+      { md: 14, home: "Atlético Madrid", away: "Real Madrid" },
+      { md: 14, home: "Borussia Dortmund", away: "Paris Saint-Germain" },
+      { md: 14, home: "Aston Villa", away: "Juventus" },
+      // Matchday 15
+      { md: 15, home: "Chelsea", away: "FC Barcelona" },
+      { md: 15, home: "Arsenal", away: "Liverpool" },
+      { md: 15, home: "Napoli", away: "Newcastle United" },
+      { md: 15, home: "Atlético Madrid", away: "Manchester City" },
+      { md: 15, home: "Borussia Dortmund", away: "AC Milan" },
+      { md: 15, home: "Aston Villa", away: "Real Madrid" },
+      { md: 15, home: "Juventus", away: "Paris Saint-Germain" },
+      // Matchday 16
+      { md: 16, home: "Arsenal", away: "FC Barcelona" },
+      { md: 16, home: "Napoli", away: "Chelsea" },
+      { md: 16, home: "Atlético Madrid", away: "Liverpool" },
+      { md: 16, home: "Borussia Dortmund", away: "Newcastle United" },
+      { md: 16, home: "Aston Villa", away: "Manchester City" },
+      { md: 16, home: "Juventus", away: "AC Milan" },
+      { md: 16, home: "Paris Saint-Germain", away: "Real Madrid" },
+      // Matchday 17
+      { md: 17, home: "Napoli", away: "FC Barcelona" },
+      { md: 17, home: "Atlético Madrid", away: "Arsenal" },
+      { md: 17, home: "Borussia Dortmund", away: "Chelsea" },
+      { md: 17, home: "Aston Villa", away: "Liverpool" },
+      { md: 17, home: "Juventus", away: "Newcastle United" },
+      { md: 17, home: "Paris Saint-Germain", away: "Manchester City" },
+      { md: 17, home: "Real Madrid", away: "AC Milan" },
+      // Matchday 18
+      { md: 18, home: "Atlético Madrid", away: "FC Barcelona" },
+      { md: 18, home: "Borussia Dortmund", away: "Napoli" },
+      { md: 18, home: "Aston Villa", away: "Arsenal" },
+      { md: 18, home: "Juventus", away: "Chelsea" },
+      { md: 18, home: "Paris Saint-Germain", away: "Liverpool" },
+      { md: 18, home: "Real Madrid", away: "Newcastle United" },
+      { md: 18, home: "AC Milan", away: "Manchester City" },
+      // Matchday 19
+      { md: 19, home: "Borussia Dortmund", away: "FC Barcelona" },
+      { md: 19, home: "Aston Villa", away: "Atlético Madrid" },
+      { md: 19, home: "Juventus", away: "Napoli" },
+      { md: 19, home: "Paris Saint-Germain", away: "Arsenal" },
+      { md: 19, home: "Real Madrid", away: "Chelsea" },
+      { md: 19, home: "AC Milan", away: "Liverpool" },
+      { md: 19, home: "Manchester City", away: "Newcastle United" },
+      // Matchday 20
+      { md: 20, home: "Aston Villa", away: "FC Barcelona" },
+      { md: 20, home: "Juventus", away: "Borussia Dortmund" },
+      { md: 20, home: "Paris Saint-Germain", away: "Atlético Madrid" },
+      { md: 20, home: "Real Madrid", away: "Napoli" },
+      { md: 20, home: "AC Milan", away: "Arsenal" },
+      { md: 20, home: "Manchester City", away: "Chelsea" },
+      { md: 20, home: "Newcastle United", away: "Liverpool" },
+      // Matchday 21
+      { md: 21, home: "Juventus", away: "FC Barcelona" },
+      { md: 21, home: "Paris Saint-Germain", away: "Aston Villa" },
+      { md: 21, home: "Real Madrid", away: "Borussia Dortmund" },
+      { md: 21, home: "AC Milan", away: "Atlético Madrid" },
+      { md: 21, home: "Manchester City", away: "Napoli" },
+      { md: 21, home: "Newcastle United", away: "Arsenal" },
+      { md: 21, home: "Liverpool", away: "Chelsea" },
+      // Matchday 22
+      { md: 22, home: "Paris Saint-Germain", away: "FC Barcelona" },
+      { md: 22, home: "Real Madrid", away: "Juventus" },
+      { md: 22, home: "AC Milan", away: "Aston Villa" },
+      { md: 22, home: "Manchester City", away: "Borussia Dortmund" },
+      { md: 22, home: "Newcastle United", away: "Atlético Madrid" },
+      { md: 22, home: "Liverpool", away: "Napoli" },
+      { md: 22, home: "Chelsea", away: "Arsenal" },
+      // Matchday 23
+      { md: 23, home: "Real Madrid", away: "FC Barcelona" },
+      { md: 23, home: "AC Milan", away: "Paris Saint-Germain" },
+      { md: 23, home: "Manchester City", away: "Juventus" },
+      { md: 23, home: "Newcastle United", away: "Aston Villa" },
+      { md: 23, home: "Liverpool", away: "Borussia Dortmund" },
+      { md: 23, home: "Chelsea", away: "Atlético Madrid" },
+      { md: 23, home: "Arsenal", away: "Napoli" },
+      // Matchday 24
+      { md: 24, home: "AC Milan", away: "FC Barcelona" },
+      { md: 24, home: "Manchester City", away: "Real Madrid" },
+      { md: 24, home: "Newcastle United", away: "Paris Saint-Germain" },
+      { md: 24, home: "Liverpool", away: "Juventus" },
+      { md: 24, home: "Chelsea", away: "Aston Villa" },
+      { md: 24, home: "Arsenal", away: "Borussia Dortmund" },
+      { md: 24, home: "Napoli", away: "Atlético Madrid" },
+      // Matchday 25
+      { md: 25, home: "Manchester City", away: "FC Barcelona" },
+      { md: 25, home: "Newcastle United", away: "AC Milan" },
+      { md: 25, home: "Liverpool", away: "Real Madrid" },
+      { md: 25, home: "Chelsea", away: "Paris Saint-Germain" },
+      { md: 25, home: "Arsenal", away: "Juventus" },
+      { md: 25, home: "Napoli", away: "Aston Villa" },
+      { md: 25, home: "Atlético Madrid", away: "Borussia Dortmund" },
+      // Matchday 26
+      { md: 26, home: "Newcastle United", away: "FC Barcelona" },
+      { md: 26, home: "Liverpool", away: "Manchester City" },
+      { md: 26, home: "Chelsea", away: "AC Milan" },
+      { md: 26, home: "Arsenal", away: "Real Madrid" },
+      { md: 26, home: "Napoli", away: "Paris Saint-Germain" },
+      { md: 26, home: "Atlético Madrid", away: "Juventus" },
+      { md: 26, home: "Borussia Dortmund", away: "Aston Villa" }
+    ];
+
+    // Assign dates sequentially starting from April 20 for MD8
+    const fixturesWithDates = [];
+    let currentDate = new Date(2026, 3, 20); // April 20
+    let currentMd = 8;
+    for (let i = 0; i < fixtureList.length; i++) {
+      const f = fixtureList[i];
+      if (f.md !== currentMd) {
+        currentMd = f.md;
+        currentDate = new Date(currentDate);
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      fixturesWithDates.push({
+        md: f.md,
+        home: f.home,
+        away: f.away,
+        date: formatDate(currentDate)
+      });
+    }
+
+    // ----- RESULTS (Matchday 7) -----
     const RESULTS_DATA = [
       { matchText: "Real Madrid 3 - 2 Napoli" },
       { matchText: "Arsenal 0 - 0 AC Milan" },
       { matchText: "Liverpool 3 - 0 Newcastle United" },
       { matchText: "Manchester City 1 - 1 Chelsea" },
       { matchText: "Dortmund 3 - 0 Juventus (Forfeited - No Reply)" },
-      { matchText: "PSG 3 - 0 Atletico Madrid (Forfeited - No Reply)" }
+      { matchText: "PSG 3 - 0 Atletico Madrid (Forfeited - No Reply)" },
+      { matchText: "Barcelona 3 - 0 Aston Villa (Forfeited - Late Reply)" }
     ];
 
     function renderLeagueTable() {
@@ -457,20 +638,13 @@
       const tbody = document.getElementById("fixturesTableBody");
       if (!tbody) return;
       tbody.innerHTML = "";
-      if (FIXTURES_MD7.length === 0) {
+      fixturesWithDates.forEach(f => {
         const row = tbody.insertRow();
-        const cell = row.insertCell(0);
-        cell.colSpan = 3;
-        cell.className = "empty-message";
-        cell.innerText = "All Matchday 7 fixtures have been completed.";
-      } else {
-        FIXTURES_MD7.forEach(fix => {
-          const row = tbody.insertRow();
-          row.insertCell(0).innerHTML = `<strong>${fix.home}</strong><span class="player-name">${fix.homePlayer}</span>`;
-          row.insertCell(1).innerHTML = `<strong>${fix.away}</strong><span class="player-name">${fix.awayPlayer}</span>`;
-          row.insertCell(2).innerHTML = `<span class="date-badge">${fix.date}</span>`;
-        });
-      }
+        row.insertCell(0).innerHTML = `<span class="round-badge" style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px; font-size:0.7rem;">MD ${f.md}</span>`;
+        row.insertCell(1).innerHTML = `<strong>${f.home}</strong>`;
+        row.insertCell(2).innerHTML = `<strong>${f.away}</strong>`;
+        row.insertCell(3).innerHTML = `<span class="date-badge">📅 ${f.date}</span>`;
+      });
     }
 
     function renderResults() {
