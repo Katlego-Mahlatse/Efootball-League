@@ -438,20 +438,18 @@
       <div class="dots-container" id="dotsContainer"></div>
     </div>
 
-    <div class="two-col-grid">
-      <div class="card">
-        <div class="card-header" style="cursor:default;"><div class="card-header-left"><h2>PREMIER LEAGUE</h2></div></div>
-        <div class="card-content">
-          <div style="overflow-x:auto;"><table class="stats-table" id="leagueTable"><thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody id="leagueTableBody"></tbody></table></div>
-          <div class="legend-under-table">
-            <span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span class="legend-text">UEFA Champions League</span></span>
-            <span class="legend-item"><span class="legend-vertical-bar legend-orange"></span><span class="legend-text">Europa League</span></span>
-            <span class="legend-item"><span class="legend-vertical-bar legend-green"></span><span class="legend-text">UEFA Conference League</span></span>
-            <span class="legend-item"><span class="legend-dashed"></span><span class="legend-text">FIFA Club World Cup</span></span>
-          </div>
+    <!-- Single column for league table (removed the right-side "MATCHDAY 7 · COMPLETED" card) -->
+    <div class="card" style="margin-bottom:2rem">
+      <div class="card-header" style="cursor:default;"><div class="card-header-left"><h2>PREMIER LEAGUE</h2></div></div>
+      <div class="card-content">
+        <div style="overflow-x:auto;"><table class="stats-table" id="leagueTable"><thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody id="leagueTableBody"></tbody></table></div>
+        <div class="legend-under-table">
+          <span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span class="legend-text">UEFA Champions League</span></span>
+          <span class="legend-item"><span class="legend-vertical-bar legend-orange"></span><span class="legend-text">Europa League</span></span>
+          <span class="legend-item"><span class="legend-vertical-bar legend-green"></span><span class="legend-text">UEFA Conference League</span></span>
+          <span class="legend-item"><span class="legend-dashed"></span><span class="legend-text">FIFA Club World Cup</span></span>
         </div>
       </div>
-      <div class="card"><div class="card-header" style="cursor:default;"><div class="card-header-left"><h2>MATCHDAY 7 · COMPLETED</h2></div></div><div class="card-content"></div></div>
     </div>
 
     <!-- FIXTURES CARD with search and filter -->
@@ -512,33 +510,35 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // ----- LEAGUE STANDINGS after MD7 + MD8 results so far:
-    // Liverpool 0-0 Chelsea, Inter 3-3 PSG, Newcastle 1-6 Arsenal, Real Madrid 1-0 Dortmund, Man City 0-1 Napoli.
-    // Updates:
+    // ----- LEAGUE STANDINGS after MD7 + all MD8 results:
+    // Results so far MD8: Liverpool 0-0 Chelsea, Inter 3-3 PSG, Newcastle 1-6 Arsenal, Real Madrid 1-0 Dortmund, Man City 0-1 Napoli, Barcelona 3-0 Juventus.
+    // Updates applied:
     // Real Madrid: +3 = 24 pts, GD +15
     // Liverpool: +1 = 22 pts
     // Dortmund: 0 = 18 pts, GD +11
     // Man City: 0 = 16 pts, GD +8
+    // Barcelona: +3 = 15 pts, GD 0 (was -3, now 0)
     // Arsenal: +3 = 11 pts, GD +4
     // PSG: +1 = 10 pts
     // Napoli: +3 = 6 pts, GD +3
     // Chelsea: +1 = 5 pts
+    // Juventus: 0 = 3 pts, GD -4 (was -1, now -4)
     // Inter: +1 = -5 pts
     // Newcastle: 0 = 3 pts, GD -23
-    // Played matches updated for those teams (now 8 games each for affected teams).
-    // Positions recalculated: Real Madrid 1st (24), Liverpool 2nd (22), Dortmund 3rd (18), Man City 4th (16), Barcelona 5th (12), Arsenal 6th (11), PSG 7th (10), AC Milan 8th (7), Napoli 9th (6), Chelsea 10th (5), Juventus 11th (3, GD -1), Newcastle 12th (3, GD -23), Atletico 13th (1), Inter 14th (-5).
+    // Played matches: all teams except AC Milan, Atletico Madrid have played 8 games? Wait: AC Milan and Atletico still have their MD8 match pending (Atletico vs AC Milan). So they remain at 7 games.
+    // Also Barcelona, Juve, etc now 8.
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 8, gd: 15, pts: 24 },
       { pos: 2, club: "Liverpool", p: 8, gd: 26, pts: 22 },
       { pos: 3, club: "Dortmund", p: 8, gd: 11, pts: 18 },
       { pos: 4, club: "Man City", p: 8, gd: 8, pts: 16 },
-      { pos: 5, club: "Barcelona", p: 7, gd: -3, pts: 12 },
+      { pos: 5, club: "Barcelona", p: 8, gd: 0, pts: 15 },
       { pos: 6, club: "Arsenal", p: 8, gd: 4, pts: 11 },
       { pos: 7, club: "PSG", p: 8, gd: -7, pts: 10 },
       { pos: 8, club: "AC Milan", p: 7, gd: -5, pts: 7 },
       { pos: 9, club: "Napoli", p: 8, gd: 3, pts: 6 },
       { pos: 10, club: "Chelsea", p: 8, gd: 1, pts: 5 },
-      { pos: 11, club: "Juventus", p: 7, gd: -1, pts: 3 },
+      { pos: 11, club: "Juventus", p: 8, gd: -4, pts: 3 },
       { pos: 12, club: "Newcastle", p: 8, gd: -23, pts: 3 },
       { pos: 13, club: "Atletico", p: 7, gd: -10, pts: 1 },
       { pos: 14, club: "Inter Milan", p: 8, gd: 0, pts: -5 }
@@ -562,12 +562,11 @@
       "Newcastle United": "~Oratile"
     };
 
-    // ----- FIXTURES from Matchday 8 to 26 (with Aston Villa replaced by Inter Milan) -----
-    // REMOVED: Chelsea vs Liverpool, Inter vs PSG, Arsenal vs Newcastle, Dortmund vs Real Madrid, Napoli vs Man City (all MD8)
-    // Remaining MD8: FC Barcelona vs Juventus, Atlético Madrid vs AC Milan
+    // ----- FIXTURES from Matchday 8 to 26 -----
+    // REMOVED all played MD8 fixtures: Chelsea vs Liverpool, Inter vs PSG, Arsenal vs Newcastle, Dortmund vs Real Madrid, Napoli vs Man City, Barcelona vs Juventus.
+    // Only remaining MD8 fixture: Atlético Madrid vs AC Milan
     const fixtureList = [
-      // Matchday 8 (only remaining fixtures)
-      { md: 8, home: "FC Barcelona", away: "Juventus" },
+      // Matchday 8 (only one remaining)
       { md: 8, home: "Atlético Madrid", away: "AC Milan" },
       // Matchday 9
       { md: 9, home: "FC Barcelona", away: "Paris Saint-Germain" },
@@ -744,8 +743,9 @@
       });
     }
 
-    // ----- RESULTS: Matchday 7 + new MD8 results (Man City 0-1 Napoli at the top) -----
+    // ----- RESULTS: Matchday 7 + all MD8 results (Barcelona 3-0 Juventus at the top) -----
     const RESULTS_DATA = [
+      { matchText: "Barcelona 3 - 0 Juventus (Forfeited - No Reply)", md: 8 },
       { matchText: "Manchester City 0 - 1 Napoli", md: 8 },
       { matchText: "Real Madrid 1 - 0 Dortmund", md: 8 },
       { matchText: "Newcastle United 1 - 6 Arsenal", md: 8 },
@@ -888,8 +888,6 @@
       setupFilters();
       setupCollapsible("fixturesHeader", "fixturesContent", "fixturesToggleIcon");
       setupCollapsible("resultsHeader", "resultsContent", "resultsToggleIcon");
-      const leagueContent = document.querySelector(".two-col-grid .card:first-child .card-content");
-      if (leagueContent) leagueContent.classList.remove("collapsed");
     }
     init();
   </script>
