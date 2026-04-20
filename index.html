@@ -303,14 +303,62 @@
     .legend-dashed { display: inline-block; width: 20px; height: 2px; border-bottom: 2px dashed #f5d742; vertical-align: middle; }
     .legend-text { color: #e6d5ff; }
 
-    .inner-table { width: 100%; border-collapse: collapse; }
-    .inner-table th { text-align: left; padding: 0.9rem 0.8rem 0.7rem 1.2rem; background: rgba(55, 35, 95, 0.5); border-bottom: 1px solid #f5d742; color: #f5e6ff; }
-    .inner-table td { padding: 0.9rem 0.8rem 0.9rem 1.2rem; border-bottom: 1px solid rgba(245, 215, 66, 0.2); vertical-align: middle; }
-    .player-name { font-size: 0.7rem; color: #d4baff; display: block; margin-top: 2px; }
-    .match-highlight { background: #3d2a6b; border-radius: 20px; padding: 0.2rem 0.8rem; display: inline-block; font-size: 0.8rem; color: #f5d742; }
-    .empty-message { text-align: center; padding: 2rem; color: #c4b0ff; font-style: italic; }
-    .date-badge { font-size: 0.7rem; background: rgba(0,0,0,0.4); padding: 0.2rem 0.6rem; border-radius: 20px; margin-left: 8px; }
-    .footer-note { text-align: center; margin-top: 2.5rem; font-size: 0.75rem; color: #b59fdb; border-top: 1px dashed #7a5db3; padding-top: 1.8rem; }
+    .inner-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .inner-table th {
+      text-align: left;
+      padding: 0.9rem 0.8rem 0.7rem 1.2rem;
+      background: rgba(55, 35, 95, 0.5);
+      border-bottom: 1px solid #f5d742;
+      color: #f5e6ff;
+    }
+    .inner-table td {
+      padding: 0.9rem 0.8rem 0.9rem 1.2rem;
+      border-bottom: 1px solid rgba(245, 215, 66, 0.2);
+      vertical-align: middle;
+    }
+    .player-name {
+      font-size: 0.7rem;
+      color: #d4baff;
+      display: block;
+      margin-top: 2px;
+    }
+    .match-highlight {
+      background: #3d2a6b;
+      border-radius: 20px;
+      padding: 0.2rem 0.8rem;
+      display: inline-block;
+      font-size: 0.8rem;
+      color: #f5d742;
+    }
+    .empty-message {
+      text-align: center;
+      padding: 2rem;
+      color: #c4b0ff;
+      font-style: italic;
+    }
+    .date-badge {
+      font-size: 0.7rem;
+      background: rgba(0,0,0,0.4);
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      margin-left: 8px;
+    }
+    .footer-note {
+      text-align: center;
+      margin-top: 2.5rem;
+      font-size: 0.75rem;
+      color: #b59fdb;
+      border-top: 1px dashed #7a5db3;
+      padding-top: 1.8rem;
+    }
+
+    /* Scrollable fixtures container */
+    .scrollable-table {
+      overflow-x: auto;
+    }
 
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
@@ -364,22 +412,41 @@
       <div class="card"><div class="card-header" style="cursor:default;"><div class="card-header-left"><h2>MATCHDAY 7 · COMPLETED</h2></div></div><div class="card-content"></div></div>
     </div>
 
+    <!-- FIXTURES CARD (scrollable, date first, then teams with player names, then matchday) -->
     <div class="card" style="margin-bottom:1.5rem">
       <div class="card-header" id="fixturesHeader"><div class="card-header-left"><h2>FIXTURES</h2></div><div class="toggle-icon" id="fixturesToggleIcon">▼</div></div>
-      <div class="card-content" id="fixturesContent"><div style="overflow-x:auto;"><table class="inner-table" id="fixturesTable"><thead><tr><th>Matchday</th><th>Home</th><th>Away</th><th>Date</th></tr></thead><tbody id="fixturesTableBody"></tbody></table></div></div>
+      <div class="card-content" id="fixturesContent">
+        <div class="scrollable-table">
+          <table class="inner-table" id="fixturesTable">
+            <thead>
+              <tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr>
+            </thead>
+            <tbody id="fixturesTableBody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
+    <!-- RESULTS CARD (removed score column, added match day column) -->
     <div class="card" style="margin-bottom:1.5rem">
-      <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS · MATCHDAY 7</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
-      <div class="card-content" id="resultsContent"><div style="overflow-x:auto;"><table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Score</th></tr></thead><tbody id="resultsTableBody"></tbody></table></div></div>
+      <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
+      <div class="card-content" id="resultsContent">
+        <div class="scrollable-table">
+          <table class="inner-table" id="resultsTable">
+            <thead>
+              <tr><th>Match</th><th>Match Day</th></tr>
+            </thead>
+            <tbody id="resultsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
-    <div class="card"><div class="card-header" id="scorersHeader"><div class="card-header-left"><h2>SEASON TOP SCORERS</h2></div><div class="toggle-icon" id="scorersToggleIcon">▼</div></div><div class="card-content" id="scorersContent"><div class="empty-message">Season's Leading Top Scorers Will Go Here For Golden Boot</div></div></div>
-    <div class="footer-note">click on FIXTURES or RESULTS or TOP SCORERS cards to expand/collapse</div>
+    <div class="footer-note">click on FIXTURES or RESULTS cards to expand/collapse</div>
   </div>
 
   <script>
-    // Slideshow images
+    // ----- Slideshow -----
     const images = ["images - 2026-04-19T121231.816.jpeg","images - 2026-04-19T155746.715.jpeg","37686bb3-06ce-401b-a022-026933c165e7.jpeg","12871.jpg","1f157df7-2054-4a9d-aa14-b9941ef4a743.jpeg"];
     let currentIndex = 0;
     const slideshowImg = document.getElementById("slideshow-img");
@@ -397,7 +464,7 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // ----- LEAGUE STANDINGS AFTER MATCHDAY 7 (forfeits: +3 points, no GD change) -----
+    // ----- LEAGUE STANDINGS (after Matchday 7, forfeits give +3 pts, no GD change) -----
     const LEAGUE_DATA = [
       { pos: 1, club: "Liverpool", p: 7, gd: 26, pts: 21 },
       { pos: 2, club: "Real Madrid", p: 7, gd: 14, pts: 21 },
@@ -415,8 +482,25 @@
       { pos: 14, club: "Aston Villa", p: 7, gd: -9, pts: 0 }
     ];
 
+    // ----- Player mapping for fixtures -----
+    const playerMap = {
+      "FC Barcelona": "~Rea🫡",
+      "Aston Villa": "Mali",
+      "Borussia Dortmund": "~Qhawe 🤍",
+      "Juventus": "~Lawree ✨",
+      "Atlético Madrid": "~Stalker.",
+      "Paris Saint-Germain": "~MJ",
+      "Napoli": "~PrettyBoy Tendancies. 👅",
+      "Real Madrid": "~Karabo",
+      "Arsenal": "Kath",
+      "AC Milan": "~Ntsiki",
+      "Chelsea": "~Zazo",
+      "Manchester City": "gry",
+      "Liverpool": "🅿️",
+      "Newcastle United": "~Oratile"
+    };
+
     // ----- FIXTURES from Matchday 8 to 26 with sequential dates (starting April 20, 2026) -----
-    const today = new Date(2026, 3, 20); // April 20, 2026
     function formatDate(date) {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
@@ -471,7 +555,7 @@
       { md: 13, home: "Paris Saint-Germain", away: "Napoli" },
       { md: 13, home: "Juventus", away: "Atlético Madrid" },
       { md: 13, home: "Aston Villa", away: "Borussia Dortmund" },
-      // Matchday 14 (reverse fixtures)
+      // Matchday 14 (reverse)
       { md: 14, home: "Liverpool", away: "FC Barcelona" },
       { md: 14, home: "Chelsea", away: "Newcastle United" },
       { md: 14, home: "Arsenal", away: "Manchester City" },
@@ -598,13 +682,13 @@
 
     // ----- RESULTS (Matchday 7) -----
     const RESULTS_DATA = [
-      { matchText: "Real Madrid 3 - 2 Napoli" },
-      { matchText: "Arsenal 0 - 0 AC Milan" },
-      { matchText: "Liverpool 3 - 0 Newcastle United" },
-      { matchText: "Manchester City 1 - 1 Chelsea" },
-      { matchText: "Dortmund 3 - 0 Juventus (Forfeited - No Reply)" },
-      { matchText: "PSG 3 - 0 Atletico Madrid (Forfeited - No Reply)" },
-      { matchText: "Barcelona 3 - 0 Aston Villa (Forfeited - Late Reply)" }
+      { matchText: "Real Madrid 3 - 2 Napoli", md: 7 },
+      { matchText: "Arsenal 0 - 0 AC Milan", md: 7 },
+      { matchText: "Liverpool 3 - 0 Newcastle United", md: 7 },
+      { matchText: "Manchester City 1 - 1 Chelsea", md: 7 },
+      { matchText: "Dortmund 3 - 0 Juventus (Forfeited - No Reply)", md: 7 },
+      { matchText: "PSG 3 - 0 Atletico Madrid (Forfeited - No Reply)", md: 7 },
+      { matchText: "Barcelona 3 - 0 Aston Villa (Forfeited - Late Reply)", md: 7 }
     ];
 
     function renderLeagueTable() {
@@ -640,11 +724,16 @@
       tbody.innerHTML = "";
       fixturesWithDates.forEach(f => {
         const row = tbody.insertRow();
-        const mdCell = row.insertCell(0);
-        mdCell.innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px; font-size:0.7rem;">MD ${f.md}</span>`;
-        row.insertCell(1).innerHTML = `<strong>${f.home}</strong>`;
-        row.insertCell(2).innerHTML = `<strong>${f.away}</strong>`;
-        row.insertCell(3).innerHTML = `<span class="date-badge">📅 ${f.date}</span>`;
+        // Date column
+        row.insertCell(0).innerHTML = `<span class="date-badge">📅 ${f.date}</span>`;
+        // Home vs Away column with player names
+        const homePlayer = playerMap[f.home] || "";
+        const awayPlayer = playerMap[f.away] || "";
+        const homeHtml = `<strong>${f.home}</strong>${homePlayer ? `<span class="player-name">${homePlayer}</span>` : ""}`;
+        const awayHtml = `<strong>${f.away}</strong>${awayPlayer ? `<span class="player-name">${awayPlayer}</span>` : ""}`;
+        row.insertCell(1).innerHTML = `${homeHtml} <span style="margin:0 8px;">vs</span> ${awayHtml}`;
+        // Matchday column
+        row.insertCell(2).innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px; font-size:0.7rem;">MD ${f.md}</span>`;
       });
     }
 
@@ -655,7 +744,7 @@
       RESULTS_DATA.forEach(res => {
         const row = tbody.insertRow();
         row.insertCell(0).innerHTML = `<strong>${res.matchText}</strong>`;
-        row.insertCell(1).innerHTML = `<span class="match-highlight">FINAL</span>`;
+        row.insertCell(1).innerHTML = `<span class="match-highlight">MD${res.md}</span>`;
       });
     }
 
@@ -687,7 +776,6 @@
       renderResults();
       setupCollapsible("fixturesHeader", "fixturesContent", "fixturesToggleIcon");
       setupCollapsible("resultsHeader", "resultsContent", "resultsToggleIcon");
-      setupCollapsible("scorersHeader", "scorersContent", "scorersToggleIcon");
       const leagueContent = document.querySelector(".two-col-grid .card:first-child .card-content");
       if (leagueContent) leagueContent.classList.remove("collapsed");
     }
