@@ -248,7 +248,6 @@
       overflow-x: auto;
     }
 
-    /* Custom scrollbar styling (optional) */
     .scrollable-table::-webkit-scrollbar {
       width: 8px;
       height: 8px;
@@ -260,6 +259,31 @@
     .scrollable-table::-webkit-scrollbar-thumb {
       background: #f5d742;
       border-radius: 10px;
+    }
+
+    /* Filter controls */
+    .filter-container {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem 1.2rem;
+      background: rgba(30, 15, 55, 0.6);
+      border-bottom: 1px solid rgba(245, 215, 66, 0.3);
+      flex-wrap: wrap;
+    }
+    .filter-input, .filter-select {
+      background: rgba(45, 25, 75, 0.9);
+      border: 1px solid #f5d742;
+      border-radius: 30px;
+      padding: 0.5rem 1rem;
+      color: #f5e6ff;
+      font-size: 0.8rem;
+      outline: none;
+    }
+    .filter-input::placeholder {
+      color: #d4baff;
+    }
+    .filter-select option {
+      background: #2d1b4e;
     }
 
     .stats-table {
@@ -383,6 +407,7 @@
       .card-header-left h2 { font-size: 1.3rem; }
       .dot { width: 6px; height: 6px; margin: 0 3px; }
       .scrollable-table { max-height: 400px; }
+      .filter-container { flex-direction: column; }
     }
   </style>
 </head>
@@ -429,10 +454,16 @@
       <div class="card"><div class="card-header" style="cursor:default;"><div class="card-header-left"><h2>MATCHDAY 7 · COMPLETED</h2></div></div><div class="card-content"></div></div>
     </div>
 
-    <!-- FIXTURES CARD with independent scroll -->
+    <!-- FIXTURES CARD with search and filter -->
     <div class="card" style="margin-bottom:1.5rem">
       <div class="card-header" id="fixturesHeader"><div class="card-header-left"><h2>FIXTURES</h2></div><div class="toggle-icon" id="fixturesToggleIcon">▼</div></div>
       <div class="card-content" id="fixturesContent">
+        <div class="filter-container">
+          <input type="text" id="searchInput" class="filter-input" placeholder="🔍 Search team or player name...">
+          <select id="teamFilter" class="filter-select">
+            <option value="">All Teams</option>
+          </select>
+        </div>
         <div class="scrollable-table">
           <table class="inner-table" id="fixturesTable">
             <thead>
@@ -444,7 +475,7 @@
       </div>
     </div>
 
-    <!-- RESULTS CARD with independent scroll -->
+    <!-- RESULTS CARD -->
     <div class="card" style="margin-bottom:1.5rem">
       <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
       <div class="card-content" id="resultsContent">
@@ -481,7 +512,7 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // ----- LEAGUE STANDINGS (after Matchday 7, forfeits give +3 pts, no GD change) -----
+    // ----- LEAGUE STANDINGS after Matchday 7 (with Inter Milan replacing Aston Villa, -6 pts, 0 GD) -----
     const LEAGUE_DATA = [
       { pos: 1, club: "Liverpool", p: 7, gd: 26, pts: 21 },
       { pos: 2, club: "Real Madrid", p: 7, gd: 14, pts: 21 },
@@ -496,13 +527,13 @@
       { pos: 11, club: "Juventus", p: 7, gd: -1, pts: 3 },
       { pos: 12, club: "Newcastle", p: 7, gd: -18, pts: 3 },
       { pos: 13, club: "Atletico", p: 7, gd: -10, pts: 1 },
-      { pos: 14, club: "Aston Villa", p: 7, gd: -9, pts: 0 }
+      { pos: 14, club: "Inter Milan", p: 7, gd: 0, pts: -6 }
     ];
 
-    // ----- Player mapping for fixtures -----
+    // ----- Player mapping for fixtures (Mali now with Inter Milan) -----
     const playerMap = {
       "FC Barcelona": "~Rea🫡",
-      "Aston Villa": "Mali",
+      "Inter Milan": "Mali",
       "Borussia Dortmund": "~Qhawe 🤍",
       "Juventus": "~Lawree ✨",
       "Atlético Madrid": "~Stalker.",
@@ -518,6 +549,7 @@
     };
 
     // ----- FIXTURES from Matchday 8 to 26 with sequential dates (starting April 20, 2026) -----
+    // All "Aston Villa" replaced with "Inter Milan"
     function formatDate(date) {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
@@ -526,7 +558,7 @@
     const fixtureList = [
       // Matchday 8
       { md: 8, home: "FC Barcelona", away: "Juventus" },
-      { md: 8, home: "Aston Villa", away: "Paris Saint-Germain" },
+      { md: 8, home: "Inter Milan", away: "Paris Saint-Germain" },
       { md: 8, home: "Borussia Dortmund", away: "Real Madrid" },
       { md: 8, home: "Atlético Madrid", away: "AC Milan" },
       { md: 8, home: "Napoli", away: "Manchester City" },
@@ -535,7 +567,7 @@
       // Matchday 9
       { md: 9, home: "FC Barcelona", away: "Paris Saint-Germain" },
       { md: 9, home: "Juventus", away: "Real Madrid" },
-      { md: 9, home: "Aston Villa", away: "AC Milan" },
+      { md: 9, home: "Inter Milan", away: "AC Milan" },
       { md: 9, home: "Borussia Dortmund", away: "Manchester City" },
       { md: 9, home: "Atlético Madrid", away: "Newcastle United" },
       { md: 9, home: "Napoli", away: "Liverpool" },
@@ -544,7 +576,7 @@
       { md: 10, home: "FC Barcelona", away: "Real Madrid" },
       { md: 10, home: "Paris Saint-Germain", away: "AC Milan" },
       { md: 10, home: "Juventus", away: "Manchester City" },
-      { md: 10, home: "Aston Villa", away: "Newcastle United" },
+      { md: 10, home: "Inter Milan", away: "Newcastle United" },
       { md: 10, home: "Borussia Dortmund", away: "Liverpool" },
       { md: 10, home: "Atlético Madrid", away: "Chelsea" },
       { md: 10, home: "Napoli", away: "Arsenal" },
@@ -553,7 +585,7 @@
       { md: 11, home: "Real Madrid", away: "Manchester City" },
       { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" },
       { md: 11, home: "Juventus", away: "Liverpool" },
-      { md: 11, home: "Aston Villa", away: "Chelsea" },
+      { md: 11, home: "Inter Milan", away: "Chelsea" },
       { md: 11, home: "Borussia Dortmund", away: "Arsenal" },
       { md: 11, home: "Atlético Madrid", away: "Napoli" },
       // Matchday 12
@@ -562,7 +594,7 @@
       { md: 12, home: "Real Madrid", away: "Liverpool" },
       { md: 12, home: "Paris Saint-Germain", away: "Chelsea" },
       { md: 12, home: "Juventus", away: "Arsenal" },
-      { md: 12, home: "Aston Villa", away: "Napoli" },
+      { md: 12, home: "Inter Milan", away: "Napoli" },
       { md: 12, home: "Borussia Dortmund", away: "Atlético Madrid" },
       // Matchday 13
       { md: 13, home: "FC Barcelona", away: "Newcastle United" },
@@ -571,7 +603,7 @@
       { md: 13, home: "Real Madrid", away: "Arsenal" },
       { md: 13, home: "Paris Saint-Germain", away: "Napoli" },
       { md: 13, home: "Juventus", away: "Atlético Madrid" },
-      { md: 13, home: "Aston Villa", away: "Borussia Dortmund" },
+      { md: 13, home: "Inter Milan", away: "Borussia Dortmund" },
       // Matchday 14 (reverse)
       { md: 14, home: "Liverpool", away: "FC Barcelona" },
       { md: 14, home: "Chelsea", away: "Newcastle United" },
@@ -579,49 +611,49 @@
       { md: 14, home: "Napoli", away: "AC Milan" },
       { md: 14, home: "Atlético Madrid", away: "Real Madrid" },
       { md: 14, home: "Borussia Dortmund", away: "Paris Saint-Germain" },
-      { md: 14, home: "Aston Villa", away: "Juventus" },
+      { md: 14, home: "Inter Milan", away: "Juventus" },
       // Matchday 15
       { md: 15, home: "Chelsea", away: "FC Barcelona" },
       { md: 15, home: "Arsenal", away: "Liverpool" },
       { md: 15, home: "Napoli", away: "Newcastle United" },
       { md: 15, home: "Atlético Madrid", away: "Manchester City" },
       { md: 15, home: "Borussia Dortmund", away: "AC Milan" },
-      { md: 15, home: "Aston Villa", away: "Real Madrid" },
+      { md: 15, home: "Inter Milan", away: "Real Madrid" },
       { md: 15, home: "Juventus", away: "Paris Saint-Germain" },
       // Matchday 16
       { md: 16, home: "Arsenal", away: "FC Barcelona" },
       { md: 16, home: "Napoli", away: "Chelsea" },
       { md: 16, home: "Atlético Madrid", away: "Liverpool" },
       { md: 16, home: "Borussia Dortmund", away: "Newcastle United" },
-      { md: 16, home: "Aston Villa", away: "Manchester City" },
+      { md: 16, home: "Inter Milan", away: "Manchester City" },
       { md: 16, home: "Juventus", away: "AC Milan" },
       { md: 16, home: "Paris Saint-Germain", away: "Real Madrid" },
       // Matchday 17
       { md: 17, home: "Napoli", away: "FC Barcelona" },
       { md: 17, home: "Atlético Madrid", away: "Arsenal" },
       { md: 17, home: "Borussia Dortmund", away: "Chelsea" },
-      { md: 17, home: "Aston Villa", away: "Liverpool" },
+      { md: 17, home: "Inter Milan", away: "Liverpool" },
       { md: 17, home: "Juventus", away: "Newcastle United" },
       { md: 17, home: "Paris Saint-Germain", away: "Manchester City" },
       { md: 17, home: "Real Madrid", away: "AC Milan" },
       // Matchday 18
       { md: 18, home: "Atlético Madrid", away: "FC Barcelona" },
       { md: 18, home: "Borussia Dortmund", away: "Napoli" },
-      { md: 18, home: "Aston Villa", away: "Arsenal" },
+      { md: 18, home: "Inter Milan", away: "Arsenal" },
       { md: 18, home: "Juventus", away: "Chelsea" },
       { md: 18, home: "Paris Saint-Germain", away: "Liverpool" },
       { md: 18, home: "Real Madrid", away: "Newcastle United" },
       { md: 18, home: "AC Milan", away: "Manchester City" },
       // Matchday 19
       { md: 19, home: "Borussia Dortmund", away: "FC Barcelona" },
-      { md: 19, home: "Aston Villa", away: "Atlético Madrid" },
+      { md: 19, home: "Inter Milan", away: "Atlético Madrid" },
       { md: 19, home: "Juventus", away: "Napoli" },
       { md: 19, home: "Paris Saint-Germain", away: "Arsenal" },
       { md: 19, home: "Real Madrid", away: "Chelsea" },
       { md: 19, home: "AC Milan", away: "Liverpool" },
       { md: 19, home: "Manchester City", away: "Newcastle United" },
       // Matchday 20
-      { md: 20, home: "Aston Villa", away: "FC Barcelona" },
+      { md: 20, home: "Inter Milan", away: "FC Barcelona" },
       { md: 20, home: "Juventus", away: "Borussia Dortmund" },
       { md: 20, home: "Paris Saint-Germain", away: "Atlético Madrid" },
       { md: 20, home: "Real Madrid", away: "Napoli" },
@@ -630,7 +662,7 @@
       { md: 20, home: "Newcastle United", away: "Liverpool" },
       // Matchday 21
       { md: 21, home: "Juventus", away: "FC Barcelona" },
-      { md: 21, home: "Paris Saint-Germain", away: "Aston Villa" },
+      { md: 21, home: "Paris Saint-Germain", away: "Inter Milan" },
       { md: 21, home: "Real Madrid", away: "Borussia Dortmund" },
       { md: 21, home: "AC Milan", away: "Atlético Madrid" },
       { md: 21, home: "Manchester City", away: "Napoli" },
@@ -639,7 +671,7 @@
       // Matchday 22
       { md: 22, home: "Paris Saint-Germain", away: "FC Barcelona" },
       { md: 22, home: "Real Madrid", away: "Juventus" },
-      { md: 22, home: "AC Milan", away: "Aston Villa" },
+      { md: 22, home: "AC Milan", away: "Inter Milan" },
       { md: 22, home: "Manchester City", away: "Borussia Dortmund" },
       { md: 22, home: "Newcastle United", away: "Atlético Madrid" },
       { md: 22, home: "Liverpool", away: "Napoli" },
@@ -648,7 +680,7 @@
       { md: 23, home: "Real Madrid", away: "FC Barcelona" },
       { md: 23, home: "AC Milan", away: "Paris Saint-Germain" },
       { md: 23, home: "Manchester City", away: "Juventus" },
-      { md: 23, home: "Newcastle United", away: "Aston Villa" },
+      { md: 23, home: "Newcastle United", away: "Inter Milan" },
       { md: 23, home: "Liverpool", away: "Borussia Dortmund" },
       { md: 23, home: "Chelsea", away: "Atlético Madrid" },
       { md: 23, home: "Arsenal", away: "Napoli" },
@@ -657,7 +689,7 @@
       { md: 24, home: "Manchester City", away: "Real Madrid" },
       { md: 24, home: "Newcastle United", away: "Paris Saint-Germain" },
       { md: 24, home: "Liverpool", away: "Juventus" },
-      { md: 24, home: "Chelsea", away: "Aston Villa" },
+      { md: 24, home: "Chelsea", away: "Inter Milan" },
       { md: 24, home: "Arsenal", away: "Borussia Dortmund" },
       { md: 24, home: "Napoli", away: "Atlético Madrid" },
       // Matchday 25
@@ -666,7 +698,7 @@
       { md: 25, home: "Liverpool", away: "Real Madrid" },
       { md: 25, home: "Chelsea", away: "Paris Saint-Germain" },
       { md: 25, home: "Arsenal", away: "Juventus" },
-      { md: 25, home: "Napoli", away: "Aston Villa" },
+      { md: 25, home: "Napoli", away: "Inter Milan" },
       { md: 25, home: "Atlético Madrid", away: "Borussia Dortmund" },
       // Matchday 26
       { md: 26, home: "Newcastle United", away: "FC Barcelona" },
@@ -675,7 +707,7 @@
       { md: 26, home: "Arsenal", away: "Real Madrid" },
       { md: 26, home: "Napoli", away: "Paris Saint-Germain" },
       { md: 26, home: "Atlético Madrid", away: "Juventus" },
-      { md: 26, home: "Borussia Dortmund", away: "Aston Villa" }
+      { md: 26, home: "Borussia Dortmund", away: "Inter Milan" }
     ];
 
     // Assign dates sequentially starting from April 20 for MD8
@@ -693,11 +725,13 @@
         md: f.md,
         home: f.home,
         away: f.away,
-        date: formatDate(currentDate)
+        date: formatDate(currentDate),
+        homePlayer: playerMap[f.home] || "",
+        awayPlayer: playerMap[f.away] || ""
       });
     }
 
-    // ----- RESULTS (Matchday 7) -----
+    // ----- RESULTS (Matchday 7) with Inter Milan replacing Aston Villa -----
     const RESULTS_DATA = [
       { matchText: "Real Madrid 3 - 2 Napoli", md: 7 },
       { matchText: "Arsenal 0 - 0 AC Milan", md: 7 },
@@ -705,8 +739,73 @@
       { matchText: "Manchester City 1 - 1 Chelsea", md: 7 },
       { matchText: "Dortmund 3 - 0 Juventus (Forfeited - No Reply)", md: 7 },
       { matchText: "PSG 3 - 0 Atletico Madrid (Forfeited - No Reply)", md: 7 },
-      { matchText: "Barcelona 3 - 0 Aston Villa (Forfeited - Late Reply)", md: 7 }
+      { matchText: "Barcelona 3 - 0 Inter Milan (Forfeited - Late Reply)", md: 7 }
     ];
+
+    // Helper to populate team filter dropdown
+    const allTeamsSet = new Set();
+    fixturesWithDates.forEach(f => {
+      allTeamsSet.add(f.home);
+      allTeamsSet.add(f.away);
+    });
+    const allTeams = Array.from(allTeamsSet).sort();
+
+    function renderFixtures(filterText = "", filterTeam = "") {
+      const tbody = document.getElementById("fixturesTableBody");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+      const lowerFilter = filterText.toLowerCase();
+      fixturesWithDates.forEach(f => {
+        // Apply search filter (team names or player names)
+        let matchesSearch = true;
+        if (lowerFilter) {
+          const homeMatch = f.home.toLowerCase().includes(lowerFilter);
+          const awayMatch = f.away.toLowerCase().includes(lowerFilter);
+          const homePlayerMatch = f.homePlayer.toLowerCase().includes(lowerFilter);
+          const awayPlayerMatch = f.awayPlayer.toLowerCase().includes(lowerFilter);
+          matchesSearch = homeMatch || awayMatch || homePlayerMatch || awayPlayerMatch;
+        }
+        // Apply team filter
+        let matchesTeam = true;
+        if (filterTeam) {
+          matchesTeam = (f.home === filterTeam || f.away === filterTeam);
+        }
+        if (!matchesSearch || !matchesTeam) return;
+
+        const row = tbody.insertRow();
+        row.insertCell(0).innerHTML = `<span class="date-badge">📅 ${f.date}</span>`;
+        const homeHtml = `<strong>${f.home}</strong>${f.homePlayer ? `<span class="player-name">${f.homePlayer}</span>` : ""}`;
+        const awayHtml = `<strong>${f.away}</strong>${f.awayPlayer ? `<span class="player-name">${f.awayPlayer}</span>` : ""}`;
+        row.insertCell(1).innerHTML = `${homeHtml} <span style="margin:0 8px;">vs</span> ${awayHtml}`;
+        row.insertCell(2).innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px; font-size:0.7rem;">MD ${f.md}</span>`;
+      });
+      if (tbody.rows.length === 0) {
+        const row = tbody.insertRow();
+        const cell = row.insertCell(0);
+        cell.colSpan = 3;
+        cell.className = "empty-message";
+        cell.innerText = "No fixtures match your search/filter.";
+      }
+    }
+
+    // Setup search and filter event listeners
+    function setupFilters() {
+      const searchInput = document.getElementById("searchInput");
+      const teamFilter = document.getElementById("teamFilter");
+      teamFilter.innerHTML = '<option value="">All Teams</option>';
+      allTeams.forEach(team => {
+        const option = document.createElement("option");
+        option.value = team;
+        option.textContent = team;
+        teamFilter.appendChild(option);
+      });
+      function updateFixtures() {
+        renderFixtures(searchInput.value, teamFilter.value);
+      }
+      searchInput.addEventListener("input", updateFixtures);
+      teamFilter.addEventListener("change", updateFixtures);
+      updateFixtures();
+    }
 
     function renderLeagueTable() {
       const tbody = document.getElementById("leagueTableBody");
@@ -732,25 +831,6 @@
         const ptsCell = row.insertCell(4);
         ptsCell.className = "pts-cell";
         ptsCell.innerText = team.pts;
-      });
-    }
-
-    function renderFixtures() {
-      const tbody = document.getElementById("fixturesTableBody");
-      if (!tbody) return;
-      tbody.innerHTML = "";
-      fixturesWithDates.forEach(f => {
-        const row = tbody.insertRow();
-        // Date column
-        row.insertCell(0).innerHTML = `<span class="date-badge">📅 ${f.date}</span>`;
-        // Home vs Away column with player names
-        const homePlayer = playerMap[f.home] || "";
-        const awayPlayer = playerMap[f.away] || "";
-        const homeHtml = `<strong>${f.home}</strong>${homePlayer ? `<span class="player-name">${homePlayer}</span>` : ""}`;
-        const awayHtml = `<strong>${f.away}</strong>${awayPlayer ? `<span class="player-name">${awayPlayer}</span>` : ""}`;
-        row.insertCell(1).innerHTML = `${homeHtml} <span style="margin:0 8px;">vs</span> ${awayHtml}`;
-        // Matchday column
-        row.insertCell(2).innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px; font-size:0.7rem;">MD ${f.md}</span>`;
       });
     }
 
@@ -789,8 +869,8 @@
 
     function init() {
       renderLeagueTable();
-      renderFixtures();
       renderResults();
+      setupFilters();   // initialises fixtures rendering with search/filter
       setupCollapsible("fixturesHeader", "fixturesContent", "fixturesToggleIcon");
       setupCollapsible("resultsHeader", "resultsContent", "resultsToggleIcon");
       const leagueContent = document.querySelector(".two-col-grid .card:first-child .card-content");
