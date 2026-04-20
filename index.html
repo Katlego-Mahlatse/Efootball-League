@@ -512,21 +512,24 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // ----- LEAGUE STANDINGS after MD7 + MD8 results so far: 
-    // Liverpool 0-0 Chelsea, Inter 3-3 PSG, Newcastle 1-6 Arsenal.
-    // Previous after MD7: Liverpool 21, Chelsea 4, Inter -6, PSG 9, Arsenal 8, Newcastle 3.
+    // ----- LEAGUE STANDINGS after MD7 + MD8 results so far:
+    // Liverpool 0-0 Chelsea, Inter 3-3 PSG, Newcastle 1-6 Arsenal, Real Madrid 1-0 Dortmund.
+    // Previous after MD7: Liverpool 21, Chelsea 4, Inter -6, PSG 9, Arsenal 8, Newcastle 3, Real Madrid 21, Dortmund 18.
     // After Liverpool-Chelsea: Liverpool 22, Chelsea 5.
     // After Inter-PSG: Inter -5, PSG 10.
     // After Newcastle-Arsenal: Arsenal +3 = 11 pts, GD from -1 to +4; Newcastle GD from -18 to -23.
-    // Played matches: Liverpool 8, Chelsea 8, Inter 8, PSG 8, Arsenal 8, Newcastle 8.
+    // After Real Madrid-Dortmund: Real Madrid +3 = 24 pts, GD +15; Dortmund 0 pts, GD +11.
+    // Played matches: Liverpool 8, Chelsea 8, Inter 8, PSG 8, Arsenal 8, Newcastle 8, Real Madrid 8, Dortmund 8.
     // Others remain at 7 matches.
+    // Recalculate positions: Real Madrid 24 (1st), Liverpool 22 (2nd), Dortmund 18 (3rd), Man City 16 (4th), Barcelona 12 (5th), Arsenal 11 (6th), PSG 10 (7th), AC Milan 7 (8th), Chelsea 5 (9th), Napoli 3 (10th), Juventus 3 (11th), Newcastle 3 (12th), Atletico 1 (13th), Inter -5 (14th).
+    // Order by points, then GD, then goals? We'll keep simple by points then GD (as given).
     const LEAGUE_DATA = [
-      { pos: 1, club: "Liverpool", p: 8, gd: 26, pts: 22 },
-      { pos: 2, club: "Real Madrid", p: 7, gd: 14, pts: 21 },
-      { pos: 3, club: "Dortmund", p: 7, gd: 12, pts: 18 },
+      { pos: 1, club: "Real Madrid", p: 8, gd: 15, pts: 24 },
+      { pos: 2, club: "Liverpool", p: 8, gd: 26, pts: 22 },
+      { pos: 3, club: "Dortmund", p: 8, gd: 11, pts: 18 },
       { pos: 4, club: "Man City", p: 7, gd: 9, pts: 16 },
       { pos: 5, club: "Barcelona", p: 7, gd: -3, pts: 12 },
-      { pos: 6, club: "Arsenal", p: 8, gd: 4, pts: 11 },      // moved above PSG
+      { pos: 6, club: "Arsenal", p: 8, gd: 4, pts: 11 },
       { pos: 7, club: "PSG", p: 8, gd: -7, pts: 10 },
       { pos: 8, club: "AC Milan", p: 7, gd: -5, pts: 7 },
       { pos: 9, club: "Chelsea", p: 8, gd: 1, pts: 5 },
@@ -556,11 +559,10 @@
     };
 
     // ----- FIXTURES from Matchday 8 to 26 (with Aston Villa replaced by Inter Milan) -----
-    // REMOVED: Chelsea vs Liverpool (MD8), Inter Milan vs PSG (MD8), Arsenal vs Newcastle United (MD8)
+    // REMOVED: Chelsea vs Liverpool (MD8), Inter Milan vs PSG (MD8), Arsenal vs Newcastle United (MD8), Borussia Dortmund vs Real Madrid (MD8)
     const fixtureList = [
       // Matchday 8 (only remaining fixtures)
       { md: 8, home: "FC Barcelona", away: "Juventus" },
-      { md: 8, home: "Borussia Dortmund", away: "Real Madrid" },
       { md: 8, home: "Atlético Madrid", away: "AC Milan" },
       { md: 8, home: "Napoli", away: "Manchester City" },
       // Matchday 9
@@ -738,8 +740,9 @@
       });
     }
 
-    // ----- RESULTS: Matchday 7 + new MD8 results (Newcastle 1-6 Arsenal at the top) -----
+    // ----- RESULTS: Matchday 7 + new MD8 results (Real Madrid 1-0 Dortmund at the top) -----
     const RESULTS_DATA = [
+      { matchText: "Real Madrid 1 - 0 Dortmund", md: 8 },
       { matchText: "Newcastle United 1 - 6 Arsenal", md: 8 },
       { matchText: "Liverpool 0 - 0 Chelsea", md: 8 },
       { matchText: "Inter Milan 3 - 3 PSG", md: 8 },
