@@ -248,7 +248,7 @@
       border: 1px solid #f5d742;
       border-radius: 1rem;
       padding: 0.5rem 0;
-      min-width: 140px;
+      min-width: 120px;
       z-index: 150;
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
       backdrop-filter: blur(12px);
@@ -365,6 +365,18 @@
     .rank-cell { font-weight: 700; width: 60px; color: #f5d742; }
     .pts-cell { font-weight: 800; color: #f5d742; text-align: center; }
 
+    .team-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .team-icon {
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+      vertical-align: middle;
+    }
+
     .form-circles {
       display: flex;
       gap: 4px;
@@ -469,6 +481,7 @@
       .filter-container { flex-direction: column; }
       .circle-result { width: 14px; height: 14px; font-size: 7px; }
       .arrow-up, .arrow-down, .arrow-side { font-size: 1rem; width: 18px; }
+      .team-icon { width: 18px; height: 18px; }
     }
   </style>
 </head>
@@ -511,7 +524,7 @@
         <div style="overflow-x:auto;">
           <table class="stats-table" id="leagueTable">
             <thead>
-              <tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th id="last5Header">Last 5</th></tr>
+              <tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th></tr>
             </thead>
             <tbody id="leagueTableBody"></tbody>
           </table>
@@ -571,8 +584,7 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // ----- LEAGUE DATA (final after MD8 including forfeit) -----
-    // Update matches played for Atletico and AC Milan to 8
+    // ----- LEAGUE DATA (final after MD8 with Atletico vs AC Milan forfeit added) -----
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 8, gd: 15, pts: 24 },
       { pos: 2, club: "Liverpool", p: 8, gd: 26, pts: 22 },
@@ -581,12 +593,12 @@
       { pos: 5, club: "Barcelona", p: 8, gd: 0, pts: 15 },
       { pos: 6, club: "Arsenal", p: 8, gd: 4, pts: 11 },
       { pos: 7, club: "PSG", p: 8, gd: -7, pts: 10 },
-      { pos: 8, club: "AC Milan", p: 8, gd: -5, pts: 7 },
+      { pos: 8, club: "AC Milan", p: 8, gd: -5, pts: 7 },   // played MD8 forfeit
       { pos: 9, club: "Napoli", p: 8, gd: 3, pts: 6 },
       { pos: 10, club: "Chelsea", p: 8, gd: 1, pts: 5 },
       { pos: 11, club: "Juventus", p: 8, gd: -4, pts: 3 },
       { pos: 12, club: "Newcastle", p: 8, gd: -23, pts: 3 },
-      { pos: 13, club: "Atletico", p: 8, gd: -10, pts: 1 },
+      { pos: 13, club: "Atletico", p: 8, gd: -10, pts: 1 },   // played MD8 forfeit
       { pos: 14, club: "Inter Milan", p: 8, gd: 0, pts: -5 }
     ];
 
@@ -611,7 +623,7 @@
       "Man City": "gry"
     };
 
-    // ----- All results in chronological order (including MD8 forfeit) -----
+    // ----- All results in chronological order including MD8 forfeit -----
     const allResultsOrder = [
       // MD7
       { type: "win", winner: "Real Madrid", loser: "Napoli" },
@@ -628,7 +640,7 @@
       { type: "win", winner: "Arsenal", loser: "Newcastle" },
       { type: "draw", teams: ["Liverpool","Chelsea"] },
       { type: "draw", teams: ["Inter Milan","PSG"] },
-      { type: "forfeit", teams: ["Atletico","AC Milan"] }   // No contest
+      { type: "forfeit", teams: ["Atletico","AC Milan"] }   // No Contest
     ];
 
     // Build teamResults array (list of results per team in order)
@@ -641,7 +653,7 @@
         if (teamResults[res.winner]) teamResults[res.winner].push("W");
         if (teamResults[res.loser]) teamResults[res.loser].push("L");
       } else if (res.type === "forfeit") {
-        res.teams.forEach(t => { if (teamResults[t]) teamResults[t].push("F"); });
+        res.teams.forEach(t => { if (teamResults[t]) teamResults[t].push("F"); }); // F = forfeit (No Contest)
       }
     });
 
@@ -658,12 +670,12 @@
       return arr.length ? arr[arr.length-1] : null;
     }
 
-    // ----- FIXTURES (all MD8 now complete, so no fixtures left for MD8) -----
-    // Remove the MD8 fixture since it's played. Start from MD9.
+    // ----- FIXTURES (full list unchanged, but MD8 fixture removed since it's played) -----
+    // Removing the Atletico vs AC Milan fixture from MD8 as it's now a result
     const fixtureList = [
+      // Matchday 8 has no remaining fixtures
       // Matchday 9
       { md: 9, home: "FC Barcelona", away: "Paris Saint-Germain" }, { md: 9, home: "Juventus", away: "Real Madrid" }, { md: 9, home: "Inter Milan", away: "AC Milan" }, { md: 9, home: "Borussia Dortmund", away: "Manchester City" }, { md: 9, home: "Atlético Madrid", away: "Newcastle United" }, { md: 9, home: "Napoli", away: "Liverpool" }, { md: 9, home: "Arsenal", away: "Chelsea" },
-      // Matchday 10
       { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Juventus", away: "Manchester City" }, { md: 10, home: "Inter Milan", away: "Newcastle United" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Atlético Madrid", away: "Chelsea" }, { md: 10, home: "Napoli", away: "Arsenal" },
       { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
       { md: 12, home: "FC Barcelona", away: "Manchester City" }, { md: 12, home: "AC Milan", away: "Newcastle United" }, { md: 12, home: "Real Madrid", away: "Liverpool" }, { md: 12, home: "Paris Saint-Germain", away: "Chelsea" }, { md: 12, home: "Juventus", away: "Arsenal" }, { md: 12, home: "Inter Milan", away: "Napoli" }, { md: 12, home: "Borussia Dortmund", away: "Atlético Madrid" },
@@ -689,7 +701,7 @@
     }
 
     const fixturesWithDates = [];
-    let currentDate = new Date(2026, 3, 21); // MD9 starts April 21 (since MD8 finished on April 20)
+    let currentDate = new Date(2026, 3, 20);
     let lastMd = null;
     for (let f of fixtureList) {
       if (lastMd === null) lastMd = f.md;
@@ -700,7 +712,6 @@
       });
     }
 
-    // RESULTS_DATA including the forfeit at the top
     const RESULTS_DATA = [
       { matchText: "Atletico Madrid F - F AC Milan (No Contest)", md: 8 },
       { matchText: "Barcelona 3 - 0 Juventus (Forfeited - No Reply)", md: 8 },
@@ -725,21 +736,13 @@
     // UI state
     let currentView = "team";
     let showFormArrows = false;
-    let showLast5 = true;   // new toggle for Last 5 circles
+    let showLast5 = true;   // New: toggle for Last 5 circles
     let popup = null;
 
     function renderLeagueTable() {
       const tbody = document.getElementById("leagueTableBody");
-      const last5Header = document.getElementById("last5Header");
       if (!tbody) return;
       tbody.innerHTML = "";
-      
-      // Show/hide Last 5 column header
-      if (showLast5) {
-        last5Header.style.display = "table-cell";
-      } else {
-        last5Header.style.display = "none";
-      }
 
       LEAGUE_DATA.forEach(team => {
         const row = tbody.insertRow();
@@ -757,21 +760,27 @@
         if (barClass) posCell.innerHTML = `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${team.pos}</div>`;
         else posCell.innerText = team.pos;
 
-        // Club name (or player name) with optional form arrow
+        // Club name with optional icon (only Arsenal for now) and optional form arrow
         let displayName = team.club;
         if (currentView === "player") displayName = playerMap[team.club] || team.club;
         
-        let clubHtml = displayName;
+        let clubHtml = '';
         if (showFormArrows) {
           const latest = getLatest(team.club);
-          let arrowHtml = '';
-          if (latest === "W") arrowHtml = '<span class="arrow-up">↑</span> ';
-          else if (latest === "L") arrowHtml = '<span class="arrow-down">↓</span> ';
-          else if (latest === "D") arrowHtml = '<span class="arrow-side">→</span> ';
-          else if (latest === "F") arrowHtml = '<span class="arrow-down" style="color:#ef4444;">✗</span> ';
-          else arrowHtml = '<span style="opacity:0.3; width:24px; display:inline-block;">—</span> ';
-          clubHtml = arrowHtml + displayName;
+          if (latest === "W") clubHtml += '<span class="arrow-up">↑</span> ';
+          else if (latest === "L") clubHtml += '<span class="arrow-down">↓</span> ';
+          else if (latest === "D") clubHtml += '<span class="arrow-side">→</span> ';
+          else clubHtml += '<span style="opacity:0.3; width:24px; display:inline-block;">—</span> ';
         }
+        
+        // Add team icon for Arsenal
+        let iconHtml = '';
+        if (team.club === "Arsenal") {
+          iconHtml = `<img class="team-icon" src="Arsenal-FC-Logo-Premier-League-Football-Club.webp" alt="Arsenal badge" onerror="this.style.display='none'">`;
+        }
+        
+        clubHtml += iconHtml + ' ' + displayName;
+        
         row.insertCell(1).innerHTML = `<div class="team-name">${clubHtml}</div>`;
 
         // P, GD, Pts
@@ -782,7 +791,7 @@
         ptsCell.className = "pts-cell";
         ptsCell.innerText = team.pts;
 
-        // Last 5 circles (conditionally visible)
+        // Last 5 circles (only if showLast5 is true)
         const last5Cell = row.insertCell(5);
         if (showLast5) {
           const last5 = getLast5WithBlanks(team.club);
@@ -816,7 +825,7 @@
       popup.className = "popup-menu";
       popup.style.position = "absolute";
       popup.style.top = (rect.bottom + window.scrollY + 5) + "px";
-      popup.style.left = (rect.left + window.scrollX - 70) + "px";
+      popup.style.left = (rect.left + window.scrollX - 60) + "px";
       
       const playersOpt = document.createElement("div");
       playersOpt.innerText = currentView === "team" ? "Players" : "Team View";
