@@ -510,7 +510,7 @@
         <div style="overflow-x:auto;">
           <table class="stats-table" id="leagueTable">
             <thead>
-              <tr><th>Pos</th><th>Form</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th></tr>
+              <tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th></tr>
             </thead>
             <tbody id="leagueTableBody"></tbody>
           </table>
@@ -571,6 +571,7 @@
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
     // ----- LEAGUE DATA (final after MD8) -----
+    // Note: club names exactly as they appear in results mapping
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 8, gd: 15, pts: 24 },
       { pos: 2, club: "Liverpool", p: 8, gd: 26, pts: 22 },
@@ -604,24 +605,26 @@
       "Manchester City": "gry",
       "Liverpool": "🅿️",
       "Newcastle United": "~Oratile",
-      "Atletico": "~Stalker."
+      "Atletico": "~Stalker.",
+      "Newcastle": "~Oratile",
+      "Man City": "gry"
     };
 
-    // ----- All results in chronological order (oldest to newest) for accurate last-5 and form -----
+    // ----- All results in chronological order (using exact league club names for matching) -----
     const allResultsOrder = [
       // MD7
       { type: "win", winner: "Real Madrid", loser: "Napoli" },
       { type: "draw", teams: ["Arsenal","AC Milan"] },
-      { type: "win", winner: "Liverpool", loser: "Newcastle United" },
-      { type: "draw", teams: ["Manchester City","Chelsea"] },
+      { type: "win", winner: "Liverpool", loser: "Newcastle" },
+      { type: "draw", teams: ["Man City","Chelsea"] },
       { type: "win", winner: "Dortmund", loser: "Juventus" },
       { type: "win", winner: "PSG", loser: "Atletico" },
       { type: "win", winner: "Barcelona", loser: "Inter Milan" },
       // MD8
       { type: "win", winner: "Barcelona", loser: "Juventus" },
-      { type: "win", winner: "Napoli", loser: "Manchester City" },
+      { type: "win", winner: "Napoli", loser: "Man City" },
       { type: "win", winner: "Real Madrid", loser: "Dortmund" },
-      { type: "win", winner: "Arsenal", loser: "Newcastle United" },
+      { type: "win", winner: "Arsenal", loser: "Newcastle" },
       { type: "draw", teams: ["Liverpool","Chelsea"] },
       { type: "draw", teams: ["Inter Milan","PSG"] }
     ];
@@ -651,7 +654,7 @@
       return arr.length ? arr[arr.length-1] : null;
     }
 
-    // ----- FIXTURES (full list from original, unchanged) -----
+    // ----- FIXTURES (full list unchanged) -----
     const fixtureList = [
       { md: 8, home: "Atlético Madrid", away: "AC Milan" },
       { md: 9, home: "FC Barcelona", away: "Paris Saint-Germain" }, { md: 9, home: "Juventus", away: "Real Madrid" }, { md: 9, home: "Inter Milan", away: "AC Milan" }, { md: 9, home: "Borussia Dortmund", away: "Manchester City" }, { md: 9, home: "Atlético Madrid", away: "Newcastle United" }, { md: 9, home: "Napoli", away: "Liverpool" }, { md: 9, home: "Arsenal", away: "Chelsea" },
@@ -711,8 +714,9 @@
     fixturesWithDates.forEach(f => { allTeamsSet.add(f.home); allTeamsSet.add(f.away); });
     const allTeams = Array.from(allTeamsSet).sort();
 
-    // UI state for player/team toggle only
-    let currentView = "team";   // "team" or "player"
+    // UI state
+    let currentView = "team";
+    let showFormArrows = false;
     let popup = null;
 
     function renderLeagueTable() {
@@ -736,24 +740,28 @@
         if (barClass) posCell.innerHTML = `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${team.pos}</div>`;
         else posCell.innerText = team.pos;
 
-        // Form arrow column (latest result)
-        const formCell = row.insertCell(1);
-        const latest = getLatest(team.club);
-        if (latest === "W") formCell.innerHTML = '<span class="arrow-up">↑</span>';
-        else if (latest === "L") formCell.innerHTML = '<span class="arrow-down">↓</span>';
-        else if (latest === "D") formCell.innerHTML = '<span class="arrow-side">→</span>';
-        else formCell.innerHTML = '<span style="opacity:0.3;">—</span>';
-
         // Club name (or player name)
         let displayName = team.club;
         if (currentView === "player") displayName = playerMap[team.club] || team.club;
-        row.insertCell(2).innerHTML = `<div class="team-name">${displayName}</div>`;
+        
+        // If form arrows enabled, prepend arrow before club name
+        let clubHtml = displayName;
+        if (showFormArrows) {
+          const latest = getLatest(team.club);
+          let arrowHtml = '';
+          if (latest === "W") arrowHtml = '<span class="arrow-up">↑</span> ';
+          else if (latest === "L") arrowHtml = '<span class="arrow-down">↓</span> ';
+          else if (latest === "D") arrowHtml = '<span class="arrow-side">→</span> ';
+          else arrowHtml = '<span style="opacity:0.3; width:24px; display:inline-block;">—</span> ';
+          clubHtml = arrowHtml + displayName;
+        }
+        row.insertCell(1).innerHTML = `<div class="team-name">${clubHtml}</div>`;
 
         // P, GD, Pts
-        row.insertCell(3).innerText = team.p;
+        row.insertCell(2).innerText = team.p;
         const gdValue = team.gd;
-        row.insertCell(4).innerText = gdValue > 0 ? `+${gdValue}` : `${gdValue}`;
-        const ptsCell = row.insertCell(5);
+        row.insertCell(3).innerText = gdValue > 0 ? `+${gdValue}` : `${gdValue}`;
+        const ptsCell = row.insertCell(4);
         ptsCell.className = "pts-cell";
         ptsCell.innerText = team.pts;
 
@@ -770,12 +778,12 @@
           else { circle.classList.add("circle-blank"); circle.innerHTML = ""; }
           container.appendChild(circle);
         });
-        const last5Cell = row.insertCell(6);
+        const last5Cell = row.insertCell(5);
         last5Cell.appendChild(container);
       });
     }
 
-    // 3-dot menu toggle (only Players/Team View)
+    // 3-dot menu toggle (Players and Form)
     const threeDotBtn = document.getElementById("threeDotBtn");
     function closePopup() { if (popup) { popup.remove(); popup = null; } }
     function togglePopup(e) {
@@ -787,6 +795,7 @@
       popup.style.position = "absolute";
       popup.style.top = (rect.bottom + window.scrollY + 5) + "px";
       popup.style.left = (rect.left + window.scrollX - 60) + "px";
+      
       const playersOpt = document.createElement("div");
       playersOpt.innerText = currentView === "team" ? "Players" : "Team View";
       playersOpt.onclick = () => {
@@ -794,7 +803,17 @@
         renderLeagueTable();
         closePopup();
       };
+      
+      const formOpt = document.createElement("div");
+      formOpt.innerText = showFormArrows ? "Hide Form" : "Show Form";
+      formOpt.onclick = () => {
+        showFormArrows = !showFormArrows;
+        renderLeagueTable();
+        closePopup();
+      };
+      
       popup.appendChild(playersOpt);
+      popup.appendChild(formOpt);
       document.body.appendChild(popup);
     }
     threeDotBtn.addEventListener("click", togglePopup);
