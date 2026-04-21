@@ -357,10 +357,10 @@
     .orange-bar-vertical { background-color: #f97316; }
     .green-bar-vertical { background-color: #22c55e; }
     
-    .gold-row { background: linear-gradient(90deg, #d4af37, #b8960c); color: #1e1a0c; font-weight: bold; }
-    .gold-row td { color: #1e1a0c; }
-    .red-row { background: rgba(180, 40, 40, 0.8); color: #ffe0e0; }
-    .dashed-separator { border-bottom: 2px dashed #f5d742 !important; }
+    /* Removed gold-row and red-row classes, now all rows have default background */
+    .dashed-separator-gold { border-bottom: 2px dashed #d4af37 !important; }
+    .dashed-separator-white { border-bottom: 2px dashed #ffffff !important; }
+    .dashed-separator-red { border-bottom: 2px dashed #ef4444 !important; }
 
     .rank-cell { font-weight: 700; width: 60px; color: #f5d742; }
     .pts-cell { font-weight: 800; color: #f5d742; text-align: center; }
@@ -418,7 +418,7 @@
     .legend-blue { background-color: #3b82f6; }
     .legend-orange { background-color: #f97316; }
     .legend-green { background-color: #22c55e; }
-    .legend-dashed { display: inline-block; width: 20px; height: 2px; border-bottom: 2px dashed #f5d742; vertical-align: middle; }
+    .legend-dashed-white { display: inline-block; width: 20px; height: 2px; border-bottom: 2px dashed #ffffff; vertical-align: middle; }
     .legend-text { color: #e6d5ff; }
 
     .inner-table {
@@ -531,10 +531,12 @@
           </table>
         </div>
         <div class="legend-under-table">
-          <span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span class="legend-text">UEFA Champions League</span></span>
-          <span class="legend-item"><span class="legend-vertical-bar legend-orange"></span><span class="legend-text">Europa League</span></span>
-          <span class="legend-item"><span class="legend-vertical-bar legend-green"></span><span class="legend-text">UEFA Conference League</span></span>
-          <span class="legend-item"><span class="legend-dashed"></span><span class="legend-text">FIFA Club World Cup</span></span>
+          <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: center; width: 100%;">
+            <span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span class="legend-text">UEFA Champions League</span></span>
+            <span class="legend-item"><span class="legend-vertical-bar legend-orange"></span><span class="legend-text">Europa League</span></span>
+            <span class="legend-item"><span class="legend-vertical-bar legend-green"></span><span class="legend-text">UEFA Conference League</span></span>
+            <span class="legend-item"><span class="legend-dashed-white"></span><span class="legend-text">FIFA Club World Cup</span></span>
+          </div>
         </div>
       </div>
     </div>
@@ -741,15 +743,28 @@
       if (!tbody) return;
       tbody.innerHTML = "";
 
-      LEAGUE_DATA.forEach(team => {
+      LEAGUE_DATA.forEach((team, idx) => {
         const row = tbody.insertRow();
         let barClass = "";
         if (team.pos >= 1 && team.pos <= 4) barClass = "blue-bar-vertical";
         else if (team.pos >= 5 && team.pos <= 8) barClass = "orange-bar-vertical";
         else if (team.pos >= 9 && team.pos <= 12) barClass = "green-bar-vertical";
-        if (team.pos === 1) row.classList.add("gold-row");
-        if (team.pos === 13 || team.pos === 14) row.classList.add("red-row");
-        if (team.pos === 8) row.classList.add("dashed-separator");
+        
+        // Add dashed lines based on position (not row background)
+        // Between pos 1 and 2: gold dashed line on row 1 (index 0)
+        if (team.pos === 1) {
+          row.classList.add("dashed-separator-gold");
+        }
+        // Between pos 8 and 9: white dashed line on row 8 (index 7)
+        else if (team.pos === 8) {
+          row.classList.add("dashed-separator-white");
+        }
+        // Between pos 12 and 13: red dashed line on row 12 (index 11)
+        else if (team.pos === 12) {
+          row.classList.add("dashed-separator-red");
+        }
+        
+        // No gold-row or red-row classes; all rows have default background (no extra class)
         
         const posCell = row.insertCell(0);
         posCell.className = "rank-cell";
@@ -768,7 +783,7 @@
           else clubHtml += '<span style="opacity:0.3; width:24px; display:inline-block;">—</span> ';
         }
         
-        // Add team icons for specific clubs (with new UUID filenames)
+        // Add team icons
         let iconHtml = '';
         if (team.club === "Arsenal") {
           iconHtml = `<img class="team-icon" src="a83ad75b-5eea-4b39-b693-c679a75b88b0_edit_8972390065297.jpg" alt="Arsenal badge" onerror="this.style.display='none'">`;
