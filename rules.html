@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>eFootball 412 · Rules</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 100%);
+      font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
+      padding: 0;
+      color: #f5f0ff;
+      min-height: 100vh;
+    }
+
+    .gold-navbar {
+      background: linear-gradient(135deg, #d4af37, #f5d742);
+      padding: 0.4rem 1.2rem;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 0.8rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-icon-btn {
+      background: #6a3bb5;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background 0.2s;
+      border: 1.5px solid #f5d742;
+      text-decoration: none;
+    }
+    .nav-icon-btn:hover {
+      transform: scale(1.05);
+      background: #7e4acf;
+    }
+    .chat-svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+    }
+
+    .hamburger-btn {
+      background: #6a3bb5;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background 0.2s;
+      border: 1.5px solid #f5d742;
+    }
+
+    .hamburger-btn:hover {
+      transform: scale(1.05);
+      background: #7e4acf;
+    }
+
+    .hamburger-btn span {
+      display: block;
+      width: 18px;
+      height: 2.5px;
+      background-color: #f5d742;
+      border-radius: 2px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: transparent;
+      z-index: 200;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .modal-overlay.active {
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      position: absolute;
+      top: 60px;
+      right: 20px;
+      background: linear-gradient(135deg, #f5d742, #e6c42c);
+      border-radius: 1.2rem;
+      padding: 1rem 1.2rem;
+      width: auto;
+      min-width: 200px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      animation: fadeInDown 0.2s ease;
+      border: 1px solid #6a3bb5;
+    }
+
+    @keyframes fadeInDown {
+      from {
+        transform: translateY(-15px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-content h3 {
+      font-size: 1.1rem;
+      color: #4a1d8c;
+      margin-bottom: 0.8rem;
+      font-weight: 800;
+      border-bottom: 1px solid #6a3bb5;
+      display: inline-block;
+      padding-bottom: 0.2rem;
+    }
+
+    .modal-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin: 0.8rem 0;
+    }
+
+    .modal-option {
+      background: rgba(106, 59, 181, 0.15);
+      padding: 0.4rem 0.8rem;
+      border-radius: 40px;
+      text-decoration: none;
+      color: #3c1a70;
+      font-weight: 700;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+      border: 1px solid #6a3bb5;
+      display: block;
+    }
+
+    .modal-option:hover {
+      background: #6a3bb5;
+      color: #f5d742;
+      transform: translateX(3px);
+    }
+
+    .close-modal {
+      background: #4a1d8c;
+      color: #f5d742;
+      border: none;
+      padding: 0.3rem 0.9rem;
+      border-radius: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      font-size: 0.7rem;
+    }
+
+    .close-modal:hover {
+      background: #2d0f5a;
+    }
+
+    .rules-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    .rules-card {
+      background: rgba(45, 25, 75, 0.85);
+      backdrop-filter: blur(10px);
+      border-radius: 2rem;
+      border: 1px solid rgba(245, 215, 66, 0.4);
+      overflow: hidden;
+      padding: 2rem;
+    }
+
+    .article-title {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #f5d742;
+      text-align: center;
+      margin: 1.5rem 0 1rem 0;
+      letter-spacing: 1px;
+    }
+
+    .article-title:first-of-type {
+      margin-top: 0;
+    }
+
+    .rule-text {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: #f0eaff;
+      margin-bottom: 0.75rem;
+      text-align: left;
+    }
+
+    .rule-sub {
+      margin-left: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: #e6d5ff;
+    }
+
+    .signature {
+      text-align: center;
+      margin-top: 2.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px dashed #f5d742;
+      font-size: 1rem;
+      color: #f5d742;
+      font-style: italic;
+    }
+
+    @media (max-width: 780px) {
+      .rules-container { padding: 1rem; }
+      .rules-card { padding: 1.2rem; }
+      .article-title { font-size: 1.5rem; }
+      .rule-text { font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="gold-navbar">
+    <a href="chat.html" class="nav-icon-btn" id="chatBtn">
+      <svg class="chat-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z" fill="#F5D742" stroke="#F5D742" stroke-width="1.5"/>
+        <circle cx="8" cy="10" r="1.5" fill="#6A3BB5"/>
+        <circle cx="12" cy="10" r="1.5" fill="#6A3BB5"/>
+        <circle cx="16" cy="10" r="1.5" fill="#6A3BB5"/>
+      </svg>
+    </a>
+    <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content">
+      <h3>TOURNAMENTS</h3>
+      <div class="modal-options">
+        <a href="fifa-club-world-cup.html" class="modal-option">FIFA CLUB WORLD CUP</a>
+        <a href="uefa-champions-league.html" class="modal-option">UEFA CHAMPIONS LEAGUE</a>
+        <a href="uefa-europa-league.html" class="modal-option">UEFA EUROPA LEAGUE</a>
+        <a href="uefa-super-league.html" class="modal-option">UEFA SUPER LEAGUE</a>
+        <a href="uefa-conference-league.html" class="modal-option">UEFA CONFERENCE LEAGUE</a>
+        <a href="player-titles.html" class="modal-option">PLAYER TITLES</a>
+        <a href="rules.html" class="modal-option">RULES</a>
+        <a href="calendar.html" class="modal-option">CALENDAR</a>
+      </div>
+      <button class="close-modal" id="closeModalBtn">CLOSE</button>
+    </div>
+  </div>
+
+  <div class="rules-container">
+    <div class="rules-card">
+      <div class="article-title">ARTICLE 1. LEAGUE STRUCTURE</div>
+      <div class="rule-text">1.1 The league shall consist of ten (14) teams.</div>
+      <div class="rule-text">1.2 The competition shall be conducted in a double round-robin format.</div>
+      <div class="rule-text">1.3 Each team shall play every other team twice — once home and once away — resulting in twenty six (26) matches per team.</div>
+      <div class="rule-text">1.4 The official fixture list shall be provided to all participants and shall serve as the binding schedule.</div>
+
+      <div class="article-title">ARTICLE 2. MATCH SCHEDULING AND COMPLETION</div>
+      <div class="rule-text">2.1 Participants are responsible for arranging their matches through the official group chat.</div>
+      <div class="rule-text">2.2 Every match must be completed and the final result posted in the group chat no later than 23:00 (11:00 PM) on the scheduled matchday.</div>
+      <div class="rule-text">2.3 No-Show and Forfeit Procedure</div>
+      <div class="rule-text rule-sub">a) If one participant actively attempts to communicate and arrange the match but the opponent fails to respond or appear by the 23:00 deadline, the match shall be awarded as a 3-0 victory to the communicating participant. The winning participant shall receive 3 points, and the defaulting participant shall receive 0 points and a 0-3 defeat.</div>
+      <div class="rule-text rule-sub">b) If neither participant initiates communication or makes any effort to schedule or play the match by 23:00 on the scheduled day, the match shall be recorded as a 0-0 result with no points awarded to either team. Both teams receive 0 points.</div>
+
+      <div class="article-title">ARTICLE 3. POINTS SYSTEM</div>
+      <div class="rule-text">3.1 A win shall award three (3) points to the victorious team.</div>
+      <div class="rule-text">3.2 A draw shall award one (1) point to each team.</div>
+      <div class="rule-text">3.3 A loss shall award zero (0) points.</div>
+
+      <div class="article-title">ARTICLE 4. TIEBREAKER RULES</div>
+      <div class="rule-text">In the event two or more teams finish with the same number of points, the following tiebreakers shall be applied in this order:</div>
+      <div class="rule-text rule-sub">4.1 Goal Difference (GD)</div>
+      <div class="rule-text rule-sub">4.2 Total Goals Scored (GF)</div>
+      <div class="rule-text rule-sub">4.3 Head-to-head points earned in matches between the tied teams</div>
+      <div class="rule-text rule-sub">4.4 Head-to-head Goal Difference</div>
+      <div class="rule-text rule-sub">4.5 Final decision by the CEOs.</div>
+
+      <div class="article-title">ARTICLE 5. TEAM SELECTION AND ELIGIBILITY</div>
+      <div class="rule-text">5.1 Participants may select any official real-world club team for the duration of the season.</div>
+      <div class="rule-text">5.2 The use of Dream Teams, fantasy squads, Icon teams, or any squads containing custom or created players is strictly prohibited.</div>
+      <div class="rule-text">5.3 Only authentic, official real-world club squads are permitted.</div>
+      <div class="rule-text">5.4 Once a team is selected, it cannot be changed or swapped for the remainder of the season. Doing so forcefully may result in Point Deductions</div>
+
+      <div class="signature">If you object with any of the rules kindly state your objection in the group and it will be addressed. Visca Barça</div>
+    </div>
+  </div>
+
+  <script>
+    // Modal functionality (same as home page)
+    const hamburger = document.getElementById("hamburgerBtn");
+    const modalOverlay = document.getElementById("modalOverlay");
+    const closeBtn = document.getElementById("closeModalBtn");
+    function openModal() { modalOverlay.classList.add("active"); }
+    function closeModal() { modalOverlay.classList.remove("active"); }
+    if (hamburger) hamburger.addEventListener("click", openModal);
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+    modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
+  </script>
+</body>
+</html>
