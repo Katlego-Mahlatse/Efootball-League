@@ -407,6 +407,7 @@
       object-fit: contain;
       vertical-align: middle;
       margin: 0 4px;
+      display: inline-block;
     }
 
     .form-circles {
@@ -494,6 +495,16 @@
       padding: 0.2rem 0.6rem;
       border-radius: 20px;
       margin-left: 8px;
+    }
+    .result-with-forfeit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .forfeit-text {
+      font-size: 0.7rem;
+      color: #f5d742;
+      margin-top: 4px;
     }
 
     @media (max-width: 780px) {
@@ -589,7 +600,7 @@
       <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
       <div class="card-content" id="resultsContent">
         <div class="scrollable-table">
-          <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></tr>
+          <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></table>
         </div>
       </div>
     </div>
@@ -653,7 +664,6 @@
       "Newcastle": "~Oratile"
     };
 
-    // Icon mapping for fixtures/results (same as table icons)
     function getTeamIconHtml(teamName, className = "inline-team-icon") {
       const iconMap = {
         "Arsenal": "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png",
@@ -679,7 +689,7 @@
       if (iconMap[teamName]) {
         return `<img class="${className}" src="${iconMap[teamName]}" alt="${teamName}" onerror="this.style.display='none'">`;
       }
-      return teamName; // fallback text for Juventus (no icon)
+      return teamName;
     }
 
     const allResultsOrder = [
@@ -952,7 +962,7 @@
         const row = tbody.insertRow();
         row.insertCell(0).innerHTML = `<span class="date-badge">📅 ${f.date}</span>`;
         
-        // Show only icons (no team names)
+        // Side by side icons with "vs" in between (inline)
         const homeIcon = getTeamIconHtml(f.home, "inline-team-icon");
         const awayIcon = getTeamIconHtml(f.away, "inline-team-icon");
         row.insertCell(1).innerHTML = `${homeIcon} <span style="margin:0 8px;">vs</span> ${awayIcon}`;
@@ -977,7 +987,7 @@
       RESULTS_DATA.forEach(r => {
         const row = tbody.insertRow();
         let processedText = r.matchText;
-        // Replace all team names that have icons (including full names) with their icon, preserving scores and parentheses.
+        // Replace team names with icons
         const teamsToReplace = [
           "Arsenal", "AC Milan", "PSG", "Barcelona", "Inter Milan", "Atletico Madrid", "Newcastle United",
           "Napoli", "Chelsea", "Dortmund", "Real Madrid", "Man City", "Liverpool", "Atletico", "Newcastle",
@@ -987,7 +997,19 @@
           const regex = new RegExp(`\\b${team.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
           processedText = processedText.replace(regex, getTeamIconHtml(team, "inline-team-icon"));
         });
-        row.insertCell(0).innerHTML = `<strong>${processedText}</strong>`;
+        // Check if this is a forfeit match (contains "Forfeited", "No Contest", or "F - F")
+        const isForfeit = r.matchText.includes("Forfeited") || r.matchText.includes("No Contest") || r.matchText.includes("F - F");
+        if (isForfeit) {
+          // Extract forfeit reason
+          let forfeitText = "";
+          if (r.matchText.includes("No Contest")) forfeitText = "No Contest";
+          else if (r.matchText.includes("Forfeited - No Reply")) forfeitText = "Forfeited - No Reply";
+          else if (r.matchText.includes("Forfeited - Late Reply")) forfeitText = "Forfeited - Late Reply";
+          else if (r.matchText.includes("F - F")) forfeitText = "No Contest";
+          row.insertCell(0).innerHTML = `<div class="result-with-forfeit"><strong>${processedText}</strong><div class="forfeit-text">${forfeitText}</div></div>`;
+        } else {
+          row.insertCell(0).innerHTML = `<strong>${processedText}</strong>`;
+        }
         row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>`;
       });
     }
