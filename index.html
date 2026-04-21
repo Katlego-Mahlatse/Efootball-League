@@ -552,6 +552,8 @@
         <a href="uefa-super-league.html" class="modal-option">UEFA SUPER LEAGUE</a>
         <a href="uefa-conference-league.html" class="modal-option">UEFA CONFERENCE LEAGUE</a>
         <a href="player-titles.html" class="modal-option">PLAYER TITLES</a>
+        <a href="rules.html" class="modal-option">RULES</a>
+        <a href="calendar.html" class="modal-option">CALENDAR</a>
       </div>
       <button class="close-modal" id="closeModalBtn">CLOSE</button>
     </div>
@@ -607,7 +609,7 @@
       <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
       <div class="card-content" id="resultsContent">
         <div class="scrollable-table">
-          <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></table>
+          <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></td>
         </div>
       </div>
     </div>
@@ -631,13 +633,7 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // Updated LEAGUE_DATA after MD9 results:
-    // Newcastle 1-2 Atletico: Newcastle loss (0 pts), GD -1 (was -23 -> -24), P+1; Atletico win (+3 pts), GD +1 (was -10 -> -9), P+1.
-    // Arsenal 1-4 Chelsea: Arsenal loss (0 pts), GD -3 (was +4 -> +1), P+1; Chelsea win (+3 pts), GD +3 (was +1 -> +4), P+1.
-    // Previous positions before MD9: Real Madrid 24, Liverpool 22, Dortmund 18, Man City 16, Barcelona 16, Arsenal 11, PSG 11, AC Milan 10, Napoli 6, Chelsea 5, Juventus 3, Newcastle 3, Atletico 1, Inter -5.
-    // After updates: Chelsea now 8 pts, Arsenal 11 pts (unchanged but GD down), Atletico 4 pts, Newcastle 3 pts (GD -24).
-    // Recalculate order: Real Madrid 24, Liverpool 22, Dortmund 18, Man City 16, Barcelona 16, PSG 11, Arsenal 11, AC Milan 10, Chelsea 8, Napoli 6, Atletico 4, Juventus 3, Newcastle 3, Inter -5.
-    // Tie-break: PSG vs Arsenal both 11 pts -> PSG GD -7, Arsenal GD +1 -> Arsenal 6th, PSG 7th.
+    // Updated LEAGUE_DATA after MD9 results (including all played matches)
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 8, gd: 15, pts: 24 },
       { pos: 2, club: "Liverpool", p: 8, gd: 26, pts: 22 },
@@ -698,7 +694,8 @@
         "Newcastle United": "IMG_20260421_093046.png",
         "FC Barcelona": "IMG_20260421_085117.jpg",
         "Paris Saint-Germain": "4dea795d-a516-46ae-bd34-07a784693d80.png",
-        "Borussia Dortmund": "01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg"
+        "Borussia Dortmund": "01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg",
+        "Juventus": "IMG_20260421_151224.jpg"
       };
       if (iconMap[teamName]) {
         return `<img class="${className}" src="${iconMap[teamName]}" alt="${teamName}" onerror="this.style.display='none'">`;
@@ -706,7 +703,7 @@
       return teamName;
     }
 
-    // Updated results order with new MD9 results
+    // Updated results order with all MD9 results (including missing ones)
     const allResultsOrder = [
       { type: "win", winner: "Real Madrid", loser: "Napoli" },
       { type: "draw", teams: ["Arsenal","AC Milan"] },
@@ -753,7 +750,7 @@
       return arr.length ? arr[arr.length-1] : null;
     }
 
-    // Updated fixtureList: removed Newcastle vs Atletico and Arsenal vs Chelsea from MD9
+    // Updated fixtureList: removed all MD9 fixtures that have been played
     const fixtureList = [
       { md: 9, home: "Juventus", away: "Real Madrid" }, { md: 9, home: "Borussia Dortmund", away: "Manchester City" }, { md: 9, home: "Napoli", away: "Liverpool" },
       { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Juventus", away: "Manchester City" }, { md: 10, home: "Inter Milan", away: "Newcastle United" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Atlético Madrid", away: "Chelsea" }, { md: 10, home: "Napoli", away: "Arsenal" },
@@ -882,6 +879,8 @@
           iconHtml = `<img class="team-icon" src="9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg" alt="Man City badge" onerror="this.style.display='none'">`;
         } else if (team.club === "Liverpool") {
           iconHtml = `<img class="team-icon" src="269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg" alt="Liverpool badge" onerror="this.style.display='none'">`;
+        } else if (team.club === "Juventus") {
+          iconHtml = `<img class="team-icon" src="IMG_20260421_151224.jpg" alt="Juventus badge" onerror="this.style.display='none'">`;
         }
         
         clubHtml += iconHtml + ' ' + displayName;
@@ -1019,7 +1018,7 @@
         const teamsToReplace = [
           "Arsenal", "AC Milan", "PSG", "Barcelona", "Inter Milan", "Atletico Madrid", "Newcastle United",
           "Napoli", "Chelsea", "Dortmund", "Real Madrid", "Man City", "Liverpool", "Atletico", "Newcastle",
-          "Manchester City", "FC Barcelona", "Paris Saint-Germain", "Borussia Dortmund"
+          "Manchester City", "FC Barcelona", "Paris Saint-Germain", "Borussia Dortmund", "Juventus"
         ];
         teamsToReplace.forEach(team => {
           const regex = new RegExp(`\\b${team.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
