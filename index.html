@@ -435,7 +435,8 @@
     .circle-win { background-color: #22c55e; color: white; border: none; }
     .circle-loss { background-color: #ef4444; color: white; border: none; }
     .circle-draw { background-color: #6b7280; color: white; border: none; }
-    .circle-forfeit { background-color: #ef4444; color: white; border: none; }
+    .circle-forfeit-win { background-color: #22c55e; color: white; border: none; }
+    .circle-forfeit-loss { background-color: #ef4444; color: white; border: none; }
     .circle-blank { background-color: transparent; border: 1px solid #a0a0a0; color: transparent; }
     .arrow-up { color: #22c55e; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
     .arrow-down { color: #ef4444; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
@@ -600,7 +601,7 @@
           <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
         </div>
         <div class="scrollable-table">
-          <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
+          <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></td>
         </div>
       </div>
     </div>
@@ -633,11 +634,11 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // Updated LEAGUE_DATA after Manchester City 2-0 Dortmund (MD9)
-    // Previous: Man City P8 GD8 Pts16; Dortmund P8 GD11 Pts18
-    // After: Man City +3 -> P9 GD10 Pts19; Dortmund 0 -> P9 GD9 Pts18
+    // Updated LEAGUE_DATA after Real Madrid 3-0 Juventus (forfeit)
+    // Real Madrid: P9, GD15, Pts27 (previously 24 +3)
+    // Juventus: P9, GD -7, Pts3 (previously -4, -3 from forfeit)
     const LEAGUE_DATA = [
-      { pos: 1, club: "Real Madrid", p: 8, gd: 15, pts: 24 },
+      { pos: 1, club: "Real Madrid", p: 9, gd: 15, pts: 27 },
       { pos: 2, club: "Liverpool", p: 9, gd: 25, pts: 22 },
       { pos: 3, club: "Man City", p: 9, gd: 10, pts: 19 },
       { pos: 4, club: "Dortmund", p: 9, gd: 9, pts: 18 },
@@ -648,7 +649,7 @@
       { pos: 9, club: "Chelsea", p: 9, gd: 4, pts: 8 },
       { pos: 10, club: "Napoli", p: 9, gd: 4, pts: 9 },
       { pos: 11, club: "Atletico", p: 9, gd: -9, pts: 4 },
-      { pos: 12, club: "Juventus", p: 8, gd: -4, pts: 3 },
+      { pos: 12, club: "Juventus", p: 9, gd: -7, pts: 3 },
       { pos: 13, club: "Newcastle", p: 9, gd: -24, pts: 3 },
       { pos: 14, club: "Inter Milan", p: 9, gd: -1, pts: -5 }
     ];
@@ -705,7 +706,7 @@
       return teamName;
     }
 
-    // Updated results order with Manchester City 2-0 Dortmund
+    // Updated results order with forfeit win for Real Madrid over Juventus
     const allResultsOrder = [
       { type: "win", winner: "Real Madrid", loser: "Napoli" },
       { type: "draw", teams: ["Arsenal","AC Milan"] },
@@ -726,7 +727,8 @@
       { type: "win", winner: "Atletico", loser: "Newcastle" },
       { type: "win", winner: "Chelsea", loser: "Arsenal" },
       { type: "win", winner: "Napoli", loser: "Liverpool" },
-      { type: "win", winner: "Man City", loser: "Dortmund" }   // MD9 Man City vs Dortmund
+      { type: "win", winner: "Man City", loser: "Dortmund" },
+      { type: "forfeit_win", winner: "Real Madrid", loser: "Juventus" }   // Special forfeit win/loss
     ];
 
     const teamResults = {};
@@ -739,6 +741,9 @@
         if (teamResults[res.loser]) teamResults[res.loser].push("L");
       } else if (res.type === "forfeit") {
         res.teams.forEach(t => { if (teamResults[t]) teamResults[t].push("F"); });
+      } else if (res.type === "forfeit_win") {
+        if (teamResults[res.winner]) teamResults[res.winner].push("WF");
+        if (teamResults[res.loser]) teamResults[res.loser].push("LF");
       }
     });
 
@@ -754,9 +759,8 @@
       return arr.length ? arr[arr.length-1] : null;
     }
 
-    // Updated fixtureList: removed Borussia Dortmund vs Manchester City from MD9
+    // Updated fixtureList: removed Juventus vs Real Madrid (MD9)
     const fixtureList = [
-      { md: 9, home: "Juventus", away: "Real Madrid" },
       { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Juventus", away: "Manchester City" }, { md: 10, home: "Inter Milan", away: "Newcastle United" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Atlético Madrid", away: "Chelsea" }, { md: 10, home: "Napoli", away: "Arsenal" },
       { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
       { md: 12, home: "FC Barcelona", away: "Manchester City" }, { md: 12, home: "AC Milan", away: "Newcastle United" }, { md: 12, home: "Real Madrid", away: "Liverpool" }, { md: 12, home: "Paris Saint-Germain", away: "Chelsea" }, { md: 12, home: "Juventus", away: "Arsenal" }, { md: 12, home: "Inter Milan", away: "Napoli" }, { md: 12, home: "Borussia Dortmund", away: "Atlético Madrid" },
@@ -782,8 +786,8 @@
     }
 
     const fixturesWithDates = [];
-    let currentDate = new Date(2026, 3, 21);
-    let lastMd = null;
+    let currentDate = new Date(2026, 3, 22); // MD10 starts April 22
+    let lastMd = 10;
     for (let f of fixtureList) {
       if (lastMd === null) lastMd = f.md;
       else if (f.md !== lastMd) { currentDate.setDate(currentDate.getDate()+1); lastMd = f.md; }
@@ -794,6 +798,7 @@
     }
 
     const RESULTS_DATA = [
+      { matchText: "Real Madrid 3 - 0 Juventus (Forfeited - No Reply)", md: 9 },
       { matchText: "Manchester City 2 - 0 Dortmund", md: 9 },
       { matchText: "Liverpool 1 - 2 Napoli", md: 9 },
       { matchText: "Newcastle United 1 - 2 Atletico Madrid", md: 9 },
@@ -855,6 +860,8 @@
           if (latest === "W") clubHtml += '<span class="arrow-up">↑</span> ';
           else if (latest === "L") clubHtml += '<span class="arrow-down">↓</span> ';
           else if (latest === "D") clubHtml += '<span class="arrow-side">→</span> ';
+          else if (latest === "WF") clubHtml += '<span class="arrow-up">↑</span> ';
+          else if (latest === "LF") clubHtml += '<span class="arrow-down">↓</span> ';
           else clubHtml += '<span style="opacity:0.3; width:24px; display:inline-block;">—</span> ';
         }
         
@@ -910,7 +917,9 @@
             if (res === "W") { circle.classList.add("circle-win"); circle.innerHTML = "✓"; }
             else if (res === "L") { circle.classList.add("circle-loss"); circle.innerHTML = "✗"; }
             else if (res === "D") { circle.classList.add("circle-draw"); circle.innerHTML = "–"; }
-            else if (res === "F") { circle.classList.add("circle-forfeit"); circle.innerHTML = "F"; }
+            else if (res === "F") { circle.classList.add("circle-loss"); circle.innerHTML = "F"; }
+            else if (res === "WF") { circle.classList.add("circle-forfeit-win"); circle.innerHTML = "F"; }
+            else if (res === "LF") { circle.classList.add("circle-forfeit-loss"); circle.innerHTML = "F"; }
             else { circle.classList.add("circle-blank"); circle.innerHTML = ""; }
             container.appendChild(circle);
           });
