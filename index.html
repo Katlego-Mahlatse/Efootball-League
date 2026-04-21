@@ -631,24 +631,27 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // Updated LEAGUE_DATA after Barcelona 0-0 PSG (MD9)
-    // Previous: Barcelona P8 GD0 Pts15; PSG P8 GD-7 Pts10
-    // After: Barcelona +1 -> P9 GD0 Pts16; PSG +1 -> P9 GD-7 Pts11
-    // Positions: Real Madrid still 1st (24), Liverpool 22, Dortmund 18, Man City 16, Barcelona 16 (but GD0 vs Man City GD+8 -> Man City 4th, Barcelona 5th), Arsenal 11, PSG 11 (PSG moves above AC Milan? AC Milan has 10 pts, so PSG 7th, AC Milan 8th)
+    // Updated LEAGUE_DATA after MD9 results:
+    // Newcastle 1-2 Atletico: Newcastle loss (0 pts), GD -1 (was -23 -> -24), P+1; Atletico win (+3 pts), GD +1 (was -10 -> -9), P+1.
+    // Arsenal 1-4 Chelsea: Arsenal loss (0 pts), GD -3 (was +4 -> +1), P+1; Chelsea win (+3 pts), GD +3 (was +1 -> +4), P+1.
+    // Previous positions before MD9: Real Madrid 24, Liverpool 22, Dortmund 18, Man City 16, Barcelona 16, Arsenal 11, PSG 11, AC Milan 10, Napoli 6, Chelsea 5, Juventus 3, Newcastle 3, Atletico 1, Inter -5.
+    // After updates: Chelsea now 8 pts, Arsenal 11 pts (unchanged but GD down), Atletico 4 pts, Newcastle 3 pts (GD -24).
+    // Recalculate order: Real Madrid 24, Liverpool 22, Dortmund 18, Man City 16, Barcelona 16, PSG 11, Arsenal 11, AC Milan 10, Chelsea 8, Napoli 6, Atletico 4, Juventus 3, Newcastle 3, Inter -5.
+    // Tie-break: PSG vs Arsenal both 11 pts -> PSG GD -7, Arsenal GD +1 -> Arsenal 6th, PSG 7th.
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 8, gd: 15, pts: 24 },
       { pos: 2, club: "Liverpool", p: 8, gd: 26, pts: 22 },
       { pos: 3, club: "Dortmund", p: 8, gd: 11, pts: 18 },
       { pos: 4, club: "Man City", p: 8, gd: 8, pts: 16 },
       { pos: 5, club: "Barcelona", p: 9, gd: 0, pts: 16 },
-      { pos: 6, club: "Arsenal", p: 8, gd: 4, pts: 11 },
+      { pos: 6, club: "Arsenal", p: 9, gd: 1, pts: 11 },
       { pos: 7, club: "PSG", p: 9, gd: -7, pts: 11 },
       { pos: 8, club: "AC Milan", p: 9, gd: -4, pts: 10 },
-      { pos: 9, club: "Napoli", p: 8, gd: 3, pts: 6 },
-      { pos: 10, club: "Chelsea", p: 8, gd: 1, pts: 5 },
-      { pos: 11, club: "Juventus", p: 8, gd: -4, pts: 3 },
-      { pos: 12, club: "Newcastle", p: 8, gd: -23, pts: 3 },
-      { pos: 13, club: "Atletico", p: 8, gd: -10, pts: 1 },
+      { pos: 9, club: "Chelsea", p: 9, gd: 4, pts: 8 },
+      { pos: 10, club: "Napoli", p: 8, gd: 3, pts: 6 },
+      { pos: 11, club: "Atletico", p: 9, gd: -9, pts: 4 },
+      { pos: 12, club: "Juventus", p: 8, gd: -4, pts: 3 },
+      { pos: 13, club: "Newcastle", p: 9, gd: -24, pts: 3 },
       { pos: 14, club: "Inter Milan", p: 9, gd: -1, pts: -5 }
     ];
 
@@ -703,7 +706,7 @@
       return teamName;
     }
 
-    // Updated results order with Barcelona 0-0 PSG (MD9 draw)
+    // Updated results order with new MD9 results
     const allResultsOrder = [
       { type: "win", winner: "Real Madrid", loser: "Napoli" },
       { type: "draw", teams: ["Arsenal","AC Milan"] },
@@ -720,7 +723,9 @@
       { type: "draw", teams: ["Inter Milan","PSG"] },
       { type: "forfeit", teams: ["Atletico","AC Milan"] },
       { type: "win", winner: "AC Milan", loser: "Inter Milan" },
-      { type: "draw", teams: ["Barcelona","PSG"] }   // MD9 Barcelona vs PSG
+      { type: "draw", teams: ["Barcelona","PSG"] },
+      { type: "win", winner: "Atletico", loser: "Newcastle" },
+      { type: "win", winner: "Chelsea", loser: "Arsenal" }
     ];
 
     const teamResults = {};
@@ -748,9 +753,9 @@
       return arr.length ? arr[arr.length-1] : null;
     }
 
-    // Updated fixtureList: removed FC Barcelona vs Paris Saint-Germain from MD9
+    // Updated fixtureList: removed Newcastle vs Atletico and Arsenal vs Chelsea from MD9
     const fixtureList = [
-      { md: 9, home: "Juventus", away: "Real Madrid" }, { md: 9, home: "Borussia Dortmund", away: "Manchester City" }, { md: 9, home: "Atlético Madrid", away: "Newcastle United" }, { md: 9, home: "Napoli", away: "Liverpool" }, { md: 9, home: "Arsenal", away: "Chelsea" },
+      { md: 9, home: "Juventus", away: "Real Madrid" }, { md: 9, home: "Borussia Dortmund", away: "Manchester City" }, { md: 9, home: "Napoli", away: "Liverpool" },
       { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Juventus", away: "Manchester City" }, { md: 10, home: "Inter Milan", away: "Newcastle United" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Atlético Madrid", away: "Chelsea" }, { md: 10, home: "Napoli", away: "Arsenal" },
       { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
       { md: 12, home: "FC Barcelona", away: "Manchester City" }, { md: 12, home: "AC Milan", away: "Newcastle United" }, { md: 12, home: "Real Madrid", away: "Liverpool" }, { md: 12, home: "Paris Saint-Germain", away: "Chelsea" }, { md: 12, home: "Juventus", away: "Arsenal" }, { md: 12, home: "Inter Milan", away: "Napoli" }, { md: 12, home: "Borussia Dortmund", away: "Atlético Madrid" },
@@ -788,6 +793,8 @@
     }
 
     const RESULTS_DATA = [
+      { matchText: "Newcastle United 1 - 2 Atletico Madrid", md: 9 },
+      { matchText: "Arsenal 1 - 4 Chelsea", md: 9 },
       { matchText: "Barcelona 0 - 0 PSG", md: 9 },
       { matchText: "Inter Milan 1 - 2 AC Milan", md: 9 },
       { matchText: "Atletico Madrid F - F AC Milan (No Contest)", md: 8 },
