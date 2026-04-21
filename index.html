@@ -357,7 +357,6 @@
     .orange-bar-vertical { background-color: #f97316; }
     .green-bar-vertical { background-color: #22c55e; }
     
-    /* Removed gold-row and red-row classes, now all rows have default background */
     .dashed-separator-gold { border-bottom: 2px dashed #d4af37 !important; }
     .dashed-separator-white { border-bottom: 2px dashed #ffffff !important; }
     .dashed-separator-red { border-bottom: 2px dashed #ef4444 !important; }
@@ -513,7 +512,6 @@
       <div class="dots-container" id="dotsContainer"></div>
     </div>
 
-    <!-- Premier League card with 3-dot menu -->
     <div class="card" style="margin-bottom:2rem">
       <div class="card-header" style="cursor:default;">
         <div class="card-header-left">
@@ -541,7 +539,6 @@
       </div>
     </div>
 
-    <!-- FIXTURES CARD -->
     <div class="card">
       <div class="card-header" id="fixturesHeader"><div class="card-header-left"><h2>FIXTURES</h2></div><div class="toggle-icon" id="fixturesToggleIcon">▼</div></div>
       <div class="card-content" id="fixturesContent">
@@ -555,7 +552,6 @@
       </div>
     </div>
 
-    <!-- RESULTS CARD -->
     <div class="card">
       <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
       <div class="card-content" id="resultsContent">
@@ -569,7 +565,6 @@
   </div>
 
   <script>
-    // ----- Slideshow -----
     const images = ["images - 2026-04-19T121231.816.jpeg","images - 2026-04-19T155746.715.jpeg","37686bb3-06ce-401b-a022-026933c165e7.jpeg","12871.jpg","1f157df7-2054-4a9d-aa14-b9941ef4a743.jpeg"];
     let currentIndex = 0;
     const slideshowImg = document.getElementById("slideshow-img");
@@ -587,7 +582,6 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // ----- LEAGUE DATA (final after MD8 with Atletico vs AC Milan forfeit) -----
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 8, gd: 15, pts: 24 },
       { pos: 2, club: "Liverpool", p: 8, gd: 26, pts: 22 },
@@ -605,30 +599,30 @@
       { pos: 14, club: "Inter Milan", p: 8, gd: 0, pts: -5 }
     ];
 
-    // Player mapping
     const playerMap = {
       "FC Barcelona": "~Rea🫡",
+      "Barcelona": "~Rea🫡",
       "Inter Milan": "Mali",
       "Borussia Dortmund": "~Qhawe 🤍",
+      "Dortmund": "~Qhawe 🤍",
       "Juventus": "~Lawree ✨",
       "Atlético Madrid": "~Stalker.",
       "Paris Saint-Germain": "~MJ",
+      "PSG": "~MJ",
       "Napoli": "~PrettyBoy Tendancies. 👅",
       "Real Madrid": "~Karabo",
       "Arsenal": "Kath",
       "AC Milan": "~Ntsiki",
       "Chelsea": "~Zazo",
       "Manchester City": "gry",
+      "Man City": "gry",
       "Liverpool": "🅿️",
       "Newcastle United": "~Oratile",
       "Atletico": "~Stalker.",
-      "Newcastle": "~Oratile",
-      "Man City": "gry"
+      "Newcastle": "~Oratile"
     };
 
-    // ----- All results in chronological order including MD8 forfeit -----
     const allResultsOrder = [
-      // MD7
       { type: "win", winner: "Real Madrid", loser: "Napoli" },
       { type: "draw", teams: ["Arsenal","AC Milan"] },
       { type: "win", winner: "Liverpool", loser: "Newcastle" },
@@ -636,7 +630,6 @@
       { type: "win", winner: "Dortmund", loser: "Juventus" },
       { type: "win", winner: "PSG", loser: "Atletico" },
       { type: "win", winner: "Barcelona", loser: "Inter Milan" },
-      // MD8
       { type: "win", winner: "Barcelona", loser: "Juventus" },
       { type: "win", winner: "Napoli", loser: "Man City" },
       { type: "win", winner: "Real Madrid", loser: "Dortmund" },
@@ -646,7 +639,6 @@
       { type: "forfeit", teams: ["Atletico","AC Milan"] }
     ];
 
-    // Build teamResults array
     const teamResults = {};
     LEAGUE_DATA.forEach(t => { teamResults[t.club] = []; });
     allResultsOrder.forEach(res => {
@@ -672,7 +664,6 @@
       return arr.length ? arr[arr.length-1] : null;
     }
 
-    // ----- FIXTURES (full list with MD8 removed) -----
     const fixtureList = [
       { md: 9, home: "FC Barcelona", away: "Paris Saint-Germain" }, { md: 9, home: "Juventus", away: "Real Madrid" }, { md: 9, home: "Inter Milan", away: "AC Milan" }, { md: 9, home: "Borussia Dortmund", away: "Manchester City" }, { md: 9, home: "Atlético Madrid", away: "Newcastle United" }, { md: 9, home: "Napoli", away: "Liverpool" }, { md: 9, home: "Arsenal", away: "Chelsea" },
       { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Juventus", away: "Manchester City" }, { md: 10, home: "Inter Milan", away: "Newcastle United" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Atlético Madrid", away: "Chelsea" }, { md: 10, home: "Napoli", away: "Arsenal" },
@@ -700,7 +691,7 @@
     }
 
     const fixturesWithDates = [];
-    let currentDate = new Date(2026, 3, 20);
+    let currentDate = new Date(2026, 3, 21); // April 21 for MD9 (fixed)
     let lastMd = null;
     for (let f of fixtureList) {
       if (lastMd === null) lastMd = f.md;
@@ -732,7 +723,6 @@
     fixturesWithDates.forEach(f => { allTeamsSet.add(f.home); allTeamsSet.add(f.away); });
     const allTeams = Array.from(allTeamsSet).sort();
 
-    // UI state
     let currentView = "team";
     let showFormArrows = false;
     let showLast5 = true;
@@ -750,21 +740,9 @@
         else if (team.pos >= 5 && team.pos <= 8) barClass = "orange-bar-vertical";
         else if (team.pos >= 9 && team.pos <= 12) barClass = "green-bar-vertical";
         
-        // Add dashed lines based on position (not row background)
-        // Between pos 1 and 2: gold dashed line on row 1 (index 0)
-        if (team.pos === 1) {
-          row.classList.add("dashed-separator-gold");
-        }
-        // Between pos 8 and 9: white dashed line on row 8 (index 7)
-        else if (team.pos === 8) {
-          row.classList.add("dashed-separator-white");
-        }
-        // Between pos 12 and 13: red dashed line on row 12 (index 11)
-        else if (team.pos === 12) {
-          row.classList.add("dashed-separator-red");
-        }
-        
-        // No gold-row or red-row classes; all rows have default background (no extra class)
+        if (team.pos === 1) row.classList.add("dashed-separator-gold");
+        else if (team.pos === 8) row.classList.add("dashed-separator-white");
+        else if (team.pos === 12) row.classList.add("dashed-separator-red");
         
         const posCell = row.insertCell(0);
         posCell.className = "rank-cell";
@@ -783,7 +761,6 @@
           else clubHtml += '<span style="opacity:0.3; width:24px; display:inline-block;">—</span> ';
         }
         
-        // Add team icons
         let iconHtml = '';
         if (team.club === "Arsenal") {
           iconHtml = `<img class="team-icon" src="a83ad75b-5eea-4b39-b693-c679a75b88b0_edit_8972390065297.jpg" alt="Arsenal badge" onerror="this.style.display='none'">`;
@@ -831,7 +808,6 @@
       });
     }
 
-    // 3-dot menu
     const threeDotBtn = document.getElementById("threeDotBtn");
     function closePopup() { if (popup) { popup.remove(); popup = null; } }
     function togglePopup(e) {
