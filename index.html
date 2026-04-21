@@ -368,11 +368,11 @@
     .team-name {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
     }
     .team-icon {
-      width: 22px;
-      height: 22px;
+      width: 44px;
+      height: 44px;
       object-fit: contain;
       vertical-align: middle;
       background: transparent;
@@ -482,7 +482,7 @@
       .filter-container { flex-direction: column; }
       .circle-result { width: 14px; height: 14px; font-size: 7px; }
       .arrow-up, .arrow-down, .arrow-side { font-size: 1rem; width: 18px; }
-      .team-icon { width: 18px; height: 18px; }
+      .team-icon { width: 32px; height: 32px; }
     }
   </style>
 </head>
@@ -585,7 +585,7 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // ----- LEAGUE DATA (final after MD8 with Atletico vs AC Milan forfeit added) -----
+    // ----- LEAGUE DATA (final after MD8 with Atletico vs AC Milan forfeit) -----
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 8, gd: 15, pts: 24 },
       { pos: 2, club: "Liverpool", p: 8, gd: 26, pts: 22 },
@@ -768,10 +768,20 @@
           else clubHtml += '<span style="opacity:0.3; width:24px; display:inline-block;">—</span> ';
         }
         
-        // Add team icon for Arsenal with new image
+        // Add team icons for specific clubs (with new UUID filenames)
         let iconHtml = '';
         if (team.club === "Arsenal") {
           iconHtml = `<img class="team-icon" src="a83ad75b-5eea-4b39-b693-c679a75b88b0_edit_8972390065297.jpg" alt="Arsenal badge" onerror="this.style.display='none'">`;
+        } else if (team.club === "Dortmund") {
+          iconHtml = `<img class="team-icon" src="01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg" alt="Dortmund badge" onerror="this.style.display='none'">`;
+        } else if (team.club === "Real Madrid") {
+          iconHtml = `<img class="team-icon" src="21259ea4-042f-48ff-902f-1e776d27fe58.jpeg" alt="Real Madrid badge" onerror="this.style.display='none'">`;
+        } else if (team.club === "Barcelona") {
+          iconHtml = `<img class="team-icon" src="8fab6b66-9141-4792-9d18-51104e2f2807.jpeg" alt="Barcelona badge" onerror="this.style.display='none'">`;
+        } else if (team.club === "Man City") {
+          iconHtml = `<img class="team-icon" src="9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg" alt="Man City badge" onerror="this.style.display='none'">`;
+        } else if (team.club === "Liverpool") {
+          iconHtml = `<img class="team-icon" src="269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg" alt="Liverpool badge" onerror="this.style.display='none'">`;
         }
         
         clubHtml += iconHtml + ' ' + displayName;
