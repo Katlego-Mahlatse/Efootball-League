@@ -384,9 +384,9 @@
     .circle-loss { background-color: #ef4444; color: white; border: none; }
     .circle-draw { background-color: #6b7280; color: white; border: none; }
     .circle-blank { background-color: transparent; border: 1px solid #a0a0a0; color: transparent; }
-    .arrow-up { color: #22c55e; font-size: 1.2rem; }
-    .arrow-down { color: #ef4444; font-size: 1.2rem; }
-    .arrow-side { color: #f5d742; font-size: 1.2rem; }
+    .arrow-up { color: #22c55e; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
+    .arrow-down { color: #ef4444; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
+    .arrow-side { color: #f5d742; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
 
     .legend-under-table {
       margin-top: 1rem;
@@ -467,6 +467,7 @@
       .scrollable-table { max-height: 400px; }
       .filter-container { flex-direction: column; }
       .circle-result { width: 14px; height: 14px; font-size: 7px; }
+      .arrow-up, .arrow-down, .arrow-side { font-size: 1rem; width: 18px; }
     }
   </style>
 </head>
@@ -509,7 +510,7 @@
         <div style="overflow-x:auto;">
           <table class="stats-table" id="leagueTable">
             <thead>
-              <tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th id="extraColHeader"></th></tr>
+              <tr><th>Pos</th><th>Form</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th></tr>
             </thead>
             <tbody id="leagueTableBody"></tbody>
           </table>
@@ -710,19 +711,14 @@
     fixturesWithDates.forEach(f => { allTeamsSet.add(f.home); allTeamsSet.add(f.away); });
     const allTeams = Array.from(allTeamsSet).sort();
 
-    // UI state
-    let currentView = "team";
-    let currentExtra = null;
+    // UI state for player/team toggle only
+    let currentView = "team";   // "team" or "player"
     let popup = null;
 
     function renderLeagueTable() {
       const tbody = document.getElementById("leagueTableBody");
-      const extraHeader = document.getElementById("extraColHeader");
       if (!tbody) return;
       tbody.innerHTML = "";
-      if (currentExtra === "last5") extraHeader.innerText = "Last 5";
-      else if (currentExtra === "form") extraHeader.innerText = "Form";
-      else extraHeader.innerText = "";
 
       LEAGUE_DATA.forEach(team => {
         const row = tbody.insertRow();
@@ -733,49 +729,53 @@
         if (team.pos === 1) row.classList.add("gold-row");
         if (team.pos === 13 || team.pos === 14) row.classList.add("red-row");
         if (team.pos === 8) row.classList.add("dashed-separator");
+        
+        // Position column
         const posCell = row.insertCell(0);
         posCell.className = "rank-cell";
         if (barClass) posCell.innerHTML = `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${team.pos}</div>`;
         else posCell.innerText = team.pos;
 
+        // Form arrow column (latest result)
+        const formCell = row.insertCell(1);
+        const latest = getLatest(team.club);
+        if (latest === "W") formCell.innerHTML = '<span class="arrow-up">↑</span>';
+        else if (latest === "L") formCell.innerHTML = '<span class="arrow-down">↓</span>';
+        else if (latest === "D") formCell.innerHTML = '<span class="arrow-side">→</span>';
+        else formCell.innerHTML = '<span style="opacity:0.3;">—</span>';
+
+        // Club name (or player name)
         let displayName = team.club;
         if (currentView === "player") displayName = playerMap[team.club] || team.club;
-        row.insertCell(1).innerHTML = `<div class="team-name">${displayName}</div>`;
-        row.insertCell(2).innerText = team.p;
+        row.insertCell(2).innerHTML = `<div class="team-name">${displayName}</div>`;
+
+        // P, GD, Pts
+        row.insertCell(3).innerText = team.p;
         const gdValue = team.gd;
-        row.insertCell(3).innerText = gdValue > 0 ? `+${gdValue}` : `${gdValue}`;
-        const ptsCell = row.insertCell(4);
+        row.insertCell(4).innerText = gdValue > 0 ? `+${gdValue}` : `${gdValue}`;
+        const ptsCell = row.insertCell(5);
         ptsCell.className = "pts-cell";
         ptsCell.innerText = team.pts;
 
-        const extraCell = row.insertCell(5);
-        if (currentExtra === "last5") {
-          const last5 = getLast5WithBlanks(team.club);
-          const container = document.createElement("div");
-          container.className = "form-circles";
-          last5.forEach(res => {
-            const circle = document.createElement("span");
-            circle.className = "circle-result";
-            if (res === "W") { circle.classList.add("circle-win"); circle.innerHTML = "✓"; }
-            else if (res === "L") { circle.classList.add("circle-loss"); circle.innerHTML = "✗"; }
-            else if (res === "D") { circle.classList.add("circle-draw"); circle.innerHTML = "–"; }
-            else { circle.classList.add("circle-blank"); circle.innerHTML = ""; }
-            container.appendChild(circle);
-          });
-          extraCell.appendChild(container);
-        } else if (currentExtra === "form") {
-          const latest = getLatest(team.club);
-          if (latest === "W") extraCell.innerHTML = '<span class="arrow-up">↑</span>';
-          else if (latest === "L") extraCell.innerHTML = '<span class="arrow-down">↓</span>';
-          else if (latest === "D") extraCell.innerHTML = '<span class="arrow-side">→</span>';
-          else extraCell.innerHTML = '—';
-        } else {
-          extraCell.innerHTML = '';
-        }
+        // Last 5 circles (always displayed)
+        const last5 = getLast5WithBlanks(team.club);
+        const container = document.createElement("div");
+        container.className = "form-circles";
+        last5.forEach(res => {
+          const circle = document.createElement("span");
+          circle.className = "circle-result";
+          if (res === "W") { circle.classList.add("circle-win"); circle.innerHTML = "✓"; }
+          else if (res === "L") { circle.classList.add("circle-loss"); circle.innerHTML = "✗"; }
+          else if (res === "D") { circle.classList.add("circle-draw"); circle.innerHTML = "–"; }
+          else { circle.classList.add("circle-blank"); circle.innerHTML = ""; }
+          container.appendChild(circle);
+        });
+        const last5Cell = row.insertCell(6);
+        last5Cell.appendChild(container);
       });
     }
 
-    // 3-dot menu toggle
+    // 3-dot menu toggle (only Players/Team View)
     const threeDotBtn = document.getElementById("threeDotBtn");
     function closePopup() { if (popup) { popup.remove(); popup = null; } }
     function togglePopup(e) {
@@ -787,13 +787,14 @@
       popup.style.position = "absolute";
       popup.style.top = (rect.bottom + window.scrollY + 5) + "px";
       popup.style.left = (rect.left + window.scrollX - 60) + "px";
-      const last5Opt = document.createElement("div"); last5Opt.innerText = "Last 5";
-      const playersOpt = document.createElement("div"); playersOpt.innerText = currentView === "team" ? "Players" : "Team View";
-      const formOpt = document.createElement("div"); formOpt.innerText = "Form";
-      last5Opt.onclick = () => { currentExtra = "last5"; renderLeagueTable(); closePopup(); };
-      playersOpt.onclick = () => { currentView = currentView === "team" ? "player" : "team"; renderLeagueTable(); closePopup(); };
-      formOpt.onclick = () => { currentExtra = "form"; renderLeagueTable(); closePopup(); };
-      popup.appendChild(last5Opt); popup.appendChild(playersOpt); popup.appendChild(formOpt);
+      const playersOpt = document.createElement("div");
+      playersOpt.innerText = currentView === "team" ? "Players" : "Team View";
+      playersOpt.onclick = () => {
+        currentView = currentView === "team" ? "player" : "team";
+        renderLeagueTable();
+        closePopup();
+      };
+      popup.appendChild(playersOpt);
       document.body.appendChild(popup);
     }
     threeDotBtn.addEventListener("click", togglePopup);
