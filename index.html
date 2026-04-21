@@ -195,13 +195,19 @@
       background-color: #6a3bb5;
     }
 
+    .two-col-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
     .card {
       background: rgba(45, 25, 75, 0.85);
       backdrop-filter: blur(10px);
       border-radius: 2rem;
       border: 1px solid rgba(245, 215, 66, 0.4);
       overflow: hidden;
-      margin-bottom: 1.5rem;
     }
 
     .card-header {
@@ -276,6 +282,7 @@
       max-height: 0;
     }
 
+    /* Independent scrollable tables */
     .scrollable-table {
       max-height: 500px;
       overflow-y: auto;
@@ -295,6 +302,7 @@
       border-radius: 10px;
     }
 
+    /* Filter controls */
     .filter-container {
       display: flex;
       gap: 1rem;
@@ -458,6 +466,7 @@
 
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
+      .two-col-grid { grid-template-columns: 1fr; gap: 1.5rem; }
       .stats-table th, .stats-table td { padding: 0.6rem 0.5rem; font-size: 0.75rem; }
       .card-header-left h2 { font-size: 1.3rem; }
       .dot { width: 6px; height: 6px; margin: 0 3px; }
@@ -493,8 +502,8 @@
       <div class="dots-container" id="dotsContainer"></div>
     </div>
 
-    <!-- Premier League card with 3-dot menu -->
-    <div class="card">
+    <!-- Single column for league table (removed the right-side "MATCHDAY 7 · COMPLETED" card) -->
+    <div class="card" style="margin-bottom:2rem">
       <div class="card-header" style="cursor:default;">
         <div class="card-header-left">
           <h2>PREMIER LEAGUE</h2>
@@ -508,7 +517,7 @@
               <tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th id="extraColHeader"></th></tr>
             </thead>
             <tbody id="leagueTableBody"></tbody>
-          追赶
+          </table>
         </div>
         <div class="legend-under-table">
           <span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span class="legend-text">UEFA Champions League</span></span>
@@ -519,26 +528,38 @@
       </div>
     </div>
 
-    <!-- FIXTURES CARD -->
-    <div class="card">
+    <!-- FIXTURES CARD with search and filter -->
+    <div class="card" style="margin-bottom:1.5rem">
       <div class="card-header" id="fixturesHeader"><div class="card-header-left"><h2>FIXTURES</h2></div><div class="toggle-icon" id="fixturesToggleIcon">▼</div></div>
       <div class="card-content" id="fixturesContent">
         <div class="filter-container">
           <input type="text" id="searchInput" class="filter-input" placeholder="🔍 Search team or player name...">
-          <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
+          <select id="teamFilter" class="filter-select">
+            <option value="">All Teams</option>
+          </select>
         </div>
         <div class="scrollable-table">
-          <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
+          <table class="inner-table" id="fixturesTable">
+            <thead>
+              <tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr>
+            </thead>
+            <tbody id="fixturesTableBody"></tbody>
+          </table>
         </div>
       </div>
     </div>
 
     <!-- RESULTS CARD -->
-    <div class="card">
+    <div class="card" style="margin-bottom:1.5rem">
       <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
       <div class="card-content" id="resultsContent">
         <div class="scrollable-table">
-          <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></table>
+          <table class="inner-table" id="resultsTable">
+            <thead>
+              <tr><th>Match</th><th>Match Day</th></tr>
+            </thead>
+            <tbody id="resultsTableBody"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -565,7 +586,7 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // ----- LEAGUE DATA (final after MD8) -----
+    // ----- LEAGUE STANDINGS after MD7 + all MD8 results (exactly as provided) -----
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 8, gd: 15, pts: 24 },
       { pos: 2, club: "Liverpool", p: 8, gd: 26, pts: 22 },
@@ -583,35 +604,45 @@
       { pos: 14, club: "Inter Milan", p: 8, gd: 0, pts: -5 }
     ];
 
-    // Player mapping
+    // Player mapping (club -> player name)
     const playerMap = {
-      "FC Barcelona": "~Rea🫡", "Inter Milan": "Mali", "Borussia Dortmund": "~Qhawe 🤍", "Juventus": "~Lawree ✨",
-      "Atlético Madrid": "~Stalker.", "Paris Saint-Germain": "~MJ", "Napoli": "~PrettyBoy Tendancies. 👅",
-      "Real Madrid": "~Karabo", "Arsenal": "Kath", "AC Milan": "~Ntsiki", "Chelsea": "~Zazo",
-      "Manchester City": "gry", "Liverpool": "🅿️", "Newcastle United": "~Oratile"
+      "FC Barcelona": "~Rea🫡",
+      "Inter Milan": "Mali",
+      "Borussia Dortmund": "~Qhawe 🤍",
+      "Juventus": "~Lawree ✨",
+      "Atlético Madrid": "~Stalker.",
+      "Paris Saint-Germain": "~MJ",
+      "Napoli": "~PrettyBoy Tendancies. 👅",
+      "Real Madrid": "~Karabo",
+      "Arsenal": "Kath",
+      "AC Milan": "~Ntsiki",
+      "Chelsea": "~Zazo",
+      "Manchester City": "gry",
+      "Liverpool": "🅿️",
+      "Newcastle United": "~Oratile",
+      "Atletico": "~Stalker."  // for the Atletico entry in LEAGUE_DATA
     };
-    const clubToPlayer = { ...playerMap, "Atletico": "~Stalker." };
 
-    // ----- Match results for form (chronological order: MD7 then MD8) -----
-    const rawResults = [
-      { match: "Real Madrid 3 - 2 Napoli", winner: "Real Madrid", loser: "Napoli", draw: false, md:7 },
-      { match: "Arsenal 0 - 0 AC Milan", winner: null, loser: null, draw: true, md:7, teams: ["Arsenal","AC Milan"] },
-      { match: "Liverpool 3 - 0 Newcastle United", winner: "Liverpool", loser: "Newcastle United", draw: false, md:7 },
-      { match: "Manchester City 1 - 1 Chelsea", winner: null, loser: null, draw: true, md:7, teams: ["Manchester City","Chelsea"] },
-      { match: "Dortmund 3 - 0 Juventus (Forfeited - No Reply)", winner: "Dortmund", loser: "Juventus", draw: false, md:7 },
-      { match: "PSG 3 - 0 Atletico Madrid (Forfeited - No Reply)", winner: "PSG", loser: "Atletico", draw: false, md:7 },
-      { match: "Barcelona 3 - 0 Inter Milan (Forfeited - Late Reply)", winner: "Barcelona", loser: "Inter Milan", draw: false, md:7 },
-      { match: "Barcelona 3 - 0 Juventus (Forfeited - No Reply)", winner: "Barcelona", loser: "Juventus", draw: false, md:8 },
-      { match: "Manchester City 0 - 1 Napoli", winner: "Napoli", loser: "Manchester City", draw: false, md:8 },
-      { match: "Real Madrid 1 - 0 Dortmund", winner: "Real Madrid", loser: "Dortmund", draw: false, md:8 },
-      { match: "Newcastle United 1 - 6 Arsenal", winner: "Arsenal", loser: "Newcastle United", draw: false, md:8 },
-      { match: "Liverpool 0 - 0 Chelsea", winner: null, loser: null, draw: true, md:8, teams: ["Liverpool","Chelsea"] },
-      { match: "Inter Milan 3 - 3 PSG", winner: null, loser: null, draw: true, md:8, teams: ["Inter Milan","PSG"] }
+    // ----- Build team results for form (based on RESULTS_DATA order) -----
+    const rawResultsOrder = [
+      { match: "Real Madrid 3 - 2 Napoli", winner: "Real Madrid", loser: "Napoli", draw: false },
+      { match: "Arsenal 0 - 0 AC Milan", winner: null, loser: null, draw: true, teams: ["Arsenal","AC Milan"] },
+      { match: "Liverpool 3 - 0 Newcastle United", winner: "Liverpool", loser: "Newcastle United", draw: false },
+      { match: "Manchester City 1 - 1 Chelsea", winner: null, loser: null, draw: true, teams: ["Manchester City","Chelsea"] },
+      { match: "Dortmund 3 - 0 Juventus (Forfeited - No Reply)", winner: "Dortmund", loser: "Juventus", draw: false },
+      { match: "PSG 3 - 0 Atletico Madrid (Forfeited - No Reply)", winner: "PSG", loser: "Atletico", draw: false },
+      { match: "Barcelona 3 - 0 Inter Milan (Forfeited - Late Reply)", winner: "Barcelona", loser: "Inter Milan", draw: false },
+      { match: "Barcelona 3 - 0 Juventus (Forfeited - No Reply)", winner: "Barcelona", loser: "Juventus", draw: false },
+      { match: "Manchester City 0 - 1 Napoli", winner: "Napoli", loser: "Manchester City", draw: false },
+      { match: "Real Madrid 1 - 0 Dortmund", winner: "Real Madrid", loser: "Dortmund", draw: false },
+      { match: "Newcastle United 1 - 6 Arsenal", winner: "Arsenal", loser: "Newcastle United", draw: false },
+      { match: "Liverpool 0 - 0 Chelsea", winner: null, loser: null, draw: true, teams: ["Liverpool","Chelsea"] },
+      { match: "Inter Milan 3 - 3 PSG", winner: null, loser: null, draw: true, teams: ["Inter Milan","PSG"] }
     ];
 
     const teamResults = {};
     LEAGUE_DATA.forEach(t => { teamResults[t.club] = []; });
-    rawResults.forEach(res => {
+    rawResultsOrder.forEach(res => {
       if (res.draw) {
         res.teams.forEach(t => { if (teamResults[t]) teamResults[t].push("D"); });
       } else {
@@ -623,7 +654,7 @@
     function getLast5(team) { return (teamResults[team] || []).slice(-5).reverse(); }
     function getLatest(team) { const arr = teamResults[team] || []; return arr.length ? arr[arr.length-1] : null; }
 
-    // ----- FIXTURES (full list MD8 to MD26) -----
+    // ----- FIXTURES (exactly as provided, unchanged) -----
     const fixtureList = [
       { md: 8, home: "Atlético Madrid", away: "AC Milan" },
       { md: 9, home: "FC Barcelona", away: "Paris Saint-Germain" }, { md: 9, home: "Juventus", away: "Real Madrid" }, { md: 9, home: "Inter Milan", away: "AC Milan" }, { md: 9, home: "Borussia Dortmund", away: "Manchester City" }, { md: 9, home: "Atlético Madrid", away: "Newcastle United" }, { md: 9, home: "Napoli", away: "Liverpool" }, { md: 9, home: "Arsenal", away: "Chelsea" },
@@ -646,14 +677,22 @@
       { md: 26, home: "Newcastle United", away: "FC Barcelona" }, { md: 26, home: "Liverpool", away: "Manchester City" }, { md: 26, home: "Chelsea", away: "AC Milan" }, { md: 26, home: "Arsenal", away: "Real Madrid" }, { md: 26, home: "Napoli", away: "Paris Saint-Germain" }, { md: 26, home: "Atlético Madrid", away: "Juventus" }, { md: 26, home: "Borussia Dortmund", away: "Inter Milan" }
     ];
 
-    function formatDate(date) { const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`; }
+    function formatDate(date) {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+    }
+
     const fixturesWithDates = [];
     let currentDate = new Date(2026, 3, 20);
     let lastMd = null;
-    for (let f of fixtureList) {
+    for (let i = 0; i < fixtureList.length; i++) {
+      const f = fixtureList[i];
       if (lastMd === null) lastMd = f.md;
-      else if (f.md !== lastMd) { currentDate.setDate(currentDate.getDate()+1); lastMd = f.md; }
-      fixturesWithDates.push({ md: f.md, home: f.home, away: f.away, date: formatDate(currentDate), homePlayer: playerMap[f.home]||"", awayPlayer: playerMap[f.away]||"" });
+      else if (f.md !== lastMd) { currentDate.setDate(currentDate.getDate() + 1); lastMd = f.md; }
+      fixturesWithDates.push({
+        md: f.md, home: f.home, away: f.away, date: formatDate(currentDate),
+        homePlayer: playerMap[f.home] || "", awayPlayer: playerMap[f.away] || ""
+      });
     }
 
     const RESULTS_DATA = [
@@ -672,10 +711,14 @@
       { matchText: "Barcelona 3 - 0 Inter Milan (Forfeited - Late Reply)", md: 7 }
     ];
 
-    // UI state
-    let currentView = "team";
-    let currentExtra = null;
-    let popupOpen = false;
+    const allTeamsSet = new Set();
+    fixturesWithDates.forEach(f => { allTeamsSet.add(f.home); allTeamsSet.add(f.away); });
+    const allTeams = Array.from(allTeamsSet).sort();
+
+    // UI state for the 3-dot menu
+    let currentView = "team";   // "team" or "player"
+    let currentExtra = null;    // null, "last5", "form"
+
     function renderLeagueTable() {
       const tbody = document.getElementById("leagueTableBody");
       const extraHeader = document.getElementById("extraColHeader");
@@ -684,6 +727,7 @@
       if (currentExtra === "last5") extraHeader.innerText = "Last 5";
       else if (currentExtra === "form") extraHeader.innerText = "Form";
       else extraHeader.innerText = "";
+
       LEAGUE_DATA.forEach(team => {
         const row = tbody.insertRow();
         let barClass = "";
@@ -697,8 +741,9 @@
         posCell.className = "rank-cell";
         if (barClass) posCell.innerHTML = `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${team.pos}</div>`;
         else posCell.innerText = team.pos;
+
         let displayName = team.club;
-        if (currentView === "player") displayName = clubToPlayer[team.club] || team.club;
+        if (currentView === "player") displayName = playerMap[team.club] || team.club;
         row.insertCell(1).innerHTML = `<div class="team-name">${displayName}</div>`;
         row.insertCell(2).innerText = team.p;
         const gdValue = team.gd;
@@ -706,6 +751,7 @@
         const ptsCell = row.insertCell(4);
         ptsCell.className = "pts-cell";
         ptsCell.innerText = team.pts;
+
         const extraCell = row.insertCell(5);
         if (currentExtra === "last5") {
           const last5 = getLast5(team.club);
@@ -726,14 +772,16 @@
           else if (latest === "L") extraCell.innerHTML = '<span class="arrow-down">↓</span>';
           else if (latest === "D") extraCell.innerHTML = '<span class="arrow-side">→</span>';
           else extraCell.innerHTML = '—';
-        } else extraCell.innerHTML = '';
+        } else {
+          extraCell.innerHTML = '';
+        }
       });
     }
 
-    // 3-dot menu
+    // 3-dot menu logic
     const threeDotBtn = document.getElementById("threeDotBtn");
     let popup = null;
-    function closePopup() { if (popup) { popup.remove(); popup = null; } popupOpen = false; }
+    function closePopup() { if (popup) { popup.remove(); popup = null; } }
     function showPopup(e) {
       e.stopPropagation();
       closePopup();
@@ -751,62 +799,99 @@
       formOpt.onclick = () => { currentExtra = "form"; renderLeagueTable(); closePopup(); };
       popup.appendChild(last5Opt); popup.appendChild(playersOpt); popup.appendChild(formOpt);
       document.body.appendChild(popup);
-      popupOpen = true;
     }
     threeDotBtn.addEventListener("click", showPopup);
-    document.addEventListener("click", (e) => { if (popupOpen && !popup?.contains(e.target) && e.target !== threeDotBtn) closePopup(); });
+    document.addEventListener("click", (e) => { if (popup && !popup.contains(e.target) && e.target !== threeDotBtn) closePopup(); });
 
-    // Fixtures & Results rendering (unchanged from working version)
-    const allTeamsSet = new Set(); fixturesWithDates.forEach(f => { allTeamsSet.add(f.home); allTeamsSet.add(f.away); });
-    const allTeams = Array.from(allTeamsSet).sort();
-    function renderFixtures(filterText="", filterTeam="") {
+    // Fixtures and Results render functions (unchanged from original)
+    function renderFixtures(filterText = "", filterTeam = "") {
       const tbody = document.getElementById("fixturesTableBody");
       if (!tbody) return;
       tbody.innerHTML = "";
-      const lower = filterText.toLowerCase();
+      const lowerFilter = filterText.toLowerCase();
       fixturesWithDates.forEach(f => {
-        let matchSearch = true;
-        if (lower) {
-          matchSearch = f.home.toLowerCase().includes(lower) || f.away.toLowerCase().includes(lower) ||
-                        f.homePlayer.toLowerCase().includes(lower) || f.awayPlayer.toLowerCase().includes(lower);
+        let matchesSearch = true;
+        if (lowerFilter) {
+          const homeMatch = f.home.toLowerCase().includes(lowerFilter);
+          const awayMatch = f.away.toLowerCase().includes(lowerFilter);
+          const homePlayerMatch = f.homePlayer.toLowerCase().includes(lowerFilter);
+          const awayPlayerMatch = f.awayPlayer.toLowerCase().includes(lowerFilter);
+          matchesSearch = homeMatch || awayMatch || homePlayerMatch || awayPlayerMatch;
         }
-        let matchTeam = !filterTeam || f.home===filterTeam || f.away===filterTeam;
-        if (!matchSearch || !matchTeam) return;
+        let matchesTeam = true;
+        if (filterTeam) matchesTeam = (f.home === filterTeam || f.away === filterTeam);
+        if (!matchesSearch || !matchesTeam) return;
         const row = tbody.insertRow();
         row.insertCell(0).innerHTML = `<span class="date-badge">📅 ${f.date}</span>`;
-        row.insertCell(1).innerHTML = `<strong>${f.home}</strong>${f.homePlayer?`<span class="player-name">${f.homePlayer}</span>`:""} <span style="margin:0 8px;">vs</span> <strong>${f.away}</strong>${f.awayPlayer?`<span class="player-name">${f.awayPlayer}</span>`:""}`;
-        row.insertCell(2).innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px;">MD ${f.md}</span>`;
+        const homeHtml = `<strong>${f.home}</strong>${f.homePlayer ? `<span class="player-name">${f.homePlayer}</span>` : ""}`;
+        const awayHtml = `<strong>${f.away}</strong>${f.awayPlayer ? `<span class="player-name">${f.awayPlayer}</span>` : ""}`;
+        row.insertCell(1).innerHTML = `${homeHtml} <span style="margin:0 8px;">vs</span> ${awayHtml}`;
+        row.insertCell(2).innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px; font-size:0.7rem;">MD ${f.md}</span>`;
       });
-      if (tbody.rows.length===0) { const r=tbody.insertRow(); r.insertCell(0).colSpan=3; r.cells[0].className="empty-message"; r.cells[0].innerText="No fixtures match."; }
+      if (tbody.rows.length === 0) {
+        const row = tbody.insertRow();
+        const cell = row.insertCell(0);
+        cell.colSpan = 3;
+        cell.className = "empty-message";
+        cell.innerText = "No fixtures match your search/filter.";
+      }
     }
+
     function setupFilters() {
       const searchInput = document.getElementById("searchInput");
       const teamFilter = document.getElementById("teamFilter");
       teamFilter.innerHTML = '<option value="">All Teams</option>';
-      allTeams.forEach(t => { const opt = document.createElement("option"); opt.value=t; opt.textContent=t; teamFilter.appendChild(opt); });
-      const update = () => renderFixtures(searchInput.value, teamFilter.value);
-      searchInput.addEventListener("input", update); teamFilter.addEventListener("change", update); update();
+      allTeams.forEach(team => {
+        const option = document.createElement("option");
+        option.value = team;
+        option.textContent = team;
+        teamFilter.appendChild(option);
+      });
+      function updateFixtures() { renderFixtures(searchInput.value, teamFilter.value); }
+      searchInput.addEventListener("input", updateFixtures);
+      teamFilter.addEventListener("change", updateFixtures);
+      updateFixtures();
     }
+
     function renderResults() {
       const tbody = document.getElementById("resultsTableBody");
       if (!tbody) return;
       tbody.innerHTML = "";
-      RESULTS_DATA.forEach(r => { const row = tbody.insertRow(); row.insertCell(0).innerHTML = `<strong>${r.matchText}</strong>`; row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>`; });
+      RESULTS_DATA.forEach(res => {
+        const row = tbody.insertRow();
+        row.insertCell(0).innerHTML = `<strong>${res.matchText}</strong>`;
+        row.insertCell(1).innerHTML = `<span class="match-highlight">MD${res.md}</span>`;
+      });
     }
-    function setupCollapsible(headerId, contentId, iconId) {
-      const h=document.getElementById(headerId), c=document.getElementById(contentId), ic=document.getElementById(iconId);
-      if(!h||!c) return;
-      let collapsed=false;
-      h.addEventListener("click",()=>{ collapsed=!collapsed; if(collapsed){ c.classList.add("collapsed"); if(ic) ic.innerHTML="▶"; } else { c.classList.remove("collapsed"); if(ic) ic.innerHTML="▼"; } });
+
+    function setupCollapsible(headerId, contentId, toggleIconId) {
+      const header = document.getElementById(headerId);
+      const content = document.getElementById(contentId);
+      const icon = document.getElementById(toggleIconId);
+      if (!header || !content) return;
+      let isCollapsed = false;
+      header.addEventListener("click", () => {
+        isCollapsed = !isCollapsed;
+        if (isCollapsed) { content.classList.add("collapsed"); if (icon) icon.innerHTML = "▶"; }
+        else { content.classList.remove("collapsed"); if (icon) icon.innerHTML = "▼"; }
+      });
     }
-    const hamburger=document.getElementById("hamburgerBtn"), modalOverlay=document.getElementById("modalOverlay"), closeBtn=document.getElementById("closeModalBtn");
-    function openModal(){ modalOverlay.classList.add("active"); }
-    function closeModal(){ modalOverlay.classList.remove("active"); }
-    hamburger.addEventListener("click",openModal); closeBtn.addEventListener("click",closeModal); modalOverlay.addEventListener("click",(e)=>{ if(e.target===modalOverlay) closeModal(); });
-    function init(){
-      renderLeagueTable(); renderResults(); setupFilters();
-      setupCollapsible("fixturesHeader","fixturesContent","fixturesToggleIcon");
-      setupCollapsible("resultsHeader","resultsContent","resultsToggleIcon");
+
+    const hamburger = document.getElementById("hamburgerBtn");
+    const modalOverlay = document.getElementById("modalOverlay");
+    const closeBtn = document.getElementById("closeModalBtn");
+    function openModal() { modalOverlay.classList.add("active"); }
+    function closeModal() { modalOverlay.classList.remove("active"); }
+    if (hamburger) hamburger.addEventListener("click", openModal);
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+    modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
+
+    function init() {
+      renderLeagueTable();
+      renderResults();
+      setupFilters();
+      setupCollapsible("fixturesHeader", "fixturesContent", "fixturesToggleIcon");
+      setupCollapsible("resultsHeader", "resultsContent", "resultsToggleIcon");
     }
     init();
   </script>
