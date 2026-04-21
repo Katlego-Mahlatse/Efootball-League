@@ -631,15 +631,19 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
+    // Updated LEAGUE_DATA after Barcelona 0-0 PSG (MD9)
+    // Previous: Barcelona P8 GD0 Pts15; PSG P8 GD-7 Pts10
+    // After: Barcelona +1 -> P9 GD0 Pts16; PSG +1 -> P9 GD-7 Pts11
+    // Positions: Real Madrid still 1st (24), Liverpool 22, Dortmund 18, Man City 16, Barcelona 16 (but GD0 vs Man City GD+8 -> Man City 4th, Barcelona 5th), Arsenal 11, PSG 11 (PSG moves above AC Milan? AC Milan has 10 pts, so PSG 7th, AC Milan 8th)
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 8, gd: 15, pts: 24 },
       { pos: 2, club: "Liverpool", p: 8, gd: 26, pts: 22 },
       { pos: 3, club: "Dortmund", p: 8, gd: 11, pts: 18 },
       { pos: 4, club: "Man City", p: 8, gd: 8, pts: 16 },
-      { pos: 5, club: "Barcelona", p: 8, gd: 0, pts: 15 },
+      { pos: 5, club: "Barcelona", p: 9, gd: 0, pts: 16 },
       { pos: 6, club: "Arsenal", p: 8, gd: 4, pts: 11 },
-      { pos: 7, club: "AC Milan", p: 9, gd: -4, pts: 10 },
-      { pos: 8, club: "PSG", p: 8, gd: -7, pts: 10 },
+      { pos: 7, club: "PSG", p: 9, gd: -7, pts: 11 },
+      { pos: 8, club: "AC Milan", p: 9, gd: -4, pts: 10 },
       { pos: 9, club: "Napoli", p: 8, gd: 3, pts: 6 },
       { pos: 10, club: "Chelsea", p: 8, gd: 1, pts: 5 },
       { pos: 11, club: "Juventus", p: 8, gd: -4, pts: 3 },
@@ -699,6 +703,7 @@
       return teamName;
     }
 
+    // Updated results order with Barcelona 0-0 PSG (MD9 draw)
     const allResultsOrder = [
       { type: "win", winner: "Real Madrid", loser: "Napoli" },
       { type: "draw", teams: ["Arsenal","AC Milan"] },
@@ -714,7 +719,8 @@
       { type: "draw", teams: ["Liverpool","Chelsea"] },
       { type: "draw", teams: ["Inter Milan","PSG"] },
       { type: "forfeit", teams: ["Atletico","AC Milan"] },
-      { type: "win", winner: "AC Milan", loser: "Inter Milan" }
+      { type: "win", winner: "AC Milan", loser: "Inter Milan" },
+      { type: "draw", teams: ["Barcelona","PSG"] }   // MD9 Barcelona vs PSG
     ];
 
     const teamResults = {};
@@ -742,8 +748,9 @@
       return arr.length ? arr[arr.length-1] : null;
     }
 
+    // Updated fixtureList: removed FC Barcelona vs Paris Saint-Germain from MD9
     const fixtureList = [
-      { md: 9, home: "FC Barcelona", away: "Paris Saint-Germain" }, { md: 9, home: "Juventus", away: "Real Madrid" }, { md: 9, home: "Borussia Dortmund", away: "Manchester City" }, { md: 9, home: "Atlético Madrid", away: "Newcastle United" }, { md: 9, home: "Napoli", away: "Liverpool" }, { md: 9, home: "Arsenal", away: "Chelsea" },
+      { md: 9, home: "Juventus", away: "Real Madrid" }, { md: 9, home: "Borussia Dortmund", away: "Manchester City" }, { md: 9, home: "Atlético Madrid", away: "Newcastle United" }, { md: 9, home: "Napoli", away: "Liverpool" }, { md: 9, home: "Arsenal", away: "Chelsea" },
       { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Juventus", away: "Manchester City" }, { md: 10, home: "Inter Milan", away: "Newcastle United" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Atlético Madrid", away: "Chelsea" }, { md: 10, home: "Napoli", away: "Arsenal" },
       { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
       { md: 12, home: "FC Barcelona", away: "Manchester City" }, { md: 12, home: "AC Milan", away: "Newcastle United" }, { md: 12, home: "Real Madrid", away: "Liverpool" }, { md: 12, home: "Paris Saint-Germain", away: "Chelsea" }, { md: 12, home: "Juventus", away: "Arsenal" }, { md: 12, home: "Inter Milan", away: "Napoli" }, { md: 12, home: "Borussia Dortmund", away: "Atlético Madrid" },
@@ -781,6 +788,7 @@
     }
 
     const RESULTS_DATA = [
+      { matchText: "Barcelona 0 - 0 PSG", md: 9 },
       { matchText: "Inter Milan 1 - 2 AC Milan", md: 9 },
       { matchText: "Atletico Madrid F - F AC Milan (No Contest)", md: 8 },
       { matchText: "Barcelona 3 - 0 Juventus (Forfeited - No Reply)", md: 8 },
@@ -944,10 +952,18 @@
         closePopup();
       };
       
+      const rulesOpt = document.createElement("div");
+      rulesOpt.innerText = "Rules";
+      rulesOpt.onclick = () => {
+        window.location.href = "rules.html";
+        closePopup();
+      };
+      
       popup.appendChild(playersOpt);
       popup.appendChild(formOpt);
       popup.appendChild(last5Opt);
       popup.appendChild(calendarOpt);
+      popup.appendChild(rulesOpt);
       document.body.appendChild(popup);
     }
     threeDotBtn.addEventListener("click", togglePopup);
@@ -969,7 +985,6 @@
         const row = tbody.insertRow();
         row.insertCell(0).innerHTML = `<span class="date-badge">📅 ${f.date}</span>`;
         
-        // Side by side icons using inline-flex
         const homeIcon = getTeamIconHtml(f.home, "inline-team-icon");
         const awayIcon = getTeamIconHtml(f.away, "inline-team-icon");
         row.insertCell(1).innerHTML = `<div class="fixture-icons">${homeIcon} <span style="margin:0 8px;">vs</span> ${awayIcon}</div>`;
@@ -994,7 +1009,6 @@
       RESULTS_DATA.forEach(r => {
         const row = tbody.insertRow();
         let processedText = r.matchText;
-        // Replace team names with icons (keep scores, dashes, forfeit info)
         const teamsToReplace = [
           "Arsenal", "AC Milan", "PSG", "Barcelona", "Inter Milan", "Atletico Madrid", "Newcastle United",
           "Napoli", "Chelsea", "Dortmund", "Real Madrid", "Man City", "Liverpool", "Atletico", "Newcastle",
@@ -1004,7 +1018,6 @@
           const regex = new RegExp(`\\b${team.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
           processedText = processedText.replace(regex, getTeamIconHtml(team, "inline-team-icon"));
         });
-        // Check for forfeit to add extra line below
         const isForfeit = r.matchText.includes("Forfeited") || r.matchText.includes("No Contest") || r.matchText.includes("F - F");
         if (isForfeit) {
           let forfeitText = "";
