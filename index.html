@@ -410,6 +410,13 @@
       display: inline-block;
     }
 
+    .fixture-icons {
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      white-space: nowrap;
+    }
+
     .form-circles {
       display: flex;
       gap: 4px;
@@ -962,10 +969,10 @@
         const row = tbody.insertRow();
         row.insertCell(0).innerHTML = `<span class="date-badge">📅 ${f.date}</span>`;
         
-        // Side by side icons with "vs" in between (inline)
+        // Side by side icons using inline-flex
         const homeIcon = getTeamIconHtml(f.home, "inline-team-icon");
         const awayIcon = getTeamIconHtml(f.away, "inline-team-icon");
-        row.insertCell(1).innerHTML = `${homeIcon} <span style="margin:0 8px;">vs</span> ${awayIcon}`;
+        row.insertCell(1).innerHTML = `<div class="fixture-icons">${homeIcon} <span style="margin:0 8px;">vs</span> ${awayIcon}</div>`;
         row.insertCell(2).innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px;">MD ${f.md}</span>`;
       });
       if (tbody.rows.length === 0) { const r=tbody.insertRow(); r.insertCell(0).colSpan=3; r.cells[0].className="empty-message"; r.cells[0].innerText="No fixtures match."; }
@@ -987,7 +994,7 @@
       RESULTS_DATA.forEach(r => {
         const row = tbody.insertRow();
         let processedText = r.matchText;
-        // Replace team names with icons
+        // Replace team names with icons (keep scores, dashes, forfeit info)
         const teamsToReplace = [
           "Arsenal", "AC Milan", "PSG", "Barcelona", "Inter Milan", "Atletico Madrid", "Newcastle United",
           "Napoli", "Chelsea", "Dortmund", "Real Madrid", "Man City", "Liverpool", "Atletico", "Newcastle",
@@ -997,10 +1004,9 @@
           const regex = new RegExp(`\\b${team.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
           processedText = processedText.replace(regex, getTeamIconHtml(team, "inline-team-icon"));
         });
-        // Check if this is a forfeit match (contains "Forfeited", "No Contest", or "F - F")
+        // Check for forfeit to add extra line below
         const isForfeit = r.matchText.includes("Forfeited") || r.matchText.includes("No Contest") || r.matchText.includes("F - F");
         if (isForfeit) {
-          // Extract forfeit reason
           let forfeitText = "";
           if (r.matchText.includes("No Contest")) forfeitText = "No Contest";
           else if (r.matchText.includes("Forfeited - No Reply")) forfeitText = "Forfeited - No Reply";
