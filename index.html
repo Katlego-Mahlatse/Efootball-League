@@ -195,19 +195,13 @@
       background-color: #6a3bb5;
     }
 
-    .two-col-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-      gap: 2rem;
-      margin-bottom: 2rem;
-    }
-
     .card {
       background: rgba(45, 25, 75, 0.85);
       backdrop-filter: blur(10px);
       border-radius: 2rem;
       border: 1px solid rgba(245, 215, 66, 0.4);
       overflow: hidden;
+      margin-bottom: 1.5rem;
     }
 
     .card-header {
@@ -369,7 +363,6 @@
     .rank-cell { font-weight: 700; width: 60px; color: #f5d742; }
     .pts-cell { font-weight: 800; color: #f5d742; text-align: center; }
 
-    /* circles for last 5 */
     .form-circles {
       display: flex;
       gap: 6px;
@@ -465,7 +458,6 @@
 
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
-      .two-col-grid { grid-template-columns: 1fr; gap: 1.5rem; }
       .stats-table th, .stats-table td { padding: 0.6rem 0.5rem; font-size: 0.75rem; }
       .card-header-left h2 { font-size: 1.3rem; }
       .dot { width: 6px; height: 6px; margin: 0 3px; }
@@ -502,7 +494,7 @@
     </div>
 
     <!-- Premier League card with 3-dot menu -->
-    <div class="card" style="margin-bottom:2rem">
+    <div class="card">
       <div class="card-header" style="cursor:default;">
         <div class="card-header-left">
           <h2>PREMIER LEAGUE</h2>
@@ -516,7 +508,7 @@
               <tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th id="extraColHeader"></th></tr>
             </thead>
             <tbody id="leagueTableBody"></tbody>
-          </table>
+          追赶
         </div>
         <div class="legend-under-table">
           <span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span class="legend-text">UEFA Champions League</span></span>
@@ -527,22 +519,27 @@
       </div>
     </div>
 
-    <!-- FIXTURES and RESULTS cards unchanged -->
-    <div class="card" style="margin-bottom:1.5rem">
+    <!-- FIXTURES CARD -->
+    <div class="card">
       <div class="card-header" id="fixturesHeader"><div class="card-header-left"><h2>FIXTURES</h2></div><div class="toggle-icon" id="fixturesToggleIcon">▼</div></div>
       <div class="card-content" id="fixturesContent">
         <div class="filter-container">
           <input type="text" id="searchInput" class="filter-input" placeholder="🔍 Search team or player name...">
           <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
         </div>
-        <div class="scrollable-table"><table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table></div>
+        <div class="scrollable-table">
+          <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
+        </div>
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:1.5rem">
+    <!-- RESULTS CARD -->
+    <div class="card">
       <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
       <div class="card-content" id="resultsContent">
-        <div class="scrollable-table"><table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></table></div>
+        <div class="scrollable-table">
+          <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></table>
+        </div>
       </div>
     </div>
 
@@ -550,7 +547,7 @@
   </div>
 
   <script>
-    // ---------- data (same as before) ----------
+    // ----- Slideshow -----
     const images = ["images - 2026-04-19T121231.816.jpeg","images - 2026-04-19T155746.715.jpeg","37686bb3-06ce-401b-a022-026933c165e7.jpeg","12871.jpg","1f157df7-2054-4a9d-aa14-b9941ef4a743.jpeg"];
     let currentIndex = 0;
     const slideshowImg = document.getElementById("slideshow-img");
@@ -568,7 +565,7 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // League data (same as final after MD8)
+    // ----- LEAGUE DATA (final after MD8) -----
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 8, gd: 15, pts: 24 },
       { pos: 2, club: "Liverpool", p: 8, gd: 26, pts: 22 },
@@ -586,79 +583,99 @@
       { pos: 14, club: "Inter Milan", p: 8, gd: 0, pts: -5 }
     ];
 
+    // Player mapping
     const playerMap = {
       "FC Barcelona": "~Rea🫡", "Inter Milan": "Mali", "Borussia Dortmund": "~Qhawe 🤍", "Juventus": "~Lawree ✨",
       "Atlético Madrid": "~Stalker.", "Paris Saint-Germain": "~MJ", "Napoli": "~PrettyBoy Tendancies. 👅",
       "Real Madrid": "~Karabo", "Arsenal": "Kath", "AC Milan": "~Ntsiki", "Chelsea": "~Zazo",
       "Manchester City": "gry", "Liverpool": "🅿️", "Newcastle United": "~Oratile"
     };
-    // Normalized club name mapping for lookup
-    const clubToPlayer = { ...playerMap };
-    // For Atletico and others
-    clubToPlayer["Atletico"] = "~Stalker."; // Atletico Madrid same as above
+    const clubToPlayer = { ...playerMap, "Atletico": "~Stalker." };
 
-    // ---------- Match results for form (last 5 and latest) ----------
-    // List of results in order (oldest first: MD7 then MD8)
+    // ----- Match results for form (chronological order: MD7 then MD8) -----
     const rawResults = [
-      // MD7
       { match: "Real Madrid 3 - 2 Napoli", winner: "Real Madrid", loser: "Napoli", draw: false, md:7 },
-      { match: "Arsenal 0 - 0 AC Milan", winner: null, loser: null, draw: true, md:7 },
+      { match: "Arsenal 0 - 0 AC Milan", winner: null, loser: null, draw: true, md:7, teams: ["Arsenal","AC Milan"] },
       { match: "Liverpool 3 - 0 Newcastle United", winner: "Liverpool", loser: "Newcastle United", draw: false, md:7 },
-      { match: "Manchester City 1 - 1 Chelsea", winner: null, loser: null, draw: true, md:7 },
+      { match: "Manchester City 1 - 1 Chelsea", winner: null, loser: null, draw: true, md:7, teams: ["Manchester City","Chelsea"] },
       { match: "Dortmund 3 - 0 Juventus (Forfeited - No Reply)", winner: "Dortmund", loser: "Juventus", draw: false, md:7 },
       { match: "PSG 3 - 0 Atletico Madrid (Forfeited - No Reply)", winner: "PSG", loser: "Atletico", draw: false, md:7 },
       { match: "Barcelona 3 - 0 Inter Milan (Forfeited - Late Reply)", winner: "Barcelona", loser: "Inter Milan", draw: false, md:7 },
-      // MD8 (in order as played)
       { match: "Barcelona 3 - 0 Juventus (Forfeited - No Reply)", winner: "Barcelona", loser: "Juventus", draw: false, md:8 },
       { match: "Manchester City 0 - 1 Napoli", winner: "Napoli", loser: "Manchester City", draw: false, md:8 },
       { match: "Real Madrid 1 - 0 Dortmund", winner: "Real Madrid", loser: "Dortmund", draw: false, md:8 },
       { match: "Newcastle United 1 - 6 Arsenal", winner: "Arsenal", loser: "Newcastle United", draw: false, md:8 },
-      { match: "Liverpool 0 - 0 Chelsea", winner: null, loser: null, draw: true, md:8 },
-      { match: "Inter Milan 3 - 3 PSG", winner: null, loser: null, draw: true, md:8 }
+      { match: "Liverpool 0 - 0 Chelsea", winner: null, loser: null, draw: true, md:8, teams: ["Liverpool","Chelsea"] },
+      { match: "Inter Milan 3 - 3 PSG", winner: null, loser: null, draw: true, md:8, teams: ["Inter Milan","PSG"] }
     ];
 
-    // Build per-team results array (ordered by matchday)
     const teamResults = {};
-    const allTeamNames = LEAGUE_DATA.map(t => t.club);
-    allTeamNames.forEach(team => { teamResults[team] = []; });
+    LEAGUE_DATA.forEach(t => { teamResults[t.club] = []; });
     rawResults.forEach(res => {
       if (res.draw) {
-        if (res.match.includes(" vs ")) {
-          // not needed, we have explicit teams from parsing? Actually we stored winner/loser null, but need both teams.
-          // Better: extract from match string for draws. Simpler: hardcode known draws.
-        }
-        // For draws we know teams from match string
-        let teams = [];
-        if (res.match.includes("Arsenal 0 - 0 AC Milan")) teams = ["Arsenal", "AC Milan"];
-        else if (res.match.includes("Manchester City 1 - 1 Chelsea")) teams = ["Manchester City", "Chelsea"];
-        else if (res.match.includes("Liverpool 0 - 0 Chelsea")) teams = ["Liverpool", "Chelsea"];
-        else if (res.match.includes("Inter Milan 3 - 3 PSG")) teams = ["Inter Milan", "PSG"];
-        teams.forEach(t => { if (teamResults[t]) teamResults[t].push("D"); });
+        res.teams.forEach(t => { if (teamResults[t]) teamResults[t].push("D"); });
       } else {
         if (teamResults[res.winner]) teamResults[res.winner].push("W");
         if (teamResults[res.loser]) teamResults[res.loser].push("L");
       }
     });
-    // Ensure all teams have at least some array (AC Milan, Atletico have only MD7 results)
-    // Also sort by matchday order (we pushed in chronological order) so last element is latest.
 
-    // Helper: get last 5 results (most recent first)
-    function getLast5(team) {
-      const results = teamResults[team] || [];
-      return results.slice(-5).reverse();
+    function getLast5(team) { return (teamResults[team] || []).slice(-5).reverse(); }
+    function getLatest(team) { const arr = teamResults[team] || []; return arr.length ? arr[arr.length-1] : null; }
+
+    // ----- FIXTURES (full list MD8 to MD26) -----
+    const fixtureList = [
+      { md: 8, home: "Atlético Madrid", away: "AC Milan" },
+      { md: 9, home: "FC Barcelona", away: "Paris Saint-Germain" }, { md: 9, home: "Juventus", away: "Real Madrid" }, { md: 9, home: "Inter Milan", away: "AC Milan" }, { md: 9, home: "Borussia Dortmund", away: "Manchester City" }, { md: 9, home: "Atlético Madrid", away: "Newcastle United" }, { md: 9, home: "Napoli", away: "Liverpool" }, { md: 9, home: "Arsenal", away: "Chelsea" },
+      { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Juventus", away: "Manchester City" }, { md: 10, home: "Inter Milan", away: "Newcastle United" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Atlético Madrid", away: "Chelsea" }, { md: 10, home: "Napoli", away: "Arsenal" },
+      { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
+      { md: 12, home: "FC Barcelona", away: "Manchester City" }, { md: 12, home: "AC Milan", away: "Newcastle United" }, { md: 12, home: "Real Madrid", away: "Liverpool" }, { md: 12, home: "Paris Saint-Germain", away: "Chelsea" }, { md: 12, home: "Juventus", away: "Arsenal" }, { md: 12, home: "Inter Milan", away: "Napoli" }, { md: 12, home: "Borussia Dortmund", away: "Atlético Madrid" },
+      { md: 13, home: "FC Barcelona", away: "Newcastle United" }, { md: 13, home: "Manchester City", away: "Liverpool" }, { md: 13, home: "AC Milan", away: "Chelsea" }, { md: 13, home: "Real Madrid", away: "Arsenal" }, { md: 13, home: "Paris Saint-Germain", away: "Napoli" }, { md: 13, home: "Juventus", away: "Atlético Madrid" }, { md: 13, home: "Inter Milan", away: "Borussia Dortmund" },
+      { md: 14, home: "Liverpool", away: "FC Barcelona" }, { md: 14, home: "Chelsea", away: "Newcastle United" }, { md: 14, home: "Arsenal", away: "Manchester City" }, { md: 14, home: "Napoli", away: "AC Milan" }, { md: 14, home: "Atlético Madrid", away: "Real Madrid" }, { md: 14, home: "Borussia Dortmund", away: "Paris Saint-Germain" }, { md: 14, home: "Inter Milan", away: "Juventus" },
+      { md: 15, home: "Chelsea", away: "FC Barcelona" }, { md: 15, home: "Arsenal", away: "Liverpool" }, { md: 15, home: "Napoli", away: "Newcastle United" }, { md: 15, home: "Atlético Madrid", away: "Manchester City" }, { md: 15, home: "Borussia Dortmund", away: "AC Milan" }, { md: 15, home: "Inter Milan", away: "Real Madrid" }, { md: 15, home: "Juventus", away: "Paris Saint-Germain" },
+      { md: 16, home: "Arsenal", away: "FC Barcelona" }, { md: 16, home: "Napoli", away: "Chelsea" }, { md: 16, home: "Atlético Madrid", away: "Liverpool" }, { md: 16, home: "Borussia Dortmund", away: "Newcastle United" }, { md: 16, home: "Inter Milan", away: "Manchester City" }, { md: 16, home: "Juventus", away: "AC Milan" }, { md: 16, home: "Paris Saint-Germain", away: "Real Madrid" },
+      { md: 17, home: "Napoli", away: "FC Barcelona" }, { md: 17, home: "Atlético Madrid", away: "Arsenal" }, { md: 17, home: "Borussia Dortmund", away: "Chelsea" }, { md: 17, home: "Inter Milan", away: "Liverpool" }, { md: 17, home: "Juventus", away: "Newcastle United" }, { md: 17, home: "Paris Saint-Germain", away: "Manchester City" }, { md: 17, home: "Real Madrid", away: "AC Milan" },
+      { md: 18, home: "Atlético Madrid", away: "FC Barcelona" }, { md: 18, home: "Borussia Dortmund", away: "Napoli" }, { md: 18, home: "Inter Milan", away: "Arsenal" }, { md: 18, home: "Juventus", away: "Chelsea" }, { md: 18, home: "Paris Saint-Germain", away: "Liverpool" }, { md: 18, home: "Real Madrid", away: "Newcastle United" }, { md: 18, home: "AC Milan", away: "Manchester City" },
+      { md: 19, home: "Borussia Dortmund", away: "FC Barcelona" }, { md: 19, home: "Inter Milan", away: "Atlético Madrid" }, { md: 19, home: "Juventus", away: "Napoli" }, { md: 19, home: "Paris Saint-Germain", away: "Arsenal" }, { md: 19, home: "Real Madrid", away: "Chelsea" }, { md: 19, home: "AC Milan", away: "Liverpool" }, { md: 19, home: "Manchester City", away: "Newcastle United" },
+      { md: 20, home: "Inter Milan", away: "FC Barcelona" }, { md: 20, home: "Juventus", away: "Borussia Dortmund" }, { md: 20, home: "Paris Saint-Germain", away: "Atlético Madrid" }, { md: 20, home: "Real Madrid", away: "Napoli" }, { md: 20, home: "AC Milan", away: "Arsenal" }, { md: 20, home: "Manchester City", away: "Chelsea" }, { md: 20, home: "Newcastle United", away: "Liverpool" },
+      { md: 21, home: "Juventus", away: "FC Barcelona" }, { md: 21, home: "Paris Saint-Germain", away: "Inter Milan" }, { md: 21, home: "Real Madrid", away: "Borussia Dortmund" }, { md: 21, home: "AC Milan", away: "Atlético Madrid" }, { md: 21, home: "Manchester City", away: "Napoli" }, { md: 21, home: "Newcastle United", away: "Arsenal" }, { md: 21, home: "Liverpool", away: "Chelsea" },
+      { md: 22, home: "Paris Saint-Germain", away: "FC Barcelona" }, { md: 22, home: "Real Madrid", away: "Juventus" }, { md: 22, home: "AC Milan", away: "Inter Milan" }, { md: 22, home: "Manchester City", away: "Borussia Dortmund" }, { md: 22, home: "Newcastle United", away: "Atlético Madrid" }, { md: 22, home: "Liverpool", away: "Napoli" }, { md: 22, home: "Chelsea", away: "Arsenal" },
+      { md: 23, home: "Real Madrid", away: "FC Barcelona" }, { md: 23, home: "AC Milan", away: "Paris Saint-Germain" }, { md: 23, home: "Manchester City", away: "Juventus" }, { md: 23, home: "Newcastle United", away: "Inter Milan" }, { md: 23, home: "Liverpool", away: "Borussia Dortmund" }, { md: 23, home: "Chelsea", away: "Atlético Madrid" }, { md: 23, home: "Arsenal", away: "Napoli" },
+      { md: 24, home: "AC Milan", away: "FC Barcelona" }, { md: 24, home: "Manchester City", away: "Real Madrid" }, { md: 24, home: "Newcastle United", away: "Paris Saint-Germain" }, { md: 24, home: "Liverpool", away: "Juventus" }, { md: 24, home: "Chelsea", away: "Inter Milan" }, { md: 24, home: "Arsenal", away: "Borussia Dortmund" }, { md: 24, home: "Napoli", away: "Atlético Madrid" },
+      { md: 25, home: "Manchester City", away: "FC Barcelona" }, { md: 25, home: "Newcastle United", away: "AC Milan" }, { md: 25, home: "Liverpool", away: "Real Madrid" }, { md: 25, home: "Chelsea", away: "Paris Saint-Germain" }, { md: 25, home: "Arsenal", away: "Juventus" }, { md: 25, home: "Napoli", away: "Inter Milan" }, { md: 25, home: "Atlético Madrid", away: "Borussia Dortmund" },
+      { md: 26, home: "Newcastle United", away: "FC Barcelona" }, { md: 26, home: "Liverpool", away: "Manchester City" }, { md: 26, home: "Chelsea", away: "AC Milan" }, { md: 26, home: "Arsenal", away: "Real Madrid" }, { md: 26, home: "Napoli", away: "Paris Saint-Germain" }, { md: 26, home: "Atlético Madrid", away: "Juventus" }, { md: 26, home: "Borussia Dortmund", away: "Inter Milan" }
+    ];
+
+    function formatDate(date) { const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`; }
+    const fixturesWithDates = [];
+    let currentDate = new Date(2026, 3, 20);
+    let lastMd = null;
+    for (let f of fixtureList) {
+      if (lastMd === null) lastMd = f.md;
+      else if (f.md !== lastMd) { currentDate.setDate(currentDate.getDate()+1); lastMd = f.md; }
+      fixturesWithDates.push({ md: f.md, home: f.home, away: f.away, date: formatDate(currentDate), homePlayer: playerMap[f.home]||"", awayPlayer: playerMap[f.away]||"" });
     }
-    function getLatestResult(team) {
-      const results = teamResults[team] || [];
-      if (results.length === 0) return null;
-      return results[results.length-1];
-    }
+
+    const RESULTS_DATA = [
+      { matchText: "Barcelona 3 - 0 Juventus (Forfeited - No Reply)", md: 8 },
+      { matchText: "Manchester City 0 - 1 Napoli", md: 8 },
+      { matchText: "Real Madrid 1 - 0 Dortmund", md: 8 },
+      { matchText: "Newcastle United 1 - 6 Arsenal", md: 8 },
+      { matchText: "Liverpool 0 - 0 Chelsea", md: 8 },
+      { matchText: "Inter Milan 3 - 3 PSG", md: 8 },
+      { matchText: "Real Madrid 3 - 2 Napoli", md: 7 },
+      { matchText: "Arsenal 0 - 0 AC Milan", md: 7 },
+      { matchText: "Liverpool 3 - 0 Newcastle United", md: 7 },
+      { matchText: "Manchester City 1 - 1 Chelsea", md: 7 },
+      { matchText: "Dortmund 3 - 0 Juventus (Forfeited - No Reply)", md: 7 },
+      { matchText: "PSG 3 - 0 Atletico Madrid (Forfeited - No Reply)", md: 7 },
+      { matchText: "Barcelona 3 - 0 Inter Milan (Forfeited - Late Reply)", md: 7 }
+    ];
 
     // UI state
-    let currentView = "team"; // "team" or "player"
-    let currentExtra = null; // null, "last5", "form"
+    let currentView = "team";
+    let currentExtra = null;
     let popupOpen = false;
-
-    // Render table based on state
     function renderLeagueTable() {
       const tbody = document.getElementById("leagueTableBody");
       const extraHeader = document.getElementById("extraColHeader");
@@ -667,7 +684,6 @@
       if (currentExtra === "last5") extraHeader.innerText = "Last 5";
       else if (currentExtra === "form") extraHeader.innerText = "Form";
       else extraHeader.innerText = "";
-
       LEAGUE_DATA.forEach(team => {
         const row = tbody.insertRow();
         let barClass = "";
@@ -681,12 +697,8 @@
         posCell.className = "rank-cell";
         if (barClass) posCell.innerHTML = `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${team.pos}</div>`;
         else posCell.innerText = team.pos;
-
-        // Club or player name
         let displayName = team.club;
-        if (currentView === "player") {
-          displayName = clubToPlayer[team.club] || team.club;
-        }
+        if (currentView === "player") displayName = clubToPlayer[team.club] || team.club;
         row.insertCell(1).innerHTML = `<div class="team-name">${displayName}</div>`;
         row.insertCell(2).innerText = team.p;
         const gdValue = team.gd;
@@ -694,8 +706,6 @@
         const ptsCell = row.insertCell(4);
         ptsCell.className = "pts-cell";
         ptsCell.innerText = team.pts;
-
-        // Extra column
         const extraCell = row.insertCell(5);
         if (currentExtra === "last5") {
           const last5 = getLast5(team.club);
@@ -711,22 +721,21 @@
           });
           extraCell.appendChild(container);
         } else if (currentExtra === "form") {
-          const latest = getLatestResult(team.club);
+          const latest = getLatest(team.club);
           if (latest === "W") extraCell.innerHTML = '<span class="arrow-up">↑</span>';
           else if (latest === "L") extraCell.innerHTML = '<span class="arrow-down">↓</span>';
           else if (latest === "D") extraCell.innerHTML = '<span class="arrow-side">→</span>';
           else extraCell.innerHTML = '—';
-        } else {
-          extraCell.innerHTML = '';
-        }
+        } else extraCell.innerHTML = '';
       });
     }
 
-    // 3-dot menu logic
+    // 3-dot menu
     const threeDotBtn = document.getElementById("threeDotBtn");
     let popup = null;
     function closePopup() { if (popup) { popup.remove(); popup = null; } popupOpen = false; }
-    function showPopup(event) {
+    function showPopup(e) {
+      e.stopPropagation();
       closePopup();
       const rect = threeDotBtn.getBoundingClientRect();
       popup = document.createElement("div");
@@ -734,53 +743,72 @@
       popup.style.position = "absolute";
       popup.style.top = (rect.bottom + window.scrollY + 5) + "px";
       popup.style.left = (rect.left + window.scrollX - 60) + "px";
-      const last5Option = document.createElement("div"); last5Option.innerText = "Last 5";
-      const playersOption = document.createElement("div"); playersOption.innerText = currentView === "team" ? "Players" : "Team View";
-      const formOption = document.createElement("div"); formOption.innerText = "Form";
-      last5Option.onclick = () => {
-        currentExtra = "last5";
-        renderLeagueTable();
-        closePopup();
-      };
-      playersOption.onclick = () => {
-        if (currentView === "team") { currentView = "player"; playersOption.innerText = "Team View"; }
-        else { currentView = "team"; playersOption.innerText = "Players"; }
-        renderLeagueTable();
-        closePopup();
-      };
-      formOption.onclick = () => {
-        currentExtra = "form";
-        renderLeagueTable();
-        closePopup();
-      };
-      popup.appendChild(last5Option);
-      popup.appendChild(playersOption);
-      popup.appendChild(formOption);
+      const last5Opt = document.createElement("div"); last5Opt.innerText = "Last 5";
+      const playersOpt = document.createElement("div"); playersOpt.innerText = currentView === "team" ? "Players" : "Team View";
+      const formOpt = document.createElement("div"); formOpt.innerText = "Form";
+      last5Opt.onclick = () => { currentExtra = "last5"; renderLeagueTable(); closePopup(); };
+      playersOpt.onclick = () => { currentView = currentView === "team" ? "player" : "team"; renderLeagueTable(); closePopup(); };
+      formOpt.onclick = () => { currentExtra = "form"; renderLeagueTable(); closePopup(); };
+      popup.appendChild(last5Opt); popup.appendChild(playersOpt); popup.appendChild(formOpt);
       document.body.appendChild(popup);
       popupOpen = true;
     }
-    threeDotBtn.addEventListener("click", (e) => { e.stopPropagation(); showPopup(e); });
+    threeDotBtn.addEventListener("click", showPopup);
     document.addEventListener("click", (e) => { if (popupOpen && !popup?.contains(e.target) && e.target !== threeDotBtn) closePopup(); });
 
-    // ---------- fixtures & results (unchanged from previous final, but we need to keep them) ----------
-    // (fixtureList, fixturesWithDates, RESULTS_DATA same as before – copied from previous answer but truncated for brevity, will restore exact)
-    // For brevity, I'll re-include the exact fixture list and results from the last working version (with all MD8 removals).
-    // To save space, I'll assume the exact same fixtureList and RESULTS_DATA as in the previous final answer (with Barcelona 3-0 Juventus, etc.)
-    // I'll embed a compact version but must be complete. Given length, I'll copy from the final working code of previous response.
-    // (We already have the same RESULTS_DATA and fixtureList in previous version. I'll re-declare them exactly.)
-
-    // ---- Fixture list (same as final after MD8 removals, only Atletico vs AC Milan remains MD8) ----
-    const fixtureList = [
-      { md: 8, home: "Atlético Madrid", away: "AC Milan" },
-      { md: 9, home: "FC Barcelona", away: "Paris Saint-Germain" }, { md: 9, home: "Juventus", away: "Real Madrid" }, { md: 9, home: "Inter Milan", away: "AC Milan" }, { md: 9, home: "Borussia Dortmund", away: "Manchester City" }, { md: 9, home: "Atlético Madrid", away: "Newcastle United" }, { md: 9, home: "Napoli", away: "Liverpool" }, { md: 9, home: "Arsenal", away: "Chelsea" },
-      // ... (remaining matchdays truncated but identical to previous; to save space I trust the prior working version)
-      // For completeness, I'll include a placeholder but must ensure no broken references. I'll copy from last correct answer's fixtureList.
-    ];
-    // To avoid massive code, I'll assume the fixtureList and RESULTS_DATA are exactly as in the previous final message.
-    // Actually I'll just keep the previous version's data – I have it in context. I'll re-insert from earlier.
-    // Since this is a single response, I'll output the full working HTML with all data included as in previous final answer, plus the new menu and view logic.
-    // For safety, I'll copy the entire script from the previous final answer (which had correct fixtures and results) and add the new menu logic.
-    // Given length limitations, I'll produce a final answer that merges the previous fully functional code with the new features.
+    // Fixtures & Results rendering (unchanged from working version)
+    const allTeamsSet = new Set(); fixturesWithDates.forEach(f => { allTeamsSet.add(f.home); allTeamsSet.add(f.away); });
+    const allTeams = Array.from(allTeamsSet).sort();
+    function renderFixtures(filterText="", filterTeam="") {
+      const tbody = document.getElementById("fixturesTableBody");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+      const lower = filterText.toLowerCase();
+      fixturesWithDates.forEach(f => {
+        let matchSearch = true;
+        if (lower) {
+          matchSearch = f.home.toLowerCase().includes(lower) || f.away.toLowerCase().includes(lower) ||
+                        f.homePlayer.toLowerCase().includes(lower) || f.awayPlayer.toLowerCase().includes(lower);
+        }
+        let matchTeam = !filterTeam || f.home===filterTeam || f.away===filterTeam;
+        if (!matchSearch || !matchTeam) return;
+        const row = tbody.insertRow();
+        row.insertCell(0).innerHTML = `<span class="date-badge">📅 ${f.date}</span>`;
+        row.insertCell(1).innerHTML = `<strong>${f.home}</strong>${f.homePlayer?`<span class="player-name">${f.homePlayer}</span>`:""} <span style="margin:0 8px;">vs</span> <strong>${f.away}</strong>${f.awayPlayer?`<span class="player-name">${f.awayPlayer}</span>`:""}`;
+        row.insertCell(2).innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px;">MD ${f.md}</span>`;
+      });
+      if (tbody.rows.length===0) { const r=tbody.insertRow(); r.insertCell(0).colSpan=3; r.cells[0].className="empty-message"; r.cells[0].innerText="No fixtures match."; }
+    }
+    function setupFilters() {
+      const searchInput = document.getElementById("searchInput");
+      const teamFilter = document.getElementById("teamFilter");
+      teamFilter.innerHTML = '<option value="">All Teams</option>';
+      allTeams.forEach(t => { const opt = document.createElement("option"); opt.value=t; opt.textContent=t; teamFilter.appendChild(opt); });
+      const update = () => renderFixtures(searchInput.value, teamFilter.value);
+      searchInput.addEventListener("input", update); teamFilter.addEventListener("change", update); update();
+    }
+    function renderResults() {
+      const tbody = document.getElementById("resultsTableBody");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+      RESULTS_DATA.forEach(r => { const row = tbody.insertRow(); row.insertCell(0).innerHTML = `<strong>${r.matchText}</strong>`; row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>`; });
+    }
+    function setupCollapsible(headerId, contentId, iconId) {
+      const h=document.getElementById(headerId), c=document.getElementById(contentId), ic=document.getElementById(iconId);
+      if(!h||!c) return;
+      let collapsed=false;
+      h.addEventListener("click",()=>{ collapsed=!collapsed; if(collapsed){ c.classList.add("collapsed"); if(ic) ic.innerHTML="▶"; } else { c.classList.remove("collapsed"); if(ic) ic.innerHTML="▼"; } });
+    }
+    const hamburger=document.getElementById("hamburgerBtn"), modalOverlay=document.getElementById("modalOverlay"), closeBtn=document.getElementById("closeModalBtn");
+    function openModal(){ modalOverlay.classList.add("active"); }
+    function closeModal(){ modalOverlay.classList.remove("active"); }
+    hamburger.addEventListener("click",openModal); closeBtn.addEventListener("click",closeModal); modalOverlay.addEventListener("click",(e)=>{ if(e.target===modalOverlay) closeModal(); });
+    function init(){
+      renderLeagueTable(); renderResults(); setupFilters();
+      setupCollapsible("fixturesHeader","fixturesContent","fixturesToggleIcon");
+      setupCollapsible("resultsHeader","resultsContent","resultsToggleIcon");
+    }
+    init();
   </script>
 </body>
 </html>
