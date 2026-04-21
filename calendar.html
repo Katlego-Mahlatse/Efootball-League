@@ -49,7 +49,7 @@
       transform: scale(1.05);
       background: #7e4acf;
     }
-    .filter-svg, .chat-svg {
+    .chat-svg, .filter-svg {
       width: 20px;
       height: 20px;
       display: block;
@@ -417,7 +417,7 @@
     return teamName;
   }
 
-  // ---------- FIXTURE DATA (MD10 to MD26) ----------
+  // ---------- FIXTURE DATA (Premier League MD10 to MD26) ----------
   const fixtureList = [
     { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Juventus", away: "Manchester City" }, { md: 10, home: "Inter Milan", away: "Newcastle United" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Atlético Madrid", away: "Chelsea" }, { md: 10, home: "Napoli", away: "Arsenal" },
       { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
@@ -436,149 +436,207 @@
       { md: 24, home: "AC Milan", away: "FC Barcelona" }, { md: 24, home: "Manchester City", away: "Real Madrid" }, { md: 24, home: "Newcastle United", away: "Paris Saint-Germain" }, { md: 24, home: "Liverpool", away: "Juventus" }, { md: 24, home: "Chelsea", away: "Inter Milan" }, { md: 24, home: "Arsenal", away: "Borussia Dortmund" }, { md: 24, home: "Napoli", away: "Atlético Madrid" },
       { md: 25, home: "Manchester City", away: "FC Barcelona" }, { md: 25, home: "Newcastle United", away: "AC Milan" }, { md: 25, home: "Liverpool", away: "Real Madrid" }, { md: 25, home: "Chelsea", away: "Paris Saint-Germain" }, { md: 25, home: "Arsenal", away: "Juventus" }, { md: 25, home: "Napoli", away: "Inter Milan" }, { md: 25, home: "Atlético Madrid", away: "Borussia Dortmund" },
       { md: 26, home: "Newcastle United", away: "FC Barcelona" }, { md: 26, home: "Liverpool", away: "Manchester City" }, { md: 26, home: "Chelsea", away: "AC Milan" }, { md: 26, home: "Arsenal", away: "Real Madrid" }, { md: 26, home: "Napoli", away: "Paris Saint-Germain" }, { md: 26, home: "Atlético Madrid", away: "Juventus" }, { md: 26, home: "Borussia Dortmund", away: "Inter Milan" }
-    ];
+  ];
 
-    // Normalize team names for matching (remove spaces, accents etc.)
-    function normalizeTeam(t) {
-      return t.replace("FC Barcelona","Barcelona").replace("Paris Saint-Germain","PSG").replace("Manchester City","Man City").replace("Atlético Madrid","Atletico").replace("Newcastle United","Newcastle").replace("Borussia Dortmund","Dortmund");
+  function formatYMD(date) {
+    return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  }
+
+  // Build Premier League matchday dates (MD10 to MD26)
+  function buildMatchdayDates() {
+    const matchdayDates = {};
+    let currentDate = new Date(2026, 3, 22);
+    let currentMd = 10;
+    for (let f of fixtureList) {
+      if (!matchdayDates[currentMd]) matchdayDates[currentMd] = { date: formatYMD(currentDate), fixtures: [] };
+      matchdayDates[currentMd].fixtures.push(f);
+      const nextIdx = fixtureList.indexOf(f)+1;
+      if (nextIdx < fixtureList.length && fixtureList[nextIdx].md !== currentMd) {
+        currentMd = fixtureList[nextIdx].md;
+        currentDate.setDate(currentDate.getDate()+1);
+      }
     }
+    return matchdayDates;
+  }
 
-    // Build matchdayDates map
-    function buildMatchdayDates() {
-      const matchdayDates = {};
-      let currentDate = new Date(2026, 3, 22); // April 22
-      let currentMd = 10;
-      for (let f of fixtureList) {
-        if (!matchdayDates[currentMd]) matchdayDates[currentMd] = { date: formatYMD(currentDate), fixtures: [] };
-        matchdayDates[currentMd].fixtures.push(f);
-        const nextIdx = fixtureList.indexOf(f)+1;
-        if (nextIdx < fixtureList.length && fixtureList[nextIdx].md !== currentMd) {
-          currentMd = fixtureList[nextIdx].md;
-          currentDate.setDate(currentDate.getDate()+1);
+  let matchdayDates = buildMatchdayDates();
+  let selectedTeam = null;
+
+  // ---------- COMPETITION EVENTS (Season 2 and future seasons) ----------
+  const typeToIcon = {
+    "premier_league": "images (14).png",
+    "champions_league": "images (15).png",
+    "europa_league": "uefa-europa-league-logo-on-transparent-background-free-vector.jpg",
+    "conference_league": "images (16).png",
+    "club_world_cup": "images - 2026-04-21T172656.176.jpeg",
+    "super_cup": "images - 2026-04-21T172601.589.jpeg",
+    "fa_cup": "GEryYr_5YQv6lyYkYIMYdH-pgvv7tZ5nGqQ4sCna6ewduDy5v_LTbGqjg3g81Fx8ZA1a_Mae5g5HI7VEY_6uQQ.webp"
+  };
+
+  // Define the exact schedule for Season 2 (May–June 2026) with formal names
+  const season2Events = [
+    { date: "2026-05-13", type: "champions_league", title: "UEFA Champions League Semi-Final 1st Leg" },
+    { date: "2026-05-14", type: "europa_league", title: "UEFA Europa League Semi-Final 1st Leg" },
+    { date: "2026-05-15", type: "premier_league", title: "Premier League Matchday 1" },
+    { date: "2026-05-16", type: "conference_league", title: "UEFA Conference League Semi-Final 1st Leg" },
+    { date: "2026-05-17", type: "premier_league", title: "Premier League Matchday 2" },
+    { date: "2026-05-18", type: "club_world_cup", title: "FIFA Club World Cup Quarter-Final" },
+    { date: "2026-05-19", type: "premier_league", title: "Premier League Matchday 3" },
+    { date: "2026-05-21", type: "champions_league", title: "UEFA Champions League Semi-Final 2nd Leg" },
+    { date: "2026-05-22", type: "premier_league", title: "Premier League Matchday 4" },
+    { date: "2026-05-23", type: "europa_league", title: "UEFA Europa League Semi-Final 2nd Leg" },
+    { date: "2026-05-24", type: "premier_league", title: "Premier League Matchday 5" },
+    { date: "2026-05-25", type: "conference_league", title: "UEFA Conference League Semi-Final 2nd Leg" },
+    { date: "2026-05-26", type: "premier_league", title: "Premier League Matchday 6" },
+    { date: "2026-05-27", type: "club_world_cup", title: "FIFA Club World Cup Semi-Final" },
+    { date: "2026-05-28", type: "premier_league", title: "Premier League Matchday 7" },
+    { date: "2026-05-29", type: "champions_league", title: "UEFA Champions League Final" },
+    { date: "2026-05-31", type: "premier_league", title: "Premier League Matchday 8" },
+    { date: "2026-06-02", type: "europa_league", title: "UEFA Europa League Final" },
+    { date: "2026-06-03", type: "premier_league", title: "Premier League Matchday 9" },
+    { date: "2026-06-04", type: "conference_league", title: "UEFA Conference League Final" },
+    { date: "2026-06-05", type: "premier_league", title: "Premier League Matchday 10" },
+    { date: "2026-06-06", type: "club_world_cup", title: "FIFA Club World Cup Final" },
+    { date: "2026-06-08", type: "super_cup", title: "UEFA Super Cup Final" },
+    { date: "2026-06-09", type: "premier_league", title: "Premier League Matchday 11" },
+    { date: "2026-06-10", type: "premier_league", title: "Premier League Matchday 12" },
+    { date: "2026-06-11", type: "premier_league", title: "Premier League Matchday 13" },
+    { date: "2026-06-12", type: "premier_league", title: "Premier League Matchday 14" }
+  ];
+
+  // Generate future seasons by shifting the same pattern (31-day blocks)
+  function generateFutureSeasons() {
+    const futureEvents = [];
+    // Start after June 12, 2026
+    let startDate = new Date(2026, 5, 13); // June 13, 2026
+    const endDate = new Date(2026, 11, 31); // Dec 31, 2026
+    const seasonDuration = 31; // days
+    let seasonNum = 3;
+    while (startDate <= endDate) {
+      for (let ev of season2Events) {
+        const evDate = new Date(ev.date);
+        const offset = evDate.getDate() - 13; // relative offset from May 13
+        const newDate = new Date(startDate);
+        newDate.setDate(startDate.getDate() + offset);
+        if (newDate <= endDate) {
+          futureEvents.push({
+            date: formatYMD(newDate),
+            type: ev.type,
+            title: "TBD"
+          });
         }
       }
-      return matchdayDates;
+      // Move to next season block
+      startDate.setDate(startDate.getDate() + seasonDuration);
+      seasonNum++;
     }
+    return futureEvents;
+  }
 
-    function formatYMD(date) {
-      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  // Build complete event map
+  const eventMap = new Map(); // key: YYYY-MM-DD -> { type, matches, title }
+
+  // Add Premier League matchday events (existing)
+  for (let md in matchdayDates) {
+    const dateStr = matchdayDates[md].date;
+    eventMap.set(dateStr, { type: "premier_league", matches: matchdayDates[md].fixtures, title: null });
+  }
+
+  // Add Season 2 events
+  for (let ev of season2Events) {
+    if (!eventMap.has(ev.date)) {
+      eventMap.set(ev.date, { type: ev.type, matches: [], title: ev.title });
+    } else {
+      // If date already has Premier League, we keep both? Rare, but if conflict, we keep the existing (Premier League has priority)
+      // For simplicity, we don't overwrite.
     }
+  }
 
-    let matchdayDates = buildMatchdayDates();
-    let selectedTeam = null; // null = show league icons
+  // Add future season events (TBD)
+  const futureEvents = generateFutureSeasons();
+  for (let ev of futureEvents) {
+    if (!eventMap.has(ev.date)) {
+      eventMap.set(ev.date, { type: ev.type, matches: [], title: ev.title });
+    }
+  }
 
-    // ---------- CALENDAR RENDERING ----------
-    function renderCalendar() {
-      const root = document.getElementById("calendarRoot");
-      root.innerHTML = "";
-      const monthsData = [];
-      for (let m = 3; m <= 11; m++) { // April to December
-        const year = 2026;
-        const firstDay = new Date(year, m, 1);
-        const lastDay = new Date(year, m+1, 0);
-        const startWeekday = firstDay.getDay();
-        const daysInMonth = lastDay.getDate();
-        monthsData.push({ year, month: m, firstDay, daysInMonth, startWeekday });
-      }
-      const monthNames = ["April", "May", "June", "July", "August", "September", "October", "November", "December"];
-      const weekLabels = ["S", "M", "T", "W", "T", "F", "S"];
+  // ---------- CALENDAR RENDERING ----------
+  function renderCalendar() {
+    const root = document.getElementById("calendarRoot");
+    root.innerHTML = "";
+    const monthsData = [];
+    for (let m = 3; m <= 11; m++) {
+      const year = 2026;
+      const firstDay = new Date(year, m, 1);
+      const lastDay = new Date(year, m+1, 0);
+      const startWeekday = firstDay.getDay();
+      const daysInMonth = lastDay.getDate();
+      monthsData.push({ year, month: m, firstDay, daysInMonth, startWeekday });
+    }
+    const monthNames = ["April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const weekLabels = ["S", "M", "T", "W", "T", "F", "S"];
 
-      for (let mi = 0; mi < monthsData.length; mi++) {
-        const m = monthsData[mi];
-        const monthName = monthNames[mi];
-        const days = [];
-        for (let i = 0; i < m.startWeekday; i++) days.push(null);
-        for (let d = 1; d <= m.daysInMonth; d++) days.push(new Date(m.year, m.month, d));
+    for (let mi = 0; mi < monthsData.length; mi++) {
+      const m = monthsData[mi];
+      const monthName = monthNames[mi];
+      const days = [];
+      for (let i = 0; i < m.startWeekday; i++) days.push(null);
+      for (let d = 1; d <= m.daysInMonth; d++) days.push(new Date(m.year, m.month, d));
 
-        const monthCard = document.createElement("div");
-        monthCard.className = "month-card";
-        monthCard.innerHTML = `<div class="month-header"><h2>${monthName} ${m.year}</h2></div>`;
-        const weekdaysDiv = document.createElement("div");
-        weekdaysDiv.className = "weekdays";
-        weekLabels.forEach(label => {
-          const wd = document.createElement("div");
-          wd.className = "weekday";
-          wd.textContent = label;
-          weekdaysDiv.appendChild(wd);
-        });
-        monthCard.appendChild(weekdaysDiv);
-        const daysGrid = document.createElement("div");
-        daysGrid.className = "days-grid";
-        for (let dayObj of days) {
-          const cell = document.createElement("div");
-          cell.className = "day-cell";
-          if (!dayObj) {
-            cell.classList.add("empty-day");
-            cell.innerHTML = "";
-          } else {
-            const dateStr = formatYMD(dayObj);
-            const dayNum = dayObj.getDate();
-            const numberSpan = document.createElement("div");
-            numberSpan.className = "day-number";
-            numberSpan.textContent = dayNum;
-            cell.appendChild(numberSpan);
-            // Find event for this date
-            let eventType = null;
-            let opponentIcon = null;
-            // Check if this date is a Premier League matchday
-            let foundFixture = null;
-            for (let md in matchdayDates) {
-              if (matchdayDates[md].date === dateStr) {
-                const fixtures = matchdayDates[md].fixtures;
-                if (selectedTeam) {
-                  // Find fixture involving selected team
-                  for (let fix of fixtures) {
-                    let homeNorm = normalizeTeam(fix.home);
-                    let awayNorm = normalizeTeam(fix.away);
-                    if (homeNorm === selectedTeam || awayNorm === selectedTeam) {
-                      const opponent = homeNorm === selectedTeam ? awayNorm : homeNorm;
-                      opponentIcon = getTeamIconHtml(opponent, "event-icon");
-                      break;
-                    }
-                  }
-                } else {
-                  eventType = "premier_league";
-                }
-                break;
-              }
-            }
-            if (selectedTeam && opponentIcon) {
-              // Show opponent icon
-              const iconContainer = document.createElement("div");
-              iconContainer.innerHTML = opponentIcon;
-              cell.appendChild(iconContainer.firstChild);
-            } else if (eventType === "premier_league") {
-              const icon = document.createElement("img");
-              icon.className = "event-icon";
-              icon.src = "images (14).png";
-              icon.alt = "Premier League";
-              cell.appendChild(icon);
-            }
-            // Add click handler
-            cell.addEventListener("click", (function(d, ds) { return function() { showPopupForDate(d, ds); }; })(dayObj, dateStr));
+      const monthCard = document.createElement("div");
+      monthCard.className = "month-card";
+      monthCard.innerHTML = `<div class="month-header"><h2>${monthName} ${m.year}</h2></div>`;
+      const weekdaysDiv = document.createElement("div");
+      weekdaysDiv.className = "weekdays";
+      weekLabels.forEach(label => {
+        const wd = document.createElement("div");
+        wd.className = "weekday";
+        wd.textContent = label;
+        weekdaysDiv.appendChild(wd);
+      });
+      monthCard.appendChild(weekdaysDiv);
+      const daysGrid = document.createElement("div");
+      daysGrid.className = "days-grid";
+      for (let dayObj of days) {
+        const cell = document.createElement("div");
+        cell.className = "day-cell";
+        if (!dayObj) {
+          cell.classList.add("empty-day");
+          cell.innerHTML = "";
+        } else {
+          const dateStr = formatYMD(dayObj);
+          const event = eventMap.get(dateStr);
+          const dayNum = dayObj.getDate();
+          const numberSpan = document.createElement("div");
+          numberSpan.className = "day-number";
+          numberSpan.textContent = dayNum;
+          cell.appendChild(numberSpan);
+          if (event) {
+            const icon = document.createElement("img");
+            icon.className = "event-icon";
+            icon.src = typeToIcon[event.type];
+            icon.alt = event.type;
+            cell.appendChild(icon);
           }
-          daysGrid.appendChild(cell);
+          cell.addEventListener("click", (function(d, ds) { return function() { showPopupForDate(d, ds); }; })(dayObj, dateStr));
         }
-        monthCard.appendChild(daysGrid);
-        root.appendChild(monthCard);
+        daysGrid.appendChild(cell);
       }
+      monthCard.appendChild(daysGrid);
+      root.appendChild(monthCard);
     }
+  }
 
-    function showPopupForDate(date, dateStr) {
-      const popup = document.getElementById("matchPopup");
-      const popupDate = document.getElementById("popupDate");
-      const popupMatchesDiv = document.getElementById("popupMatches");
-      popupDate.textContent = date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-      popupMatchesDiv.innerHTML = "";
-      let fixtures = null;
-      for (let md in matchdayDates) {
-        if (matchdayDates[md].date === dateStr) {
-          fixtures = matchdayDates[md].fixtures;
-          break;
-        }
-      }
-      if (fixtures && fixtures.length > 0) {
-        fixtures.forEach(match => {
+  function showPopupForDate(date, dateStr) {
+    const popup = document.getElementById("matchPopup");
+    const popupDate = document.getElementById("popupDate");
+    const popupMatchesDiv = document.getElementById("popupMatches");
+    popupDate.textContent = date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    popupMatchesDiv.innerHTML = "";
+    const event = eventMap.get(dateStr);
+    if (event) {
+      if (event.matches && event.matches.length > 0) {
+        event.matches.forEach(match => {
           const matchDiv = document.createElement("div");
           matchDiv.className = "match-item";
           const homeIcon = getTeamIconHtml(match.home, "match-icon");
@@ -586,66 +644,77 @@
           matchDiv.innerHTML = `${homeIcon} <span class="match-text">vs</span> ${awayIcon}`;
           popupMatchesDiv.appendChild(matchDiv);
         });
+      } else if (event.title) {
+        const msg = document.createElement("div");
+        msg.className = "match-item";
+        msg.innerHTML = `<span class="match-text">${event.title}</span>`;
+        popupMatchesDiv.appendChild(msg);
       } else {
         const msg = document.createElement("div");
         msg.className = "match-item";
-        msg.innerHTML = `<span class="match-text">No matches scheduled</span>`;
+        msg.innerHTML = `<span class="match-text">Matchday - Details coming soon</span>`;
         popupMatchesDiv.appendChild(msg);
       }
-      popup.classList.add("active");
+    } else {
+      const msg = document.createElement("div");
+      msg.className = "match-item";
+      msg.innerHTML = `<span class="match-text">No matches scheduled</span>`;
+      popupMatchesDiv.appendChild(msg);
     }
+    popup.classList.add("active");
+  }
 
-    // Filter popup logic
-    const filterBtn = document.getElementById("filterBtn");
-    const filterModal = document.getElementById("filterModal");
-    const closeFilterBtn = document.getElementById("closeFilterBtn");
-    const clearFilterBtn = document.getElementById("clearFilterBtn");
-    const teamListContainer = document.getElementById("teamListContainer");
+  // ---------- FILTER MODAL ----------
+  const filterBtn = document.getElementById("filterBtn");
+  const filterModal = document.getElementById("filterModal");
+  const closeFilterBtn = document.getElementById("closeFilterBtn");
+  const clearFilterBtn = document.getElementById("clearFilterBtn");
+  const teamListContainer = document.getElementById("teamListContainer");
 
-    function openFilterModal() { filterModal.classList.add("active"); }
-    function closeFilterModal() { filterModal.classList.remove("active"); }
-    filterBtn.addEventListener("click", openFilterModal);
-    closeFilterBtn.addEventListener("click", closeFilterModal);
-    filterModal.addEventListener("click", (e) => { if (e.target === filterModal) closeFilterModal(); });
+  function openFilterModal() { filterModal.classList.add("active"); }
+  function closeFilterModal() { filterModal.classList.remove("active"); }
+  filterBtn.addEventListener("click", openFilterModal);
+  closeFilterBtn.addEventListener("click", closeFilterModal);
+  filterModal.addEventListener("click", (e) => { if (e.target === filterModal) closeFilterModal(); });
 
-    function buildTeamList() {
-      teamListContainer.innerHTML = "";
-      allTeams.forEach(team => {
-        const div = document.createElement("div");
-        div.className = "team-option";
-        div.textContent = team;
-        div.addEventListener("click", () => {
-          selectedTeam = team;
-          closeFilterModal();
-          renderCalendar();
-        });
-        teamListContainer.appendChild(div);
+  function buildTeamList() {
+    teamListContainer.innerHTML = "";
+    allTeams.forEach(team => {
+      const div = document.createElement("div");
+      div.className = "team-option";
+      div.textContent = team;
+      div.addEventListener("click", () => {
+        selectedTeam = team;
+        closeFilterModal();
+        renderCalendar();
       });
-    }
-    buildTeamList();
-    clearFilterBtn.addEventListener("click", () => {
-      selectedTeam = null;
-      closeFilterModal();
-      renderCalendar();
+      teamListContainer.appendChild(div);
     });
-
-    // Tournament modal
-    const hamburgerBtn = document.getElementById("hamburgerBtn");
-    const modalOverlay = document.getElementById("modalOverlay");
-    const closeModalBtn = document.getElementById("closeModalBtn");
-    function openModal() { modalOverlay.classList.add("active"); }
-    function closeModal() { modalOverlay.classList.remove("active"); }
-    hamburgerBtn.addEventListener("click", openModal);
-    closeModalBtn.addEventListener("click", closeModal);
-    modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
-
-    // Close popup
-    const closePopupBtn = document.getElementById("closePopupBtn");
-    const popupOverlay = document.getElementById("matchPopup");
-    closePopupBtn.addEventListener("click", () => popupOverlay.classList.remove("active"));
-    popupOverlay.addEventListener("click", (e) => { if (e.target === popupOverlay) popupOverlay.classList.remove("active"); });
-
+  }
+  buildTeamList();
+  clearFilterBtn.addEventListener("click", () => {
+    selectedTeam = null;
+    closeFilterModal();
     renderCalendar();
-  </script>
+  });
+
+  // ---------- TOURNAMENT MODAL ----------
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  const modalOverlay = document.getElementById("modalOverlay");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  function openModal() { modalOverlay.classList.add("active"); }
+  function closeModal() { modalOverlay.classList.remove("active"); }
+  hamburgerBtn.addEventListener("click", openModal);
+  closeModalBtn.addEventListener("click", closeModal);
+  modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
+
+  // ---------- CLOSE POPUP ----------
+  const closePopupBtn = document.getElementById("closePopupBtn");
+  const popupOverlay = document.getElementById("matchPopup");
+  closePopupBtn.addEventListener("click", () => popupOverlay.classList.remove("active"));
+  popupOverlay.addEventListener("click", (e) => { if (e.target === popupOverlay) popupOverlay.classList.remove("active"); });
+
+  renderCalendar();
+</script>
 </body>
 </html>
