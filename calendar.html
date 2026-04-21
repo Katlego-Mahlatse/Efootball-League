@@ -214,6 +214,7 @@
       text-align: center;
       font-weight: bold;
       color: #f5d742;
+      font-size: 1rem;
     }
 
     .days-grid {
@@ -232,6 +233,8 @@
       transition: background 0.2s;
       cursor: pointer;
       position: relative;
+      text-align: center;
+      padding: 4px;
     }
     .day-cell:hover {
       background: rgba(106, 59, 181, 0.6);
@@ -241,12 +244,14 @@
       font-weight: bold;
       margin-bottom: 4px;
       color: #f5e6ff;
+      line-height: 1;
     }
     .event-icon {
       width: 48px;
       height: 48px;
       object-fit: contain;
       margin-top: 4px;
+      display: block;
     }
     .empty-day {
       background: rgba(30, 15, 55, 0.4);
@@ -335,6 +340,7 @@
       .event-icon { width: 32px; height: 32px; }
       .day-number { font-size: 0.7rem; }
       .match-icon { width: 30px; height: 30px; }
+      .weekday { font-size: 0.8rem; padding: 0.5rem; }
     }
   </style>
 </head>
@@ -391,30 +397,6 @@
     modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
 
     // ---------- FIXTURE DATA (from home page, MD10 to MD26) ----------
-    // Player mapping for icons (only needed for display)
-    const playerMap = {
-      "FC Barcelona": "~Rea🫡",
-      "Barcelona": "~Rea🫡",
-      "Inter Milan": "Mali",
-      "Borussia Dortmund": "~Qhawe 🤍",
-      "Dortmund": "~Qhawe 🤍",
-      "Juventus": "~Lawree ✨",
-      "Atlético Madrid": "~Stalker.",
-      "Paris Saint-Germain": "~MJ",
-      "PSG": "~MJ",
-      "Napoli": "~PrettyBoy Tendancies. 👅",
-      "Real Madrid": "~Karabo",
-      "Arsenal": "Kath",
-      "AC Milan": "~Ntsiki",
-      "Chelsea": "~Zazo",
-      "Manchester City": "gry",
-      "Man City": "gry",
-      "Liverpool": "🅿️",
-      "Newcastle United": "~Oratile",
-      "Atletico": "~Stalker.",
-      "Newcastle": "~Oratile"
-    };
-
     function getTeamIconHtml(teamName) {
       const iconMap = {
         "Arsenal": "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png",
@@ -444,7 +426,7 @@
       return teamName;
     }
 
-    // Fixture list from MD10 to MD26 (same as home page after removing MD9 results)
+    // Fixture list from MD10 to MD26
     const fixtureList = [
       { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Juventus", away: "Manchester City" }, { md: 10, home: "Inter Milan", away: "Newcastle United" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Atlético Madrid", away: "Chelsea" }, { md: 10, home: "Napoli", away: "Arsenal" },
       { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
@@ -475,7 +457,6 @@
     for (let f of fixtureList) {
       if (!matchdayDates[currentMd]) matchdayDates[currentMd] = { date: formatYMD(currentDate), fixtures: [] };
       matchdayDates[currentMd].fixtures.push(f);
-      // when matchday changes, increment date
       const nextIdx = fixtureList.indexOf(f)+1;
       if (nextIdx < fixtureList.length && fixtureList[nextIdx].md !== currentMd) {
         currentMd = fixtureList[nextIdx].md;
@@ -483,67 +464,14 @@
       }
     }
 
-    // Build event map: date -> event type (icon) and list of matches
-    const eventMap = new Map(); // key: YYYY-MM-DD, value: { type, matches: [] }
-
-    // Add Premier League events
+    // Build event map
+    const eventMap = new Map();
     for (let md in matchdayDates) {
       const dateStr = matchdayDates[md].date;
       eventMap.set(dateStr, { type: "premier_league", matches: matchdayDates[md].fixtures });
     }
 
-    // After last Premier League matchday (May 8, 2026), add UEFA competitions
-    // Last PL date is May 8 (MD26). We'll start adding from May 12 onward with off days each week.
-    const startAfter = new Date(2026, 4, 9); // May 9
-    // We'll schedule events on Tuesdays, Wednesdays, Thursdays with at least one off day per week.
-    // Order: Champions League (Tue), Europa League (Wed), Conference League (Thu), then later Super Cup, Club World Cup, FA Cup.
-    // We'll spread them over weeks.
-    const competitionTypes = [
-      { name: "champions_league", icon: "images (15).png", dayOffset: 0 }, // Tuesday
-      { name: "europa_league", icon: "uefa-europa-league-logo-on-transparent-background-free-vector.jpg", dayOffset: 1 }, // Wednesday
-      { name: "conference_league", icon: "images (16).png", dayOffset: 2 }, // Thursday
-      // then break a week, then Super Cup
-      { name: "super_cup", icon: "images - 2026-04-21T172601.589.jpeg", dayOffset: 7+0 }, // next Tuesday
-      { name: "club_world_cup", icon: "images - 2026-04-21T172656.176.jpeg", dayOffset: 7+1 }, // next Wednesday
-      { name: "fa_cup", icon: "GEryYr_5YQv6lyYkYIMYdH-pgvv7tZ5nGqQ4sCna6ewduDy5v_LTbGqjg3g81Fx8ZA1a_Mae5g5HI7VEY_6uQQ.webp", dayOffset: 7+2 } // next Thursday
-    ];
-    // We'll also add more rounds? The requirement says "one after the other example uefa champions league on Tuesday then uefa europa league on Wednesday and so on, then you add club world and fa cup". We'll do one round each.
-    // To fill until December, we can repeat the cycle (e.g., multiple matchdays for each competition). But to keep simple, we'll add one occurrence per competition, but that would end in May. The calendar goes to December, so we need more. Let's add monthly cycles: each month we can have a "matchday week" with UCL, UEL, UECL. For simplicity, we'll add a week of European competitions every 4 weeks from May through November.
-    // Better: generate events for each month from June to November: one week per month with UCL Tue, UEL Wed, UECL Thu.
-    let baseDate = new Date(2026, 4, 12); // first Tuesday after May 8 (May 12)
-    for (let month = 5; month <= 10; month++) { // May to October
-      // find Tuesday of that week (second week of month roughly)
-      let tuesday = new Date(2026, month, 1);
-      while (tuesday.getDay() !== 2) tuesday.setDate(tuesday.getDate()+1);
-      tuesday.setDate(tuesday.getDate() + 7); // second Tuesday
-      if (tuesday < startAfter) tuesday = new Date(startAfter);
-      const dateStr = formatYMD(tuesday);
-      if (!eventMap.has(dateStr)) eventMap.set(dateStr, { type: "champions_league", matches: [] });
-      // Wednesday
-      let wednesday = new Date(tuesday); wednesday.setDate(tuesday.getDate()+1);
-      const wedStr = formatYMD(wednesday);
-      if (!eventMap.has(wedStr)) eventMap.set(wedStr, { type: "europa_league", matches: [] });
-      // Thursday
-      let thursday = new Date(tuesday); thursday.setDate(tuesday.getDate()+2);
-      const thuStr = formatYMD(thursday);
-      if (!eventMap.has(thuStr)) eventMap.set(thuStr, { type: "conference_league", matches: [] });
-    }
-    // Add Super Cup, Club World Cup, FA Cup in June/July
-    let superCupDate = new Date(2026, 5, 9); // June 9
-    if (!eventMap.has(formatYMD(superCupDate))) eventMap.set(formatYMD(superCupDate), { type: "super_cup", matches: [] });
-    let clubWorldDate = new Date(2026, 5, 10);
-    if (!eventMap.has(formatYMD(clubWorldDate))) eventMap.set(formatYMD(clubWorldDate), { type: "club_world_cup", matches: [] });
-    let faCupDate = new Date(2026, 5, 11);
-    if (!eventMap.has(formatYMD(faCupDate))) eventMap.set(formatYMD(faCupDate), { type: "fa_cup", matches: [] });
-    // Add additional later events for December? Not strictly needed but we'll add one more cycle in November.
-    let novTuesday = new Date(2026, 10, 10);
-    if (!eventMap.has(formatYMD(novTuesday))) eventMap.set(formatYMD(novTuesday), { type: "champions_league", matches: [] });
-    let novWed = new Date(2026, 10, 11);
-    if (!eventMap.has(formatYMD(novWed))) eventMap.set(formatYMD(novWed), { type: "europa_league", matches: [] });
-    let novThu = new Date(2026, 10, 12);
-    if (!eventMap.has(formatYMD(novThu))) eventMap.set(formatYMD(novThu), { type: "conference_league", matches: [] });
-
-    // Map type to icon
+    // Add other competition events (same as before but ensures no date conflicts)
     const typeToIcon = {
       "premier_league": "images (14).png",
       "champions_league": "images (15).png",
@@ -554,18 +482,44 @@
       "fa_cup": "GEryYr_5YQv6lyYkYIMYdH-pgvv7tZ5nGqQ4sCna6ewduDy5v_LTbGqjg3g81Fx8ZA1a_Mae5g5HI7VEY_6uQQ.webp"
     };
 
+    // Helper to add event if not already present
+    function addEvent(date, type) {
+      const ds = formatYMD(date);
+      if (!eventMap.has(ds)) eventMap.set(ds, { type: type, matches: [] });
+    }
+
+    // Add recurring European weeks (May to October)
+    for (let month = 5; month <= 10; month++) {
+      let tuesday = new Date(2026, month, 1);
+      while (tuesday.getDay() !== 2) tuesday.setDate(tuesday.getDate()+1);
+      tuesday.setDate(tuesday.getDate() + 7); // second Tuesday
+      if (tuesday < new Date(2026, 4, 12)) tuesday = new Date(2026, 4, 12);
+      addEvent(tuesday, "champions_league");
+      let wednesday = new Date(tuesday); wednesday.setDate(tuesday.getDate()+1);
+      addEvent(wednesday, "europa_league");
+      let thursday = new Date(tuesday); thursday.setDate(tuesday.getDate()+2);
+      addEvent(thursday, "conference_league");
+    }
+    // Add Super Cup, Club World Cup, FA Cup
+    addEvent(new Date(2026, 5, 9), "super_cup");
+    addEvent(new Date(2026, 5, 10), "club_world_cup");
+    addEvent(new Date(2026, 5, 11), "fa_cup");
+    addEvent(new Date(2026, 10, 10), "champions_league");
+    addEvent(new Date(2026, 10, 11), "europa_league");
+    addEvent(new Date(2026, 10, 12), "conference_league");
+
     // Build calendar months from April 2026 to December 2026
     const months = [];
-    for (let m = 3; m <= 11; m++) { // 3=April, 11=December
+    for (let m = 3; m <= 11; m++) {
       const year = 2026;
       const firstDay = new Date(year, m, 1);
       const lastDay = new Date(year, m+1, 0);
-      const startWeekday = firstDay.getDay(); // 0=Sunday
+      const startWeekday = firstDay.getDay();
       const daysInMonth = lastDay.getDate();
       months.push({ year, month: m, firstDay, daysInMonth, startWeekday });
     }
-
     const monthNames = ["April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const weekLabels = ["S", "M", "T", "W", "T", "F", "S"];
 
     function renderCalendar() {
       const root = document.getElementById("calendarRoot");
@@ -574,7 +528,6 @@
         const m = months[monthIdx];
         const monthName = monthNames[monthIdx];
         const days = [];
-        // empty cells before first day
         for (let i = 0; i < m.startWeekday; i++) days.push(null);
         for (let d = 1; d <= m.daysInMonth; d++) days.push(new Date(m.year, m.month, d));
         const monthCard = document.createElement("div");
@@ -582,10 +535,10 @@
         monthCard.innerHTML = `<div class="month-header"><h2>${monthName} ${m.year}</h2></div>`;
         const weekdaysDiv = document.createElement("div");
         weekdaysDiv.className = "weekdays";
-        ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].forEach(day => {
+        weekLabels.forEach(label => {
           const wd = document.createElement("div");
           wd.className = "weekday";
-          wd.textContent = day;
+          wd.textContent = label;
           weekdaysDiv.appendChild(wd);
         });
         monthCard.appendChild(weekdaysDiv);
@@ -628,7 +581,6 @@
       popupDate.textContent = date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
       popupMatchesDiv.innerHTML = "";
       if (event && event.matches && event.matches.length > 0) {
-        // Show matches for Premier League
         event.matches.forEach(match => {
           const matchDiv = document.createElement("div");
           matchDiv.className = "match-item";
@@ -638,7 +590,6 @@
           popupMatchesDiv.appendChild(matchDiv);
         });
       } else if (event) {
-        // For other competitions, show generic message
         const msg = document.createElement("div");
         msg.className = "match-item";
         msg.innerHTML = `<span class="match-text">Matchday - Details coming soon</span>`;
@@ -654,12 +605,8 @@
 
     const closePopupBtn = document.getElementById("closePopupBtn");
     const popupOverlay = document.getElementById("matchPopup");
-    closePopupBtn.addEventListener("click", () => {
-      popupOverlay.classList.remove("active");
-    });
-    popupOverlay.addEventListener("click", (e) => {
-      if (e.target === popupOverlay) popupOverlay.classList.remove("active");
-    });
+    closePopupBtn.addEventListener("click", () => popupOverlay.classList.remove("active"));
+    popupOverlay.addEventListener("click", (e) => { if (e.target === popupOverlay) popupOverlay.classList.remove("active"); });
 
     renderCalendar();
   </script>
