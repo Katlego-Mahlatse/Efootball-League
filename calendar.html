@@ -308,6 +308,12 @@
       font-weight: bold;
       color: #f5e6ff;
     }
+    .competition-name {
+      text-align: center;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+      color: #f5d742;
+    }
     .close-popup {
       display: block;
       margin: 1rem auto 0;
@@ -384,6 +390,7 @@
 <div class="match-popup-overlay" id="matchPopup">
   <div class="match-popup">
     <h3 id="popupDate"></h3>
+    <div id="popupCompetition" class="competition-name"></div>
     <div id="popupMatches" class="match-list"></div>
     <button class="close-popup" id="closePopupBtn">Close</button>
   </div>
@@ -411,9 +418,21 @@
     "Liverpool": "269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg",
     "Juventus": "IMG_20260421_151224.jpg"
   };
+  function normalizeTeamName(teamName) {
+    const map = {
+      "FC Barcelona": "Barcelona",
+      "Paris Saint-Germain": "PSG",
+      "Manchester City": "Man City",
+      "Atlético Madrid": "Atletico",
+      "Newcastle United": "Newcastle",
+      "Borussia Dortmund": "Dortmund"
+    };
+    return map[teamName] || teamName;
+  }
   function getTeamIconHtml(teamName, className = "match-icon") {
-    const src = teamIconMap[teamName];
-    if (src) return `<img class="${className}" src="${src}" alt="${teamName}">`;
+    const normalized = normalizeTeamName(teamName);
+    const src = teamIconMap[normalized];
+    if (src) return `<img class="${className}" src="${src}" alt="${normalized}">`;
     return teamName;
   }
 
@@ -460,21 +479,19 @@
   }
 
   let matchdayDates = buildMatchdayDates();
-  let selectedTeam = null;
+  let selectedTeam = null;  // null = show all competition icons
 
   // ---------- COMPETITION EVENTS (Season 2 and future seasons) ----------
-  // Swapped Club World Cup and Super Cup icons
   const typeToIcon = {
     "premier_league": "images (14).png",
     "champions_league": "images (15).png",
     "europa_league": "uefa-europa-league-logo-on-transparent-background-free-vector.jpg",
     "conference_league": "images (16).png",
-    "club_world_cup": "images - 2026-04-21T172601.589.jpeg",   // was super cup icon
-    "super_cup": "images - 2026-04-21T172656.176.jpeg",        // was club world cup icon
+    "club_world_cup": "images - 2026-04-21T172601.589.jpeg",
+    "super_cup": "images - 2026-04-21T172656.176.jpeg",
     "fa_cup": "GEryYr_5YQv6lyYkYIMYdH-pgvv7tZ5nGqQ4sCna6ewduDy5v_LTbGqjg3g81Fx8ZA1a_Mae5g5HI7VEY_6uQQ.webp"
   };
 
-  // Define the exact schedule for Season 2 (May–June 2026) with formal names
   const season2Events = [
     { date: "2026-05-13", type: "champions_league", title: "UEFA Champions League Semi-Final 1st Leg" },
     { date: "2026-05-14", type: "europa_league", title: "UEFA Europa League Semi-Final 1st Leg" },
@@ -505,18 +522,15 @@
     { date: "2026-06-12", type: "premier_league", title: "Premier League Matchday 14" }
   ];
 
-  // Generate future seasons by shifting the same pattern (31-day blocks)
   function generateFutureSeasons() {
     const futureEvents = [];
-    // Start after June 12, 2026
-    let startDate = new Date(2026, 5, 13); // June 13, 2026
-    const endDate = new Date(2026, 11, 31); // Dec 31, 2026
-    const seasonDuration = 31; // days
-    let seasonNum = 3;
+    let startDate = new Date(2026, 5, 13);
+    const endDate = new Date(2026, 11, 31);
+    const seasonDuration = 31;
     while (startDate <= endDate) {
       for (let ev of season2Events) {
         const evDate = new Date(ev.date);
-        const offset = evDate.getDate() - 13; // relative offset from May 13
+        const offset = evDate.getDate() - 13;
         const newDate = new Date(startDate);
         newDate.setDate(startDate.getDate() + offset);
         if (newDate <= endDate) {
@@ -527,33 +541,22 @@
           });
         }
       }
-      // Move to next season block
       startDate.setDate(startDate.getDate() + seasonDuration);
-      seasonNum++;
     }
     return futureEvents;
   }
 
-  // Build complete event map
-  const eventMap = new Map(); // key: YYYY-MM-DD -> { type, matches, title }
-
-  // Add Premier League matchday events (existing)
+  // Build event map with competition title
+  const eventMap = new Map();
   for (let md in matchdayDates) {
     const dateStr = matchdayDates[md].date;
-    eventMap.set(dateStr, { type: "premier_league", matches: matchdayDates[md].fixtures, title: null });
+    eventMap.set(dateStr, { type: "premier_league", matches: matchdayDates[md].fixtures, title: "Premier League" });
   }
-
-  // Add Season 2 events
   for (let ev of season2Events) {
     if (!eventMap.has(ev.date)) {
       eventMap.set(ev.date, { type: ev.type, matches: [], title: ev.title });
-    } else {
-      // If date already has Premier League, we keep both? Rare, but if conflict, we keep the existing (Premier League has priority)
-      // For simplicity, we don't overwrite.
     }
   }
-
-  // Add future season events (TBD)
   const futureEvents = generateFutureSeasons();
   for (let ev of futureEvents) {
     if (!eventMap.has(ev.date)) {
@@ -561,7 +564,23 @@
     }
   }
 
-  // ---------- CALENDAR RENDERING ----------
+  // Helper to get opponent icon if selected team is in a fixture list
+  function getOpponentIconForDate(fixtures, selectedTeam) {
+    if (!fixtures || fixtures.length === 0) return null;
+    for (let f of fixtures) {
+      let home = normalizeTeamName(f.home);
+      let away = normalizeTeamName(f.away);
+      if (home === selectedTeam) {
+        return getTeamIconHtml(away, "event-icon");
+      }
+      if (away === selectedTeam) {
+        return getTeamIconHtml(home, "event-icon");
+      }
+    }
+    return null;
+  }
+
+  // ---------- CALENDAR RENDERING (with team filter support) ----------
   function renderCalendar() {
     const root = document.getElementById("calendarRoot");
     root.innerHTML = "";
@@ -612,13 +631,31 @@
           numberSpan.className = "day-number";
           numberSpan.textContent = dayNum;
           cell.appendChild(numberSpan);
-          if (event) {
+
+          // Determine what icon to show
+          let iconHtml = null;
+          if (selectedTeam && event && event.type === "premier_league" && event.matches) {
+            // Check if selected team plays on this date
+            const opponentIcon = getOpponentIconForDate(event.matches, selectedTeam);
+            if (opponentIcon) {
+              iconHtml = opponentIcon;
+            }
+          } else if (!selectedTeam && event) {
+            // Normal mode: show competition icon
             const icon = document.createElement("img");
             icon.className = "event-icon";
             icon.src = typeToIcon[event.type];
             icon.alt = event.type;
-            cell.appendChild(icon);
+            iconHtml = icon;
           }
+          if (iconHtml) {
+            if (typeof iconHtml === "string") {
+              cell.insertAdjacentHTML("beforeend", iconHtml);
+            } else {
+              cell.appendChild(iconHtml);
+            }
+          }
+          // Store event data for click handler
           cell.addEventListener("click", (function(d, ds) { return function() { showPopupForDate(d, ds); }; })(dayObj, dateStr));
         }
         daysGrid.appendChild(cell);
@@ -631,12 +668,16 @@
   function showPopupForDate(date, dateStr) {
     const popup = document.getElementById("matchPopup");
     const popupDate = document.getElementById("popupDate");
+    const popupCompetition = document.getElementById("popupCompetition");
     const popupMatchesDiv = document.getElementById("popupMatches");
     popupDate.textContent = date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
     popupMatchesDiv.innerHTML = "";
     const event = eventMap.get(dateStr);
     if (event) {
+      // Show competition name
+      popupCompetition.textContent = event.title || (event.type === "premier_league" ? "Premier League" : "Competition");
       if (event.matches && event.matches.length > 0) {
+        // For Premier League: show all fixtures (both teams icons)
         event.matches.forEach(match => {
           const matchDiv = document.createElement("div");
           matchDiv.className = "match-item";
@@ -645,11 +686,6 @@
           matchDiv.innerHTML = `${homeIcon} <span class="match-text">vs</span> ${awayIcon}`;
           popupMatchesDiv.appendChild(matchDiv);
         });
-      } else if (event.title) {
-        const msg = document.createElement("div");
-        msg.className = "match-item";
-        msg.innerHTML = `<span class="match-text">${event.title}</span>`;
-        popupMatchesDiv.appendChild(msg);
       } else {
         const msg = document.createElement("div");
         msg.className = "match-item";
@@ -657,6 +693,7 @@
         popupMatchesDiv.appendChild(msg);
       }
     } else {
+      popupCompetition.textContent = "";
       const msg = document.createElement("div");
       msg.className = "match-item";
       msg.innerHTML = `<span class="match-text">No matches scheduled</span>`;
@@ -718,4 +755,4 @@
   renderCalendar();
 </script>
 </body>
-</html>
+</html> 
