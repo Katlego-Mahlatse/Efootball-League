@@ -601,7 +601,7 @@
           <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
         </div>
         <div class="scrollable-table">
-          <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th><tr></thead><tbody id="fixturesTableBody"></tbody></table>
+          <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
         </div>
       </div>
     </div>
@@ -610,7 +610,7 @@
       <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
       <div class="card-content" id="resultsContent">
         <div class="scrollable-table">
-          <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></table>
+          <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></tr>
         </div>
       </div>
     </div>
@@ -634,13 +634,9 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // Corrected LEAGUE_DATA after MD10:
-    // Real Madrid: 27 (unchanged)
-    // Man City: 19 (after MD9) + 3 = 22, GD +12 (was +10, +2 from 3-1)
-    // Liverpool: 22 (unchanged, still 9 games)
-    // Dortmund: 18 (unchanged)
-    // Barcelona: 16
-    // Arsenal: 11, PSG: 11, AC Milan: 10, Napoli: 9, Chelsea: 8, Atletico: 4, Juventus: 3 (GD -9), Newcastle: 3 (GD -26), Inter: -2 (GD +1)
+    // Updated LEAGUE_DATA after MD10: Atlético Madrid 2-4 Chelsea
+    // Chelsea: +3 pts (8->11), GD +2 (4->6), P+1 (9->10)
+    // Atletico: 0 pts, GD -2 (-9->-11), P+1 (9->10)
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 9, gd: 15, pts: 27 },
       { pos: 2, club: "Man City", p: 10, gd: 12, pts: 22 },
@@ -648,11 +644,11 @@
       { pos: 4, club: "Dortmund", p: 9, gd: 9, pts: 18 },
       { pos: 5, club: "Barcelona", p: 9, gd: 0, pts: 16 },
       { pos: 6, club: "Arsenal", p: 9, gd: 1, pts: 11 },
-      { pos: 7, club: "PSG", p: 9, gd: -7, pts: 11 },
-      { pos: 8, club: "AC Milan", p: 9, gd: -4, pts: 10 },
-      { pos: 9, club: "Napoli", p: 9, gd: 4, pts: 9 },
-      { pos: 10, club: "Chelsea", p: 9, gd: 4, pts: 8 },
-      { pos: 11, club: "Atletico", p: 9, gd: -9, pts: 4 },
+      { pos: 7, club: "Chelsea", p: 10, gd: 6, pts: 11 },
+      { pos: 8, club: "PSG", p: 9, gd: -7, pts: 11 },
+      { pos: 9, club: "AC Milan", p: 9, gd: -4, pts: 10 },
+      { pos: 10, club: "Napoli", p: 9, gd: 4, pts: 9 },
+      { pos: 11, club: "Atletico", p: 10, gd: -11, pts: 4 },
       { pos: 12, club: "Juventus", p: 10, gd: -9, pts: 3 },
       { pos: 13, club: "Newcastle", p: 10, gd: -26, pts: 3 },
       { pos: 14, club: "Inter Milan", p: 10, gd: 1, pts: -2 }
@@ -709,6 +705,7 @@
       return teamName;
     }
 
+    // Updated allResultsOrder with new MD10 result
     const allResultsOrder = [
       { type: "win", winner: "Real Madrid", loser: "Napoli" },
       { type: "draw", teams: ["Arsenal","AC Milan"] },
@@ -732,7 +729,8 @@
       { type: "win", winner: "Man City", loser: "Dortmund" },
       { type: "forfeit_win", winner: "Real Madrid", loser: "Juventus" },
       { type: "win", winner: "Man City", loser: "Juventus" },
-      { type: "win", winner: "Inter Milan", loser: "Newcastle" }
+      { type: "win", winner: "Inter Milan", loser: "Newcastle" },
+      { type: "win", winner: "Chelsea", loser: "Atletico" }   // MD10 Atletico vs Chelsea
     ];
 
     const teamResults = {};
@@ -763,8 +761,9 @@
       return arr.length ? arr[arr.length-1] : null;
     }
 
+    // Updated fixtureList: removed Atletico Madrid vs Chelsea from MD10
     const fixtureList = [
-      { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Atlético Madrid", away: "Chelsea" }, { md: 10, home: "Napoli", away: "Arsenal" },
+      { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Napoli", away: "Arsenal" },
       { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
       { md: 12, home: "FC Barcelona", away: "Manchester City" }, { md: 12, home: "AC Milan", away: "Newcastle United" }, { md: 12, home: "Real Madrid", away: "Liverpool" }, { md: 12, home: "Paris Saint-Germain", away: "Chelsea" }, { md: 12, home: "Juventus", away: "Arsenal" }, { md: 12, home: "Inter Milan", away: "Napoli" }, { md: 12, home: "Borussia Dortmund", away: "Atlético Madrid" },
       { md: 13, home: "FC Barcelona", away: "Newcastle United" }, { md: 13, home: "Manchester City", away: "Liverpool" }, { md: 13, home: "AC Milan", away: "Chelsea" }, { md: 13, home: "Real Madrid", away: "Arsenal" }, { md: 13, home: "Paris Saint-Germain", away: "Napoli" }, { md: 13, home: "Juventus", away: "Atlético Madrid" }, { md: 13, home: "Inter Milan", away: "Borussia Dortmund" },
@@ -801,6 +800,7 @@
     }
 
     const RESULTS_DATA = [
+      { matchText: "Atletico Madrid 2 - 4 Chelsea", md: 10 },
       { matchText: "Manchester City 3 - 1 Juventus", md: 10 },
       { matchText: "Inter Milan 2 - 0 Newcastle United", md: 10 },
       { matchText: "Real Madrid 3 - 0 Juventus (Forfeited - No Reply)", md: 9 },
@@ -1044,7 +1044,6 @@
           const regex = new RegExp(`\\b${team.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
           processedText = processedText.replace(regex, getTeamIconHtml(team, "inline-team-icon"));
         });
-        // Remove leftover words like "United", "Madrid", "City"
         processedText = processedText.replace(/\b(United|Madrid|City)\b/g, '');
         processedText = processedText.replace(/\s+/g, ' ').trim();
         
