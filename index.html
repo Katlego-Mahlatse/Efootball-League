@@ -601,7 +601,7 @@
           <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
         </div>
         <div class="scrollable-table">
-          <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></td>
+          <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
         </div>
       </div>
     </div>
@@ -634,9 +634,7 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // Updated LEAGUE_DATA after Real Madrid 3-0 Juventus (forfeit)
-    // Real Madrid: P9, GD15, Pts27 (previously 24 +3)
-    // Juventus: P9, GD -7, Pts3 (previously -4, -3 from forfeit)
+    // Corrected LEAGUE_DATA: Napoli (9 pts) above Chelsea (8 pts)
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 9, gd: 15, pts: 27 },
       { pos: 2, club: "Liverpool", p: 9, gd: 25, pts: 22 },
@@ -646,8 +644,8 @@
       { pos: 6, club: "Arsenal", p: 9, gd: 1, pts: 11 },
       { pos: 7, club: "PSG", p: 9, gd: -7, pts: 11 },
       { pos: 8, club: "AC Milan", p: 9, gd: -4, pts: 10 },
-      { pos: 9, club: "Chelsea", p: 9, gd: 4, pts: 8 },
-      { pos: 10, club: "Napoli", p: 9, gd: 4, pts: 9 },
+      { pos: 9, club: "Napoli", p: 9, gd: 4, pts: 9 },
+      { pos: 10, club: "Chelsea", p: 9, gd: 4, pts: 8 },
       { pos: 11, club: "Atletico", p: 9, gd: -9, pts: 4 },
       { pos: 12, club: "Juventus", p: 9, gd: -7, pts: 3 },
       { pos: 13, club: "Newcastle", p: 9, gd: -24, pts: 3 },
@@ -706,7 +704,7 @@
       return teamName;
     }
 
-    // Updated results order with forfeit win for Real Madrid over Juventus
+    // All results order (including forfeit win for Real Madrid over Juventus)
     const allResultsOrder = [
       { type: "win", winner: "Real Madrid", loser: "Napoli" },
       { type: "draw", teams: ["Arsenal","AC Milan"] },
@@ -728,7 +726,7 @@
       { type: "win", winner: "Chelsea", loser: "Arsenal" },
       { type: "win", winner: "Napoli", loser: "Liverpool" },
       { type: "win", winner: "Man City", loser: "Dortmund" },
-      { type: "forfeit_win", winner: "Real Madrid", loser: "Juventus" }   // Special forfeit win/loss
+      { type: "forfeit_win", winner: "Real Madrid", loser: "Juventus" }
     ];
 
     const teamResults = {};
@@ -759,7 +757,7 @@
       return arr.length ? arr[arr.length-1] : null;
     }
 
-    // Updated fixtureList: removed Juventus vs Real Madrid (MD9)
+    // Fixture list (MD10 to MD26, all remaining)
     const fixtureList = [
       { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Juventus", away: "Manchester City" }, { md: 10, home: "Inter Milan", away: "Newcastle United" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Atlético Madrid", away: "Chelsea" }, { md: 10, home: "Napoli", away: "Arsenal" },
       { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
@@ -786,7 +784,7 @@
     }
 
     const fixturesWithDates = [];
-    let currentDate = new Date(2026, 3, 22); // MD10 starts April 22
+    let currentDate = new Date(2026, 3, 22);
     let lastMd = 10;
     for (let f of fixtureList) {
       if (lastMd === null) lastMd = f.md;
