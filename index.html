@@ -601,7 +601,7 @@
           <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
         </div>
         <div class="scrollable-table">
-          <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
+          <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th><tr></thead><tbody id="fixturesTableBody"></tbody></table>
         </div>
       </div>
     </div>
@@ -634,9 +634,16 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
+    // Corrected LEAGUE_DATA after MD10:
+    // Real Madrid: 27 (unchanged)
+    // Man City: 19 (after MD9) + 3 = 22, GD +12 (was +10, +2 from 3-1)
+    // Liverpool: 22 (unchanged, still 9 games)
+    // Dortmund: 18 (unchanged)
+    // Barcelona: 16
+    // Arsenal: 11, PSG: 11, AC Milan: 10, Napoli: 9, Chelsea: 8, Atletico: 4, Juventus: 3 (GD -9), Newcastle: 3 (GD -26), Inter: -2 (GD +1)
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 9, gd: 15, pts: 27 },
-      { pos: 2, club: "Man City", p: 10, gd: 12, pts: 25 },
+      { pos: 2, club: "Man City", p: 10, gd: 12, pts: 22 },
       { pos: 3, club: "Liverpool", p: 9, gd: 25, pts: 22 },
       { pos: 4, club: "Dortmund", p: 9, gd: 9, pts: 18 },
       { pos: 5, club: "Barcelona", p: 9, gd: 0, pts: 16 },
@@ -646,7 +653,7 @@
       { pos: 9, club: "Napoli", p: 9, gd: 4, pts: 9 },
       { pos: 10, club: "Chelsea", p: 9, gd: 4, pts: 8 },
       { pos: 11, club: "Atletico", p: 9, gd: -9, pts: 4 },
-      { pos: 12, club: "Juventus", p: 10, gd: -12, pts: 3 },
+      { pos: 12, club: "Juventus", p: 10, gd: -9, pts: 3 },
       { pos: 13, club: "Newcastle", p: 10, gd: -26, pts: 3 },
       { pos: 14, club: "Inter Milan", p: 10, gd: 1, pts: -2 }
     ];
@@ -1028,8 +1035,6 @@
       RESULTS_DATA.forEach(r => {
         const row = tbody.insertRow();
         let processedText = r.matchText;
-        // Remove any leftover text that might appear after icon replacement
-        // First, replace full team names (longest first) with icons
         const teamsToReplace = [
           "Newcastle United", "Atletico Madrid", "Manchester City", "Paris Saint-Germain", "Borussia Dortmund",
           "FC Barcelona", "Inter Milan", "Real Madrid", "AC Milan", "Atletico", "Newcastle",
@@ -1039,9 +1044,8 @@
           const regex = new RegExp(`\\b${team.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
           processedText = processedText.replace(regex, getTeamIconHtml(team, "inline-team-icon"));
         });
-        // Remove any remaining standalone words like "United", "Madrid", "City" that weren't part of full names
+        // Remove leftover words like "United", "Madrid", "City"
         processedText = processedText.replace(/\b(United|Madrid|City)\b/g, '');
-        // Remove any leftover whitespace or double spaces
         processedText = processedText.replace(/\s+/g, ' ').trim();
         
         const isForfeit = r.matchText.includes("Forfeited") || r.matchText.includes("No Contest") || r.matchText.includes("F - F");
