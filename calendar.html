@@ -411,9 +411,25 @@
     "Liverpool": "269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg",
     "Juventus": "IMG_20260421_151224.jpg"
   };
+
+  // Normalize team names to match the keys in teamIconMap
+  function normalizeTeamName(teamName) {
+    const map = {
+      "FC Barcelona": "Barcelona",
+      "Paris Saint-Germain": "PSG",
+      "Manchester City": "Man City",
+      "Atlético Madrid": "Atletico",
+      "Newcastle United": "Newcastle",
+      "Borussia Dortmund": "Dortmund"
+    };
+    return map[teamName] || teamName;
+  }
+
   function getTeamIconHtml(teamName, className = "match-icon") {
-    const src = teamIconMap[teamName];
-    if (src) return `<img class="${className}" src="${src}" alt="${teamName}">`;
+    const normalized = normalizeTeamName(teamName);
+    const src = teamIconMap[normalized];
+    if (src) return `<img class="${className}" src="${src}" alt="${normalized}">`;
+    // Fallback to text if no icon found (should not happen)
     return teamName;
   }
 
@@ -507,15 +523,13 @@
   // Generate future seasons by shifting the same pattern (31-day blocks)
   function generateFutureSeasons() {
     const futureEvents = [];
-    // Start after June 12, 2026
     let startDate = new Date(2026, 5, 13); // June 13, 2026
     const endDate = new Date(2026, 11, 31); // Dec 31, 2026
-    const seasonDuration = 31; // days
-    let seasonNum = 3;
+    const seasonDuration = 31;
     while (startDate <= endDate) {
       for (let ev of season2Events) {
         const evDate = new Date(ev.date);
-        const offset = evDate.getDate() - 13; // relative offset from May 13
+        const offset = evDate.getDate() - 13;
         const newDate = new Date(startDate);
         newDate.setDate(startDate.getDate() + offset);
         if (newDate <= endDate) {
@@ -526,17 +540,15 @@
           });
         }
       }
-      // Move to next season block
       startDate.setDate(startDate.getDate() + seasonDuration);
-      seasonNum++;
     }
     return futureEvents;
   }
 
   // Build complete event map
-  const eventMap = new Map(); // key: YYYY-MM-DD -> { type, matches, title }
+  const eventMap = new Map();
 
-  // Add Premier League matchday events (existing)
+  // Add Premier League matchday events
   for (let md in matchdayDates) {
     const dateStr = matchdayDates[md].date;
     eventMap.set(dateStr, { type: "premier_league", matches: matchdayDates[md].fixtures, title: null });
@@ -546,9 +558,6 @@
   for (let ev of season2Events) {
     if (!eventMap.has(ev.date)) {
       eventMap.set(ev.date, { type: ev.type, matches: [], title: ev.title });
-    } else {
-      // If date already has Premier League, we keep both? Rare, but if conflict, we keep the existing (Premier League has priority)
-      // For simplicity, we don't overwrite.
     }
   }
 
