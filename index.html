@@ -515,11 +515,6 @@
       margin-top: 4px;
     }
 
-    /* Hide broken image icon text */
-    .inline-team-icon, .match-icon {
-      background: transparent;
-    }
-
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
       .stats-table th, .stats-table td { padding: 0.6rem 0.5rem; font-size: 0.75rem; }
@@ -639,7 +634,6 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // Corrected LEAGUE_DATA after MD10 (Man City 3-1 Juventus, Inter 2-0 Newcastle)
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 9, gd: 15, pts: 27 },
       { pos: 2, club: "Man City", p: 10, gd: 12, pts: 25 },
@@ -680,7 +674,6 @@
       "Newcastle": "~Oratile"
     };
 
-    // Icon mapping without onerror attribute to prevent text rendering
     function getTeamIconHtml(teamName, className = "inline-team-icon") {
       const iconMap = {
         "Arsenal": "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png",
@@ -705,14 +698,10 @@
         "Juventus": "IMG_20260421_151224.jpg"
       };
       const src = iconMap[teamName];
-      if (src) {
-        // No onerror attribute to avoid rendering as text
-        return `<img class="${className}" src="${src}" alt="${teamName}">`;
-      }
+      if (src) return `<img class="${className}" src="${src}" alt="${teamName}">`;
       return teamName;
     }
 
-    // Updated results order (Man City 3-1 Juventus as regular win)
     const allResultsOrder = [
       { type: "win", winner: "Real Madrid", loser: "Napoli" },
       { type: "draw", teams: ["Arsenal","AC Milan"] },
@@ -767,7 +756,6 @@
       return arr.length ? arr[arr.length-1] : null;
     }
 
-    // Fixture list (remaining matches)
     const fixtureList = [
       { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Atlético Madrid", away: "Chelsea" }, { md: 10, home: "Napoli", away: "Arsenal" },
       { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
@@ -1040,7 +1028,8 @@
       RESULTS_DATA.forEach(r => {
         const row = tbody.insertRow();
         let processedText = r.matchText;
-        // Replace full team names (including multi-word) in correct order (longest first)
+        // Remove any leftover text that might appear after icon replacement
+        // First, replace full team names (longest first) with icons
         const teamsToReplace = [
           "Newcastle United", "Atletico Madrid", "Manchester City", "Paris Saint-Germain", "Borussia Dortmund",
           "FC Barcelona", "Inter Milan", "Real Madrid", "AC Milan", "Atletico", "Newcastle",
@@ -1050,6 +1039,11 @@
           const regex = new RegExp(`\\b${team.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
           processedText = processedText.replace(regex, getTeamIconHtml(team, "inline-team-icon"));
         });
+        // Remove any remaining standalone words like "United", "Madrid", "City" that weren't part of full names
+        processedText = processedText.replace(/\b(United|Madrid|City)\b/g, '');
+        // Remove any leftover whitespace or double spaces
+        processedText = processedText.replace(/\s+/g, ' ').trim();
+        
         const isForfeit = r.matchText.includes("Forfeited") || r.matchText.includes("No Contest") || r.matchText.includes("F - F");
         if (isForfeit) {
           let forfeitText = "";
