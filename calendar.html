@@ -1,1 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>eFootball 412 · Calendar</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
+    body {
+      background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 100%);
+      font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
+      padding: 0;
+      color: #f5f0ff;
+    }
+
+    .gold-navbar {
+      background: linear-gradient(135deg, #d4af37, #f5d742);
+      padding: 0.4rem 1.2rem;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 0.8rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-icon-btn {
+      background: #6a3bb5;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background 0.2s;
+      border: 1.5px solid #f5d742;
+      text-decoration: none;
+    }
+    .nav-icon-btn:hover {
+      transform: scale(1.05);
+      background: #7e4acf;
+    }
+    .chat-svg, .filter-svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+    }
+    .hamburger-btn {
+      background: #6a3bb5;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background 0.2s;
+      border: 1.5px solid #f5d742;
+    }
+    .hamburger-btn:hover {
+      transform: scale(1.05);
+      background: #7e4acf;
+    }
+    .hamburger-btn span {
+      display: block;
+      width: 18px;
+      height: 2.5px;
+      background-color: #f5d742;
+      border-radius: 2px;
+    }
+
+    /* Modals */
+    .modal-overlay, .filter-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      z-index: 200;
+      visibility: hidden;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active, .filter-modal-overlay.active {
+      visibility: visible;
+      pointer-events: auto;
+    }
+    .modal-content, .filter-modal-content {
+      background: linear-gradient(135deg, #2d1b4e, #1f0f3a);
+      border: 2px solid #f5d742;
+      border-radius: 2rem;
+      padding: 1.5rem;
+      max-width: 300px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .filter-modal-content h3 {
+      color: #f5d742;
+      margin-bottom: 1rem;
+    }
+    .team-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .team-option {
+      background: rgba(106, 59, 181, 0.3);
+      padding: 0.5rem;
+      border-radius: 2rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      border: 1px solid #f5d742;
+    }
+    .team-option:hover {
+      background: #6a3bb5;
+    }
+    .clear-filter {
+      background: #ef4444;
+      border: none;
+      color: white;
+      padding: 0.5rem;
+      border-radius: 2rem;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 0.5rem;
+    }
+    .close-modal-btn {
+      background: #6a3bb5;
+      border: 1px solid #f5d742;
+      color: #f5d742;
+      padding: 0.5rem 1rem;
+      border-radius: 2rem;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    .tournament-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .tournament-option {
+      background: rgba(106, 59, 181, 0.15);
+      padding: 0.4rem 0.8rem;
+      border-radius: 40px;
+      text-decoration: none;
+      color: #f5e6ff;
+      font-weight: 700;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+      border: 1px solid #f5d742;
+    }
+
+    /* Calendar */
+    .calendar-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+    .month-card {
+      background: rgba(45, 25, 75, 0.85);
+      backdrop-filter: blur(10px);
+      border-radius: 2rem;
+      border: 1px solid rgba(245, 215, 66, 0.4);
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .month-header {
+      padding: 1rem 1.5rem;
+      background: rgba(30, 15, 55, 0.9);
+      border-bottom: 2px solid #f5d742;
+    }
+    .month-header h2 {
+      font-size: 1.6rem;
+      color: #f5e6ff;
+    }
+    .weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: rgba(55, 35, 95, 0.5);
+      border-bottom: 1px solid #f5d742;
+    }
+    .weekday {
+      padding: 0.8rem;
+      text-align: center;
+      font-weight: bold;
+      color: #f5d742;
+      font-size: 1rem;
+    }
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+    }
+    .day-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(245, 215, 66, 0.2);
+      background: rgba(45, 25, 75, 0.6);
+      transition: background 0.2s;
+      cursor: pointer;
+      min-height: 100px;
+      padding: 8px;
+      text-align: center;
+    }
+    .day-cell:hover {
+      background: rgba(106, 59, 181, 0.6);
+    }
+    .day-number {
+      font-size: 0.9rem;
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: #f5e6ff;
+    }
+    .event-icon {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      margin-top: 4px;
+      display: block;
+    }
+    .empty-day {
+      background: rgba(30, 15, 55, 0.4);
+      cursor: default;
+    }
+    .empty-day:hover {
+      background: rgba(30, 15, 55, 0.4);
+    }
+
+    /* Popup */
+    .match-popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0.2s, opacity 0.2s;
+    }
+    .match-popup-overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    .match-popup {
+      background: linear-gradient(135deg, #2d1b4e, #1f0f3a);
+      border: 2px solid #f5d742;
+      border-radius: 2rem;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .match-popup h3 {
+      color: #f5d742;
+      margin-bottom: 1rem;
+      font-size: 1.4rem;
+      text-align: center;
+    }
+    .match-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+    .match-item {
+      background: rgba(55, 35, 95, 0.6);
+      border-radius: 1rem;
+      padding: 0.6rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .match-icon {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+    }
+    .match-text {
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: #f5e6ff;
+    }
+    .close-popup {
+      display: block;
+      margin: 1rem auto 0;
+      background: #6a3bb5;
+      border: 1px solid #f5d742;
+      color: #f5d742;
+      padding: 0.5rem 1rem;
+      border-radius: 2rem;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    @media (max-width: 780px) {
+      .calendar-container { padding: 1rem; }
+      .event-icon { width: 32px; height: 32px; }
+      .day-number { font-size: 0.7rem; }
+      .match-icon { width: 30px; height: 30px; }
+      .weekday { font-size: 0.8rem; padding: 0.5rem; }
+      .day-cell { min-height: 70px; padding: 4px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="gold-navbar">
+  <div class="nav-icon-btn" id="filterBtn">
+    <svg class="filter-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 6H20M6 12H18M10 18H14" stroke="#F5D742" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="6" cy="6" r="2" stroke="#F5D742" stroke-width="2"/>
+      <circle cx="18" cy="12" r="2" stroke="#F5D742" stroke-width="2"/>
+      <circle cx="14" cy="18" r="2" stroke="#F5D742" stroke-width="2"/>
+    </svg>
+  </div>
+  <a href="chat.html" class="nav-icon-btn" id="chatBtn">
+    <svg class="chat-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z" fill="#F5D742" stroke="#F5D742" stroke-width="1.5"/>
+      <circle cx="8" cy="10" r="1.5" fill="#6A3BB5"/>
+      <circle cx="12" cy="10" r="1.5" fill="#6A3BB5"/>
+      <circle cx="16" cy="10" r="1.5" fill="#6A3BB5"/>
+    </svg>
+  </a>
+  <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
+</div>
+
+<!-- Tournament Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-content">
+    <h3>TOURNAMENTS</h3>
+    <div class="tournament-options">
+      <a href="fifa-club-world-cup.html" class="tournament-option">FIFA CLUB WORLD CUP</a>
+      <a href="uefa-champions-league.html" class="tournament-option">UEFA CHAMPIONS LEAGUE</a>
+      <a href="uefa-europa-league.html" class="tournament-option">UEFA EUROPA LEAGUE</a>
+      <a href="uefa-super-league.html" class="tournament-option">UEFA SUPER LEAGUE</a>
+      <a href="uefa-conference-league.html" class="tournament-option">UEFA CONFERENCE LEAGUE</a>
+      <a href="player-titles.html" class="tournament-option">PLAYER TITLES</a>
+      <a href="rules.html" class="tournament-option">RULES</a>
+      <a href="calendar.html" class="tournament-option">CALENDAR</a>
+    </div>
+    <button class="close-modal-btn" id="closeModalBtn">CLOSE</button>
+  </div>
+</div>
+
+<!-- Filter Modal -->
+<div class="filter-modal-overlay" id="filterModal">
+  <div class="filter-modal-content">
+    <h3>FILTER BY TEAM</h3>
+    <div id="teamListContainer" class="team-list"></div>
+    <button id="clearFilterBtn" class="clear-filter">Clear Filter</button>
+    <button id="closeFilterBtn" class="close-modal-btn" style="margin-top: 1rem;">CLOSE</button>
+  </div>
+</div>
+
+<div class="calendar-container" id="calendarRoot"></div>
+<div class="match-popup-overlay" id="matchPopup">
+  <div class="match-popup">
+    <h3 id="popupDate"></h3>
+    <div id="popupMatches" class="match-list"></div>
+    <button class="close-popup" id="closePopupBtn">Close</button>
+  </div>
+</div>
+
+<script>
+  // ---------- TEAM LIST & ICONS ----------
+  const allTeams = [
+    "Real Madrid", "Liverpool", "Dortmund", "Man City", "Barcelona", "Arsenal", "PSG",
+    "AC Milan", "Chelsea", "Napoli", "Atletico", "Juventus", "Newcastle", "Inter Milan"
+  ];
+  const teamIconMap = {
+    "Arsenal": "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png",
+    "AC Milan": "44e0f58a-e5db-445b-9896-db22ea99b936.png",
+    "PSG": "4dea795d-a516-46ae-bd34-07a784693d80.png",
+    "Barcelona": "IMG_20260421_085117.jpg",
+    "Inter Milan": "IMG_20260421_092951.png",
+    "Atletico": "IMG_20260421_093024.png",
+    "Newcastle": "IMG_20260421_093046.png",
+    "Napoli": "IMG_20260421_100318.jpg",
+    "Chelsea": "IMG_20260421_100354.jpg",
+    "Dortmund": "01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg",
+    "Real Madrid": "21259ea4-042f-48ff-902f-1e776d27fe58.jpeg",
+    "Man City": "9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg",
+    "Liverpool": "269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg",
+    "Juventus": "IMG_20260421_151224.jpg"
+  };
+  function getTeamIconHtml(teamName, className = "match-icon") {
+    const src = teamIconMap[teamName];
+    if (src) return `<img class="${className}" src="${src}" alt="${teamName}">`;
+    return teamName;
+  }
+
+  // ---------- FIXTURE DATA (Premier League MD10 to MD26) ----------
+  const fixtureList = [
+    { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Juventus", away: "Manchester City" }, { md: 10, home: "Inter Milan", away: "Newcastle United" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Atlético Madrid", away: "Chelsea" }, { md: 10, home: "Napoli", away: "Arsenal" },
+      { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
+      { md: 12, home: "FC Barcelona", away: "Manchester City" }, { md: 12, home: "AC Milan", away: "Newcastle United" }, { md: 12, home: "Real Madrid", away: "Liverpool" }, { md: 12, home: "Paris Saint-Germain", away: "Chelsea" }, { md: 12, home: "Juventus", away: "Arsenal" }, { md: 12, home: "Inter Milan", away: "Napoli" }, { md: 12, home: "Borussia Dortmund", away: "Atlético Madrid" },
+      { md: 13, home: "FC Barcelona", away: "Newcastle United" }, { md: 13, home: "Manchester City", away: "Liverpool" }, { md: 13, home: "AC Milan", away: "Chelsea" }, { md: 13, home: "Real Madrid", away: "Arsenal" }, { md: 13, home: "Paris Saint-Germain", away: "Napoli" }, { md: 13, home: "Juventus", away: "Atlético Madrid" }, { md: 13, home: "Inter Milan", away: "Borussia Dortmund" },
+      { md: 14, home: "Liverpool", away: "FC Barcelona" }, { md: 14, home: "Chelsea", away: "Newcastle United" }, { md: 14, home: "Arsenal", away: "Manchester City" }, { md: 14, home: "Napoli", away: "AC Milan" }, { md: 14, home: "Atlético Madrid", away: "Real Madrid" }, { md: 14, home: "Borussia Dortmund", away: "Paris Saint-Germain" }, { md: 14, home: "Inter Milan", away: "Juventus" },
+      { md: 15, home: "Chelsea", away: "FC Barcelona" }, { md: 15, home: "Arsenal", away: "Liverpool" }, { md: 15, home: "Napoli", away: "Newcastle United" }, { md: 15, home: "Atlético Madrid", away: "Manchester City" }, { md: 15, home: "Borussia Dortmund", away: "AC Milan" }, { md: 15, home: "Inter Milan", away: "Real Madrid" }, { md: 15, home: "Juventus", away: "Paris Saint-Germain" },
+      { md: 16, home: "Arsenal", away: "FC Barcelona" }, { md: 16, home: "Napoli", away: "Chelsea" }, { md: 16, home: "Atlético Madrid", away: "Liverpool" }, { md: 16, home: "Borussia Dortmund", away: "Newcastle United" }, { md: 16, home: "Inter Milan", away: "Manchester City" }, { md: 16, home: "Juventus", away: "AC Milan" }, { md: 16, home: "Paris Saint-Germain", away: "Real Madrid" },
+      { md: 17, home: "Napoli", away: "FC Barcelona" }, { md: 17, home: "Atlético Madrid", away: "Arsenal" }, { md: 17, home: "Borussia Dortmund", away: "Chelsea" }, { md: 17, home: "Inter Milan", away: "Liverpool" }, { md: 17, home: "Juventus", away: "Newcastle United" }, { md: 17, home: "Paris Saint-Germain", away: "Manchester City" }, { md: 17, home: "Real Madrid", away: "AC Milan" },
+      { md: 18, home: "Atlético Madrid", away: "FC Barcelona" }, { md: 18, home: "Borussia Dortmund", away: "Napoli" }, { md: 18, home: "Inter Milan", away: "Arsenal" }, { md: 18, home: "Juventus", away: "Chelsea" }, { md: 18, home: "Paris Saint-Germain", away: "Liverpool" }, { md: 18, home: "Real Madrid", away: "Newcastle United" }, { md: 18, home: "AC Milan", away: "Manchester City" },
+      { md: 19, home: "Borussia Dortmund", away: "FC Barcelona" }, { md: 19, home: "Inter Milan", away: "Atlético Madrid" }, { md: 19, home: "Juventus", away: "Napoli" }, { md: 19, home: "Paris Saint-Germain", away: "Arsenal" }, { md: 19, home: "Real Madrid", away: "Chelsea" }, { md: 19, home: "AC Milan", away: "Liverpool" }, { md: 19, home: "Manchester City", away: "Newcastle United" },
+      { md: 20, home: "Inter Milan", away: "FC Barcelona" }, { md: 20, home: "Juventus", away: "Borussia Dortmund" }, { md: 20, home: "Paris Saint-Germain", away: "Atlético Madrid" }, { md: 20, home: "Real Madrid", away: "Napoli" }, { md: 20, home: "AC Milan", away: "Arsenal" }, { md: 20, home: "Manchester City", away: "Chelsea" }, { md: 20, home: "Newcastle United", away: "Liverpool" },
+      { md: 21, home: "Juventus", away: "FC Barcelona" }, { md: 21, home: "Paris Saint-Germain", away: "Inter Milan" }, { md: 21, home: "Real Madrid", away: "Borussia Dortmund" }, { md: 21, home: "AC Milan", away: "Atlético Madrid" }, { md: 21, home: "Manchester City", away: "Napoli" }, { md: 21, home: "Newcastle United", away: "Arsenal" }, { md: 21, home: "Liverpool", away: "Chelsea" },
+      { md: 22, home: "Paris Saint-Germain", away: "FC Barcelona" }, { md: 22, home: "Real Madrid", away: "Juventus" }, { md: 22, home: "AC Milan", away: "Inter Milan" }, { md: 22, home: "Manchester City", away: "Borussia Dortmund" }, { md: 22, home: "Newcastle United", away: "Atlético Madrid" }, { md: 22, home: "Liverpool", away: "Napoli" }, { md: 22, home: "Chelsea", away: "Arsenal" },
+      { md: 23, home: "Real Madrid", away: "FC Barcelona" }, { md: 23, home: "AC Milan", away: "Paris Saint-Germain" }, { md: 23, home: "Manchester City", away: "Juventus" }, { md: 23, home: "Newcastle United", away: "Inter Milan" }, { md: 23, home: "Liverpool", away: "Borussia Dortmund" }, { md: 23, home: "Chelsea", away: "Atlético Madrid" }, { md: 23, home: "Arsenal", away: "Napoli" },
+      { md: 24, home: "AC Milan", away: "FC Barcelona" }, { md: 24, home: "Manchester City", away: "Real Madrid" }, { md: 24, home: "Newcastle United", away: "Paris Saint-Germain" }, { md: 24, home: "Liverpool", away: "Juventus" }, { md: 24, home: "Chelsea", away: "Inter Milan" }, { md: 24, home: "Arsenal", away: "Borussia Dortmund" }, { md: 24, home: "Napoli", away: "Atlético Madrid" },
+      { md: 25, home: "Manchester City", away: "FC Barcelona" }, { md: 25, home: "Newcastle United", away: "AC Milan" }, { md: 25, home: "Liverpool", away: "Real Madrid" }, { md: 25, home: "Chelsea", away: "Paris Saint-Germain" }, { md: 25, home: "Arsenal", away: "Juventus" }, { md: 25, home: "Napoli", away: "Inter Milan" }, { md: 25, home: "Atlético Madrid", away: "Borussia Dortmund" },
+      { md: 26, home: "Newcastle United", away: "FC Barcelona" }, { md: 26, home: "Liverpool", away: "Manchester City" }, { md: 26, home: "Chelsea", away: "AC Milan" }, { md: 26, home: "Arsenal", away: "Real Madrid" }, { md: 26, home: "Napoli", away: "Paris Saint-Germain" }, { md: 26, home: "Atlético Madrid", away: "Juventus" }, { md: 26, home: "Borussia Dortmund", away: "Inter Milan" }
+  ];
+
+  function formatYMD(date) {
+    return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  }
+
+  // Build Premier League matchday dates (MD10 to MD26)
+  function buildMatchdayDates() {
+    const matchdayDates = {};
+    let currentDate = new Date(2026, 3, 22);
+    let currentMd = 10;
+    for (let f of fixtureList) {
+      if (!matchdayDates[currentMd]) matchdayDates[currentMd] = { date: formatYMD(currentDate), fixtures: [] };
+      matchdayDates[currentMd].fixtures.push(f);
+      const nextIdx = fixtureList.indexOf(f)+1;
+      if (nextIdx < fixtureList.length && fixtureList[nextIdx].md !== currentMd) {
+        currentMd = fixtureList[nextIdx].md;
+        currentDate.setDate(currentDate.getDate()+1);
+      }
+    }
+    return matchdayDates;
+  }
+
+  let matchdayDates = buildMatchdayDates();
+  let selectedTeam = null;
+
+  // ---------- COMPETITION EVENTS (Season 2 and future seasons) ----------
+  // Swapped Club World Cup and Super Cup icons
+  const typeToIcon = {
+    "premier_league": "images (14).png",
+    "champions_league": "images (15).png",
+    "europa_league": "uefa-europa-league-logo-on-transparent-background-free-vector.jpg",
+    "conference_league": "images (16).png",
+    "club_world_cup": "images - 2026-04-21T172601.589.jpeg",   // was super cup icon
+    "super_cup": "images - 2026-04-21T172656.176.jpeg",        // was club world cup icon
+    "fa_cup": "GEryYr_5YQv6lyYkYIMYdH-pgvv7tZ5nGqQ4sCna6ewduDy5v_LTbGqjg3g81Fx8ZA1a_Mae5g5HI7VEY_6uQQ.webp"
+  };
+
+  // Define the exact schedule for Season 2 (May–June 2026) with formal names
+  const season2Events = [
+    { date: "2026-05-13", type: "champions_league", title: "UEFA Champions League Semi-Final 1st Leg" },
+    { date: "2026-05-14", type: "europa_league", title: "UEFA Europa League Semi-Final 1st Leg" },
+    { date: "2026-05-15", type: "premier_league", title: "Premier League Matchday 1" },
+    { date: "2026-05-16", type: "conference_league", title: "UEFA Conference League Semi-Final 1st Leg" },
+    { date: "2026-05-17", type: "premier_league", title: "Premier League Matchday 2" },
+    { date: "2026-05-18", type: "club_world_cup", title: "FIFA Club World Cup Quarter-Final" },
+    { date: "2026-05-19", type: "premier_league", title: "Premier League Matchday 3" },
+    { date: "2026-05-21", type: "champions_league", title: "UEFA Champions League Semi-Final 2nd Leg" },
+    { date: "2026-05-22", type: "premier_league", title: "Premier League Matchday 4" },
+    { date: "2026-05-23", type: "europa_league", title: "UEFA Europa League Semi-Final 2nd Leg" },
+    { date: "2026-05-24", type: "premier_league", title: "Premier League Matchday 5" },
+    { date: "2026-05-25", type: "conference_league", title: "UEFA Conference League Semi-Final 2nd Leg" },
+    { date: "2026-05-26", type: "premier_league", title: "Premier League Matchday 6" },
+    { date: "2026-05-27", type: "club_world_cup", title: "FIFA Club World Cup Semi-Final" },
+    { date: "2026-05-28", type: "premier_league", title: "Premier League Matchday 7" },
+    { date: "2026-05-29", type: "champions_league", title: "UEFA Champions League Final" },
+    { date: "2026-05-31", type: "premier_league", title: "Premier League Matchday 8" },
+    { date: "2026-06-02", type: "europa_league", title: "UEFA Europa League Final" },
+    { date: "2026-06-03", type: "premier_league", title: "Premier League Matchday 9" },
+    { date: "2026-06-04", type: "conference_league", title: "UEFA Conference League Final" },
+    { date: "2026-06-05", type: "premier_league", title: "Premier League Matchday 10" },
+    { date: "2026-06-06", type: "club_world_cup", title: "FIFA Club World Cup Final" },
+    { date: "2026-06-08", type: "super_cup", title: "UEFA Super Cup Final" },
+    { date: "2026-06-09", type: "premier_league", title: "Premier League Matchday 11" },
+    { date: "2026-06-10", type: "premier_league", title: "Premier League Matchday 12" },
+    { date: "2026-06-11", type: "premier_league", title: "Premier League Matchday 13" },
+    { date: "2026-06-12", type: "premier_league", title: "Premier League Matchday 14" }
+  ];
+
+  // Generate future seasons by shifting the same pattern (31-day blocks)
+  function generateFutureSeasons() {
+    const futureEvents = [];
+    // Start after June 12, 2026
+    let startDate = new Date(2026, 5, 13); // June 13, 2026
+    const endDate = new Date(2026, 11, 31); // Dec 31, 2026
+    const seasonDuration = 31; // days
+    let seasonNum = 3;
+    while (startDate <= endDate) {
+      for (let ev of season2Events) {
+        const evDate = new Date(ev.date);
+        const offset = evDate.getDate() - 13; // relative offset from May 13
+        const newDate = new Date(startDate);
+        newDate.setDate(startDate.getDate() + offset);
+        if (newDate <= endDate) {
+          futureEvents.push({
+            date: formatYMD(newDate),
+            type: ev.type,
+            title: "TBD"
+          });
+        }
+      }
+      // Move to next season block
+      startDate.setDate(startDate.getDate() + seasonDuration);
+      seasonNum++;
+    }
+    return futureEvents;
+  }
+
+  // Build complete event map
+  const eventMap = new Map(); // key: YYYY-MM-DD -> { type, matches, title }
+
+  // Add Premier League matchday events (existing)
+  for (let md in matchdayDates) {
+    const dateStr = matchdayDates[md].date;
+    eventMap.set(dateStr, { type: "premier_league", matches: matchdayDates[md].fixtures, title: null });
+  }
+
+  // Add Season 2 events
+  for (let ev of season2Events) {
+    if (!eventMap.has(ev.date)) {
+      eventMap.set(ev.date, { type: ev.type, matches: [], title: ev.title });
+    } else {
+      // If date already has Premier League, we keep both? Rare, but if conflict, we keep the existing (Premier League has priority)
+      // For simplicity, we don't overwrite.
+    }
+  }
+
+  // Add future season events (TBD)
+  const futureEvents = generateFutureSeasons();
+  for (let ev of futureEvents) {
+    if (!eventMap.has(ev.date)) {
+      eventMap.set(ev.date, { type: ev.type, matches: [], title: ev.title });
+    }
+  }
+
+  // ---------- CALENDAR RENDERING ----------
+  function renderCalendar() {
+    const root = document.getElementById("calendarRoot");
+    root.innerHTML = "";
+    const monthsData = [];
+    for (let m = 3; m <= 11; m++) {
+      const year = 2026;
+      const firstDay = new Date(year, m, 1);
+      const lastDay = new Date(year, m+1, 0);
+      const startWeekday = firstDay.getDay();
+      const daysInMonth = lastDay.getDate();
+      monthsData.push({ year, month: m, firstDay, daysInMonth, startWeekday });
+    }
+    const monthNames = ["April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const weekLabels = ["S", "M", "T", "W", "T", "F", "S"];
+
+    for (let mi = 0; mi < monthsData.length; mi++) {
+      const m = monthsData[mi];
+      const monthName = monthNames[mi];
+      const days = [];
+      for (let i = 0; i < m.startWeekday; i++) days.push(null);
+      for (let d = 1; d <= m.daysInMonth; d++) days.push(new Date(m.year, m.month, d));
+
+      const monthCard = document.createElement("div");
+      monthCard.className = "month-card";
+      monthCard.innerHTML = `<div class="month-header"><h2>${monthName} ${m.year}</h2></div>`;
+      const weekdaysDiv = document.createElement("div");
+      weekdaysDiv.className = "weekdays";
+      weekLabels.forEach(label => {
+        const wd = document.createElement("div");
+        wd.className = "weekday";
+        wd.textContent = label;
+        weekdaysDiv.appendChild(wd);
+      });
+      monthCard.appendChild(weekdaysDiv);
+      const daysGrid = document.createElement("div");
+      daysGrid.className = "days-grid";
+      for (let dayObj of days) {
+        const cell = document.createElement("div");
+        cell.className = "day-cell";
+        if (!dayObj) {
+          cell.classList.add("empty-day");
+          cell.innerHTML = "";
+        } else {
+          const dateStr = formatYMD(dayObj);
+          const event = eventMap.get(dateStr);
+          const dayNum = dayObj.getDate();
+          const numberSpan = document.createElement("div");
+          numberSpan.className = "day-number";
+          numberSpan.textContent = dayNum;
+          cell.appendChild(numberSpan);
+          if (event) {
+            const icon = document.createElement("img");
+            icon.className = "event-icon";
+            icon.src = typeToIcon[event.type];
+            icon.alt = event.type;
+            cell.appendChild(icon);
+          }
+          cell.addEventListener("click", (function(d, ds) { return function() { showPopupForDate(d, ds); }; })(dayObj, dateStr));
+        }
+        daysGrid.appendChild(cell);
+      }
+      monthCard.appendChild(daysGrid);
+      root.appendChild(monthCard);
+    }
+  }
+
+  function showPopupForDate(date, dateStr) {
+    const popup = document.getElementById("matchPopup");
+    const popupDate = document.getElementById("popupDate");
+    const popupMatchesDiv = document.getElementById("popupMatches");
+    popupDate.textContent = date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    popupMatchesDiv.innerHTML = "";
+    const event = eventMap.get(dateStr);
+    if (event) {
+      if (event.matches && event.matches.length > 0) {
+        event.matches.forEach(match => {
+          const matchDiv = document.createElement("div");
+          matchDiv.className = "match-item";
+          const homeIcon = getTeamIconHtml(match.home, "match-icon");
+          const awayIcon = getTeamIconHtml(match.away, "match-icon");
+          matchDiv.innerHTML = `${homeIcon} <span class="match-text">vs</span> ${awayIcon}`;
+          popupMatchesDiv.appendChild(matchDiv);
+        });
+      } else if (event.title) {
+        const msg = document.createElement("div");
+        msg.className = "match-item";
+        msg.innerHTML = `<span class="match-text">${event.title}</span>`;
+        popupMatchesDiv.appendChild(msg);
+      } else {
+        const msg = document.createElement("div");
+        msg.className = "match-item";
+        msg.innerHTML = `<span class="match-text">Matchday - Details coming soon</span>`;
+        popupMatchesDiv.appendChild(msg);
+      }
+    } else {
+      const msg = document.createElement("div");
+      msg.className = "match-item";
+      msg.innerHTML = `<span class="match-text">No matches scheduled</span>`;
+      popupMatchesDiv.appendChild(msg);
+    }
+    popup.classList.add("active");
+  }
+
+  // ---------- FILTER MODAL ----------
+  const filterBtn = document.getElementById("filterBtn");
+  const filterModal = document.getElementById("filterModal");
+  const closeFilterBtn = document.getElementById("closeFilterBtn");
+  const clearFilterBtn = document.getElementById("clearFilterBtn");
+  const teamListContainer = document.getElementById("teamListContainer");
+
+  function openFilterModal() { filterModal.classList.add("active"); }
+  function closeFilterModal() { filterModal.classList.remove("active"); }
+  filterBtn.addEventListener("click", openFilterModal);
+  closeFilterBtn.addEventListener("click", closeFilterModal);
+  filterModal.addEventListener("click", (e) => { if (e.target === filterModal) closeFilterModal(); });
+
+  function buildTeamList() {
+    teamListContainer.innerHTML = "";
+    allTeams.forEach(team => {
+      const div = document.createElement("div");
+      div.className = "team-option";
+      div.textContent = team;
+      div.addEventListener("click", () => {
+        selectedTeam = team;
+        closeFilterModal();
+        renderCalendar();
+      });
+      teamListContainer.appendChild(div);
+    });
+  }
+  buildTeamList();
+  clearFilterBtn.addEventListener("click", () => {
+    selectedTeam = null;
+    closeFilterModal();
+    renderCalendar();
+  });
+
+  // ---------- TOURNAMENT MODAL ----------
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  const modalOverlay = document.getElementById("modalOverlay");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  function openModal() { modalOverlay.classList.add("active"); }
+  function closeModal() { modalOverlay.classList.remove("active"); }
+  hamburgerBtn.addEventListener("click", openModal);
+  closeModalBtn.addEventListener("click", closeModal);
+  modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
+
+  // ---------- CLOSE POPUP ----------
+  const closePopupBtn = document.getElementById("closePopupBtn");
+  const popupOverlay = document.getElementById("matchPopup");
+  closePopupBtn.addEventListener("click", () => popupOverlay.classList.remove("active"));
+  popupOverlay.addEventListener("click", (e) => { if (e.target === popupOverlay) popupOverlay.classList.remove("active"); });
+
+  renderCalendar();
+</script>
+</body>
+  </html>
