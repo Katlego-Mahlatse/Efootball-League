@@ -133,6 +133,21 @@
     .modal-btn:hover {
       background: #7e4acf;
     }
+    .passcode-input {
+      background: rgba(30, 15, 55, 0.8);
+      border: 1px solid #f5d742;
+      border-radius: 2rem;
+      padding: 0.6rem 1rem;
+      color: white;
+      width: 100%;
+      margin: 1rem 0;
+      text-align: center;
+    }
+    .error-text {
+      color: #ef4444;
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+    }
 
     /* Team selection screen */
     .team-selector {
@@ -356,6 +371,19 @@
   </div>
 </div>
 
+<!-- Passcode Modal -->
+<div id="passcodeModal" class="modal-overlay" style="z-index: 300;">
+  <div class="modal-content">
+    <h3>🔐 Enter Passcode for <span id="passcodeTeamName"></span></h3>
+    <input type="password" id="passcodeInput" class="passcode-input" placeholder="Enter passcode" autocomplete="off">
+    <div id="passcodeError" class="error-text"></div>
+    <div class="modal-buttons">
+      <button id="passcodeSubmitBtn" class="modal-btn">Submit</button>
+      <button id="passcodeCancelBtn" class="modal-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- Team selection screen -->
 <div id="teamSelector" class="team-selector">
   <h2>⚽ Select Your Team</h2>
@@ -416,29 +444,29 @@
     messagingSenderId: "596548424249",
     appId: "1:596548424249:web:4349f6e87a40a1590bf3e8",
     measurementId: "G-KHY86ZMPZH",
-    databaseURL: "https://efootball-412-default-rtdb.firebaseio.com" // Realtime Database URL
+    databaseURL: "https://efootball-412-default-rtdb.firebaseio.com"
   };
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getDatabase(app);
 
-  // List of all teams with their display names and icon filenames
+  // List of all teams with display names, icons, and hardcoded passcodes
   const teams = [
-    { name: "Real Madrid", icon: "21259ea4-042f-48ff-902f-1e776d27fe58.jpeg" },
-    { name: "Liverpool", icon: "269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg" },
-    { name: "Dortmund", icon: "01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg" },
-    { name: "Man City", icon: "9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg" },
-    { name: "Barcelona", icon: "IMG_20260421_085117.jpg" },
-    { name: "Arsenal", icon: "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png" },
-    { name: "PSG", icon: "4dea795d-a516-46ae-bd34-07a784693d80.png" },
-    { name: "AC Milan", icon: "44e0f58a-e5db-445b-9896-db22ea99b936.png" },
-    { name: "Chelsea", icon: "IMG_20260421_100354.jpg" },
-    { name: "Napoli", icon: "IMG_20260421_100318.jpg" },
-    { name: "Atletico", icon: "IMG_20260421_093024.png" },
-    { name: "Juventus", icon: "IMG_20260421_151224.jpg" },
-    { name: "Newcastle", icon: "IMG_20260421_093046.png" },
-    { name: "Inter Milan", icon: "IMG_20260421_092951.png" }
+    { name: "Real Madrid", icon: "21259ea4-042f-48ff-902f-1e776d27fe58.jpeg", passcode: "realmadrid123" },
+    { name: "Liverpool", icon: "269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg", passcode: "liverpool456" },
+    { name: "Dortmund", icon: "01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg", passcode: "dortmund789" },
+    { name: "Man City", icon: "9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg", passcode: "mancity101" },
+    { name: "Barcelona", icon: "IMG_20260421_085117.jpg", passcode: "barca2026" },
+    { name: "Arsenal", icon: "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png", passcode: "arsenal5673" },
+    { name: "PSG", icon: "4dea795d-a516-46ae-bd34-07a784693d80.png", passcode: "psg2024" },
+    { name: "AC Milan", icon: "44e0f58a-e5db-445b-9896-db22ea99b936.png", passcode: "acmilan777" },
+    { name: "Chelsea", icon: "IMG_20260421_100354.jpg", passcode: "chelsea888" },
+    { name: "Napoli", icon: "IMG_20260421_100318.jpg", passcode: "napoli999" },
+    { name: "Atletico", icon: "IMG_20260421_093024.png", passcode: "atletico111" },
+    { name: "Juventus", icon: "IMG_20260421_151224.jpg", passcode: "juventus222" },
+    { name: "Newcastle", icon: "IMG_20260421_093046.png", passcode: "newcastle333" },
+    { name: "Inter Milan", icon: "IMG_20260421_092951.png", passcode: "inter444" }
   ];
 
   // DOM elements
@@ -456,6 +484,15 @@
   const messageInput = document.getElementById("messageInput");
   const sendBtn = document.getElementById("sendBtn");
 
+  // Passcode modal elements
+  const passcodeModal = document.getElementById("passcodeModal");
+  const passcodeTeamNameSpan = document.getElementById("passcodeTeamName");
+  const passcodeInput = document.getElementById("passcodeInput");
+  const passcodeError = document.getElementById("passcodeError");
+  const passcodeSubmitBtn = document.getElementById("passcodeSubmitBtn");
+  const passcodeCancelBtn = document.getElementById("passcodeCancelBtn");
+
+  let pendingTeam = null;        // team awaiting passcode
   let currentTeam = null;       // { name, icon }
   let selectedChatTeam = null;
   let currentChatId = null;
@@ -467,6 +504,36 @@
     return `${a}_${b}`;
   }
 
+  // Show passcode modal for a selected team
+  function requestPasscode(team) {
+    pendingTeam = team;
+    passcodeTeamNameSpan.textContent = team.name;
+    passcodeInput.value = "";
+    passcodeError.textContent = "";
+    passcodeModal.classList.add("active");
+  }
+
+  // Verify passcode and proceed
+  function verifyPasscode() {
+    const enteredCode = passcodeInput.value.trim();
+    if (enteredCode === pendingTeam.passcode) {
+      passcodeModal.classList.remove("active");
+      selectTeam(pendingTeam);
+    } else {
+      passcodeError.textContent = "❌ Incorrect passcode. Try again.";
+    }
+  }
+
+  // Cancel passcode entry
+  function cancelPasscode() {
+    passcodeModal.classList.remove("active");
+    pendingTeam = null;
+  }
+
+  passcodeSubmitBtn.addEventListener("click", verifyPasscode);
+  passcodeCancelBtn.addEventListener("click", cancelPasscode);
+  passcodeInput.addEventListener("keypress", (e) => { if (e.key === "Enter") verifyPasscode(); });
+
   // Render team selection grid
   function renderTeamSelector() {
     teamGrid.innerHTML = "";
@@ -477,12 +544,12 @@
         <img class="team-icon" src="${team.icon}" alt="${team.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 24 24%22 fill=%22%23f5d742%22%3E%3Cpath d=%22M12 2L15 8.5L22 9.5L17 14L18.5 21L12 17.5L5.5 21L7 14L2 9.5L9 8.5L12 2Z%22/%3E%3C/svg%3E'">
         <div class="team-name">${team.name}</div>
       `;
-      card.addEventListener("click", () => selectTeam(team));
+      card.addEventListener("click", () => requestPasscode(team));
       teamGrid.appendChild(card);
     });
   }
 
-  // Select a team (called from team grid or continue dialog)
+  // Select a team (called after successful passcode or continue)
   async function selectTeam(team) {
     currentTeam = team;
     localStorage.setItem("chat_team", team.name);
@@ -517,14 +584,12 @@
   function listenToMessages(chatId) {
     if (unsubscribeMessages) unsubscribeMessages();
     const messagesRef = ref(db, `chats/${chatId}/messages`);
-    // Get last 50 messages, ordered by timestamp
     const recentQuery = query(messagesRef, limitToLast(50));
     onChildAdded(recentQuery, (snapshot) => {
       const msg = snapshot.val();
       if (!msg) return;
       const div = document.createElement("div");
       div.className = `message ${msg.sender === currentTeam.name ? "own" : ""}`;
-      // Find sender icon
       const senderTeam = teams.find(t => t.name === msg.sender);
       const senderIcon = senderTeam ? senderTeam.icon : "";
       div.innerHTML = `
@@ -556,9 +621,7 @@
     inputArea.style.display = "flex";
     const chatId = getChatId(currentTeam.name, team.name);
     currentChatId = chatId;
-    // Clear messages area
     messagesArea.innerHTML = "";
-    // Start listening
     listenToMessages(chatId);
   }
 
@@ -582,7 +645,6 @@
   const savedTeamName = localStorage.getItem("chat_team");
   const savedTeamIcon = localStorage.getItem("chat_team_icon");
   if (savedTeamName && savedTeamIcon) {
-    // Verify team still exists in list
     const savedTeam = teams.find(t => t.name === savedTeamName);
     if (savedTeam) {
       continueMessage.innerText = `Continue as ${savedTeam.name}?`;
@@ -599,7 +661,6 @@
         teamSelectorDiv.style.display = "block";
       };
     } else {
-      // Invalid saved team, clear and show selector
       localStorage.removeItem("chat_team");
       localStorage.removeItem("chat_team_icon");
       renderTeamSelector();
@@ -609,9 +670,6 @@
     renderTeamSelector();
     teamSelectorDiv.style.display = "block";
   }
-
-  // Ensure anonymous sign-in happens automatically when needed (on team selection)
-  // Already handled inside selectTeam
 
   // Modal hamburger menu
   const hamburgerBtn = document.getElementById("hamburgerBtn");
