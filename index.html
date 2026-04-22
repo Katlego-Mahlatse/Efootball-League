@@ -634,12 +634,12 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // Updated LEAGUE_DATA after MD10: Inter Milan 2-0 Newcastle
-    // Inter Milan: +3 pts (-5 -> -2), GD +2 (-1 -> +1), P+1 (9->10)
-    // Newcastle: 0 pts, GD -2 (-24 -> -26), P+1 (9->10)
+    // Corrected LEAGUE_DATA after MD10: Man City 3-1 Juventus (regular win)
+    // Man City: P10, GD +12 (was +10, +2 from 3-1), Pts 25 (was 22 +3)
+    // Juventus: P10, GD -12 (was -10, -2), Pts 3 (unchanged)
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 9, gd: 15, pts: 27 },
-      { pos: 2, club: "Man City", p: 10, gd: 10, pts: 22 },
+      { pos: 2, club: "Man City", p: 10, gd: 12, pts: 25 },
       { pos: 3, club: "Liverpool", p: 9, gd: 25, pts: 22 },
       { pos: 4, club: "Dortmund", p: 9, gd: 9, pts: 18 },
       { pos: 5, club: "Barcelona", p: 9, gd: 0, pts: 16 },
@@ -649,7 +649,7 @@
       { pos: 9, club: "Napoli", p: 9, gd: 4, pts: 9 },
       { pos: 10, club: "Chelsea", p: 9, gd: 4, pts: 8 },
       { pos: 11, club: "Atletico", p: 9, gd: -9, pts: 4 },
-      { pos: 12, club: "Juventus", p: 10, gd: -10, pts: 3 },
+      { pos: 12, club: "Juventus", p: 10, gd: -12, pts: 3 },
       { pos: 13, club: "Newcastle", p: 10, gd: -26, pts: 3 },
       { pos: 14, club: "Inter Milan", p: 10, gd: 1, pts: -2 }
     ];
@@ -706,7 +706,7 @@
       return teamName;
     }
 
-    // Updated allResultsOrder with MD10 Inter Milan vs Newcastle win
+    // Updated allResultsOrder: replace forfeit_win with regular win for Man City vs Juventus
     const allResultsOrder = [
       { type: "win", winner: "Real Madrid", loser: "Napoli" },
       { type: "draw", teams: ["Arsenal","AC Milan"] },
@@ -729,8 +729,8 @@
       { type: "win", winner: "Napoli", loser: "Liverpool" },
       { type: "win", winner: "Man City", loser: "Dortmund" },
       { type: "forfeit_win", winner: "Real Madrid", loser: "Juventus" },
-      { type: "forfeit_win", winner: "Man City", loser: "Juventus" },
-      { type: "win", winner: "Inter Milan", loser: "Newcastle" }   // MD10 Inter vs Newcastle
+      { type: "win", winner: "Man City", loser: "Juventus" },        // Corrected: regular win, not forfeit
+      { type: "win", winner: "Inter Milan", loser: "Newcastle" }
     ];
 
     const teamResults = {};
@@ -761,7 +761,7 @@
       return arr.length ? arr[arr.length-1] : null;
     }
 
-    // Updated fixtureList: removed Inter Milan vs Newcastle United from MD10
+    // Fixture list (unchanged, already removed Juventus vs Man City)
     const fixtureList = [
       { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Atlético Madrid", away: "Chelsea" }, { md: 10, home: "Napoli", away: "Arsenal" },
       { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
@@ -800,8 +800,8 @@
     }
 
     const RESULTS_DATA = [
+      { matchText: "Manchester City 3 - 1 Juventus", md: 10 },
       { matchText: "Inter Milan 2 - 0 Newcastle United", md: 10 },
-      { matchText: "Manchester City 3 - 0 Juventus (Forfeited on Agreement)", md: 10 },
       { matchText: "Real Madrid 3 - 0 Juventus (Forfeited - No Reply)", md: 9 },
       { matchText: "Manchester City 2 - 0 Dortmund", md: 9 },
       { matchText: "Liverpool 1 - 2 Napoli", md: 9 },
