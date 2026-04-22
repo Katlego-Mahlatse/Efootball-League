@@ -515,6 +515,11 @@
       margin-top: 4px;
     }
 
+    /* Hide broken image icon text */
+    .inline-team-icon, .match-icon {
+      background: transparent;
+    }
+
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
       .stats-table th, .stats-table td { padding: 0.6rem 0.5rem; font-size: 0.75rem; }
@@ -634,9 +639,7 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // Corrected LEAGUE_DATA after MD10: Man City 3-1 Juventus (regular win)
-    // Man City: P10, GD +12 (was +10, +2 from 3-1), Pts 25 (was 22 +3)
-    // Juventus: P10, GD -12 (was -10, -2), Pts 3 (unchanged)
+    // Corrected LEAGUE_DATA after MD10 (Man City 3-1 Juventus, Inter 2-0 Newcastle)
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 9, gd: 15, pts: 27 },
       { pos: 2, club: "Man City", p: 10, gd: 12, pts: 25 },
@@ -677,6 +680,7 @@
       "Newcastle": "~Oratile"
     };
 
+    // Icon mapping without onerror attribute to prevent text rendering
     function getTeamIconHtml(teamName, className = "inline-team-icon") {
       const iconMap = {
         "Arsenal": "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png",
@@ -700,13 +704,15 @@
         "Borussia Dortmund": "01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg",
         "Juventus": "IMG_20260421_151224.jpg"
       };
-      if (iconMap[teamName]) {
-        return `<img class="${className}" src="${iconMap[teamName]}" alt="${teamName}" onerror="this.style.display='none'">`;
+      const src = iconMap[teamName];
+      if (src) {
+        // No onerror attribute to avoid rendering as text
+        return `<img class="${className}" src="${src}" alt="${teamName}">`;
       }
       return teamName;
     }
 
-    // Updated allResultsOrder: replace forfeit_win with regular win for Man City vs Juventus
+    // Updated results order (Man City 3-1 Juventus as regular win)
     const allResultsOrder = [
       { type: "win", winner: "Real Madrid", loser: "Napoli" },
       { type: "draw", teams: ["Arsenal","AC Milan"] },
@@ -729,7 +735,7 @@
       { type: "win", winner: "Napoli", loser: "Liverpool" },
       { type: "win", winner: "Man City", loser: "Dortmund" },
       { type: "forfeit_win", winner: "Real Madrid", loser: "Juventus" },
-      { type: "win", winner: "Man City", loser: "Juventus" },        // Corrected: regular win, not forfeit
+      { type: "win", winner: "Man City", loser: "Juventus" },
       { type: "win", winner: "Inter Milan", loser: "Newcastle" }
     ];
 
@@ -761,7 +767,7 @@
       return arr.length ? arr[arr.length-1] : null;
     }
 
-    // Fixture list (unchanged, already removed Juventus vs Man City)
+    // Fixture list (remaining matches)
     const fixtureList = [
       { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Atlético Madrid", away: "Chelsea" }, { md: 10, home: "Napoli", away: "Arsenal" },
       { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
@@ -871,33 +877,33 @@
         
         let iconHtml = '';
         if (team.club === "Arsenal") {
-          iconHtml = `<img class="team-icon" src="b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png" alt="Arsenal badge" onerror="this.style.display='none'">`;
+          iconHtml = `<img class="team-icon" src="b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png" alt="Arsenal badge">`;
         } else if (team.club === "AC Milan") {
-          iconHtml = `<img class="team-icon" src="44e0f58a-e5db-445b-9896-db22ea99b936.png" alt="AC Milan badge" onerror="this.style.display='none'">`;
+          iconHtml = `<img class="team-icon" src="44e0f58a-e5db-445b-9896-db22ea99b936.png" alt="AC Milan badge">`;
         } else if (team.club === "PSG") {
-          iconHtml = `<img class="team-icon" src="4dea795d-a516-46ae-bd34-07a784693d80.png" alt="PSG badge" onerror="this.style.display='none'">`;
+          iconHtml = `<img class="team-icon" src="4dea795d-a516-46ae-bd34-07a784693d80.png" alt="PSG badge">`;
         } else if (team.club === "Barcelona") {
-          iconHtml = `<img class="team-icon" src="IMG_20260421_085117.jpg" alt="Barcelona badge" onerror="this.style.display='none'">`;
+          iconHtml = `<img class="team-icon" src="IMG_20260421_085117.jpg" alt="Barcelona badge">`;
         } else if (team.club === "Inter Milan") {
-          iconHtml = `<img class="team-icon" src="IMG_20260421_092951.png" alt="Inter Milan badge" onerror="this.style.display='none'">`;
+          iconHtml = `<img class="team-icon" src="IMG_20260421_092951.png" alt="Inter Milan badge">`;
         } else if (team.club === "Atletico") {
-          iconHtml = `<img class="team-icon" src="IMG_20260421_093024.png" alt="Atletico Madrid badge" onerror="this.style.display='none'">`;
+          iconHtml = `<img class="team-icon" src="IMG_20260421_093024.png" alt="Atletico Madrid badge">`;
         } else if (team.club === "Newcastle") {
-          iconHtml = `<img class="team-icon" src="IMG_20260421_093046.png" alt="Newcastle badge" onerror="this.style.display='none'">`;
+          iconHtml = `<img class="team-icon" src="IMG_20260421_093046.png" alt="Newcastle badge">`;
         } else if (team.club === "Napoli") {
-          iconHtml = `<img class="team-icon" src="IMG_20260421_100318.jpg" alt="Napoli badge" onerror="this.style.display='none'">`;
+          iconHtml = `<img class="team-icon" src="IMG_20260421_100318.jpg" alt="Napoli badge">`;
         } else if (team.club === "Chelsea") {
-          iconHtml = `<img class="team-icon" src="IMG_20260421_100354.jpg" alt="Chelsea badge" onerror="this.style.display='none'">`;
+          iconHtml = `<img class="team-icon" src="IMG_20260421_100354.jpg" alt="Chelsea badge">`;
         } else if (team.club === "Dortmund") {
-          iconHtml = `<img class="team-icon" src="01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg" alt="Dortmund badge" onerror="this.style.display='none'">`;
+          iconHtml = `<img class="team-icon" src="01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg" alt="Dortmund badge">`;
         } else if (team.club === "Real Madrid") {
-          iconHtml = `<img class="team-icon" src="21259ea4-042f-48ff-902f-1e776d27fe58.jpeg" alt="Real Madrid badge" onerror="this.style.display='none'">`;
+          iconHtml = `<img class="team-icon" src="21259ea4-042f-48ff-902f-1e776d27fe58.jpeg" alt="Real Madrid badge">`;
         } else if (team.club === "Man City") {
-          iconHtml = `<img class="team-icon" src="9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg" alt="Man City badge" onerror="this.style.display='none'">`;
+          iconHtml = `<img class="team-icon" src="9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg" alt="Man City badge">`;
         } else if (team.club === "Liverpool") {
-          iconHtml = `<img class="team-icon" src="269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg" alt="Liverpool badge" onerror="this.style.display='none'">`;
+          iconHtml = `<img class="team-icon" src="269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg" alt="Liverpool badge">`;
         } else if (team.club === "Juventus") {
-          iconHtml = `<img class="team-icon" src="IMG_20260421_151224.jpg" alt="Juventus badge" onerror="this.style.display='none'">`;
+          iconHtml = `<img class="team-icon" src="IMG_20260421_151224.jpg" alt="Juventus badge">`;
         }
         
         clubHtml += iconHtml + ' ' + displayName;
@@ -1034,10 +1040,11 @@
       RESULTS_DATA.forEach(r => {
         const row = tbody.insertRow();
         let processedText = r.matchText;
+        // Replace full team names (including multi-word) in correct order (longest first)
         const teamsToReplace = [
-          "Arsenal", "AC Milan", "PSG", "Barcelona", "Inter Milan", "Atletico Madrid", "Newcastle United",
-          "Napoli", "Chelsea", "Dortmund", "Real Madrid", "Man City", "Liverpool", "Atletico", "Newcastle",
-          "Manchester City", "FC Barcelona", "Paris Saint-Germain", "Borussia Dortmund", "Juventus"
+          "Newcastle United", "Atletico Madrid", "Manchester City", "Paris Saint-Germain", "Borussia Dortmund",
+          "FC Barcelona", "Inter Milan", "Real Madrid", "AC Milan", "Atletico", "Newcastle",
+          "Arsenal", "Barcelona", "Chelsea", "Dortmund", "Juventus", "Liverpool", "Man City", "PSG", "Napoli"
         ];
         teamsToReplace.forEach(team => {
           const regex = new RegExp(`\\b${team.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
