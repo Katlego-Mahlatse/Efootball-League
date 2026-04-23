@@ -470,6 +470,12 @@
       text-align: center;
       font-size: 0.85rem;
     }
+    .loading-row td {
+      text-align: center;
+      padding: 2rem;
+      color: #f5d742;
+      font-style: italic;
+    }
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
       .team-icon { width: 32px; height: 32px; }
@@ -544,7 +550,9 @@
       <div style="overflow-x:auto;">
         <table class="stats-table" id="leagueTable">
           <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th></tr></thead>
-          <tbody id="leagueTableBody"></tbody>
+          <tbody id="leagueTableBody">
+            <tr class="loading-row"><td colspan="6">Loading table data...</td></tr>
+          </tbody>
         </table>
       </div>
       <div class="legend-under-table">
@@ -566,7 +574,7 @@
         <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
       </div>
       <div class="scrollable-table">
-        <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th><tr></thead><tbody id="fixturesTableBody"></tbody></table>
+        <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></td>
       </div>
     </div>
   </div>
@@ -594,7 +602,7 @@
 <script type="module">
   import { initializeApp } from "firebase/app";
   import { getAuth, signInAnonymously } from "firebase/auth";
-  import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
+  import { getFirestore, doc, setDoc, onSnapshot } from "firebase/firestore";
 
   // Firebase config (user provided)
   const firebaseConfig = {
@@ -626,7 +634,7 @@
   const debugModal = document.getElementById("debugModal");
   const closeDebugBtn = document.getElementById("closeDebugBtn");
 
-  // Default league data (exactly as original)
+  // Default league data (only used if Firebase is empty)
   const DEFAULT_LEAGUE_DATA = [
     { club: "Real Madrid", p: 10, gd: 16, pts: 30 },
     { club: "Liverpool", p: 10, gd: 24, pts: 22 },
@@ -650,7 +658,6 @@
   let showFormArrows = false;
   let showLast5 = true;
   let popupMenu = null;
-  let isFirestoreReady = false;
 
   // Reference to Firestore document
   const leagueDocRef = doc(db, "league", "standings");
@@ -822,7 +829,7 @@
   fixturesWithDates.forEach(f => { allTeamsSet.add(f.home); allTeamsSet.add(f.away); });
   const allTeams = Array.from(allTeamsSet).sort();
 
-  // Render functions
+  // Render table from currentLeagueData
   function renderLeagueTable() {
     if (!leagueTableBody) return;
     leagueTableBody.innerHTML = "";
@@ -892,7 +899,7 @@
     });
   }
 
-  // Save to Firestore
+  // Save to Firestore and update local data
   async function saveToFirestore() {
     try {
       await setDoc(leagueDocRef, { teams: currentLeagueData });
@@ -900,24 +907,6 @@
     } catch (err) {
       console.error("Firestore save error:", err);
       alert("Error saving to Firebase: " + err.message);
-    }
-  }
-
-  // Load from Firestore (background)
-  async function loadFromFirestore() {
-    try {
-      const docSnap = await getDoc(leagueDocRef);
-      if (docSnap.exists()) {
-        currentLeagueData = docSnap.data().teams;
-      } else {
-        await setDoc(leagueDocRef, { teams: DEFAULT_LEAGUE_DATA });
-        currentLeagueData = [...DEFAULT_LEAGUE_DATA];
-      }
-      renderLeagueTable();
-    } catch (err) {
-      console.warn("Firestore not available, using default data", err);
-      currentLeagueData = [...DEFAULT_LEAGUE_DATA];
-      renderLeagueTable();
     }
   }
 
@@ -987,7 +976,7 @@
     content.innerHTML = `<pre>Edit mode: ${editMode}
 Current data (first 3 teams):
 ${JSON.stringify(currentLeagueData.slice(0,3), null, 2)}
-Firestore: ${isFirestoreReady ? "ready" : "loading"}
+Firestore listener: active
 Last 5 circles: available
 Form arrows: ${showFormArrows}
 Player view: ${currentView}</pre>`;
@@ -997,7 +986,7 @@ Player view: ${currentView}</pre>`;
   closeDebugBtn.addEventListener("click", () => debugModal.classList.remove("active"));
   debugModal.addEventListener("click", (e) => { if (e.target === debugModal) debugModal.classList.remove("active"); });
 
-  // Fixtures & results render functions
+  // Fixtures & results render functions (unchanged)
   function renderFixtures(filterText = "", filterTeamName = "") {
     if (!fixturesTableBody) return;
     fixturesTableBody.innerHTML = "";
@@ -1102,13 +1091,27 @@ Player view: ${currentView}</pre>`;
   closeModalBtn.addEventListener("click", closeModal);
   modalOverlayEl.addEventListener("click", (e) => { if (e.target === modalOverlayEl) closeModal(); });
 
-  // Initialize
-  loadFromFirestore();
+  // Initialize: listen to Firestore and update table when data arrives
+  onSnapshot(leagueDocRef, (docSnap) => {
+    if (docSnap.exists()) {
+      currentLeagueData = docSnap.data().teams;
+    } else {
+      // First time: create default data in Firestore
+      setDoc(leagueDocRef, { teams: DEFAULT_LEAGUE_DATA });
+      currentLeagueData = [...DEFAULT_LEAGUE_DATA];
+    }
+    renderLeagueTable();
+  }, (error) => {
+    console.warn("Firestore error, using local data", error);
+    currentLeagueData = [...DEFAULT_LEAGUE_DATA];
+    renderLeagueTable();
+  });
+
+  // Initial render of fixtures/results (they don't depend on Firebase)
   renderResults();
   setupFilters();
   setupCollapsible("fixturesHeader", "fixturesContent", "fixturesToggleIcon");
   setupCollapsible("resultsHeader", "resultsContent", "resultsToggleIcon");
-  isFirestoreReady = true;
 </script>
 </body>
 </html>
