@@ -545,7 +545,7 @@
         <table class="stats-table" id="leagueTable">
           <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th></tr></thead>
           <tbody id="leagueTableBody"></tbody>
-        <td>
+        </table>
       </div>
       <div class="legend-under-table">
         <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: center; width: 100%;">
@@ -566,7 +566,7 @@
         <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
       </div>
       <div class="scrollable-table">
-        <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
+        <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th><tr></thead><tbody id="fixturesTableBody"></tbody></table>
       </div>
     </div>
   </div>
@@ -581,8 +581,52 @@
   </div>
 </div>
 
-<script>
-  // ======================== DATA & HELPERS ========================
+<script type="importmap">
+  {
+    "imports": {
+      "firebase/app": "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js",
+      "firebase/auth": "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js",
+      "firebase/firestore": "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"
+    }
+  }
+</script>
+
+<script type="module">
+  import { initializeApp } from "firebase/app";
+  import { getAuth, signInAnonymously } from "firebase/auth";
+  import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
+
+  // Firebase config (user provided)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
+    authDomain: "efootball-412.firebaseapp.com",
+    projectId: "efootball-412",
+    storageBucket: "efootball-412.firebasestorage.app",
+    messagingSenderId: "596548424249",
+    appId: "1:596548424249:web:4349f6e87a40a1590bf3e8",
+    measurementId: "G-KHY86ZMPZH"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  signInAnonymously(auth).catch(console.warn);
+
+  // DOM elements
+  const leagueTableBody = document.getElementById("leagueTableBody");
+  const fixturesTableBody = document.getElementById("fixturesTableBody");
+  const resultsTableBody = document.getElementById("resultsTableBody");
+  const searchInput = document.getElementById("searchInput");
+  const teamFilter = document.getElementById("teamFilter");
+  const threeDotBtn = document.getElementById("threeDotBtn");
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  const modalOverlayEl = document.getElementById("modalOverlay");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  const debugBtn = document.getElementById("debugBtn");
+  const debugModal = document.getElementById("debugModal");
+  const closeDebugBtn = document.getElementById("closeDebugBtn");
+
+  // Default league data (exactly as original)
   const DEFAULT_LEAGUE_DATA = [
     { club: "Real Madrid", p: 10, gd: 16, pts: 30 },
     { club: "Liverpool", p: 10, gd: 24, pts: 22 },
@@ -600,6 +644,18 @@
     { club: "Inter Milan", p: 10, gd: 1, pts: -2 }
   ];
 
+  let currentLeagueData = [...DEFAULT_LEAGUE_DATA];
+  let editMode = false;
+  let currentView = "team";
+  let showFormArrows = false;
+  let showLast5 = true;
+  let popupMenu = null;
+  let isFirestoreReady = false;
+
+  // Reference to Firestore document
+  const leagueDocRef = doc(db, "league", "standings");
+
+  // Player mapping & icon helpers (unchanged)
   const playerMap = {
     "FC Barcelona": "~Rea🫡", "Barcelona": "~Rea🫡", "Inter Milan": "Mali",
     "Borussia Dortmund": "~Qhawe 🤍", "Dortmund": "~Qhawe 🤍", "Juventus": "~Lawree ✨",
@@ -637,7 +693,7 @@
     return teamName;
   }
 
-  // Last 5 circles data
+  // Last 5 circles data (same as original)
   const allResultsOrder = [
     { type: "win", winner: "Real Madrid", loser: "Napoli" },
     { type: "draw", teams: ["Arsenal","AC Milan"] },
@@ -668,6 +724,7 @@
     { type: "win", winner: "Dortmund", loser: "Liverpool" },
     { type: "win", winner: "PSG", loser: "AC Milan" }
   ];
+
   const teamResults = {};
   DEFAULT_LEAGUE_DATA.forEach(t => { teamResults[t.club] = []; });
   allResultsOrder.forEach(res => {
@@ -694,7 +751,7 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // === COMPLETE FIXTURES (MD11 to MD26) ===
+  // Fixtures (full list, unchanged)
   const fixtureList = [
     { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
     { md: 12, home: "FC Barcelona", away: "Manchester City" }, { md: 12, home: "AC Milan", away: "Newcastle United" }, { md: 12, home: "Real Madrid", away: "Liverpool" }, { md: 12, home: "Paris Saint-Germain", away: "Chelsea" }, { md: 12, home: "Juventus", away: "Arsenal" }, { md: 12, home: "Inter Milan", away: "Napoli" }, { md: 12, home: "Borussia Dortmund", away: "Atlético Madrid" },
@@ -719,18 +776,17 @@
     return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
   }
   const fixturesWithDates = [];
-  let currentDate = new Date(2026, 3, 23);
+  let curDate = new Date(2026, 3, 23);
   let lastMd = 11;
   for (let f of fixtureList) {
     if (lastMd === null) lastMd = f.md;
-    else if (f.md !== lastMd) { currentDate.setDate(currentDate.getDate()+1); lastMd = f.md; }
+    else if (f.md !== lastMd) { curDate.setDate(curDate.getDate()+1); lastMd = f.md; }
     fixturesWithDates.push({
-      md: f.md, home: f.home, away: f.away, date: formatDate(currentDate),
+      md: f.md, home: f.home, away: f.away, date: formatDate(curDate),
       homePlayer: playerMap[f.home] || "", awayPlayer: playerMap[f.away] || ""
     });
   }
 
-  // COMPLETE RESULTS (MD7 to MD10)
   const RESULTS_DATA = [
     { matchText: "Liverpool 1 - 2 Dortmund", md: 10 },
     { matchText: "PSG 2 - 1 AC Milan", md: 10 },
@@ -766,36 +822,12 @@
   fixturesWithDates.forEach(f => { allTeamsSet.add(f.home); allTeamsSet.add(f.away); });
   const allTeams = Array.from(allTeamsSet).sort();
 
-  // UI state
-  let currentLeagueData = [...DEFAULT_LEAGUE_DATA];
-  let editMode = false;
-  let currentView = "team";
-  let showFormArrows = false;
-  let showLast5 = true;
-  let popupMenu = null;
-
-  // Load/Save localStorage
-  function loadLeagueData() {
-    const saved = localStorage.getItem("efootball_league_data");
-    if (saved) {
-      try {
-        currentLeagueData = JSON.parse(saved);
-      } catch(e) { currentLeagueData = [...DEFAULT_LEAGUE_DATA]; }
-    } else {
-      currentLeagueData = [...DEFAULT_LEAGUE_DATA];
-    }
-    renderLeagueTable();
-  }
-  function saveLeagueDataToLocal() {
-    localStorage.setItem("efootball_league_data", JSON.stringify(currentLeagueData));
-  }
-
+  // Render functions
   function renderLeagueTable() {
-    const tbody = document.getElementById("leagueTableBody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
+    if (!leagueTableBody) return;
+    leagueTableBody.innerHTML = "";
     currentLeagueData.forEach((team, idx) => {
-      const row = tbody.insertRow();
+      const row = leagueTableBody.insertRow();
       let barClass = "";
       if (idx < 4) barClass = "blue-bar-vertical";
       else if (idx < 8) barClass = "orange-bar-vertical";
@@ -860,6 +892,36 @@
     });
   }
 
+  // Save to Firestore
+  async function saveToFirestore() {
+    try {
+      await setDoc(leagueDocRef, { teams: currentLeagueData });
+      alert("Changes saved to Firebase!");
+    } catch (err) {
+      console.error("Firestore save error:", err);
+      alert("Error saving to Firebase: " + err.message);
+    }
+  }
+
+  // Load from Firestore (background)
+  async function loadFromFirestore() {
+    try {
+      const docSnap = await getDoc(leagueDocRef);
+      if (docSnap.exists()) {
+        currentLeagueData = docSnap.data().teams;
+      } else {
+        await setDoc(leagueDocRef, { teams: DEFAULT_LEAGUE_DATA });
+        currentLeagueData = [...DEFAULT_LEAGUE_DATA];
+      }
+      renderLeagueTable();
+    } catch (err) {
+      console.warn("Firestore not available, using default data", err);
+      currentLeagueData = [...DEFAULT_LEAGUE_DATA];
+      renderLeagueTable();
+    }
+  }
+
+  // Edit mode functions
   function enterEditMode() {
     const pwd = prompt("Enter admin password:");
     if (pwd !== "@admin#123") { alert("Incorrect password"); return; }
@@ -877,10 +939,9 @@
       }
     });
     currentLeagueData = newData;
-    saveLeagueDataToLocal();
+    saveToFirestore();
     editMode = false;
     renderLeagueTable();
-    alert("Changes saved successfully!");
   }
   function cancelEdit() {
     editMode = false;
@@ -917,20 +978,16 @@
     popupMenu.appendChild(playersOpt); popupMenu.appendChild(formOpt); popupMenu.appendChild(last5Opt); popupMenu.appendChild(calendarOpt); popupMenu.appendChild(rulesOpt);
     document.body.appendChild(popupMenu);
   }
-  const threeDotBtn = document.getElementById("threeDotBtn");
   threeDotBtn.addEventListener("click", toggleMenuPopup);
   document.addEventListener("click", (e) => { if (popupMenu && !popupMenu.contains(e.target) && e.target !== threeDotBtn) closeMenuPopup(); });
 
   // Debug modal
-  const debugBtn = document.getElementById("debugBtn");
-  const debugModal = document.getElementById("debugModal");
-  const closeDebugBtn = document.getElementById("closeDebugBtn");
   function showDebug() {
     const content = document.getElementById("debugContent");
     content.innerHTML = `<pre>Edit mode: ${editMode}
 Current data (first 3 teams):
 ${JSON.stringify(currentLeagueData.slice(0,3), null, 2)}
-LocalStorage key "efootball_league_data": ${localStorage.getItem("efootball_league_data") ? "exists" : "none"}
+Firestore: ${isFirestoreReady ? "ready" : "loading"}
 Last 5 circles: available
 Form arrows: ${showFormArrows}
 Player view: ${currentView}</pre>`;
@@ -940,11 +997,10 @@ Player view: ${currentView}</pre>`;
   closeDebugBtn.addEventListener("click", () => debugModal.classList.remove("active"));
   debugModal.addEventListener("click", (e) => { if (e.target === debugModal) debugModal.classList.remove("active"); });
 
-  // Fixtures/Results rendering (unchanged from original)
-  function renderFixtures(filterText = "", filterTeam = "") {
-    const tbody = document.getElementById("fixturesTableBody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
+  // Fixtures & results render functions
+  function renderFixtures(filterText = "", filterTeamName = "") {
+    if (!fixturesTableBody) return;
+    fixturesTableBody.innerHTML = "";
     const lowerFilter = filterText.toLowerCase();
     fixturesWithDates.forEach(f => {
       let matchesSearch = true;
@@ -952,17 +1008,17 @@ Player view: ${currentView}</pre>`;
         matchesSearch = f.home.toLowerCase().includes(lowerFilter) || f.away.toLowerCase().includes(lowerFilter) ||
                         f.homePlayer.toLowerCase().includes(lowerFilter) || f.awayPlayer.toLowerCase().includes(lowerFilter);
       }
-      let matchesTeam = !filterTeam || f.home === filterTeam || f.away === filterTeam;
+      let matchesTeam = !filterTeamName || f.home === filterTeamName || f.away === filterTeamName;
       if (!matchesSearch || !matchesTeam) return;
-      const row = tbody.insertRow();
+      const row = fixturesTableBody.insertRow();
       row.insertCell(0).innerHTML = `<span class="date-badge">📅 ${f.date}</span>`;
       const homeIcon = getTeamIconHtml(f.home, "inline-team-icon");
       const awayIcon = getTeamIconHtml(f.away, "inline-team-icon");
       row.insertCell(1).innerHTML = `<div class="fixture-icons">${homeIcon} <span style="margin:0 8px;">vs</span> ${awayIcon}</div>`;
       row.insertCell(2).innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px;">MD ${f.md}</span>`;
     });
-    if (tbody.rows.length === 0) {
-      const r = tbody.insertRow();
+    if (fixturesTableBody.rows.length === 0) {
+      const r = fixturesTableBody.insertRow();
       r.insertCell(0).colSpan = 3;
       r.cells[0].className = "empty-message";
       r.cells[0].innerText = "No fixtures match.";
@@ -979,11 +1035,10 @@ Player view: ${currentView}</pre>`;
     update();
   }
   function renderResults() {
-    const tbody = document.getElementById("resultsTableBody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
+    if (!resultsTableBody) return;
+    resultsTableBody.innerHTML = "";
     RESULTS_DATA.forEach(r => {
-      const row = tbody.insertRow();
+      const row = resultsTableBody.insertRow();
       let processedText = r.matchText;
       const teamsToReplace = [
         "Newcastle United", "Atletico Madrid", "Manchester City", "Paris Saint-Germain", "Borussia Dortmund",
@@ -1041,21 +1096,19 @@ Player view: ${currentView}</pre>`;
   if (slideshowImg) { createDots(); setInterval(()=>{ currIdx = (currIdx+1)%images.length; slideshowImg.src = images[currIdx]; updateDots(); }, 2000); }
 
   // Hamburger modal
-  const hamburgerBtn = document.getElementById("hamburgerBtn");
-  const modalOverlay = document.getElementById("modalOverlay");
-  const closeModalBtn = document.getElementById("closeModalBtn");
-  function openModal() { modalOverlay.classList.add("active"); }
-  function closeModal() { modalOverlay.classList.remove("active"); }
+  function openModal() { modalOverlayEl.classList.add("active"); }
+  function closeModal() { modalOverlayEl.classList.remove("active"); }
   hamburgerBtn.addEventListener("click", openModal);
   closeModalBtn.addEventListener("click", closeModal);
-  modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
+  modalOverlayEl.addEventListener("click", (e) => { if (e.target === modalOverlayEl) closeModal(); });
 
   // Initialize
-  loadLeagueData();
+  loadFromFirestore();
   renderResults();
   setupFilters();
   setupCollapsible("fixturesHeader", "fixturesContent", "fixturesToggleIcon");
   setupCollapsible("resultsHeader", "resultsContent", "resultsToggleIcon");
+  isFirestoreReady = true;
 </script>
 </body>
-    </html>
+</html>
