@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>eFootball 412 · League Hub</title>
-    <!-- Firebase Compat SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js">
+    </script>
     <style>
         * {
             margin: 0;
@@ -183,7 +185,6 @@
             transition: all 0.2s;
             border: 1px solid #6a3bb5;
             display: block;
-            cursor: pointer;
         }
 
         .modal-option:hover {
@@ -208,7 +209,6 @@
             background: #2d0f5a;
         }
 
-        /* Admin panel styles */
         .admin-panel {
             display: none;
             position: fixed;
@@ -304,7 +304,6 @@
             font-weight: bold;
         }
 
-        /* rest of styles unchanged */
         .dashboard {
             max-width: 1400px;
             margin: 0 auto;
@@ -774,49 +773,40 @@
             .dashboard {
                 padding: 1rem;
             }
-
             .stats-table th,
             .stats-table td {
                 padding: 0.6rem 0.5rem;
                 font-size: 0.75rem;
             }
-
             .card-header-left h2 {
                 font-size: 1.3rem;
             }
-
             .dot {
                 width: 6px;
                 height: 6px;
                 margin: 0 3px;
             }
-
             .scrollable-table {
                 max-height: 350px;
             }
-
             .filter-container {
                 flex-direction: column;
             }
-
             .circle-result {
                 width: 14px;
                 height: 14px;
                 font-size: 7px;
             }
-
             .arrow-up,
             .arrow-down,
             .arrow-side {
                 font-size: 1rem;
                 width: 18px;
             }
-
             .team-icon {
                 width: 32px;
                 height: 32px;
             }
-
             .inline-team-icon {
                 width: 32px;
                 height: 32px;
@@ -856,7 +846,6 @@
         </div>
     </div>
 
-    <!-- Admin Panel Modal -->
     <div class="admin-panel" id="adminPanel">
         <h2>🔧 Admin Panel</h2>
         <div class="admin-btn-panel">
@@ -947,12 +936,14 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // Sign in anonymously (safe)
         auth.signInAnonymously().catch(err => console.warn("Auth skipped:", err));
 
-        // All hardcoded data for fixtures, results, etc. (unchanged)
-        const images = ["images - 2026-04-19T121231.816.jpeg", "images - 2026-04-19T155746.715.jpeg",
-            "37686bb3-06ce-401b-a022-026933c165e7.jpeg", "12871.jpg",
+        // Slideshow (unchanged)
+        const images = [
+            "images - 2026-04-19T121231.816.jpeg",
+            "images - 2026-04-19T155746.715.jpeg",
+            "37686bb3-06ce-401b-a022-026933c165e7.jpeg",
+            "12871.jpg",
             "1f157df7-2054-4a9d-aa14-b9941ef4a743.jpeg"
         ];
         let currentIndex = 0;
@@ -965,21 +956,31 @@
                 const dot = document.createElement("span");
                 dot.classList.add("dot");
                 if (i === currentIndex) dot.classList.add("active");
-                dot.addEventListener("click", () => { currentIndex = i;
+                dot.addEventListener("click", () => {
+                    currentIndex = i;
                     slideshowImg.src = images[currentIndex];
-                    updateDots(); });
+                    updateDots();
+                });
                 dotsContainer.appendChild(dot);
             }
         }
 
-        function updateDots() { document.querySelectorAll(".dot").forEach((dot, idx) => { if (idx === currentIndex)
-                    dot.classList.add("active");
-                else dot.classList.remove("active"); }); }
-        if (slideshowImg) { createDots();
-            setInterval(() => { currentIndex = (currentIndex + 1) % images.length;
+        function updateDots() {
+            document.querySelectorAll(".dot").forEach((dot, idx) => {
+                if (idx === currentIndex) dot.classList.add("active");
+                else dot.classList.remove("active");
+            });
+        }
+        if (slideshowImg) {
+            createDots();
+            setInterval(() => {
+                currentIndex = (currentIndex + 1) % images.length;
                 slideshowImg.src = images[currentIndex];
-                updateDots(); }, 2000); }
+                updateDots();
+            }, 2000);
+        }
 
+        // Player map (unchanged)
         const playerMap = {
             "FC Barcelona": "~Rea🫡",
             "Barcelona": "~Rea🫡",
@@ -1003,6 +1004,7 @@
             "Newcastle": "~Oratile"
         };
 
+        // Team icon map (unchanged)
         function getTeamIconHtml(teamName, className = "inline-team-icon") {
             const iconMap = {
                 "Arsenal": "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png",
@@ -1018,6 +1020,12 @@
                 "Real Madrid": "21259ea4-042f-48ff-902f-1e776d27fe58.jpeg",
                 "Man City": "9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg",
                 "Liverpool": "269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg",
+                "Manchester City": "9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg",
+                "Atlético Madrid": "IMG_20260421_093024.png",
+                "Newcastle United": "IMG_20260421_093046.png",
+                "FC Barcelona": "IMG_20260421_085117.jpg",
+                "Paris Saint-Germain": "4dea795d-a516-46ae-bd34-07a784693d80.png",
+                "Borussia Dortmund": "01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg",
                 "Juventus": "IMG_20260421_151224.jpg"
             };
             const src = iconMap[teamName];
@@ -1025,7 +1033,7 @@
             return teamName;
         }
 
-        // Hardcoded results & fixtures (unchanged)
+        // Hardcoded results (unchanged)
         const allResultsOrder = [
             { type: "win", winner: "Real Madrid", loser: "Napoli" },
             { type: "draw", teams: ["Arsenal", "AC Milan"] },
@@ -1088,6 +1096,7 @@
             return arr.length ? arr[arr.length - 1] : null;
         }
 
+        // Fixtures (unchanged)
         const fixtureList = [
             { md: 10, home: "Paris Saint-Germain", away: "AC Milan" },
             { md: 10, home: "Borussia Dortmund", away: "Liverpool" },
@@ -1215,8 +1224,10 @@
         let lastMd = 10;
         for (let f of fixtureList) {
             if (lastMd === null) lastMd = f.md;
-            else if (f.md !== lastMd) { currentDate.setDate(currentDate.getDate() + 1);
-                lastMd = f.md; }
+            else if (f.md !== lastMd) {
+                currentDate.setDate(currentDate.getDate() + 1);
+                lastMd = f.md;
+            }
             fixturesWithDates.push({
                 md: f.md,
                 home: f.home,
@@ -1263,68 +1274,66 @@
             allTeamsSet.add(f.away); });
         const allTeams = Array.from(allTeamsSet).sort();
 
-        // Global league data (fetched from Firestore)
+        // Global league data from Firebase
         let leagueData = [];
-
-        // UI state
         let currentView = "team";
         let showFormArrows = false;
         let showLast5 = true;
         let popup = null;
         let isAdmin = false;
 
-        // Toast helper
         function showToast(msg) {
             const toast = document.getElementById("toast");
             toast.textContent = msg;
             toast.style.display = "block";
-            setTimeout(() => { toast.style.display = "none"; }, 3000);
+            clearTimeout(window.toastTimeout);
+            window.toastTimeout = setTimeout(() => { toast.style.display = "none"; }, 3000);
         }
 
-        // Fetch league table from Firestore
+        // Fetch league table from Firebase
         async function fetchLeagueTable() {
             try {
                 const snapshot = await db.collection("league_table").orderBy("pos").get();
-                leagueData = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    leagueData.push({
-                        id: doc.id,
-                        pos: parseInt(data.pos) || 0,
-                        club: data.club,
-                        p: parseInt(data.p) || 0,
-                        gd: parseInt(data.gd) || 0,
-                        pts: parseInt(data.pts) || 0,
-                        icon: data.icon || ""
-                    });
-                });
-                // If empty, fallback to hardcoded (shouldn't happen after init)
-                if (leagueData.length === 0) {
+                if (snapshot.empty) {
+                    // No data in Firebase, use hardcoded fallback
                     leagueData = [
-                        { pos: 1, club: "Real Madrid", p: 10, gd: 16, pts: 30 },
-                        { pos: 2, club: "Man City", p: 10, gd: 12, pts: 22 },
-                        { pos: 3, club: "Liverpool", p: 10, gd: 24, pts: 22 },
-                        { pos: 4, club: "Dortmund", p: 10, gd: 10, pts: 21 },
-                        { pos: 5, club: "Barcelona", p: 10, gd: -1, pts: 16 },
-                        { pos: 6, club: "PSG", p: 10, gd: -6, pts: 14 },
-                        { pos: 7, club: "Arsenal", p: 10, gd: 6, pts: 14 },
-                        { pos: 8, club: "Chelsea", p: 10, gd: 6, pts: 11 },
-                        { pos: 9, club: "AC Milan", p: 10, gd: -5, pts: 10 },
-                        { pos: 10, club: "Napoli", p: 10, gd: -1, pts: 9 },
-                        { pos: 11, club: "Atletico", p: 10, gd: -11, pts: 4 },
-                        { pos: 12, club: "Juventus", p: 10, gd: -9, pts: 3 },
-                        { pos: 13, club: "Newcastle", p: 10, gd: -26, pts: 3 },
-                        { pos: 14, club: "Inter Milan", p: 10, gd: 1, pts: -2 }
+                        { id: "Real_Madrid", pos: 1, club: "Real Madrid", p: 10, gd: 16, pts: 30 },
+                        { id: "Man_City", pos: 2, club: "Man City", p: 10, gd: 12, pts: 22 },
+                        { id: "Liverpool", pos: 3, club: "Liverpool", p: 10, gd: 24, pts: 22 },
+                        { id: "Dortmund", pos: 4, club: "Dortmund", p: 10, gd: 10, pts: 21 },
+                        { id: "Barcelona", pos: 5, club: "Barcelona", p: 10, gd: -1, pts: 16 },
+                        { id: "PSG", pos: 6, club: "PSG", p: 10, gd: -6, pts: 14 },
+                        { id: "Arsenal", pos: 7, club: "Arsenal", p: 10, gd: 6, pts: 14 },
+                        { id: "Chelsea", pos: 8, club: "Chelsea", p: 10, gd: 6, pts: 11 },
+                        { id: "AC_Milan", pos: 9, club: "AC Milan", p: 10, gd: -5, pts: 10 },
+                        { id: "Napoli", pos: 10, club: "Napoli", p: 10, gd: -1, pts: 9 },
+                        { id: "Atletico", pos: 11, club: "Atletico", p: 10, gd: -11, pts: 4 },
+                        { id: "Juventus", pos: 12, club: "Juventus", p: 10, gd: -9, pts: 3 },
+                        { id: "Newcastle", pos: 13, club: "Newcastle", p: 10, gd: -26, pts: 3 },
+                        { id: "Inter_Milan", pos: 14, club: "Inter Milan", p: 10, gd: 1, pts: -2 }
                     ];
+                } else {
+                    leagueData = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        leagueData.push({
+                            id: doc.id,
+                            pos: Number(data.pos) || 0,
+                            club: data.club || "",
+                            p: Number(data.p) || 0,
+                            gd: Number(data.gd) || 0,
+                            pts: Number(data.pts) || 0,
+                            icon: data.icon || ""
+                        });
+                    });
                 }
                 renderLeagueTable();
             } catch (err) {
                 console.error("Fetch error:", err);
-                showToast("Failed to load table, using local data.");
+                showToast("⚠️ Could not load from Firebase. Check console.");
             }
         }
 
-        // Render the league table using global leagueData
         function renderLeagueTable() {
             const tbody = document.getElementById("leagueTableBody");
             if (!tbody) return;
@@ -1403,7 +1412,7 @@
             });
         }
 
-        // Popup menu for table options
+        // Three-dot popup menu
         const threeDotBtn = document.getElementById("threeDotBtn");
 
         function closePopup() { if (popup) { popup.remove();
@@ -1426,7 +1435,6 @@
                 renderLeagueTable();
                 closePopup();
             };
-
             const formOpt = document.createElement("div");
             formOpt.innerText = showFormArrows ? "Hide Form" : "Show Form";
             formOpt.onclick = () => {
@@ -1434,7 +1442,6 @@
                 renderLeagueTable();
                 closePopup();
             };
-
             const last5Opt = document.createElement("div");
             last5Opt.innerText = showLast5 ? "Hide Last 5" : "Show Last 5";
             last5Opt.onclick = () => {
@@ -1442,20 +1449,14 @@
                 renderLeagueTable();
                 closePopup();
             };
-
             const calendarOpt = document.createElement("div");
             calendarOpt.innerText = "Calendar";
-            calendarOpt.onclick = () => {
-                window.location.href = "calendar.html";
-                closePopup();
-            };
-
+            calendarOpt.onclick = () => { window.location.href = "calendar.html";
+                closePopup(); };
             const rulesOpt = document.createElement("div");
             rulesOpt.innerText = "Rules";
-            rulesOpt.onclick = () => {
-                window.location.href = "rules.html";
-                closePopup();
-            };
+            rulesOpt.onclick = () => { window.location.href = "rules.html";
+                closePopup(); };
 
             popup.appendChild(playersOpt);
             popup.appendChild(formOpt);
@@ -1465,10 +1466,11 @@
             document.body.appendChild(popup);
         }
         threeDotBtn.addEventListener("click", togglePopup);
-        document.addEventListener("click", (e) => { if (popup && !popup.contains(e.target) && e.target !==
-                threeDotBtn) closePopup(); });
+        document.addEventListener("click", (e) => {
+            if (popup && !popup.contains(e.target) && e.target !== threeDotBtn) closePopup();
+        });
 
-        // Render fixtures (hardcoded)
+        // Fixtures render (unchanged - with icons)
         function renderFixtures(filterText = "", filterTeam = "") {
             const tbody = document.getElementById("fixturesTableBody");
             if (!tbody) return;
@@ -1477,10 +1479,10 @@
             fixturesWithDates.forEach(f => {
                 let matchesSearch = true;
                 if (lowerFilter) {
-                    matchesSearch = f.home.toLowerCase().includes(lowerFilter) || f.away.toLowerCase()
-                        .includes(lowerFilter) ||
-                        f.homePlayer.toLowerCase().includes(lowerFilter) || f.awayPlayer.toLowerCase()
-                        .includes(lowerFilter);
+                    matchesSearch = f.home.toLowerCase().includes(lowerFilter) ||
+                        f.away.toLowerCase().includes(lowerFilter) ||
+                        f.homePlayer.toLowerCase().includes(lowerFilter) ||
+                        f.awayPlayer.toLowerCase().includes(lowerFilter);
                 }
                 let matchesTeam = !filterTeam || f.home === filterTeam || f.away === filterTeam;
                 if (!matchesSearch || !matchesTeam) return;
@@ -1493,26 +1495,31 @@
                 row.insertCell(2).innerHTML =
                     `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px;">MD ${f.md}</span>`;
             });
-            if (tbody.rows.length === 0) { const r = tbody.insertRow();
+            if (tbody.rows.length === 0) {
+                const r = tbody.insertRow();
                 r.insertCell(0).colSpan = 3;
                 r.cells[0].className = "empty-message";
-                r.cells[0].innerText = "No fixtures match."; }
+                r.cells[0].innerText = "No fixtures match.";
+            }
         }
 
         function setupFilters() {
             const searchInput = document.getElementById("searchInput");
             const teamFilter = document.getElementById("teamFilter");
             teamFilter.innerHTML = '<option value="">All Teams</option>';
-            allTeams.forEach(t => { const opt = document.createElement("option");
+            allTeams.forEach(t => {
+                const opt = document.createElement("option");
                 opt.value = t;
                 opt.textContent = t;
-                teamFilter.appendChild(opt); });
+                teamFilter.appendChild(opt);
+            });
             const update = () => renderFixtures(searchInput.value, teamFilter.value);
             searchInput.addEventListener("input", update);
             teamFilter.addEventListener("change", update);
             update();
         }
 
+        // Results render (unchanged - with icons)
         function renderResults() {
             const tbody = document.getElementById("resultsTableBody");
             if (!tbody) return;
@@ -1522,10 +1529,9 @@
                 let processedText = r.matchText;
                 const teamsToReplace = [
                     "Newcastle United", "Atletico Madrid", "Manchester City", "Paris Saint-Germain",
-                    "Borussia Dortmund",
-                    "FC Barcelona", "Inter Milan", "Real Madrid", "AC Milan", "Atletico", "Newcastle",
-                    "Arsenal", "Barcelona", "Chelsea", "Dortmund", "Juventus", "Liverpool", "Man City",
-                    "PSG", "Napoli"
+                    "Borussia Dortmund", "FC Barcelona", "Inter Milan", "Real Madrid", "AC Milan",
+                    "Atletico", "Newcastle", "Arsenal", "Barcelona", "Chelsea", "Dortmund",
+                    "Juventus", "Liverpool", "Man City", "PSG", "Napoli"
                 ];
                 teamsToReplace.forEach(team => {
                     const regex = new RegExp(`\\b${team.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`,
@@ -1536,8 +1542,8 @@
                 processedText = processedText.replace(/\b(United|Madrid|City)\b/g, '');
                 processedText = processedText.replace(/\s+/g, ' ').trim();
 
-                const isForfeit = r.matchText.includes("Forfeited") || r.matchText.includes("No Contest") || r
-                    .matchText.includes("F - F");
+                const isForfeit = r.matchText.includes("Forfeited") || r.matchText.includes(
+                    "No Contest") || r.matchText.includes("F - F");
                 if (isForfeit) {
                     let forfeitText = "";
                     if (r.matchText.includes("No Contest")) forfeitText = "No Contest";
@@ -1563,9 +1569,16 @@
                 ic = document.getElementById(iconId);
             if (!h || !c) return;
             let collapsed = false;
-            h.addEventListener("click", () => { collapsed = !collapsed; if (collapsed) { c.classList.add(
-                        "collapsed"); if (ic) ic.innerHTML = "▶"; } else { c.classList.remove("collapsed"); if (
-                        ic) ic.innerHTML = "▼"; } });
+            h.addEventListener("click", () => {
+                collapsed = !collapsed;
+                if (collapsed) {
+                    c.classList.add("collapsed");
+                    if (ic) ic.innerHTML = "▶";
+                } else {
+                    c.classList.remove("collapsed");
+                    if (ic) ic.innerHTML = "▼";
+                }
+            });
         }
 
         // Hamburger menu
@@ -1580,7 +1593,7 @@
         closeBtn.addEventListener("click", closeModal);
         modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
 
-        // ---- ADMIN FUNCTIONALITY ----
+        // ---- ADMIN PANEL ----
         const adminBtn = document.getElementById("adminBtn");
         const adminPanel = document.getElementById("adminPanel");
         const closeAdminPanelBtn = document.getElementById("closeAdminPanelBtn");
@@ -1611,7 +1624,7 @@
         adminBtn.addEventListener("click", openAdminPanel);
         closeAdminPanelBtn.addEventListener("click", closeAdminPanel);
 
-        // Initialize missing teams (one-time setup)
+        // All teams data for initialization
         const allTeamsData = [
             { id: "Real_Madrid", pos: 1, club: "Real Madrid", p: 10, gd: 16, pts: 30,
                 icon: "21259ea4-042f-48ff-902f-1e776d27fe58.jpeg" },
@@ -1622,17 +1635,17 @@
             { id: "Dortmund", pos: 4, club: "Dortmund", p: 10, gd: 10, pts: 21,
                 icon: "01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg" },
             { id: "Barcelona", pos: 5, club: "Barcelona", p: 10, gd: -1, pts: 16,
-            icon: "IMG_20260421_085117.jpg" },
+                icon: "IMG_20260421_085117.jpg" },
             { id: "PSG", pos: 6, club: "PSG", p: 10, gd: -6, pts: 14,
-            icon: "4dea795d-a516-46ae-bd34-07a784693d80.png" },
+                icon: "4dea795d-a516-46ae-bd34-07a784693d80.png" },
             { id: "Arsenal", pos: 7, club: "Arsenal", p: 10, gd: 6, pts: 14,
                 icon: "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png" },
             { id: "Chelsea", pos: 8, club: "Chelsea", p: 10, gd: 6, pts: 11,
-            icon: "IMG_20260421_100354.jpg" },
+                icon: "IMG_20260421_100354.jpg" },
             { id: "AC_Milan", pos: 9, club: "AC Milan", p: 10, gd: -5, pts: 10,
                 icon: "44e0f58a-e5db-445b-9896-db22ea99b936.png" },
             { id: "Napoli", pos: 10, club: "Napoli", p: 10, gd: -1, pts: 9,
-            icon: "IMG_20260421_100318.jpg" },
+                icon: "IMG_20260421_100318.jpg" },
             { id: "Atletico", pos: 11, club: "Atletico", p: 10, gd: -11, pts: 4,
                 icon: "IMG_20260421_093024.png" },
             { id: "Juventus", pos: 12, club: "Juventus", p: 10, gd: -9, pts: 3,
@@ -1643,11 +1656,15 @@
                 icon: "IMG_20260421_092951.png" }
         ];
 
+        // Initialize missing teams
         initMissingBtn.addEventListener("click", async () => {
+            initMissingBtn.disabled = true;
+            initMissingBtn.textContent = "⏳ Working...";
             try {
                 const existingDocs = await db.collection("league_table").get();
                 const existingIds = new Set();
                 existingDocs.forEach(doc => existingIds.add(doc.id));
+
                 const batch = db.batch();
                 let added = 0;
                 allTeamsData.forEach(team => {
@@ -1664,16 +1681,20 @@
                         added++;
                     }
                 });
+
                 if (added > 0) {
                     await batch.commit();
-                    showToast(`✅ Added ${added} missing teams. Reloading table...`);
+                    showToast(`✅ Added ${added} missing teams! Reloading...`);
                     await fetchLeagueTable();
                 } else {
-                    showToast("ℹ️ All teams already exist.");
+                    showToast("ℹ️ All 14 teams already exist in Firebase.");
                 }
             } catch (err) {
-                console.error(err);
-                showToast("❌ Error adding teams: " + err.message);
+                console.error("Init error:", err);
+                showToast("❌ Error: " + err.message);
+            } finally {
+                initMissingBtn.disabled = false;
+                initMissingBtn.textContent = "📥 Initialize Missing Teams";
             }
         });
 
@@ -1694,7 +1715,7 @@
                     const cell = row.insertCell();
                     const input = document.createElement("input");
                     input.type = "text";
-                    input.value = team[f] || "";
+                    input.value = team[f] !== undefined ? team[f] : "";
                     input.dataset.field = f;
                     cell.appendChild(input);
                 });
@@ -1710,13 +1731,17 @@
             editTableContainer.style.display = "none";
         });
 
+        // Save changes to Firebase
         saveTableBtn.addEventListener("click", async () => {
+            saveTableBtn.disabled = true;
+            saveTableBtn.textContent = "⏳ Saving...";
             try {
                 const rows = adminEditTable.querySelectorAll("tr");
                 const batch = db.batch();
                 for (let i = 1; i < rows.length; i++) {
                     const row = rows[i];
                     const id = row.dataset.id;
+                    if (!id) continue;
                     const inputs = row.querySelectorAll("input");
                     const data = {};
                     inputs.forEach(inp => {
@@ -1725,20 +1750,23 @@
                     const ref = db.collection("league_table").doc(id);
                     batch.update(ref, {
                         pos: parseInt(data.pos) || 0,
-                        club: data.club,
+                        club: data.club || "",
                         p: parseInt(data.p) || 0,
                         gd: parseInt(data.gd) || 0,
                         pts: parseInt(data.pts) || 0,
-                        icon: data.icon
+                        icon: data.icon || ""
                     });
                 }
                 await batch.commit();
-                showToast("💾 Changes saved successfully!");
+                showToast("💾 Changes saved to Firebase!");
                 editTableContainer.style.display = "none";
                 await fetchLeagueTable();
             } catch (err) {
-                console.error(err);
+                console.error("Save error:", err);
                 showToast("❌ Save failed: " + err.message);
+            } finally {
+                saveTableBtn.disabled = false;
+                saveTableBtn.textContent = "💾 Save Changes";
             }
         });
 
