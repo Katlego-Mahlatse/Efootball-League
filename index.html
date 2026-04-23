@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>eFootball 412 · League Hub</title>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js">
-    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -849,7 +846,6 @@
     <div class="admin-panel" id="adminPanel">
         <h2>🔧 Admin Panel</h2>
         <div class="admin-btn-panel">
-            <button id="initMissingBtn">📥 Initialize Missing Teams</button>
             <button id="editTableBtn">✏️ Edit League Table</button>
             <button id="closeAdminPanelBtn">❌ Close</button>
         </div>
@@ -934,9 +930,6 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const auth = firebase.auth();
-
-        auth.signInAnonymously().catch(err => console.warn("Auth skipped:", err));
 
         // Slideshow (unchanged)
         const images = [
@@ -1295,7 +1288,7 @@
             try {
                 const snapshot = await db.collection("league_table").orderBy("pos").get();
                 if (snapshot.empty) {
-                    // No data in Firebase, use hardcoded fallback
+                    // No data? fallback to hardcoded
                     leagueData = [
                         { id: "Real_Madrid", pos: 1, club: "Real Madrid", p: 10, gd: 16, pts: 30 },
                         { id: "Man_City", pos: 2, club: "Man City", p: 10, gd: 12, pts: 22 },
@@ -1330,7 +1323,7 @@
                 renderLeagueTable();
             } catch (err) {
                 console.error("Fetch error:", err);
-                showToast("⚠️ Could not load from Firebase. Check console.");
+                showToast("⚠️ Could not load from Firebase.");
             }
         }
 
@@ -1597,7 +1590,6 @@
         const adminBtn = document.getElementById("adminBtn");
         const adminPanel = document.getElementById("adminPanel");
         const closeAdminPanelBtn = document.getElementById("closeAdminPanelBtn");
-        const initMissingBtn = document.getElementById("initMissingBtn");
         const editTableBtn = document.getElementById("editTableBtn");
         const editTableContainer = document.getElementById("editTableContainer");
         const adminEditTable = document.getElementById("adminEditTable");
@@ -1623,80 +1615,6 @@
 
         adminBtn.addEventListener("click", openAdminPanel);
         closeAdminPanelBtn.addEventListener("click", closeAdminPanel);
-
-        // All teams data for initialization
-        const allTeamsData = [
-            { id: "Real_Madrid", pos: 1, club: "Real Madrid", p: 10, gd: 16, pts: 30,
-                icon: "21259ea4-042f-48ff-902f-1e776d27fe58.jpeg" },
-            { id: "Man_City", pos: 2, club: "Man City", p: 10, gd: 12, pts: 22,
-                icon: "9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg" },
-            { id: "Liverpool", pos: 3, club: "Liverpool", p: 10, gd: 24, pts: 22,
-                icon: "269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg" },
-            { id: "Dortmund", pos: 4, club: "Dortmund", p: 10, gd: 10, pts: 21,
-                icon: "01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg" },
-            { id: "Barcelona", pos: 5, club: "Barcelona", p: 10, gd: -1, pts: 16,
-                icon: "IMG_20260421_085117.jpg" },
-            { id: "PSG", pos: 6, club: "PSG", p: 10, gd: -6, pts: 14,
-                icon: "4dea795d-a516-46ae-bd34-07a784693d80.png" },
-            { id: "Arsenal", pos: 7, club: "Arsenal", p: 10, gd: 6, pts: 14,
-                icon: "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png" },
-            { id: "Chelsea", pos: 8, club: "Chelsea", p: 10, gd: 6, pts: 11,
-                icon: "IMG_20260421_100354.jpg" },
-            { id: "AC_Milan", pos: 9, club: "AC Milan", p: 10, gd: -5, pts: 10,
-                icon: "44e0f58a-e5db-445b-9896-db22ea99b936.png" },
-            { id: "Napoli", pos: 10, club: "Napoli", p: 10, gd: -1, pts: 9,
-                icon: "IMG_20260421_100318.jpg" },
-            { id: "Atletico", pos: 11, club: "Atletico", p: 10, gd: -11, pts: 4,
-                icon: "IMG_20260421_093024.png" },
-            { id: "Juventus", pos: 12, club: "Juventus", p: 10, gd: -9, pts: 3,
-                icon: "IMG_20260421_151224.jpg" },
-            { id: "Newcastle", pos: 13, club: "Newcastle", p: 10, gd: -26, pts: 3,
-                icon: "IMG_20260421_093046.png" },
-            { id: "Inter_Milan", pos: 14, club: "Inter Milan", p: 10, gd: 1, pts: -2,
-                icon: "IMG_20260421_092951.png" }
-        ];
-
-        // Initialize missing teams
-        initMissingBtn.addEventListener("click", async () => {
-            initMissingBtn.disabled = true;
-            initMissingBtn.textContent = "⏳ Working...";
-            try {
-                const existingDocs = await db.collection("league_table").get();
-                const existingIds = new Set();
-                existingDocs.forEach(doc => existingIds.add(doc.id));
-
-                const batch = db.batch();
-                let added = 0;
-                allTeamsData.forEach(team => {
-                    if (!existingIds.has(team.id)) {
-                        const ref = db.collection("league_table").doc(team.id);
-                        batch.set(ref, {
-                            pos: team.pos,
-                            club: team.club,
-                            p: team.p,
-                            gd: team.gd,
-                            pts: team.pts,
-                            icon: team.icon
-                        });
-                        added++;
-                    }
-                });
-
-                if (added > 0) {
-                    await batch.commit();
-                    showToast(`✅ Added ${added} missing teams! Reloading...`);
-                    await fetchLeagueTable();
-                } else {
-                    showToast("ℹ️ All 14 teams already exist in Firebase.");
-                }
-            } catch (err) {
-                console.error("Init error:", err);
-                showToast("❌ Error: " + err.message);
-            } finally {
-                initMissingBtn.disabled = false;
-                initMissingBtn.textContent = "📥 Initialize Missing Teams";
-            }
-        });
 
         // Edit table form
         function populateEditTable() {
@@ -1731,13 +1649,13 @@
             editTableContainer.style.display = "none";
         });
 
-        // Save changes to Firebase
+        // Save changes to Firebase (using set with merge)
         saveTableBtn.addEventListener("click", async () => {
             saveTableBtn.disabled = true;
             saveTableBtn.textContent = "⏳ Saving...";
             try {
                 const rows = adminEditTable.querySelectorAll("tr");
-                const batch = db.batch();
+                const promises = [];
                 for (let i = 1; i < rows.length; i++) {
                     const row = rows[i];
                     const id = row.dataset.id;
@@ -1748,16 +1666,17 @@
                         data[inp.dataset.field] = inp.value;
                     });
                     const ref = db.collection("league_table").doc(id);
-                    batch.update(ref, {
+                    const updateData = {
                         pos: parseInt(data.pos) || 0,
                         club: data.club || "",
                         p: parseInt(data.p) || 0,
                         gd: parseInt(data.gd) || 0,
                         pts: parseInt(data.pts) || 0,
                         icon: data.icon || ""
-                    });
+                    };
+                    promises.push(ref.set(updateData, { merge: true }));
                 }
-                await batch.commit();
+                await Promise.all(promises);
                 showToast("💾 Changes saved to Firebase!");
                 editTableContainer.style.display = "none";
                 await fetchLeagueTable();
