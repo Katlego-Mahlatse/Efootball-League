@@ -634,15 +634,15 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // Updated LEAGUE_DATA after MD10: Liverpool 1-2 Dortmund, PSG 2-1 AC Milan
+    // Corrected LEAGUE_DATA: Arsenal (GD +6) above PSG (GD -6)
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 10, gd: 16, pts: 30 },
       { pos: 2, club: "Man City", p: 10, gd: 12, pts: 22 },
       { pos: 3, club: "Liverpool", p: 10, gd: 24, pts: 22 },
       { pos: 4, club: "Dortmund", p: 10, gd: 10, pts: 21 },
       { pos: 5, club: "Barcelona", p: 10, gd: -1, pts: 16 },
-      { pos: 6, club: "PSG", p: 10, gd: -6, pts: 14 },
-      { pos: 7, club: "Arsenal", p: 10, gd: 6, pts: 14 },
+      { pos: 6, club: "Arsenal", p: 10, gd: 6, pts: 14 },
+      { pos: 7, club: "PSG", p: 10, gd: -6, pts: 14 },
       { pos: 8, club: "Chelsea", p: 10, gd: 6, pts: 11 },
       { pos: 9, club: "AC Milan", p: 10, gd: -5, pts: 10 },
       { pos: 10, club: "Napoli", p: 10, gd: -1, pts: 9 },
@@ -703,7 +703,7 @@
       return teamName;
     }
 
-    // Updated allResultsOrder with new MD10 results
+    // All results order (includes all MD10 results)
     const allResultsOrder = [
       { type: "win", winner: "Real Madrid", loser: "Napoli" },
       { type: "draw", teams: ["Arsenal","AC Milan"] },
@@ -731,8 +731,8 @@
       { type: "win", winner: "Chelsea", loser: "Atletico" },
       { type: "win", winner: "Arsenal", loser: "Napoli" },
       { type: "win", winner: "Real Madrid", loser: "Barcelona" },
-      { type: "win", winner: "Dortmund", loser: "Liverpool" },   // MD10 Liverpool vs Dortmund
-      { type: "win", winner: "PSG", loser: "AC Milan" }          // MD10 PSG vs AC Milan
+      { type: "win", winner: "Dortmund", loser: "Liverpool" },
+      { type: "win", winner: "PSG", loser: "AC Milan" }
     ];
 
     const teamResults = {};
@@ -763,9 +763,8 @@
       return arr.length ? arr[arr.length-1] : null;
     }
 
-    // Updated fixtureList: removed Borussia Dortmund vs Liverpool and Paris Saint-Germain vs AC Milan from MD10
+    // Fixture list: only MD11 onward (all MD10 fixtures removed)
     const fixtureList = [
-      { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" },
       { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
       { md: 12, home: "FC Barcelona", away: "Manchester City" }, { md: 12, home: "AC Milan", away: "Newcastle United" }, { md: 12, home: "Real Madrid", away: "Liverpool" }, { md: 12, home: "Paris Saint-Germain", away: "Chelsea" }, { md: 12, home: "Juventus", away: "Arsenal" }, { md: 12, home: "Inter Milan", away: "Napoli" }, { md: 12, home: "Borussia Dortmund", away: "Atlético Madrid" },
       { md: 13, home: "FC Barcelona", away: "Newcastle United" }, { md: 13, home: "Manchester City", away: "Liverpool" }, { md: 13, home: "AC Milan", away: "Chelsea" }, { md: 13, home: "Real Madrid", away: "Arsenal" }, { md: 13, home: "Paris Saint-Germain", away: "Napoli" }, { md: 13, home: "Juventus", away: "Atlético Madrid" }, { md: 13, home: "Inter Milan", away: "Borussia Dortmund" },
@@ -790,8 +789,8 @@
     }
 
     const fixturesWithDates = [];
-    let currentDate = new Date(2026, 3, 22);
-    let lastMd = 10;
+    let currentDate = new Date(2026, 3, 23); // MD11 starts April 23 (after MD10)
+    let lastMd = 11;
     for (let f of fixtureList) {
       if (lastMd === null) lastMd = f.md;
       else if (f.md !== lastMd) { currentDate.setDate(currentDate.getDate()+1); lastMd = f.md; }
