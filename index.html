@@ -515,19 +515,16 @@
       margin-top: 4px;
     }
 
-    /* Edit mode styles */
+    /* Edit mode styles - inline editing */
     .edit-input {
       background: rgba(30, 15, 55, 0.9);
       border: 1px solid #f5d742;
       border-radius: 20px;
-      padding: 0.3rem 0.5rem;
+      padding: 0.2rem 0.4rem;
       color: white;
       width: 55px;
       text-align: center;
       font-size: 0.85rem;
-    }
-    .edit-mode .stats-table td {
-      padding: 0.4rem 0.3rem;
     }
     .admin-action-buttons {
       margin-top: 1rem;
@@ -636,7 +633,7 @@
           <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
         </div>
         <div class="scrollable-table">
-          <table class="inner-table" id="fixturesTable"><thead><table><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
+          <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></td></thead><tbody id="fixturesTableBody"></tbody></table>
         </div>
       </div>
     </div>
@@ -645,7 +642,7 @@
       <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
       <div class="card-content" id="resultsContent">
         <div class="scrollable-table">
-          <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></td>
+          <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></table>
         </div>
       </div>
     </div>
@@ -664,7 +661,7 @@
   <script type="module">
     import { initializeApp } from "firebase/app";
     import { getAuth, signInAnonymously } from "firebase/auth";
-    import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, orderBy } from "firebase/firestore";
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
 
     // Firebase config
     const firebaseConfig = {
@@ -680,8 +677,6 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-
-    // Sign in anonymously to allow writes
     signInAnonymously(auth).catch(console.error);
 
     // DOM elements
@@ -691,8 +686,11 @@
     const searchInput = document.getElementById("searchInput");
     const teamFilter = document.getElementById("teamFilter");
     const threeDotBtn = document.getElementById("threeDotBtn");
+    const hamburgerBtn = document.getElementById("hamburgerBtn");
+    const modalOverlayEl = document.getElementById("modalOverlay");
+    const closeModalBtn = document.getElementById("closeModalBtn");
 
-    // Default league data (fallback)
+    // Default league data (exact same order as original working version)
     const DEFAULT_LEAGUE_DATA = [
       { club: "Real Madrid", p: 10, gd: 16, pts: 30 },
       { club: "Liverpool", p: 10, gd: 24, pts: 22 },
@@ -712,12 +710,8 @@
 
     let currentLeagueData = [...DEFAULT_LEAGUE_DATA];
     let isEditMode = false;
-    let editInputs = [];
 
-    // Reference to Firestore document
-    const leagueDocRef = doc(db, "league", "standings");
-
-    // Player mapping (unchanged)
+    // Player mapping and icon helper (unchanged from original)
     const playerMap = {
       "FC Barcelona": "~Rea🫡", "Barcelona": "~Rea🫡", "Inter Milan": "Mali",
       "Borussia Dortmund": "~Qhawe 🤍", "Dortmund": "~Qhawe 🤍", "Juventus": "~Lawree ✨",
@@ -755,7 +749,7 @@
       return teamName;
     }
 
-    // All results order for last 5 calculation (unchanged)
+    // Last 5 circles data (based on actual match results, unchanged)
     const allResultsOrder = [
       { type: "win", winner: "Real Madrid", loser: "Napoli" },
       { type: "draw", teams: ["Arsenal","AC Milan"] },
@@ -815,7 +809,7 @@
       return arr.length ? arr[arr.length-1] : null;
     }
 
-    // Fixture list (unchanged)
+    // Fixtures (unchanged)
     const fixtureList = [
       { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
       { md: 12, home: "FC Barcelona", away: "Manchester City" }, { md: 12, home: "AC Milan", away: "Newcastle United" }, { md: 12, home: "Real Madrid", away: "Liverpool" }, { md: 12, home: "Paris Saint-Germain", away: "Chelsea" }, { md: 12, home: "Juventus", away: "Arsenal" }, { md: 12, home: "Inter Milan", away: "Napoli" }, { md: 12, home: "Borussia Dortmund", away: "Atlético Madrid" },
@@ -890,12 +884,13 @@
     let currentView = "team";
     let showFormArrows = false;
     let showLast5 = true;
-    let popup = null;
+    let popupMenu = null;
 
+    // Render league table with original style
     function renderLeagueTable() {
       if (!leagueTableBody) return;
       leagueTableBody.innerHTML = "";
-      
+
       currentLeagueData.forEach((team, idx) => {
         const row = leagueTableBody.insertRow();
         let barClass = "";
@@ -942,22 +937,25 @@
         else if (team.club === "Liverpool") iconHtml = `<img class="team-icon" src="269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg" alt="Liverpool badge">`;
         else if (team.club === "Juventus") iconHtml = `<img class="team-icon" src="IMG_20260421_151224.jpg" alt="Juventus badge">`;
         
-        let extraHtml = '';
+        clubHtml += iconHtml + ' ' + displayName;
+        row.insertCell(1).innerHTML = `<div class="team-name">${clubHtml}</div>`;
+        
+        // P, GD, Pts columns - editable in edit mode
+        const pCell = row.insertCell(2);
+        const gdCell = row.insertCell(3);
+        const ptsCell = row.insertCell(4);
         if (isEditMode) {
-          extraHtml = `<div style="display:flex; flex-direction:column; gap:2px;">
-            <input type="number" class="edit-input edit-p" data-club="${team.club}" value="${team.p}" placeholder="P">
-            <input type="number" class="edit-input edit-gd" data-club="${team.club}" value="${team.gd}" placeholder="GD">
-            <input type="number" class="edit-input edit-pts" data-club="${team.club}" value="${team.pts}" placeholder="Pts">
-          </div>`;
+          pCell.innerHTML = `<input type="number" class="edit-input" data-club="${team.club}" data-field="p" value="${team.p}" style="width:60px;">`;
+          gdCell.innerHTML = `<input type="number" class="edit-input" data-club="${team.club}" data-field="gd" value="${team.gd}" style="width:60px;">`;
+          ptsCell.innerHTML = `<input type="number" class="edit-input" data-club="${team.club}" data-field="pts" value="${team.pts}" style="width:60px;">`;
+        } else {
+          pCell.innerText = team.p;
+          gdCell.innerText = team.gd > 0 ? `+${team.gd}` : `${team.gd}`;
+          ptsCell.className = "pts-cell";
+          ptsCell.innerText = team.pts;
         }
         
-        clubHtml += iconHtml + ' ' + displayName;
-        
-        row.insertCell(1).innerHTML = `<div class="team-name">${clubHtml}</div>`;
-        row.insertCell(2).innerHTML = isEditMode ? `<input type="number" class="edit-input edit-p" data-club="${team.club}" value="${team.p}" style="width:60px;">` : team.p;
-        row.insertCell(3).innerHTML = isEditMode ? `<input type="number" class="edit-input edit-gd" data-club="${team.club}" value="${team.gd}" style="width:60px;">` : (team.gd > 0 ? `+${team.gd}` : `${team.gd}`);
-        row.insertCell(4).innerHTML = isEditMode ? `<input type="number" class="edit-input edit-pts" data-club="${team.club}" value="${team.pts}" style="width:60px;">` : team.pts;
-        
+        // Last 5 circles (never editable)
         const last5Cell = row.insertCell(5);
         if (showLast5) {
           const last5 = getLast5WithBlanks(team.club);
@@ -981,33 +979,12 @@
       });
     }
 
-    // Sync from Firestore and auto-create if missing
-    async function syncFromFirestore() {
-      try {
-        const docSnap = await getDoc(leagueDocRef);
-        if (docSnap.exists()) {
-          currentLeagueData = docSnap.data().teams;
-        } else {
-          // Create the document with default data
-          await setDoc(leagueDocRef, { teams: DEFAULT_LEAGUE_DATA });
-          currentLeagueData = [...DEFAULT_LEAGUE_DATA];
-        }
-        renderLeagueTable();
-      } catch (error) {
-        console.error("Firestore error:", error);
-        // Fallback to default data
-        currentLeagueData = [...DEFAULT_LEAGUE_DATA];
-        renderLeagueTable();
-      }
-    }
-
-    // Save edits to Firestore
-    async function saveToFirestore() {
-      const inputs = document.querySelectorAll('.edit-input');
+    // Save edited data to Firebase
+    async function saveEditedTable() {
       const newData = currentLeagueData.map(team => {
-        const pInput = document.querySelector(`.edit-p[data-club="${team.club}"]`);
-        const gdInput = document.querySelector(`.edit-gd[data-club="${team.club}"]`);
-        const ptsInput = document.querySelector(`.edit-pts[data-club="${team.club}"]`);
+        const pInput = document.querySelector(`.edit-input[data-club="${team.club}"][data-field="p"]`);
+        const gdInput = document.querySelector(`.edit-input[data-club="${team.club}"][data-field="gd"]`);
+        const ptsInput = document.querySelector(`.edit-input[data-club="${team.club}"][data-field="pts"]`);
         return {
           club: team.club,
           p: pInput ? parseInt(pInput.value) || 0 : team.p,
@@ -1016,7 +993,7 @@
         };
       });
       try {
-        await setDoc(leagueDocRef, { teams: newData });
+        await setDoc(doc(db, "league", "standings"), { teams: newData });
         currentLeagueData = newData;
         isEditMode = false;
         renderLeagueTable();
@@ -1045,43 +1022,43 @@
       }
       isEditMode = true;
       renderLeagueTable();
-      // Add Save/Cancel buttons below the table
+      // Add Save/Cancel buttons below the legend
       const legendDiv = document.querySelector('.legend-under-table');
       let actionDiv = document.querySelector('.admin-action-buttons');
       if (actionDiv) actionDiv.remove();
       actionDiv = document.createElement('div');
       actionDiv.className = 'admin-action-buttons';
       actionDiv.innerHTML = `
-        <button id="saveEditBtn" class="admin-btn">💾 Save to Firebase</button>
+        <button id="saveEditBtn" class="admin-btn">💾 Save Changes</button>
         <button id="cancelEditBtn" class="admin-btn">❌ Cancel</button>
       `;
       legendDiv.parentNode.insertBefore(actionDiv, legendDiv.nextSibling);
-      document.getElementById('saveEditBtn').addEventListener('click', saveToFirestore);
+      document.getElementById('saveEditBtn').addEventListener('click', saveEditedTable);
       document.getElementById('cancelEditBtn').addEventListener('click', cancelEdit);
     }
 
     // 3-dot menu
-    function closePopup() { if (popup) { popup.remove(); popup = null; } }
-    function togglePopup(e) {
+    function closeMenuPopup() { if (popupMenu) { popupMenu.remove(); popupMenu = null; } }
+    function toggleMenuPopup(e) {
       e.stopPropagation();
-      if (popup) { closePopup(); return; }
+      if (popupMenu) { closeMenuPopup(); return; }
       const rect = threeDotBtn.getBoundingClientRect();
-      popup = document.createElement("div");
-      popup.className = "popup-menu";
-      popup.style.position = "absolute";
-      popup.style.top = (rect.bottom + window.scrollY + 5) + "px";
-      popup.style.left = (rect.left + window.scrollX - 60) + "px";
+      popupMenu = document.createElement("div");
+      popupMenu.className = "popup-menu";
+      popupMenu.style.position = "absolute";
+      popupMenu.style.top = (rect.bottom + window.scrollY + 5) + "px";
+      popupMenu.style.left = (rect.left + window.scrollX - 60) + "px";
       
       const editTableOpt = document.createElement("div");
       editTableOpt.innerText = "✏️ Edit Table";
-      editTableOpt.onclick = () => { closePopup(); enterEditMode(); };
+      editTableOpt.onclick = () => { closeMenuPopup(); enterEditMode(); };
       
       const playersOpt = document.createElement("div");
       playersOpt.innerText = currentView === "team" ? "Players" : "Team View";
       playersOpt.onclick = () => {
         currentView = currentView === "team" ? "player" : "team";
         renderLeagueTable();
-        closePopup();
+        closeMenuPopup();
       };
       
       const formOpt = document.createElement("div");
@@ -1089,7 +1066,7 @@
       formOpt.onclick = () => {
         showFormArrows = !showFormArrows;
         renderLeagueTable();
-        closePopup();
+        closeMenuPopup();
       };
       
       const last5Opt = document.createElement("div");
@@ -1097,28 +1074,29 @@
       last5Opt.onclick = () => {
         showLast5 = !showLast5;
         renderLeagueTable();
-        closePopup();
+        closeMenuPopup();
       };
       
       const calendarOpt = document.createElement("div");
       calendarOpt.innerText = "Calendar";
-      calendarOpt.onclick = () => { window.location.href = "calendar.html"; closePopup(); };
+      calendarOpt.onclick = () => { window.location.href = "calendar.html"; closeMenuPopup(); };
       
       const rulesOpt = document.createElement("div");
       rulesOpt.innerText = "Rules";
-      rulesOpt.onclick = () => { window.location.href = "rules.html"; closePopup(); };
+      rulesOpt.onclick = () => { window.location.href = "rules.html"; closeMenuPopup(); };
       
-      popup.appendChild(editTableOpt);
-      popup.appendChild(playersOpt);
-      popup.appendChild(formOpt);
-      popup.appendChild(last5Opt);
-      popup.appendChild(calendarOpt);
-      popup.appendChild(rulesOpt);
-      document.body.appendChild(popup);
+      popupMenu.appendChild(editTableOpt);
+      popupMenu.appendChild(playersOpt);
+      popupMenu.appendChild(formOpt);
+      popupMenu.appendChild(last5Opt);
+      popupMenu.appendChild(calendarOpt);
+      popupMenu.appendChild(rulesOpt);
+      document.body.appendChild(popupMenu);
     }
-    threeDotBtn.addEventListener("click", togglePopup);
-    document.addEventListener("click", (e) => { if (popup && !popup.contains(e.target) && e.target !== threeDotBtn) closePopup(); });
+    threeDotBtn.addEventListener("click", toggleMenuPopup);
+    document.addEventListener("click", (e) => { if (popupMenu && !popupMenu.contains(e.target) && e.target !== threeDotBtn) closeMenuPopup(); });
 
+    // Fixtures, results, filters (unchanged)
     function renderFixtures(filterText = "", filterTeam = "") {
       if (!fixturesTableBody) return;
       fixturesTableBody.innerHTML = "";
@@ -1201,14 +1179,31 @@
       });
     }
 
-    const hamburgerBtn = document.getElementById("hamburgerBtn");
-    const modalOverlayEl = document.getElementById("modalOverlay");
-    const closeModalBtn = document.getElementById("closeModalBtn");
     function openModal() { modalOverlayEl.classList.add("active"); }
     function closeModalFunc() { modalOverlayEl.classList.remove("active"); }
     hamburgerBtn.addEventListener("click", openModal);
     closeModalBtn.addEventListener("click", closeModalFunc);
     modalOverlayEl.addEventListener("click", (e) => { if (e.target === modalOverlayEl) closeModalFunc(); });
+
+    // Load data from Firestore (or create if missing)
+    const leagueDocRef = doc(db, "league", "standings");
+    async function loadFromFirestore() {
+      try {
+        const docSnap = await getDoc(leagueDocRef);
+        if (docSnap.exists()) {
+          currentLeagueData = docSnap.data().teams;
+        } else {
+          await setDoc(leagueDocRef, { teams: DEFAULT_LEAGUE_DATA });
+          currentLeagueData = [...DEFAULT_LEAGUE_DATA];
+        }
+        renderLeagueTable();
+      } catch (error) {
+        console.error("Firestore error:", error);
+        currentLeagueData = [...DEFAULT_LEAGUE_DATA];
+        renderLeagueTable();
+      }
+    }
+    loadFromFirestore();
 
     // Slideshow (unchanged)
     const images = ["images - 2026-04-19T121231.816.jpeg","images - 2026-04-19T155746.715.jpeg","37686bb3-06ce-401b-a022-026933c165e7.jpeg","12871.jpg","1f157df7-2054-4a9d-aa14-b9941ef4a743.jpeg"];
@@ -1229,7 +1224,6 @@
     if (slideshowImgEl) { createDots(); setInterval(() => { currIndex = (currIndex + 1) % images.length; slideshowImgEl.src = images[currIndex]; updateDots(); }, 2000); }
 
     function init() {
-      syncFromFirestore();
       renderResults();
       setupFilters();
       setupCollapsible("fixturesHeader", "fixturesContent", "fixturesToggleIcon");
