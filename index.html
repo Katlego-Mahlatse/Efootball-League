@@ -634,22 +634,22 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // Updated LEAGUE_DATA after MD10: Liverpool 1-2 Dortmund, PSG 2-1 AC Milan
+    // Updated LEAGUE_DATA after MD10 + new results (Inter 2-6 Chelsea, Napoli 0-1 Atletico)
     const LEAGUE_DATA = [
       { pos: 1, club: "Real Madrid", p: 10, gd: 16, pts: 30 },
       { pos: 2, club: "Man City", p: 10, gd: 12, pts: 22 },
       { pos: 3, club: "Liverpool", p: 10, gd: 24, pts: 22 },
       { pos: 4, club: "Dortmund", p: 10, gd: 10, pts: 21 },
       { pos: 5, club: "Barcelona", p: 10, gd: -1, pts: 16 },
-      { pos: 6, club: "PSG", p: 10, gd: -6, pts: 14 },
+      { pos: 6, club: "Chelsea", p: 11, gd: 10, pts: 14 },
       { pos: 7, club: "Arsenal", p: 10, gd: 6, pts: 14 },
-      { pos: 8, club: "Chelsea", p: 10, gd: 6, pts: 11 },
+      { pos: 8, club: "PSG", p: 10, gd: -6, pts: 14 },
       { pos: 9, club: "AC Milan", p: 10, gd: -5, pts: 10 },
-      { pos: 10, club: "Napoli", p: 10, gd: -1, pts: 9 },
-      { pos: 11, club: "Atletico", p: 10, gd: -11, pts: 4 },
+      { pos: 10, club: "Napoli", p: 11, gd: -2, pts: 9 },
+      { pos: 11, club: "Atletico", p: 11, gd: -10, pts: 7 },
       { pos: 12, club: "Juventus", p: 10, gd: -9, pts: 3 },
       { pos: 13, club: "Newcastle", p: 10, gd: -26, pts: 3 },
-      { pos: 14, club: "Inter Milan", p: 10, gd: 1, pts: -2 }
+      { pos: 14, club: "Inter Milan", p: 11, gd: -3, pts: -2 }
     ];
 
     const playerMap = {
@@ -703,7 +703,7 @@
       return teamName;
     }
 
-    // Updated allResultsOrder with new MD10 results
+    // Updated allResultsOrder with new MD10 results appended
     const allResultsOrder = [
       { type: "win", winner: "Real Madrid", loser: "Napoli" },
       { type: "draw", teams: ["Arsenal","AC Milan"] },
@@ -731,8 +731,11 @@
       { type: "win", winner: "Chelsea", loser: "Atletico" },
       { type: "win", winner: "Arsenal", loser: "Napoli" },
       { type: "win", winner: "Real Madrid", loser: "Barcelona" },
-      { type: "win", winner: "Dortmund", loser: "Liverpool" },   // MD10 Liverpool vs Dortmund
-      { type: "win", winner: "PSG", loser: "AC Milan" }          // MD10 PSG vs AC Milan
+      { type: "win", winner: "Dortmund", loser: "Liverpool" },
+      { type: "win", winner: "PSG", loser: "AC Milan" },
+      // New matchday 10 results
+      { type: "win", winner: "Chelsea", loser: "Inter Milan" },
+      { type: "win", winner: "Atletico", loser: "Napoli" }
     ];
 
     const teamResults = {};
@@ -763,9 +766,8 @@
       return arr.length ? arr[arr.length-1] : null;
     }
 
-    // Updated fixtureList: removed Borussia Dortmund vs Liverpool and Paris Saint-Germain vs AC Milan from MD10
+    // Updated fixtureList: removed MD10 fixtures (PSG vs AC Milan, Dortmund vs Liverpool)
     const fixtureList = [
-      { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" },
       { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
       { md: 12, home: "FC Barcelona", away: "Manchester City" }, { md: 12, home: "AC Milan", away: "Newcastle United" }, { md: 12, home: "Real Madrid", away: "Liverpool" }, { md: 12, home: "Paris Saint-Germain", away: "Chelsea" }, { md: 12, home: "Juventus", away: "Arsenal" }, { md: 12, home: "Inter Milan", away: "Napoli" }, { md: 12, home: "Borussia Dortmund", away: "Atlético Madrid" },
       { md: 13, home: "FC Barcelona", away: "Newcastle United" }, { md: 13, home: "Manchester City", away: "Liverpool" }, { md: 13, home: "AC Milan", away: "Chelsea" }, { md: 13, home: "Real Madrid", away: "Arsenal" }, { md: 13, home: "Paris Saint-Germain", away: "Napoli" }, { md: 13, home: "Juventus", away: "Atlético Madrid" }, { md: 13, home: "Inter Milan", away: "Borussia Dortmund" },
@@ -784,13 +786,14 @@
       { md: 26, home: "Newcastle United", away: "FC Barcelona" }, { md: 26, home: "Liverpool", away: "Manchester City" }, { md: 26, home: "Chelsea", away: "AC Milan" }, { md: 26, home: "Arsenal", away: "Real Madrid" }, { md: 26, home: "Napoli", away: "Paris Saint-Germain" }, { md: 26, home: "Atlético Madrid", away: "Juventus" }, { md: 26, home: "Borussia Dortmund", away: "Inter Milan" }
     ];
 
+    // Date format: month and day only, no year
     function formatDate(date) {
       const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+      return `${months[date.getMonth()]} ${date.getDate()}`;
     }
 
     const fixturesWithDates = [];
-    let currentDate = new Date(2026, 3, 22);
+    let currentDate = new Date(2026, 3, 22); // April 22, 2026
     let lastMd = 10;
     for (let f of fixtureList) {
       if (lastMd === null) lastMd = f.md;
@@ -802,6 +805,8 @@
     }
 
     const RESULTS_DATA = [
+      { matchText: "Inter Milan 2 - 6 Chelsea", md: 10 },
+      { matchText: "Napoli 0 - 1 Atletico Madrid", md: 10 },
       { matchText: "Liverpool 1 - 2 Dortmund", md: 10 },
       { matchText: "PSG 2 - 1 AC Milan", md: 10 },
       { matchText: "Real Madrid 1 - 0 Barcelona", md: 10 },
@@ -1015,7 +1020,8 @@
         let matchesTeam = !filterTeam || f.home === filterTeam || f.away === filterTeam;
         if (!matchesSearch || !matchesTeam) return;
         const row = tbody.insertRow();
-        row.insertCell(0).innerHTML = `<span class="date-badge">📅 ${f.date}</span>`;
+        // Date cell without emoji and year (formatDate already returns month and day only)
+        row.insertCell(0).innerHTML = `<span class="date-badge">${f.date}</span>`;
         
         const homeIcon = getTeamIconHtml(f.home, "inline-team-icon");
         const awayIcon = getTeamIconHtml(f.away, "inline-team-icon");
@@ -1089,4 +1095,4 @@
     init();
   </script>
 </body>
-  </html>
+</html>
