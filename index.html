@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -635,15 +634,15 @@
     function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
     if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-    // Updated LEAGUE_DATA: Liverpool (GD+24) above Man City (GD+12) on same points.
+    // Updated LEAGUE_DATA after MD10 & MD11 results.
     const LEAGUE_DATA = [
-      { pos: 1, club: "Real Madrid", p: 10, gd: 16, pts: 30 },
+      { pos: 1, club: "Real Madrid", p: 11, gd: 19, pts: 33 },
       { pos: 2, club: "Liverpool", p: 10, gd: 24, pts: 22 },
-      { pos: 3, club: "Man City", p: 10, gd: 12, pts: 22 },
-      { pos: 4, club: "Dortmund", p: 10, gd: 10, pts: 21 },
-      { pos: 5, club: "Barcelona", p: 10, gd: -1, pts: 16 },
-      { pos: 6, club: "Chelsea", p: 11, gd: 10, pts: 14 },
-      { pos: 7, club: "Arsenal", p: 10, gd: 6, pts: 14 },
+      { pos: 3, club: "Man City", p: 11, gd: 9, pts: 22 },
+      { pos: 4, club: "Dortmund", p: 11, gd: 9, pts: 21 },
+      { pos: 5, club: "Arsenal", p: 11, gd: 7, pts: 17 },
+      { pos: 6, club: "Barcelona", p: 10, gd: -1, pts: 16 },
+      { pos: 7, club: "Chelsea", p: 11, gd: 10, pts: 14 },
       { pos: 8, club: "PSG", p: 10, gd: -6, pts: 14 },
       { pos: 9, club: "AC Milan", p: 10, gd: -5, pts: 10 },
       { pos: 10, club: "Napoli", p: 11, gd: -2, pts: 9 },
@@ -704,7 +703,7 @@
       return teamName;
     }
 
-    // Updated allResultsOrder with new MD10 results appended
+    // Full results order for form tracking, including MD10 & MD11.
     const allResultsOrder = [
       { type: "win", winner: "Real Madrid", loser: "Napoli" },
       { type: "draw", teams: ["Arsenal","AC Milan"] },
@@ -734,9 +733,10 @@
       { type: "win", winner: "Real Madrid", loser: "Barcelona" },
       { type: "win", winner: "Dortmund", loser: "Liverpool" },
       { type: "win", winner: "PSG", loser: "AC Milan" },
-      // New matchday 10 results
       { type: "win", winner: "Chelsea", loser: "Inter Milan" },
-      { type: "win", winner: "Atletico", loser: "Napoli" }
+      { type: "win", winner: "Atletico", loser: "Napoli" },
+      { type: "win", winner: "Real Madrid", loser: "Man City" },
+      { type: "win", winner: "Arsenal", loser: "Dortmund" }
     ];
 
     const teamResults = {};
@@ -767,9 +767,9 @@
       return arr.length ? arr[arr.length-1] : null;
     }
 
-    // Updated fixtureList: removed MD10 fixtures (PSG vs AC Milan, Dortmund vs Liverpool)
+    // Fixture list without played MD11 matches: Real Madrid vs Man City, Dortmund vs Arsenal removed.
     const fixtureList = [
-      { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
+      { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
       { md: 12, home: "FC Barcelona", away: "Manchester City" }, { md: 12, home: "AC Milan", away: "Newcastle United" }, { md: 12, home: "Real Madrid", away: "Liverpool" }, { md: 12, home: "Paris Saint-Germain", away: "Chelsea" }, { md: 12, home: "Juventus", away: "Arsenal" }, { md: 12, home: "Inter Milan", away: "Napoli" }, { md: 12, home: "Borussia Dortmund", away: "Atlético Madrid" },
       { md: 13, home: "FC Barcelona", away: "Newcastle United" }, { md: 13, home: "Manchester City", away: "Liverpool" }, { md: 13, home: "AC Milan", away: "Chelsea" }, { md: 13, home: "Real Madrid", away: "Arsenal" }, { md: 13, home: "Paris Saint-Germain", away: "Napoli" }, { md: 13, home: "Juventus", away: "Atlético Madrid" }, { md: 13, home: "Inter Milan", away: "Borussia Dortmund" },
       { md: 14, home: "Liverpool", away: "FC Barcelona" }, { md: 14, home: "Chelsea", away: "Newcastle United" }, { md: 14, home: "Arsenal", away: "Manchester City" }, { md: 14, home: "Napoli", away: "AC Milan" }, { md: 14, home: "Atlético Madrid", away: "Real Madrid" }, { md: 14, home: "Borussia Dortmund", away: "Paris Saint-Germain" }, { md: 14, home: "Inter Milan", away: "Juventus" },
@@ -787,7 +787,7 @@
       { md: 26, home: "Newcastle United", away: "FC Barcelona" }, { md: 26, home: "Liverpool", away: "Manchester City" }, { md: 26, home: "Chelsea", away: "AC Milan" }, { md: 26, home: "Arsenal", away: "Real Madrid" }, { md: 26, home: "Napoli", away: "Paris Saint-Germain" }, { md: 26, home: "Atlético Madrid", away: "Juventus" }, { md: 26, home: "Borussia Dortmund", away: "Inter Milan" }
     ];
 
-    // Date format: month and day only, no year
+    // Date format: month and day only
     function formatDate(date) {
       const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       return `${months[date.getMonth()]} ${date.getDate()}`;
@@ -806,6 +806,8 @@
     }
 
     const RESULTS_DATA = [
+      { matchText: "Real Madrid 3 - 0 Manchester City", md: 11 },
+      { matchText: "Arsenal 1 - 0 Dortmund", md: 11 },
       { matchText: "Inter Milan 2 - 6 Chelsea", md: 10 },
       { matchText: "Napoli 0 - 1 Atletico Madrid", md: 10 },
       { matchText: "Liverpool 1 - 2 Dortmund", md: 10 },
@@ -1096,4 +1098,3 @@
   </script>
 </body>
 </html>
-```
