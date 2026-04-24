@@ -598,7 +598,7 @@
         <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
       </div>
       <div class="scrollable-table">
-        <table class="inner-table" id="fixturesTable"><thead></tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
+        <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
       </div>
     </div>
   </div>
@@ -701,22 +701,11 @@
   }
 
   // ============================================================
-  // CORRECT allResultsOrder: MD12 matches FIRST (most recent),
-  // then MD11 results, then all older matches in original order
+  // CORRECT allResultsOrder: MD12 matches at the VERY END
+  // so that they become the most recent results.
   // ============================================================
   const allResultsOrder = [
-    // MD12 matches (7) - most recent first
-    { type: "draw", teams: ["PSG","Chelsea"] },
-    { type: "win", winner: "Newcastle", loser: "AC Milan" },
-    { type: "draw", teams: ["Napoli","Inter Milan"] },
-    { type: "forfeit_win", winner: "Barcelona", loser: "Man City" },
-    { type: "forfeit_win", winner: "Arsenal", loser: "Juventus" },
-    { type: "draw", teams: ["Real Madrid","Liverpool"] },
-    { type: "forfeit_win", winner: "Dortmund", loser: "Atletico" },
-    // MD11 results
-    { type: "win", winner: "Real Madrid", loser: "Man City" },
-    { type: "win", winner: "Arsenal", loser: "Dortmund" },
-    // MD10 catch-up and earlier matches (original order from the user's first file)
+    // Older matches (MD7, MD8, MD9, MD10, MD11) in original order
     { type: "win", winner: "Real Madrid", loser: "Napoli" },
     { type: "draw", teams: ["Arsenal","AC Milan"] },
     { type: "win", winner: "Liverpool", loser: "Newcastle" },
@@ -747,12 +736,21 @@
     { type: "win", winner: "PSG", loser: "AC Milan" },
     { type: "win", winner: "Chelsea", loser: "Inter Milan" },
     { type: "win", winner: "Atletico", loser: "Napoli" },
-    { type: "forfeit_win", winner: "PSG", loser: "Newcastle" },
-    { type: "win", winner: "Barcelona", loser: "AC Milan" },
-    { type: "forfeit_win", winner: "Liverpool", loser: "Juventus" }
+    { type: "win", winner: "Real Madrid", loser: "Man City" },   // MD11
+    { type: "win", winner: "Arsenal", loser: "Dortmund" },      // MD11
+    { type: "forfeit_win", winner: "PSG", loser: "Newcastle" }, // MD10 catch-up
+    { type: "win", winner: "Barcelona", loser: "AC Milan" },    // MD10 catch-up
+    { type: "forfeit_win", winner: "Liverpool", loser: "Juventus" }, // MD10 catch-up
+    // ========== MD12 matches (most recent – at the bottom) ==========
+    { type: "draw", teams: ["PSG","Chelsea"] },
+    { type: "win", winner: "Newcastle", loser: "AC Milan" },
+    { type: "draw", teams: ["Napoli","Inter Milan"] },
+    { type: "forfeit_win", winner: "Barcelona", loser: "Man City" },
+    { type: "forfeit_win", winner: "Arsenal", loser: "Juventus" },
+    { type: "draw", teams: ["Real Madrid","Liverpool"] },
+    { type: "forfeit_win", winner: "Dortmund", loser: "Atletico" }
   ];
 
-  // Build teamResults based on allResultsOrder
   const teamResults = {};
   LEAGUE_DATA.forEach(t => { teamResults[t.club] = []; });
   allResultsOrder.forEach(res => {
@@ -781,7 +779,7 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // FIXTURE LIST: Remove all MD11 and MD12 matches. Start from MD13.
+  // FIXTURE LIST: Remove MD11 and MD12 matches, start from MD13
   const fixtureList = [
     { md: 13, home: "FC Barcelona", away: "Newcastle United" }, { md: 13, home: "Manchester City", away: "Liverpool" }, { md: 13, home: "AC Milan", away: "Chelsea" }, { md: 13, home: "Real Madrid", away: "Arsenal" }, { md: 13, home: "Paris Saint-Germain", away: "Napoli" }, { md: 13, home: "Juventus", away: "Atlético Madrid" }, { md: 13, home: "Inter Milan", away: "Borussia Dortmund" },
     { md: 14, home: "Liverpool", away: "FC Barcelona" }, { md: 14, home: "Chelsea", away: "Newcastle United" }, { md: 14, home: "Arsenal", away: "Manchester City" }, { md: 14, home: "Napoli", away: "AC Milan" }, { md: 14, home: "Atlético Madrid", away: "Real Madrid" }, { md: 14, home: "Borussia Dortmund", away: "Paris Saint-Germain" }, { md: 14, home: "Inter Milan", away: "Juventus" },
@@ -806,7 +804,7 @@
 
   const fixturesWithDates = [];
   let currentDate = new Date(2026, 3, 22);
-  let lastMd = 12; // Start after MD12
+  let lastMd = 12;
   for (let f of fixtureList) {
     if (lastMd === null) lastMd = f.md;
     else if (f.md !== lastMd) { currentDate.setDate(currentDate.getDate()+1); lastMd = f.md; }
@@ -816,7 +814,6 @@
     });
   }
 
-  // RESULTS_DATA: MD12 matches at the top
   const RESULTS_DATA = [
     { matchText: "Dortmund 3 - 0 Atletico Madrid (Forfeited - No Reply)", md: 12 },
     { matchText: "Real Madrid 1 - 1 Liverpool", md: 12 },
