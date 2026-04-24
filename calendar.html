@@ -390,11 +390,13 @@
 </div>
 
 <script>
-  // ---------- TEAM LIST & ICONS ----------
+  // ---------- TEAM LIST & ICONS (with extended mapping for all variations) ----------
   const allTeams = [
     "Real Madrid", "Liverpool", "Dortmund", "Man City", "Barcelona", "Arsenal", "PSG",
     "AC Milan", "Chelsea", "Napoli", "Atletico", "Juventus", "Newcastle", "Inter Milan"
   ];
+  
+  // Original icon map (canonical names)
   const teamIconMap = {
     "Arsenal": "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png",
     "AC Milan": "44e0f58a-e5db-445b-9896-db22ea99b936.png",
@@ -411,10 +413,31 @@
     "Liverpool": "269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg",
     "Juventus": "IMG_20260421_151224.jpg"
   };
+  
+  // Normalize team name from fixture list to canonical key
+  function normalizeTeamName(name) {
+    if (name === "FC Barcelona") return "Barcelona";
+    if (name === "Paris Saint-Germain") return "PSG";
+    if (name === "Manchester City") return "Man City";
+    if (name === "Newcastle United") return "Newcastle";
+    if (name === "Borussia Dortmund") return "Dortmund";
+    if (name === "Atlético Madrid") return "Atletico";
+    if (name === "Inter Milan") return "Inter Milan";
+    if (name === "Real Madrid") return "Real Madrid";
+    if (name === "Liverpool") return "Liverpool";
+    if (name === "Arsenal") return "Arsenal";
+    if (name === "Chelsea") return "Chelsea";
+    if (name === "Napoli") return "Napoli";
+    if (name === "Juventus") return "Juventus";
+    if (name === "AC Milan") return "AC Milan";
+    return name;
+  }
+  
   function getTeamIconHtml(teamName, className = "match-icon") {
-    const src = teamIconMap[teamName];
-    if (src) return `<img class="${className}" src="${src}" alt="${teamName}">`;
-    return teamName;
+    const canonical = normalizeTeamName(teamName);
+    const src = teamIconMap[canonical];
+    if (src) return `<img class="${className}" src="${src}" alt="${teamName}" onerror="this.onerror=null; this.outerHTML='<span class=\'match-text\'>${teamName}</span>';">`;
+    return `<span class="match-text">${teamName}</span>`;
   }
 
   // ---------- FIXTURE DATA (Premier League MD10 to MD26) ----------
@@ -463,18 +486,16 @@
   let selectedTeam = null;
 
   // ---------- COMPETITION EVENTS (Season 2 and future seasons) ----------
-  // Swapped Club World Cup and Super Cup icons
   const typeToIcon = {
     "premier_league": "images (14).png",
     "champions_league": "images (15).png",
     "europa_league": "uefa-europa-league-logo-on-transparent-background-free-vector.jpg",
     "conference_league": "images (16).png",
-    "club_world_cup": "images - 2026-04-21T172601.589.jpeg",   // was super cup icon
-    "super_cup": "images - 2026-04-21T172656.176.jpeg",        // was club world cup icon
+    "club_world_cup": "images - 2026-04-21T172601.589.jpeg",
+    "super_cup": "images - 2026-04-21T172656.176.jpeg",
     "fa_cup": "GEryYr_5YQv6lyYkYIMYdH-pgvv7tZ5nGqQ4sCna6ewduDy5v_LTbGqjg3g81Fx8ZA1a_Mae5g5HI7VEY_6uQQ.webp"
   };
 
-  // Define the exact schedule for Season 2 (May–June 2026) with formal names
   const season2Events = [
     { date: "2026-05-13", type: "champions_league", title: "UEFA Champions League Semi-Final 1st Leg" },
     { date: "2026-05-14", type: "europa_league", title: "UEFA Europa League Semi-Final 1st Leg" },
@@ -505,18 +526,15 @@
     { date: "2026-06-12", type: "premier_league", title: "Premier League Matchday 14" }
   ];
 
-  // Generate future seasons by shifting the same pattern (31-day blocks)
   function generateFutureSeasons() {
     const futureEvents = [];
-    // Start after June 12, 2026
-    let startDate = new Date(2026, 5, 13); // June 13, 2026
-    const endDate = new Date(2026, 11, 31); // Dec 31, 2026
-    const seasonDuration = 31; // days
-    let seasonNum = 3;
+    let startDate = new Date(2026, 5, 13);
+    const endDate = new Date(2026, 11, 31);
+    const seasonDuration = 31;
     while (startDate <= endDate) {
       for (let ev of season2Events) {
         const evDate = new Date(ev.date);
-        const offset = evDate.getDate() - 13; // relative offset from May 13
+        const offset = evDate.getDate() - 13;
         const newDate = new Date(startDate);
         newDate.setDate(startDate.getDate() + offset);
         if (newDate <= endDate) {
@@ -527,33 +545,21 @@
           });
         }
       }
-      // Move to next season block
       startDate.setDate(startDate.getDate() + seasonDuration);
-      seasonNum++;
     }
     return futureEvents;
   }
 
-  // Build complete event map
-  const eventMap = new Map(); // key: YYYY-MM-DD -> { type, matches, title }
-
-  // Add Premier League matchday events (existing)
+  const eventMap = new Map();
   for (let md in matchdayDates) {
     const dateStr = matchdayDates[md].date;
     eventMap.set(dateStr, { type: "premier_league", matches: matchdayDates[md].fixtures, title: null });
   }
-
-  // Add Season 2 events
   for (let ev of season2Events) {
     if (!eventMap.has(ev.date)) {
       eventMap.set(ev.date, { type: ev.type, matches: [], title: ev.title });
-    } else {
-      // If date already has Premier League, we keep both? Rare, but if conflict, we keep the existing (Premier League has priority)
-      // For simplicity, we don't overwrite.
     }
   }
-
-  // Add future season events (TBD)
   const futureEvents = generateFutureSeasons();
   for (let ev of futureEvents) {
     if (!eventMap.has(ev.date)) {
@@ -718,4 +724,4 @@
   renderCalendar();
 </script>
 </body>
-  </html>
+</html>
