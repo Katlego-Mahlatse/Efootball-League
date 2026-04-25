@@ -632,22 +632,22 @@
   function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
   if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-  // Final LEAGUE_DATA after all MD12 matches
+  // UPDATED LEAGUE_DATA after MD13
   const LEAGUE_DATA = [
-    { pos: 1, club: "Real Madrid", p: 12, gd: 19, pts: 34 },
+    { pos: 1, club: "Real Madrid", p: 13, gd: 20, pts: 37 },
     { pos: 2, club: "Liverpool", p: 12, gd: 24, pts: 26 },
-    { pos: 3, club: "Dortmund", p: 12, gd: 9, pts: 24 },
+    { pos: 3, club: "Dortmund", p: 13, gd: 8, pts: 24 },
     { pos: 4, club: "Man City", p: 12, gd: 6, pts: 22 },
     { pos: 5, club: "Barcelona", p: 12, gd: 1, pts: 22 },
-    { pos: 6, club: "Arsenal", p: 12, gd: 7, pts: 20 },
-    { pos: 7, club: "PSG", p: 12, gd: -6, pts: 18 },
+    { pos: 6, club: "Arsenal", p: 13, gd: 6, pts: 20 },
+    { pos: 7, club: "PSG", p: 13, gd: -6, pts: 19 },
     { pos: 8, club: "Chelsea", p: 12, gd: 10, pts: 15 },
-    { pos: 9, club: "Napoli", p: 12, gd: -2, pts: 10 },
+    { pos: 9, club: "Napoli", p: 13, gd: -2, pts: 11 },
     { pos: 10, club: "AC Milan", p: 12, gd: -9, pts: 10 },
     { pos: 11, club: "Atletico", p: 12, gd: -13, pts: 7 },
     { pos: 12, club: "Newcastle", p: 12, gd: -27, pts: 6 },
-    { pos: 13, club: "Juventus", p: 12, gd: -15, pts: 3 },
-    { pos: 14, club: "Inter Milan", p: 12, gd: -3, pts: -1 }
+    { pos: 13, club: "Inter Milan", p: 13, gd: -2, pts: 2 },
+    { pos: 14, club: "Juventus", p: 12, gd: -15, pts: 3 }
   ];
 
   const playerMap = {
@@ -701,8 +701,9 @@
     return teamName;
   }
 
-  // Full results order with MD12 matches at the bottom (most recent)
+  // Updated allResultsOrder with MD13 matches at the bottom (most recent)
   const allResultsOrder = [
+    // Older matches (MD7 to MD12)
     { type: "win", winner: "Real Madrid", loser: "Napoli" },
     { type: "draw", teams: ["Arsenal","AC Milan"] },
     { type: "win", winner: "Liverpool", loser: "Newcastle" },
@@ -738,14 +739,18 @@
     { type: "forfeit_win", winner: "PSG", loser: "Newcastle" },
     { type: "win", winner: "Barcelona", loser: "AC Milan" },
     { type: "forfeit_win", winner: "Liverpool", loser: "Juventus" },
-    // MD12 matches (most recent)
+    // MD12 matches
     { type: "draw", teams: ["PSG","Chelsea"] },
     { type: "win", winner: "Newcastle", loser: "AC Milan" },
     { type: "draw", teams: ["Napoli","Inter Milan"] },
     { type: "forfeit_win", winner: "Barcelona", loser: "Man City" },
     { type: "forfeit_win", winner: "Arsenal", loser: "Juventus" },
     { type: "draw", teams: ["Real Madrid","Liverpool"] },
-    { type: "forfeit_win", winner: "Dortmund", loser: "Atletico" }
+    { type: "forfeit_win", winner: "Dortmund", loser: "Atletico" },
+    // MD13 matches (most recent)
+    { type: "win", winner: "Real Madrid", loser: "Arsenal" },
+    { type: "draw", teams: ["Napoli","PSG"] },
+    { type: "win", winner: "Inter Milan", loser: "Dortmund" }
   ];
 
   const teamResults = {};
@@ -776,9 +781,9 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // Fixture list: starts from MD13 (all MD11 and MD12 removed)
+  // Fixture list: removed MD13 matches (Real Madrid vs Arsenal, Napoli vs PSG, Inter Milan vs Dortmund)
   const fixtureList = [
-    { md: 13, home: "FC Barcelona", away: "Newcastle United" }, { md: 13, home: "Manchester City", away: "Liverpool" }, { md: 13, home: "AC Milan", away: "Chelsea" }, { md: 13, home: "Real Madrid", away: "Arsenal" }, { md: 13, home: "Paris Saint-Germain", away: "Napoli" }, { md: 13, home: "Juventus", away: "Atlético Madrid" }, { md: 13, home: "Inter Milan", away: "Borussia Dortmund" },
+    { md: 13, home: "FC Barcelona", away: "Newcastle United" }, { md: 13, home: "Manchester City", away: "Liverpool" }, { md: 13, home: "AC Milan", away: "Chelsea" }, { md: 13, home: "Juventus", away: "Atlético Madrid" },
     { md: 14, home: "Liverpool", away: "FC Barcelona" }, { md: 14, home: "Chelsea", away: "Newcastle United" }, { md: 14, home: "Arsenal", away: "Manchester City" }, { md: 14, home: "Napoli", away: "AC Milan" }, { md: 14, home: "Atlético Madrid", away: "Real Madrid" }, { md: 14, home: "Borussia Dortmund", away: "Paris Saint-Germain" }, { md: 14, home: "Inter Milan", away: "Juventus" },
     { md: 15, home: "Chelsea", away: "FC Barcelona" }, { md: 15, home: "Arsenal", away: "Liverpool" }, { md: 15, home: "Napoli", away: "Newcastle United" }, { md: 15, home: "Atlético Madrid", away: "Manchester City" }, { md: 15, home: "Borussia Dortmund", away: "AC Milan" }, { md: 15, home: "Inter Milan", away: "Real Madrid" }, { md: 15, home: "Juventus", away: "Paris Saint-Germain" },
     { md: 16, home: "Arsenal", away: "FC Barcelona" }, { md: 16, home: "Napoli", away: "Chelsea" }, { md: 16, home: "Atlético Madrid", away: "Liverpool" }, { md: 16, home: "Borussia Dortmund", away: "Newcastle United" }, { md: 16, home: "Inter Milan", away: "Manchester City" }, { md: 16, home: "Juventus", away: "AC Milan" }, { md: 16, home: "Paris Saint-Germain", away: "Real Madrid" },
@@ -811,7 +816,11 @@
     });
   }
 
+  // RESULTS_DATA: MD13 matches at the top
   const RESULTS_DATA = [
+    { matchText: "Inter Milan 3 - 2 Dortmund", md: 13 },
+    { matchText: "Napoli 1 - 1 PSG", md: 13 },
+    { matchText: "Real Madrid 3 - 2 Arsenal", md: 13 },
     { matchText: "Dortmund 3 - 0 Atletico Madrid (Forfeited - No Reply)", md: 12 },
     { matchText: "Real Madrid 1 - 1 Liverpool", md: 12 },
     { matchText: "Juventus 0 - 3 Arsenal (Forfeited - No Reply)", md: 12 },
