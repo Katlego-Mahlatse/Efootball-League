@@ -1,0 +1,407 @@
+<!-- nations.html (new page) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>eFootball 412 · UEFA Nations League</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 100%);
+      font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
+      padding: 0;
+      color: #f5f0ff;
+    }
+    .gold-navbar {
+      background: linear-gradient(135deg, #d4af37, #f5d742);
+      padding: 0.4rem 1.2rem;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 0.8rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-icon-btn {
+      background: #6a3bb5;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background 0.2s;
+      border: 1.5px solid #f5d742;
+      text-decoration: none;
+    }
+    .nav-icon-btn:hover {
+      transform: scale(1.05);
+      background: #7e4acf;
+    }
+    .chat-svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+    }
+    .hamburger-btn {
+      background: #6a3bb5;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background 0.2s;
+      border: 1.5px solid #f5d742;
+    }
+    .hamburger-btn:hover {
+      transform: scale(1.05);
+      background: #7e4acf;
+    }
+    .hamburger-btn span {
+      display: block;
+      width: 18px;
+      height: 2.5px;
+      background-color: #f5d742;
+      border-radius: 2px;
+    }
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: transparent;
+      z-index: 200;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .modal-overlay.active {
+      visibility: visible;
+      pointer-events: auto;
+    }
+    .modal-content {
+      position: absolute;
+      top: 60px;
+      right: 20px;
+      background: linear-gradient(135deg, #f5d742, #e6c42c);
+      border-radius: 1.2rem;
+      padding: 1rem 1.2rem;
+      width: auto;
+      min-width: 200px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      animation: fadeInDown 0.2s ease;
+      border: 1px solid #6a3bb5;
+    }
+    @keyframes fadeInDown {
+      from { transform: translateY(-15px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-content h3 {
+      font-size: 1.1rem;
+      color: #4a1d8c;
+      margin-bottom: 0.8rem;
+      font-weight: 800;
+      border-bottom: 1px solid #6a3bb5;
+      display: inline-block;
+      padding-bottom: 0.2rem;
+    }
+    .modal-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin: 0.8rem 0;
+    }
+    .modal-option {
+      background: rgba(106, 59, 181, 0.15);
+      padding: 0.4rem 0.8rem;
+      border-radius: 40px;
+      text-decoration: none;
+      color: #3c1a70;
+      font-weight: 700;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+      border: 1px solid #6a3bb5;
+      display: block;
+    }
+    .modal-option:hover {
+      background: #6a3bb5;
+      color: #f5d742;
+      transform: translateX(3px);
+    }
+    .close-modal {
+      background: #4a1d8c;
+      color: #f5d742;
+      border: none;
+      padding: 0.3rem 0.9rem;
+      border-radius: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      font-size: 0.7rem;
+    }
+    .close-modal:hover {
+      background: #2d0f5a;
+    }
+    .dashboard {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+    .card {
+      background: rgba(45, 25, 75, 0.85);
+      backdrop-filter: blur(10px);
+      border-radius: 2rem;
+      border: 1px solid rgba(245, 215, 66, 0.4);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      padding: 1.2rem 1.8rem;
+      background: rgba(30, 15, 55, 0.9);
+      border-bottom: 2px solid #f5d742;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: default;
+    }
+    .card-header-left h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #f5e6ff;
+    }
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .stats-table th {
+      text-align: left;
+      padding: 0.9rem 0.8rem 0.7rem 1.2rem;
+      background: rgba(55, 35, 95, 0.7);
+      border-bottom: 1px solid #f5d742;
+      color: #f5e6ff;
+    }
+    .stats-table td {
+      padding: 0.75rem 0.8rem 0.75rem 1.2rem;
+      border-bottom: 1px solid rgba(245, 215, 66, 0.2);
+      color: #f0eaff;
+      vertical-align: middle;
+    }
+    .team-name {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .team-icon {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+      background: transparent;
+    }
+    .countdown-container {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-size: 1.2rem;
+      background: rgba(30, 15, 55, 0.7);
+      padding: 0.8rem;
+      border-radius: 2rem;
+      border: 1px solid #f5d742;
+    }
+    .countdown {
+      font-weight: bold;
+      color: #f5d742;
+      font-size: 1.5rem;
+      letter-spacing: 2px;
+    }
+    .subheading {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 1rem;
+      color: #f5d742;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    @media (max-width: 780px) {
+      .dashboard { padding: 1rem; }
+      .stats-table th, .stats-table td { padding: 0.6rem 0.5rem; font-size: 0.75rem; }
+      .team-icon { width: 32px; height: 32px; }
+      .countdown { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="gold-navbar">
+  <a href="chat.html" class="nav-icon-btn" id="chatBtn">
+    <svg class="chat-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z" fill="#F5D742" stroke="#F5D742" stroke-width="1.5"/>
+      <circle cx="8" cy="10" r="1.5" fill="#6A3BB5"/>
+      <circle cx="12" cy="10" r="1.5" fill="#6A3BB5"/>
+      <circle cx="16" cy="10" r="1.5" fill="#6A3BB5"/>
+    </svg>
+  </a>
+  <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-content">
+    <h3>TOURNAMENTS</h3>
+    <div class="modal-options">
+      <a href="index.html" class="modal-option">PREMIER LEAGUE HUB</a>
+      <a href="fifa-club-world-cup.html" class="modal-option">FIFA CLUB WORLD CUP</a>
+      <a href="uefa-champions-league.html" class="modal-option">UEFA CHAMPIONS LEAGUE</a>
+      <a href="uefa-europa-league.html" class="modal-option">UEFA EUROPA LEAGUE</a>
+      <a href="uefa-super-league.html" class="modal-option">UEFA SUPER LEAGUE</a>
+      <a href="uefa-conference-league.html" class="modal-option">UEFA CONFERENCE LEAGUE</a>
+      <a href="player-titles.html" class="modal-option">PLAYER TITLES</a>
+      <a href="rules.html" class="modal-option">RULES</a>
+      <a href="calendar.html" class="modal-option">CALENDAR</a>
+    </div>
+    <button class="close-modal" id="closeModalBtn">CLOSE</button>
+  </div>
+</div>
+
+<div class="dashboard">
+  <div class="countdown-container">
+    <div>🏆 UEFA NATIONS LEAGUE STARTS 🏆</div>
+    <div class="countdown" id="countdownTimer">--d --h --m --s</div>
+    <div style="font-size:0.8rem; margin-top:5px;">(Monday midnight SAST)</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-left">
+        <h2>UEFA NATIONS LEAGUE · GROUP STAGE</h2>
+      </div>
+    </div>
+    <div class="card-content">
+      <div style="overflow-x:auto;">
+        <table class="stats-table" id="nationsTable">
+          <thead><tr><th>Pos</th><th>Nation</th><th>P</th><th>GD</th><th>Pts</th></tr></thead>
+          <tbody id="nationsTableBody">
+            <!-- dynamic rows with 0/0/0 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="subheading">🏆 NATIONS LEAGUE DRAFT IN PROGRESS 🏆</div>
+</div>
+
+<script>
+  // List of nations
+  const nations = [
+    "France", "Portugal", "Germany", "Netherlands", "Spain", "England"
+  ];
+
+  // Helper to get a generic flag/icon (using the same style as club icons – you can replace paths later)
+  function getNationIcon(nation, className = "team-icon") {
+    // For demonstration, we use placeholder images – you can replace with actual flag icons.
+    // To keep consistency, we use the same icon mapping style but with generic filenames.
+    const iconMap = {
+      "France": "france.png",
+      "Portugal": "portugal.png",
+      "Germany": "germany.png",
+      "Netherlands": "netherlands.png",
+      "Spain": "spain.png",
+      "England": "england.png"
+    };
+    const src = iconMap[nation];
+    if (src) return `<img class="${className}" src="${src}" alt="${nation} flag">`;
+    return nation;
+  }
+
+  function renderNationsTable() {
+    const tbody = document.getElementById("nationsTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    nations.forEach((nation, idx) => {
+      const row = tbody.insertRow();
+      // Position (1-based)
+      const posCell = row.insertCell(0);
+      posCell.className = "rank-cell";
+      posCell.innerText = idx + 1;
+      // Nation name with icon
+      const nameCell = row.insertCell(1);
+      nameCell.innerHTML = `<div class="team-name">${getNationIcon(nation, "team-icon")} ${nation}</div>`;
+      // P (matches played) = 0
+      row.insertCell(2).innerText = "0";
+      // GD = 0
+      row.insertCell(3).innerText = "0";
+      // Pts = 0
+      const ptsCell = row.insertCell(4);
+      ptsCell.className = "pts-cell";
+      ptsCell.innerText = "0";
+    });
+  }
+
+  // Countdown to Monday midnight (South Africa time, UTC+2)
+  function getNextMondayMidnightSAST() {
+    const now = new Date();
+    // Get current time in SAST (UTC+2)
+    const nowUTC = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
+    const nowSAST = new Date(nowUTC.getTime() + 2 * 3600000);
+    // Create target: Monday 00:00:00 SAST
+    const target = new Date(nowSAST);
+    const day = target.getDay(); // 0=Sunday, 1=Monday, etc.
+    const daysUntilMonday = (day === 1 ? 0 : (1 - day + 7) % 7);
+    target.setDate(target.getDate() + daysUntilMonday);
+    target.setHours(0, 0, 0, 0);
+    // If it's Monday and time already passed midnight, move to next Monday
+    if (day === 1 && nowSAST > target) {
+      target.setDate(target.getDate() + 7);
+    }
+    return target;
+  }
+
+  function updateCountdown() {
+    const target = getNextMondayMidnightSAST();
+    const now = new Date();
+    const nowUTC = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
+    const nowSAST = new Date(nowUTC.getTime() + 2 * 3600000);
+    const diff = target - nowSAST;
+    if (diff <= 0) {
+      document.getElementById("countdownTimer").innerHTML = "00d 00h 00m 00s";
+      return;
+    }
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (86400000)) / (3600000));
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    const seconds = Math.floor((diff % 60000) / 1000);
+    document.getElementById("countdownTimer").innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  }
+
+  // Modal logic (same as index)
+  const hamburger = document.getElementById("hamburgerBtn");
+  const modalOverlay = document.getElementById("modalOverlay");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  function openModal() { modalOverlay.classList.add("active"); }
+  function closeModal() { modalOverlay.classList.remove("active"); }
+  hamburger.addEventListener("click", openModal);
+  closeModalBtn.addEventListener("click", closeModal);
+  modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
+
+  // Slideshow? Not required on this page, but we keep the navbar consistent.
+  // No slideshow on nations page, but we can add dummy or skip.
+
+  renderNationsTable();
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+</script>
+</body>
+</html>
