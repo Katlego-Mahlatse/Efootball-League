@@ -182,6 +182,7 @@
       font-size: 0.8rem;
       margin-top: 0.5rem;
     }
+    /* Continue dialog */
     .continue-overlay {
       position: fixed;
       top: 0;
@@ -275,7 +276,6 @@
   </div>
 </div>
 
-<!-- Continue dialog -->
 <div id="continueDialog" class="continue-overlay">
   <div class="continue-card">
     <p id="continueMessage"></p>
@@ -316,22 +316,18 @@
   const continueYesBtn = document.getElementById('continueYesBtn');
   const continueNoBtn = document.getElementById('continueNoBtn');
 
-  // Check for stored credentials
-  const storedEmail = localStorage.getItem('lastLoginEmail');
-  const storedPassword = localStorage.getItem('lastLoginPassword');
-
-  async function performLogin(email, password, redirectOnSuccess = true) {
+  // Redirect after successful login based on role
+  async function performLogin(email, password, redirect = true) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      // Store credentials after successful login
+      // Store credentials on success
       localStorage.setItem('lastLoginEmail', email);
       localStorage.setItem('lastLoginPassword', password);
-      const userRef = ref(db, `users/${user.uid}`);
+      const userRef = ref(db, `users/${userCredential.user.uid}`);
       const snapshot = await get(userRef);
       const userData = snapshot.val();
       const isAdmin = userData && userData.role === 'admin';
-      if (redirectOnSuccess) {
+      if (redirect) {
         if (isAdmin) {
           window.location.href = 'admindash.html';
         } else {
@@ -340,21 +336,28 @@
       }
       return true;
     } catch (error) {
-      // If stored credentials are invalid, clear them
+      console.error("Auto login failed", error);
+      // Clear stored credentials if they are invalid
       localStorage.removeItem('lastLoginEmail');
       localStorage.removeItem('lastLoginPassword');
-      loginError.textContent = 'Auto-login failed. Please log in manually.';
       return false;
     }
   }
 
+  // Check for stored credentials
+  const storedEmail = localStorage.getItem('lastLoginEmail');
+  const storedPassword = localStorage.getItem('lastLoginPassword');
+
   if (storedEmail && storedPassword) {
-    // Show continue dialog and attempt auto-login when user confirms
     continueMessage.innerText = `Welcome back, ${storedEmail}. Continue as this user?`;
     continueDialog.classList.add('active');
     continueYesBtn.onclick = async () => {
       continueDialog.classList.remove('active');
-      await performLogin(storedEmail, storedPassword, true);
+      const success = await performLogin(storedEmail, storedPassword, true);
+      if (!success) {
+        loginError.textContent = 'Auto‑login failed. Please log in manually.';
+        loginForm.style.display = 'block';
+      }
     };
     continueNoBtn.onclick = () => {
       localStorage.removeItem('lastLoginEmail');
@@ -393,8 +396,6 @@
       btn.textContent = 'Show';
     }
   };
-
-  // Hamburger modal (not present, ignore)
 </script>
 </body>
 </html>
