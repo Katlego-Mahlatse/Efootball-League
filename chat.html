@@ -133,65 +133,6 @@
     .modal-btn:hover {
       background: #7e4acf;
     }
-    .passcode-input {
-      background: rgba(30, 15, 55, 0.8);
-      border: 1px solid #f5d742;
-      border-radius: 2rem;
-      padding: 0.6rem 1rem;
-      color: white;
-      width: 100%;
-      margin: 1rem 0;
-      text-align: center;
-    }
-    .error-text {
-      color: #ef4444;
-      font-size: 0.8rem;
-      margin-top: 0.5rem;
-    }
-
-    /* Team selection screen */
-    .team-selector {
-      max-width: 900px;
-      margin: 3rem auto;
-      background: rgba(45, 25, 75, 0.85);
-      backdrop-filter: blur(10px);
-      border-radius: 2rem;
-      border: 1px solid rgba(245, 215, 66, 0.4);
-      padding: 2rem;
-      text-align: center;
-    }
-    .team-selector h2 {
-      color: #f5d742;
-      margin-bottom: 1rem;
-    }
-    .team-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-      gap: 1rem;
-      margin-top: 1.5rem;
-    }
-    .team-card {
-      background: rgba(55, 35, 95, 0.6);
-      border-radius: 1rem;
-      padding: 0.8rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
-    }
-    .team-card:hover {
-      background: rgba(106, 59, 181, 0.8);
-      transform: scale(1.02);
-    }
-    .team-icon {
-      width: 60px;
-      height: 60px;
-      object-fit: contain;
-      margin-bottom: 0.5rem;
-    }
-    .team-name {
-      font-size: 0.8rem;
-      font-weight: bold;
-    }
 
     /* Chat layout */
     .chat-container {
@@ -264,6 +205,7 @@
       justify-content: center;
       color: #2d1b4e;
       font-weight: bold;
+      text-transform: uppercase;
     }
     .user-name {
       font-weight: 500;
@@ -334,10 +276,16 @@
       background: #7e4acf;
     }
 
+    /* Loading / empty states */
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #c4b0ff;
+    }
+
     @media (max-width: 780px) {
       .chat-container { flex-direction: column; }
       .users-panel { max-height: 40vh; }
-      .team-icon { width: 40px; height: 40px; }
     }
   </style>
 </head>
@@ -371,51 +319,18 @@
   </div>
 </div>
 
-<!-- Passcode Modal -->
-<div id="passcodeModal" class="modal-overlay" style="z-index: 300;">
-  <div class="modal-content">
-    <h3>🔐 Enter Passcode for <span id="passcodeTeamName"></span></h3>
-    <input type="password" id="passcodeInput" class="passcode-input" placeholder="Enter passcode" autocomplete="off">
-    <div id="passcodeError" class="error-text"></div>
-    <div class="modal-buttons">
-      <button id="passcodeSubmitBtn" class="modal-btn">Submit</button>
-      <button id="passcodeCancelBtn" class="modal-btn">Cancel</button>
-    </div>
+<!-- Main Chat UI -->
+<div class="chat-container">
+  <div class="users-panel">
+    <div class="panel-title">👥 All Members</div>
+    <div id="userList" class="user-list">Loading users...</div>
   </div>
-</div>
-
-<!-- Team selection screen -->
-<div id="teamSelector" class="team-selector">
-  <h2>⚽ Select Your Team</h2>
-  <div id="teamGrid" class="team-grid"></div>
-</div>
-
-<!-- Chat UI (hidden until team selected) -->
-<div id="chatApp" style="display: none;">
-  <div class="chat-container">
-    <div class="users-panel">
-      <div class="panel-title">👥 Teams</div>
-      <div id="userList" class="user-list">Loading...</div>
-    </div>
-    <div class="chat-panel">
-      <div class="panel-title" id="chatHeader">Select a team to start chatting</div>
-      <div id="messagesArea" class="messages-area"></div>
-      <div class="input-area" id="inputArea" style="display: none;">
-        <input type="text" id="messageInput" placeholder="Type a message...">
-        <button id="sendBtn">Send</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Continue as dialog -->
-<div id="continueDialog" class="modal-overlay" style="z-index: 300;">
-  <div class="modal-content">
-    <h3>Welcome back!</h3>
-    <p id="continueMessage"></p>
-    <div class="modal-buttons">
-      <button id="continueYesBtn" class="modal-btn">Continue</button>
-      <button id="continueNoBtn" class="modal-btn">Switch team</button>
+  <div class="chat-panel">
+    <div class="panel-title" id="chatHeader">Select a user to start chatting</div>
+    <div id="messagesArea" class="messages-area"></div>
+    <div class="input-area" id="inputArea" style="display: none;">
+      <input type="text" id="messageInput" placeholder="Type a message...">
+      <button id="sendBtn">Send</button>
     </div>
   </div>
 </div>
@@ -432,10 +347,9 @@
 
 <script type="module">
   import { initializeApp } from "firebase/app";
-  import { getAuth, signInAnonymously } from "firebase/auth";
-  import { getDatabase, ref, push, onChildAdded, query, limitToLast, set } from "firebase/database";
+  import { getAuth, onAuthStateChanged } from "firebase/auth";
+  import { getDatabase, ref, push, onChildAdded, query, limitToLast, set, get, child } from "firebase/database";
 
-  // Firebase config (same as before)
   const firebaseConfig = {
     apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
     authDomain: "efootball-412.firebaseapp.com",
@@ -451,32 +365,16 @@
   const auth = getAuth(app);
   const db = getDatabase(app);
 
-  // List of all teams with display names, icons, and hardcoded passcodes
-  const teams = [
-    { name: "Real Madrid", icon: "21259ea4-042f-48ff-902f-1e776d27fe58.jpeg", passcode: "realmadrid123" },
-    { name: "Liverpool", icon: "269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg", passcode: "liverpool456" },
-    { name: "Dortmund", icon: "01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg", passcode: "dortmund789" },
-    { name: "Man City", icon: "9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg", passcode: "mancity101" },
-    { name: "Barcelona", icon: "IMG_20260421_085117.jpg", passcode: "barca2026" },
-    { name: "Arsenal", icon: "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png", passcode: "arsenal5673" },
-    { name: "PSG", icon: "4dea795d-a516-46ae-bd34-07a784693d80.png", passcode: "psg2024" },
-    { name: "AC Milan", icon: "44e0f58a-e5db-445b-9896-db22ea99b936.png", passcode: "acmilan777" },
-    { name: "Chelsea", icon: "IMG_20260421_100354.jpg", passcode: "chelsea888" },
-    { name: "Napoli", icon: "IMG_20260421_100318.jpg", passcode: "napoli999" },
-    { name: "Atletico", icon: "IMG_20260421_093024.png", passcode: "atletico111" },
-    { name: "Juventus", icon: "IMG_20260421_151224.jpg", passcode: "juventus222" },
-    { name: "Newcastle", icon: "IMG_20260421_093046.png", passcode: "newcastle333" },
-    { name: "Inter Milan", icon: "IMG_20260421_092951.png", passcode: "inter444" }
-  ];
+  // Current logged-in user
+  let currentUser = null;
+  let currentUserId = null;
+
+  // Selected chat partner
+  let selectedUser = null;
+  let currentChatId = null;
+  let unsubscribeMessages = null;
 
   // DOM elements
-  const teamSelectorDiv = document.getElementById("teamSelector");
-  const chatAppDiv = document.getElementById("chatApp");
-  const continueDialog = document.getElementById("continueDialog");
-  const continueMessage = document.getElementById("continueMessage");
-  const continueYesBtn = document.getElementById("continueYesBtn");
-  const continueNoBtn = document.getElementById("continueNoBtn");
-  const teamGrid = document.getElementById("teamGrid");
   const userListDiv = document.getElementById("userList");
   const chatHeader = document.getElementById("chatHeader");
   const messagesArea = document.getElementById("messagesArea");
@@ -484,127 +382,13 @@
   const messageInput = document.getElementById("messageInput");
   const sendBtn = document.getElementById("sendBtn");
 
-  // Passcode modal elements
-  const passcodeModal = document.getElementById("passcodeModal");
-  const passcodeTeamNameSpan = document.getElementById("passcodeTeamName");
-  const passcodeInput = document.getElementById("passcodeInput");
-  const passcodeError = document.getElementById("passcodeError");
-  const passcodeSubmitBtn = document.getElementById("passcodeSubmitBtn");
-  const passcodeCancelBtn = document.getElementById("passcodeCancelBtn");
-
-  let pendingTeam = null;        // team awaiting passcode
-  let currentTeam = null;       // { name, icon }
-  let selectedChatTeam = null;
-  let currentChatId = null;
-  let unsubscribeMessages = null;
-
-  // Helper: generate chat ID from two team names (sorted)
-  function getChatId(team1, team2) {
-    const [a, b] = [team1, team2].sort();
+  // Helper: generate chat room ID from two user IDs (sorted)
+  function getChatId(uid1, uid2) {
+    const [a, b] = [uid1, uid2].sort();
     return `${a}_${b}`;
   }
 
-  // Show passcode modal for a selected team
-  function requestPasscode(team) {
-    pendingTeam = team;
-    passcodeTeamNameSpan.textContent = team.name;
-    passcodeInput.value = "";
-    passcodeError.textContent = "";
-    passcodeModal.classList.add("active");
-  }
-
-  // Verify passcode and proceed
-  function verifyPasscode() {
-    const enteredCode = passcodeInput.value.trim();
-    if (enteredCode === pendingTeam.passcode) {
-      passcodeModal.classList.remove("active");
-      selectTeam(pendingTeam);
-    } else {
-      passcodeError.textContent = "❌ Incorrect passcode. Try again.";
-    }
-  }
-
-  // Cancel passcode entry
-  function cancelPasscode() {
-    passcodeModal.classList.remove("active");
-    pendingTeam = null;
-  }
-
-  passcodeSubmitBtn.addEventListener("click", verifyPasscode);
-  passcodeCancelBtn.addEventListener("click", cancelPasscode);
-  passcodeInput.addEventListener("keypress", (e) => { if (e.key === "Enter") verifyPasscode(); });
-
-  // Render team selection grid
-  function renderTeamSelector() {
-    teamGrid.innerHTML = "";
-    teams.forEach(team => {
-      const card = document.createElement("div");
-      card.className = "team-card";
-      card.innerHTML = `
-        <img class="team-icon" src="${team.icon}" alt="${team.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 24 24%22 fill=%22%23f5d742%22%3E%3Cpath d=%22M12 2L15 8.5L22 9.5L17 14L18.5 21L12 17.5L5.5 21L7 14L2 9.5L9 8.5L12 2Z%22/%3E%3C/svg%3E'">
-        <div class="team-name">${team.name}</div>
-      `;
-      card.addEventListener("click", () => requestPasscode(team));
-      teamGrid.appendChild(card);
-    });
-  }
-
-  // Select a team (called after successful passcode or continue)
-  async function selectTeam(team) {
-    currentTeam = team;
-    localStorage.setItem("chat_team", team.name);
-    localStorage.setItem("chat_team_icon", team.icon);
-    // Sign in anonymously if not already
-    if (!auth.currentUser) {
-      await signInAnonymously(auth);
-    }
-    teamSelectorDiv.style.display = "none";
-    chatAppDiv.style.display = "block";
-    loadOtherTeams();
-  }
-
-  // Load list of other teams (excluding current team)
-  function loadOtherTeams() {
-    if (!currentTeam) return;
-    const otherTeams = teams.filter(t => t.name !== currentTeam.name);
-    userListDiv.innerHTML = otherTeams.length === 0 ? '<div class="user-item">No other teams</div>' : '';
-    otherTeams.forEach(team => {
-      const div = document.createElement("div");
-      div.className = "user-item";
-      div.innerHTML = `
-        <img src="${team.icon}" style="width:32px; height:32px; border-radius:50%; object-fit:contain;" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 24 24%22 fill=%22%23f5d742%22%3E%3Cpath d=%22M12 2L15 8.5L22 9.5L17 14L18.5 21L12 17.5L5.5 21L7 14L2 9.5L9 8.5L12 2Z%22/%3E%3C/svg%3E'">
-        <span class="user-name">${team.name}</span>
-      `;
-      div.addEventListener("click", () => openChat(team));
-      userListDiv.appendChild(div);
-    });
-  }
-
-  // Listen for messages in a specific chat room
-  function listenToMessages(chatId) {
-    if (unsubscribeMessages) unsubscribeMessages();
-    const messagesRef = ref(db, `chats/${chatId}/messages`);
-    const recentQuery = query(messagesRef, limitToLast(50));
-    onChildAdded(recentQuery, (snapshot) => {
-      const msg = snapshot.val();
-      if (!msg) return;
-      const div = document.createElement("div");
-      div.className = `message ${msg.sender === currentTeam.name ? "own" : ""}`;
-      const senderTeam = teams.find(t => t.name === msg.sender);
-      const senderIcon = senderTeam ? senderTeam.icon : "";
-      div.innerHTML = `
-        <div class="message-sender">
-          ${senderIcon ? `<img src="${senderIcon}" style="width:18px; height:18px; border-radius:50%; object-fit:contain;" onerror="this.style.display='none'">` : ""}
-          <span>${msg.sender}</span>
-        </div>
-        <div class="message-text">${escapeHtml(msg.text)}</div>
-        <div class="message-time">${msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : ""}</div>
-      `;
-      messagesArea.appendChild(div);
-      messagesArea.scrollTop = messagesArea.scrollHeight;
-    });
-  }
-
+  // Escape HTML to prevent injection
   function escapeHtml(str) {
     return str.replace(/[&<>]/g, function(m) {
       if (m === '&') return '&amp;';
@@ -614,62 +398,123 @@
     });
   }
 
-  async function openChat(team) {
-    if (!currentTeam) return;
-    selectedChatTeam = team;
-    chatHeader.innerHTML = `<img src="${team.icon}" style="width:28px; height:28px; border-radius:50%; object-fit:contain;" onerror="this.style.display='none'"> 💬 Chat with ${team.name}`;
-    inputArea.style.display = "flex";
-    const chatId = getChatId(currentTeam.name, team.name);
-    currentChatId = chatId;
-    messagesArea.innerHTML = "";
-    listenToMessages(chatId);
+  // Load all users from the "users" node in Realtime Database
+  async function loadUsers() {
+    if (!currentUserId) return;
+    userListDiv.innerHTML = '<div class="loading">Loading users...</div>';
+    const usersRef = ref(db, 'users');
+    try {
+      const snapshot = await get(usersRef);
+      if (!snapshot.exists()) {
+        userListDiv.innerHTML = '<div class="loading">No other users found.</div>';
+        return;
+      }
+      const users = snapshot.val();
+      const otherUsers = [];
+      for (const uid in users) {
+        if (uid !== currentUserId) {
+          otherUsers.push({ uid, ...users[uid] });
+        }
+      }
+      if (otherUsers.length === 0) {
+        userListDiv.innerHTML = '<div class="loading">No other users yet.</div>';
+        return;
+      }
+      userListDiv.innerHTML = '';
+      otherUsers.forEach(user => {
+        const displayName = user.username || user.email || 'Anonymous';
+        const firstChar = displayName.charAt(0).toUpperCase();
+        const div = document.createElement('div');
+        div.className = 'user-item';
+        div.innerHTML = `
+          <div class="user-avatar">${firstChar}</div>
+          <span class="user-name">${escapeHtml(displayName)}</span>
+        `;
+        div.addEventListener('click', () => openChat(user));
+        userListDiv.appendChild(div);
+      });
+    } catch (error) {
+      console.error('Error loading users:', error);
+      userListDiv.innerHTML = '<div class="loading">Error loading users</div>';
+    }
   }
 
+  // Open chat with a selected user
+  async function openChat(user) {
+    if (!currentUserId) return;
+    selectedUser = user;
+    const chatId = getChatId(currentUserId, user.uid);
+    currentChatId = chatId;
+    const displayName = user.username || user.email || 'Anonymous';
+    chatHeader.innerHTML = `💬 Chat with ${escapeHtml(displayName)}`;
+    inputArea.style.display = 'flex';
+    messagesArea.innerHTML = '';
+    // Unsubscribe from previous listener
+    if (unsubscribeMessages) unsubscribeMessages();
+    // Listen for new messages
+    const messagesRef = ref(db, `private_messages/${chatId}/messages`);
+    const recentQuery = query(messagesRef, limitToLast(50));
+    unsubscribeMessages = onChildAdded(recentQuery, (snapshot) => {
+      const msg = snapshot.val();
+      if (!msg) return;
+      const div = document.createElement('div');
+      div.className = `message ${msg.senderId === currentUserId ? 'own' : ''}`;
+      const senderName = msg.senderName || (msg.senderId === currentUserId ? 'You' : displayName);
+      div.innerHTML = `
+        <div class="message-sender">
+          <span>${escapeHtml(senderName)}</span>
+        </div>
+        <div class="message-text">${escapeHtml(msg.text)}</div>
+        <div class="message-time">${msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : ''}</div>
+      `;
+      messagesArea.appendChild(div);
+      messagesArea.scrollTop = messagesArea.scrollHeight;
+    });
+  }
+
+  // Send a message
   async function sendMessage() {
     const text = messageInput.value.trim();
-    if (!text || !currentChatId || !currentTeam) return;
-    const messagesRef = ref(db, `chats/${currentChatId}/messages`);
+    if (!text || !currentChatId || !currentUser || !selectedUser) return;
+    const messagesRef = ref(db, `private_messages/${currentChatId}/messages`);
     const newMessageRef = push(messagesRef);
     await set(newMessageRef, {
       text: text,
-      sender: currentTeam.name,
+      senderId: currentUserId,
+      senderName: currentUser.displayName || currentUser.email?.split('@')[0] || 'User',
       timestamp: Date.now()
     });
-    messageInput.value = "";
+    messageInput.value = '';
   }
 
   sendBtn.onclick = sendMessage;
-  messageInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
+  messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
-  // Initialize: check localStorage for saved team
-  const savedTeamName = localStorage.getItem("chat_team");
-  const savedTeamIcon = localStorage.getItem("chat_team_icon");
-  if (savedTeamName && savedTeamIcon) {
-    const savedTeam = teams.find(t => t.name === savedTeamName);
-    if (savedTeam) {
-      continueMessage.innerText = `Continue as ${savedTeam.name}?`;
-      continueDialog.classList.add("active");
-      continueYesBtn.onclick = () => {
-        selectTeam(savedTeam);
-        continueDialog.classList.remove("active");
-      };
-      continueNoBtn.onclick = () => {
-        localStorage.removeItem("chat_team");
-        localStorage.removeItem("chat_team_icon");
-        continueDialog.classList.remove("active");
-        renderTeamSelector();
-        teamSelectorDiv.style.display = "block";
-      };
-    } else {
-      localStorage.removeItem("chat_team");
-      localStorage.removeItem("chat_team_icon");
-      renderTeamSelector();
-      teamSelectorDiv.style.display = "block";
+  // Authentication state listener
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      // Not logged in - redirect to login
+      window.location.href = 'login.html';
+      return;
     }
-  } else {
-    renderTeamSelector();
-    teamSelectorDiv.style.display = "block";
-  }
+    currentUser = user;
+    currentUserId = user.uid;
+    // Ensure this user exists in the "users" database node (so they appear in others' lists)
+    const userRef = ref(db, `users/${user.uid}`);
+    const snapshot = await get(userRef);
+    if (!snapshot.exists()) {
+      // Store user info: use displayName (from signup) or email
+      const username = user.displayName || user.email?.split('@')[0] || 'Player';
+      await set(userRef, {
+        uid: user.uid,
+        email: user.email,
+        username: username,
+        createdAt: Date.now()
+      });
+    }
+    // Load the list of other users
+    await loadUsers();
+  });
 
   // Modal hamburger menu
   const hamburgerBtn = document.getElementById("hamburgerBtn");
