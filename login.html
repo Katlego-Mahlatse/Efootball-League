@@ -182,7 +182,6 @@
       font-size: 0.8rem;
       margin-top: 0.5rem;
     }
-    /* Continue dialog as an overlay */
     .continue-overlay {
       position: fixed;
       top: 0;
@@ -276,7 +275,7 @@
   </div>
 </div>
 
-<!-- Continue as dialog -->
+<!-- Continue dialog -->
 <div id="continueDialog" class="continue-overlay">
   <div class="continue-card">
     <p id="continueMessage"></p>
@@ -317,68 +316,70 @@
   const continueYesBtn = document.getElementById('continueYesBtn');
   const continueNoBtn = document.getElementById('continueNoBtn');
 
-  // Check for stored last user email
-  const lastUserEmail = localStorage.getItem('lastLoginEmail');
+  // Check for stored credentials
+  const storedEmail = localStorage.getItem('lastLoginEmail');
+  const storedPassword = localStorage.getItem('lastLoginPassword');
 
-  if (lastUserEmail) {
-    // Show continue dialog
-    continueMessage.innerText = `Welcome back, ${lastUserEmail}. Continue as this user?`;
-    continueDialog.classList.add('active');
+  async function performLogin(email, password, redirectOnSuccess = true) {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      // Store credentials after successful login
+      localStorage.setItem('lastLoginEmail', email);
+      localStorage.setItem('lastLoginPassword', password);
+      const userRef = ref(db, `users/${user.uid}`);
+      const snapshot = await get(userRef);
+      const userData = snapshot.val();
+      const isAdmin = userData && userData.role === 'admin';
+      if (redirectOnSuccess) {
+        if (isAdmin) {
+          window.location.href = 'admindash.html';
+        } else {
+          window.location.href = 'dashboard.html';
+        }
+      }
+      return true;
+    } catch (error) {
+      // If stored credentials are invalid, clear them
+      localStorage.removeItem('lastLoginEmail');
+      localStorage.removeItem('lastLoginPassword');
+      loginError.textContent = 'Auto-login failed. Please log in manually.';
+      return false;
+    }
   }
 
-  // Continue as last user
-  continueYesBtn.onclick = () => {
-    continueDialog.classList.remove('active');
-    loginEmail.value = lastUserEmail;
-    loginEmail.disabled = true;  // Prevents editing, forces same email
+  if (storedEmail && storedPassword) {
+    // Show continue dialog and attempt auto-login when user confirms
+    continueMessage.innerText = `Welcome back, ${storedEmail}. Continue as this user?`;
+    continueDialog.classList.add('active');
+    continueYesBtn.onclick = async () => {
+      continueDialog.classList.remove('active');
+      await performLogin(storedEmail, storedPassword, true);
+    };
+    continueNoBtn.onclick = () => {
+      localStorage.removeItem('lastLoginEmail');
+      localStorage.removeItem('lastLoginPassword');
+      continueDialog.classList.remove('active');
+      loginEmail.disabled = false;
+      loginEmail.value = '';
+      loginPassword.value = '';
+      loginForm.style.display = 'block';
+    };
+  } else {
     loginForm.style.display = 'block';
-  };
+  }
 
-  // Switch account – clear stored email and show normal form
-  continueNoBtn.onclick = () => {
-    localStorage.removeItem('lastLoginEmail');
-    continueDialog.classList.remove('active');
-    loginEmail.disabled = false;
-    loginEmail.value = '';
-    loginForm.style.display = 'block';
-  };
-
-  // Normal login handler
+  // Manual login handler
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = loginEmail.value.trim();
     const password = loginPassword.value;
     loginError.textContent = '';
-
     if (!email || !password) {
       loginError.textContent = 'Please fill in all fields.';
       return;
     }
-
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      // Store last used email
-      localStorage.setItem('lastLoginEmail', email);
-      // Get user type from database
-      const userRef = ref(db, `users/${user.uid}`);
-      const snapshot = await get(userRef);
-      const userData = snapshot.val();
-      const isAdmin = userData && userData.role === 'admin';
-      if (isAdmin) {
-        window.location.href = 'admindash.html';
-      } else {
-        window.location.href = 'dashboard.html';
-      }
-    } catch (error) {
-      if (error.code === 'auth/user-not-found') {
-        loginError.textContent = 'No account found with this email. Please sign up.';
-      } else if (error.code === 'auth/wrong-password') {
-        loginError.textContent = 'Incorrect password. Please try again.';
-      } else {
-        loginError.textContent = error.message;
-      }
-    }
+    await performLogin(email, password, true);
   });
 
   window.togglePassword = (fieldId) => {
@@ -393,11 +394,7 @@
     }
   };
 
-  // Modal logic (hamburger)
-  const hamburgerBtn = document.getElementById("hamburgerBtn");
-  const modalOverlay = document.getElementById("modalOverlay");
-  const closeModalBtn = document.getElementById("closeModalBtn");
-  // Modal overlay not present on this page; we just skip to avoid errors.
+  // Hamburger modal (not present, ignore)
 </script>
 </body>
 </html>
