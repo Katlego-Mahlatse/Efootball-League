@@ -28,22 +28,19 @@
       top: 0;
       z-index: 100;
     }
-    .hamburger-btn {
+    .debug-btn, .hamburger-btn {
       background: #6a3bb5;
       width: 36px;
       height: 36px;
       border-radius: 50%;
       display: flex;
-      flex-direction: column;
-      justify-content: center;
       align-items: center;
-      gap: 4px;
+      justify-content: center;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       transition: transform 0.2s, background 0.2s;
       border: 1.5px solid #f5d742;
     }
-    .hamburger-btn:hover {
+    .debug-btn:hover, .hamburger-btn:hover {
       transform: scale(1.05);
       background: #7e4acf;
     }
@@ -53,6 +50,7 @@
       height: 2.5px;
       background-color: #f5d742;
       border-radius: 2px;
+      margin: 2px 0;
     }
     .modal-overlay {
       position: fixed;
@@ -60,7 +58,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: transparent;
+      background-color: rgba(0,0,0,0.7);
       z-index: 200;
       visibility: hidden;
       pointer-events: none;
@@ -69,49 +67,29 @@
       visibility: visible;
       pointer-events: auto;
     }
-    .modal-content {
+    .modal-content, .debug-modal {
       position: absolute;
       top: 60px;
       right: 20px;
-      background: linear-gradient(135deg, #f5d742, #e6c42c);
+      background: linear-gradient(135deg, #2d1b4e, #1f0f3a);
+      border: 2px solid #f5d742;
       border-radius: 1.2rem;
-      padding: 1rem 1.2rem;
+      padding: 1rem;
       width: auto;
-      min-width: 200px;
-      text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-      border: 1px solid #6a3bb5;
+      min-width: 280px;
+      max-width: 400px;
+      color: #f5e6ff;
     }
-    .modal-content h3 {
-      font-size: 1.1rem;
-      color: #4a1d8c;
-      margin-bottom: 0.8rem;
+    .debug-modal {
+      left: 20px;
+      right: auto;
     }
-    .modal-option {
-      background: rgba(106, 59, 181, 0.15);
-      padding: 0.4rem 0.8rem;
-      border-radius: 40px;
-      text-decoration: none;
-      color: #3c1a70;
-      font-weight: 700;
-      font-size: 0.8rem;
-      display: block;
-      margin: 0.5rem 0;
-      border: 1px solid #6a3bb5;
-      cursor: pointer;
-    }
-    .modal-option:hover {
-      background: #6a3bb5;
-      color: #f5d742;
-    }
-    .close-modal {
-      background: #4a1d8c;
-      color: #f5d742;
-      border: none;
-      padding: 0.3rem 0.9rem;
-      border-radius: 30px;
-      cursor: pointer;
-      margin-top: 0.5rem;
+    .debug-modal pre {
+      background: #1a0a2e;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+      font-size: 0.7rem;
     }
     .dashboard {
       max-width: 1400px;
@@ -169,7 +147,6 @@
       cursor: pointer;
       font-size: 1rem;
     }
-    .edit-btn:hover, .delete-btn:hover { opacity: 0.7; }
     .team-icon-sm {
       width: 30px;
       height: 30px;
@@ -226,9 +203,22 @@
 <body>
 
 <div class="gold-navbar">
-  <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
+  <div style="display: flex; gap: 0.5rem;">
+    <div class="debug-btn" id="debugBtn">🐞</div>
+    <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
+  </div>
 </div>
 
+<!-- Debug Modal -->
+<div id="debugModal" class="modal-overlay" style="z-index: 250;">
+  <div class="debug-modal">
+    <h3>🐞 Debug Info</h3>
+    <div id="debugContent">Loading...</div>
+    <button id="closeDebugBtn" class="close-modal" style="margin-top: 1rem;">Close</button>
+  </div>
+</div>
+
+<!-- Main Menu Modal -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal-content">
     <h3>MENU</h3>
@@ -283,12 +273,11 @@
   </div>
 </div>
 
-<!-- Forms (hidden) -->
+<!-- Forms -->
 <div id="teamForm" class="form-overlay">
   <div class="form-card">
     <h3>Add/Edit Team</h3>
-    <input type="text" id="teamName" placeholder="Team Name">
-    <select id="teamIconSelect"></select>
+    <select id="teamNameSelect"></select>
     <input type="number" id="teamP" placeholder="Played">
     <input type="number" id="teamGD" placeholder="Goal Difference">
     <input type="number" id="teamPts" placeholder="Points">
@@ -331,7 +320,7 @@
 
 <script type="module">
   import { initializeApp } from "firebase/app";
-  import { getDatabase, ref, set, onValue, push, remove } from "firebase/database";
+  import { getDatabase, ref, set, onValue, push, remove, get } from "firebase/database";
   import { getAuth, signOut } from "firebase/auth";
 
   const firebaseConfig = {
@@ -347,7 +336,36 @@
   const db = getDatabase(app);
   const auth = getAuth(app);
 
-  // Team icons mapping (from index)
+  // Debug logger
+  let lastError = null;
+  let lastOperation = null;
+  function logError(operation, error) {
+    lastError = { operation, error: error.message || error, timestamp: new Date().toISOString() };
+    console.error(operation, error);
+  }
+  function logSuccess(operation, data) {
+    lastOperation = { operation, data, timestamp: new Date().toISOString() };
+    console.log(operation, data);
+  }
+
+  // Debug modal update
+  async function updateDebugModal() {
+    const debugDiv = document.getElementById('debugContent');
+    let dbStatus = "unknown";
+    try {
+      const testRef = ref(db, '.info/connected');
+      const snapshot = await get(testRef);
+      dbStatus = snapshot.exists() ? "connected" : "disconnected";
+    } catch(e) { dbStatus = "error: " + e.message; }
+    debugDiv.innerHTML = `
+      <strong>Firebase DB:</strong> ${dbStatus}<br>
+      <strong>Last operation:</strong> ${lastOperation ? JSON.stringify(lastOperation) : 'none'}<br>
+      <strong>Last error:</strong> ${lastError ? JSON.stringify(lastError) : 'none'}<br>
+      <strong>Auth user:</strong> ${auth.currentUser ? auth.currentUser.email : 'none'}
+    `;
+  }
+
+  // Team icons mapping
   const teamIcons = {
     "Arsenal": "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png",
     "AC Milan": "44e0f58a-e5db-445b-9896-db22ea99b936.png",
@@ -366,15 +384,13 @@
   };
   const teamList = Object.keys(teamIcons);
 
-  // Helper: get icon HTML
   function getTeamIconHtml(team, size = "30px") {
     const src = teamIcons[team];
     if (src) return `<img class="team-icon-sm" src="${src}" style="width:${size}; height:${size}; object-fit:contain;">`;
     return team;
   }
 
-  // Populate select dropdowns with team icons
-  function populateSelect(selectEl) {
+  function populateSelect(selectEl, excludeCurrent = null) {
     selectEl.innerHTML = '';
     teamList.forEach(team => {
       const option = document.createElement('option');
@@ -382,20 +398,16 @@
       option.innerHTML = `${getTeamIconHtml(team, '20px')} ${team}`;
       selectEl.appendChild(option);
     });
+    if (excludeCurrent && selectEl.value === excludeCurrent) selectEl.value = '';
   }
 
-  // Reference paths
-  const tableRef = ref(db, 'premier_league/table');
-  const fixturesRef = ref(db, 'premier_league/fixtures');
-  const resultsRef = ref(db, 'premier_league/results');
-
-  // --- Table CRUD ---
+  // Table CRUD
   let editingTeamKey = null;
   function renderTable(teams) {
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
     const teamArray = teams ? Object.entries(teams).map(([key, val]) => ({ key, ...val })) : [];
-    teamArray.sort((a,b) => a.pts - b.pts || a.gd - b.gd).reverse();
+    teamArray.sort((a,b) => b.pts - a.pts || b.gd - a.gd);
     teamArray.forEach((team, idx) => {
       const row = tbody.insertRow();
       row.insertCell(0).innerText = idx+1;
@@ -411,42 +423,51 @@
       const delBtn = document.createElement('button');
       delBtn.innerText = '🗑️';
       delBtn.className = 'delete-btn';
-      delBtn.onclick = () => remove(ref(db, `premier_league/table/${team.key}`));
+      delBtn.onclick = async () => {
+        try {
+          await remove(ref(db, `premier_league/table/${team.key}`));
+          logSuccess('deleteTeam', team.key);
+        } catch(e) { logError('deleteTeam', e); }
+      };
       actions.appendChild(editBtn);
       actions.appendChild(delBtn);
     });
   }
-  onValue(tableRef, (snap) => renderTable(snap.val()));
+  onValue(ref(db, 'premier_league/table'), (snap) => renderTable(snap.val()));
 
   function openTeamForm(key, data = null) {
     editingTeamKey = key;
-    document.getElementById('teamName').value = data?.name || '';
+    const select = document.getElementById('teamNameSelect');
+    populateSelect(select);
+    if (data?.name) select.value = data.name;
     document.getElementById('teamP').value = data?.p || '';
     document.getElementById('teamGD').value = data?.gd || '';
     document.getElementById('teamPts').value = data?.pts || '';
-    populateSelect(document.getElementById('teamIconSelect'));
-    if (data?.name) document.getElementById('teamIconSelect').value = data.name;
     document.getElementById('teamForm').classList.add('active');
   }
   document.getElementById('addTeamBtn').onclick = () => openTeamForm(null);
   document.getElementById('saveTeamBtn').onclick = async () => {
-    const name = document.getElementById('teamName').value.trim();
+    const name = document.getElementById('teamNameSelect').value;
     const p = parseInt(document.getElementById('teamP').value) || 0;
     const gd = parseInt(document.getElementById('teamGD').value) || 0;
     const pts = parseInt(document.getElementById('teamPts').value) || 0;
-    if (!name) return;
-    const teamData = { name, p, gd, pts, icon: teamIcons[name] || '' };
-    if (editingTeamKey) {
-      await set(ref(db, `premier_league/table/${editingTeamKey}`), teamData);
-    } else {
-      const newRef = push(tableRef);
-      await set(newRef, teamData);
-    }
-    document.getElementById('teamForm').classList.remove('active');
+    if (!name) { alert('Select a team'); return; }
+    const teamData = { name, p, gd, pts };
+    try {
+      if (editingTeamKey) {
+        await set(ref(db, `premier_league/table/${editingTeamKey}`), teamData);
+        logSuccess('updateTeam', teamData);
+      } else {
+        const newRef = push(ref(db, 'premier_league/table'));
+        await set(newRef, teamData);
+        logSuccess('addTeam', teamData);
+      }
+      document.getElementById('teamForm').classList.remove('active');
+    } catch(e) { logError('saveTeam', e); alert('Error saving team: ' + e.message); }
   };
   document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamForm').classList.remove('active');
 
-  // --- Fixtures CRUD ---
+  // Fixtures CRUD
   let editingFixtureKey = null;
   function renderFixtures(fixtures) {
     const tbody = document.getElementById('fixturesBody');
@@ -455,7 +476,7 @@
     Object.entries(fixtures).forEach(([key, f]) => {
       const row = tbody.insertRow();
       row.insertCell(0).innerHTML = `<span class="date-badge">${f.date || ''}</span>`;
-      row.insertCell(1).innerHTML = `<div class="fixture-icons">${getTeamIconHtml(f.home)} ${f.home} vs ${getTeamIconHtml(f.away)} ${f.away}</div>`;
+      row.insertCell(1).innerHTML = `<div>${getTeamIconHtml(f.home)} ${f.home} vs ${getTeamIconHtml(f.away)} ${f.away}</div>`;
       row.insertCell(2).innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px;">MD ${f.md}</span>`;
       const actions = row.insertCell(3);
       const editBtn = document.createElement('button');
@@ -463,11 +484,16 @@
       editBtn.onclick = () => openFixtureForm(key, f);
       const delBtn = document.createElement('button');
       delBtn.innerText = '🗑️'; delBtn.className = 'delete-btn';
-      delBtn.onclick = () => remove(ref(db, `premier_league/fixtures/${key}`));
+      delBtn.onclick = async () => {
+        try {
+          await remove(ref(db, `premier_league/fixtures/${key}`));
+          logSuccess('deleteFixture', key);
+        } catch(e) { logError('deleteFixture', e); }
+      };
       actions.appendChild(editBtn); actions.appendChild(delBtn);
     });
   }
-  onValue(fixturesRef, (snap) => renderFixtures(snap.val()));
+  onValue(ref(db, 'premier_league/fixtures'), (snap) => renderFixtures(snap.val()));
 
   function openFixtureForm(key, data = null) {
     editingFixtureKey = key;
@@ -485,19 +511,24 @@
     const home = document.getElementById('fixtureHome').value;
     const away = document.getElementById('fixtureAway').value;
     const md = parseInt(document.getElementById('fixtureMd').value);
-    if (!date || !home || !away || !md) return;
+    if (!date || !home || !away || !md) { alert('Please fill all fields'); return; }
+    if (home === away) { alert('Home and away cannot be the same'); return; }
     const fixData = { date, home, away, md };
-    if (editingFixtureKey) {
-      await set(ref(db, `premier_league/fixtures/${editingFixtureKey}`), fixData);
-    } else {
-      const newRef = push(fixturesRef);
-      await set(newRef, fixData);
-    }
-    document.getElementById('fixtureForm').classList.remove('active');
+    try {
+      if (editingFixtureKey) {
+        await set(ref(db, `premier_league/fixtures/${editingFixtureKey}`), fixData);
+        logSuccess('updateFixture', fixData);
+      } else {
+        const newRef = push(ref(db, 'premier_league/fixtures'));
+        await set(newRef, fixData);
+        logSuccess('addFixture', fixData);
+      }
+      document.getElementById('fixtureForm').classList.remove('active');
+    } catch(e) { logError('saveFixture', e); alert('Error saving fixture: ' + e.message); }
   };
   document.getElementById('cancelFixtureBtn').onclick = () => document.getElementById('fixtureForm').classList.remove('active');
 
-  // --- Results CRUD ---
+  // Results CRUD
   let editingResultKey = null;
   function renderResults(results) {
     const tbody = document.getElementById('resultsBody');
@@ -518,11 +549,16 @@
       editBtn.onclick = () => openResultForm(key, r);
       const delBtn = document.createElement('button');
       delBtn.innerText = '🗑️'; delBtn.className = 'delete-btn';
-      delBtn.onclick = () => remove(ref(db, `premier_league/results/${key}`));
+      delBtn.onclick = async () => {
+        try {
+          await remove(ref(db, `premier_league/results/${key}`));
+          logSuccess('deleteResult', key);
+        } catch(e) { logError('deleteResult', e); }
+      };
       actions.appendChild(editBtn); actions.appendChild(delBtn);
     });
   }
-  onValue(resultsRef, (snap) => renderResults(snap.val()));
+  onValue(ref(db, 'premier_league/results'), (snap) => renderResults(snap.val()));
 
   function openResultForm(key, data = null) {
     editingResultKey = key;
@@ -534,19 +570,29 @@
   document.getElementById('saveResultBtn').onclick = async () => {
     const text = document.getElementById('resultText').value.trim();
     const md = parseInt(document.getElementById('resultMd').value);
-    if (!text || !md) return;
+    if (!text || !md) { alert('Please fill all fields'); return; }
     const resData = { matchText: text, md };
-    if (editingResultKey) {
-      await set(ref(db, `premier_league/results/${editingResultKey}`), resData);
-    } else {
-      const newRef = push(resultsRef);
-      await set(newRef, resData);
-    }
-    document.getElementById('resultForm').classList.remove('active');
+    try {
+      if (editingResultKey) {
+        await set(ref(db, `premier_league/results/${editingResultKey}`), resData);
+        logSuccess('updateResult', resData);
+      } else {
+        const newRef = push(ref(db, 'premier_league/results'));
+        await set(newRef, resData);
+        logSuccess('addResult', resData);
+      }
+      document.getElementById('resultForm').classList.remove('active');
+    } catch(e) { logError('saveResult', e); alert('Error saving result: ' + e.message); }
   };
   document.getElementById('cancelResultBtn').onclick = () => document.getElementById('resultForm').classList.remove('active');
 
-  // Modal menu
+  // Menus
+  const debugBtn = document.getElementById('debugBtn');
+  const debugModal = document.getElementById('debugModal');
+  const closeDebug = document.getElementById('closeDebugBtn');
+  debugBtn.onclick = async () => { await updateDebugModal(); debugModal.classList.add('active'); };
+  closeDebug.onclick = () => debugModal.classList.remove('active');
+
   const hamburger = document.getElementById('hamburgerBtn');
   const modalOverlay = document.getElementById('modalOverlay');
   const closeModal = document.getElementById('closeModalBtn');
@@ -558,6 +604,9 @@
     await signOut(auth);
     window.location.href = 'login.html';
   };
+
+  // Initial debug update
+  setTimeout(updateDebugModal, 1000);
 </script>
 </body>
 </html>
