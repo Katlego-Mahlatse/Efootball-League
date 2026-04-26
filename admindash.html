@@ -20,7 +20,6 @@
       padding-bottom: 80px;
     }
 
-    /* Top Navbar (gold) */
     .gold-navbar {
       background: linear-gradient(135deg, #d4af37, #f5d742);
       padding: 0.4rem 1.2rem;
@@ -79,7 +78,6 @@
       border-radius: 2px;
     }
 
-    /* Modal */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -160,14 +158,12 @@
       background: #2d0f5a;
     }
 
-    /* Dashboard content */
     .dashboard-container {
       max-width: 1200px;
       margin: 0 auto;
       padding: 2rem 1.5rem;
     }
 
-    /* Profile section */
     .profile-section {
       text-align: center;
       margin-bottom: 2.5rem;
@@ -200,7 +196,6 @@
       backdrop-filter: blur(5px);
     }
 
-    /* Leagues grid */
     .leagues-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -235,7 +230,6 @@
       font-weight: 600;
     }
 
-    /* Bottom Navbar - GOLD background */
     .bottom-navbar {
       position: fixed;
       bottom: 0;
@@ -310,23 +304,21 @@
 </head>
 <body>
 
-<!-- Top Navbar - only hamburger -->
 <div class="gold-navbar">
   <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
 </div>
 
-<!-- Tournament Modal -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal-content">
     <h3>TOURNAMENTS</h3>
     <div class="modal-options">
-      <a href="index.html" class="modal-option">PREMIER LEAGUE</a>
-      <a href="nations.html" class="modal-option">UEFA NATIONS LEAGUE</a>
-      <a href="uefa-champions-league.html" class="modal-option">UEFA CHAMPIONS LEAGUE</a>
-      <a href="fifa-club-world-cup.html" class="modal-option">FIFA CLUB WORLD CUP</a>
-      <a href="uefa-europa-league.html" class="modal-option">UEFA EUROPA LEAGUE</a>
-      <a href="uefa-conference-league.html" class="modal-option">UEFA CONFERENCE LEAGUE</a>
-      <a href="uefa-super-league.html" class="modal-option">UEFA SUPER CUP</a>
+      <a href="adminpremier.html" class="modal-option">PREMIER LEAGUE</a>
+      <a href="adminnations.html" class="modal-option">UEFA NATIONS LEAGUE</a>
+      <a href="adminchampions.html" class="modal-option">UEFA CHAMPIONS LEAGUE</a>
+      <a href="adminclubworldcup.html" class="modal-option">FIFA CLUB WORLD CUP</a>
+      <a href="admineuropa.html" class="modal-option">UEFA EUROPA LEAGUE</a>
+      <a href="adminconference.html" class="modal-option">UEFA CONFERENCE LEAGUE</a>
+      <a href="adminsupercup.html" class="modal-option">UEFA SUPER CUP</a>
       <a href="player-titles.html" class="modal-option">PLAYER TITLES</a>
       <a href="rules.html" class="modal-option">RULES</a>
       <a href="calendar.html" class="modal-option">CALENDAR</a>
@@ -347,12 +339,9 @@
     <div class="username" id="usernameDisplay">Loading...</div>
   </div>
 
-  <div class="leagues-grid" id="leaguesGrid">
-    <!-- League cards will be injected here -->
-  </div>
+  <div class="leagues-grid" id="leaguesGrid"></div>
 </div>
 
-<!-- Bottom Navbar - GOLD -->
 <div class="bottom-navbar">
   <a href="profile.html" class="bottom-nav-icon" id="bottomProfileBtn">
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -405,13 +394,13 @@
   const db = getDatabase(app);
 
   const leagues = [
-    { name: "Premier League", icon: "images (14).png", redirect: "index.html" },
-    { name: "UEFA Nations League", icon: "IMG-20260425-WA4698.jpg", redirect: "nations.html" },
-    { name: "UEFA Champions League", icon: "images (15).png", redirect: "uefa-champions-league.html" },
-    { name: "FIFA Club World Cup", icon: "images - 2026-04-21T172601.589.jpeg", redirect: "fifa-club-world-cup.html" },
-    { name: "UEFA Europa League", icon: "uefa-europa-league-logo-on-transparent-background-free-vector.jpg", redirect: "uefa-europa-league.html" },
-    { name: "UEFA Conference League", icon: "images (16).png", redirect: "uefa-conference-league.html" },
-    { name: "UEFA Super Cup", icon: "images - 2026-04-21T172656.176.jpeg", redirect: "uefa-super-league.html" }
+    { name: "Premier League", icon: "images (14).png", redirect: "adminpremier.html" },
+    { name: "UEFA Nations League", icon: "IMG-20260425-WA4698.jpg", redirect: "adminnations.html" },
+    { name: "UEFA Champions League", icon: "images (15).png", redirect: "adminchampions.html" },
+    { name: "FIFA Club World Cup", icon: "images - 2026-04-21T172601.589.jpeg", redirect: "adminclubworldcup.html" },
+    { name: "UEFA Europa League", icon: "uefa-europa-league-logo-on-transparent-background-free-vector.jpg", redirect: "admineuropa.html" },
+    { name: "UEFA Conference League", icon: "images (16).png", redirect: "adminconference.html" },
+    { name: "UEFA Super Cup", icon: "images - 2026-04-21T172656.176.jpeg", redirect: "adminsupercup.html" }
   ];
 
   function renderLeagues() {
@@ -445,20 +434,19 @@
       window.location.href = "login.html";
       return;
     }
-    // Verify that the user is actually an admin (prevent direct access)
+    // Verify admin role
     const userRef = ref(db, `users/${user.uid}`);
     const snapshot = await get(userRef);
     const userData = snapshot.val();
     if (!userData || userData.role !== 'admin') {
-      // Not admin - redirect to player dashboard or login
       window.location.href = "dashboard.html";
       return;
     }
+    if (user.email) localStorage.setItem('lastLoginEmail', user.email);
     updateUserUI(user, userData);
     renderLeagues();
   });
 
-  // Modal logic
   const hamburgerBtn = document.getElementById("hamburgerBtn");
   const modalOverlay = document.getElementById("modalOverlay");
   const closeModalBtn = document.getElementById("closeModalBtn");
@@ -473,6 +461,8 @@
     logoutModalBtn.addEventListener("click", async () => {
       try {
         await signOut(auth);
+        localStorage.removeItem('lastLoginEmail');
+        localStorage.removeItem('lastLoginPassword');
         window.location.href = "login.html";
       } catch (error) {
         console.error("Logout error:", error);
