@@ -1,1 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Dashboard · eFootball 412</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
+    body {
+      background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 100%);
+      font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
+      padding: 0;
+      color: #f5f0ff;
+      min-height: 100vh;
+    }
+
+    .gold-navbar {
+      background: linear-gradient(135deg, #d4af37, #f5d742);
+      padding: 0.4rem 1.2rem;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 0.8rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-icon-btn {
+      background: #6a3bb5;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background 0.2s;
+      border: 1.5px solid #f5d742;
+      text-decoration: none;
+    }
+    .nav-icon-btn:hover {
+      transform: scale(1.05);
+      background: #7e4acf;
+    }
+    .chat-svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+    }
+    .hamburger-btn {
+      background: #6a3bb5;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background 0.2s;
+      border: 1.5px solid #f5d742;
+    }
+    .hamburger-btn:hover {
+      transform: scale(1.05);
+      background: #7e4acf;
+    }
+    .hamburger-btn span {
+      display: block;
+      width: 18px;
+      height: 2.5px;
+      background-color: #f5d742;
+      border-radius: 2px;
+    }
+
+    /* Modal (same as index) */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: transparent;
+      z-index: 200;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .modal-overlay.active {
+      visibility: visible;
+      pointer-events: auto;
+    }
+    .modal-content {
+      position: absolute;
+      top: 60px;
+      right: 20px;
+      background: linear-gradient(135deg, #f5d742, #e6c42c);
+      border-radius: 1.2rem;
+      padding: 1rem 1.2rem;
+      width: auto;
+      min-width: 200px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      animation: fadeInDown 0.2s ease;
+      border: 1px solid #6a3bb5;
+    }
+    @keyframes fadeInDown {
+      from { transform: translateY(-15px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-content h3 {
+      font-size: 1.1rem;
+      color: #4a1d8c;
+      margin-bottom: 0.8rem;
+      font-weight: 800;
+      border-bottom: 1px solid #6a3bb5;
+      display: inline-block;
+      padding-bottom: 0.2rem;
+    }
+    .modal-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin: 0.8rem 0;
+    }
+    .modal-option {
+      background: rgba(106, 59, 181, 0.15);
+      padding: 0.4rem 0.8rem;
+      border-radius: 40px;
+      text-decoration: none;
+      color: #3c1a70;
+      font-weight: 700;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+      border: 1px solid #6a3bb5;
+      display: block;
+    }
+    .modal-option:hover {
+      background: #6a3bb5;
+      color: #f5d742;
+      transform: translateX(3px);
+    }
+    .close-modal {
+      background: #4a1d8c;
+      color: #f5d742;
+      border: none;
+      padding: 0.3rem 0.9rem;
+      border-radius: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      font-size: 0.7rem;
+    }
+    .close-modal:hover {
+      background: #2d0f5a;
+    }
+
+    /* Dashboard content */
+    .dashboard-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* Profile section */
+    .profile-section {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      animation: fadeIn 0.5s ease;
+    }
+    .profile-icon {
+      width: 80px;
+      height: 80px;
+      background: #6a3bb5;
+      border: 3px solid #f5d742;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.8rem;
+    }
+    .profile-icon svg {
+      width: 50px;
+      height: 50px;
+      fill: #f5d742;
+    }
+    .username {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #f5d742;
+      background: rgba(30, 15, 55, 0.7);
+      display: inline-block;
+      padding: 0.3rem 1.5rem;
+      border-radius: 40px;
+      backdrop-filter: blur(5px);
+    }
+
+    /* Leagues grid */
+    .leagues-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+    .league-card {
+      background: rgba(45, 25, 75, 0.7);
+      backdrop-filter: blur(8px);
+      border-radius: 1.5rem;
+      border: 1px solid rgba(245, 215, 66, 0.4);
+      padding: 1rem;
+      text-align: center;
+      transition: transform 0.2s, background 0.2s;
+      cursor: pointer;
+      text-decoration: none;
+      color: #f5e6ff;
+    }
+    .league-card:hover {
+      transform: translateY(-5px);
+      background: rgba(106, 59, 181, 0.6);
+      border-color: #f5d742;
+    }
+    .league-icon {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      margin-bottom: 0.8rem;
+    }
+    .league-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    @media (max-width: 680px) {
+      .leagues-grid {
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 1rem;
+      }
+      .league-icon {
+        width: 60px;
+        height: 60px;
+      }
+      .profile-icon {
+        width: 60px;
+        height: 60px;
+      }
+      .profile-icon svg {
+        width: 35px;
+        height: 35px;
+      }
+      .username {
+        font-size: 1.2rem;
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="gold-navbar">
+  <a href="chat.html" class="nav-icon-btn" id="chatBtn">
+    <svg class="chat-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z" fill="#F5D742" stroke="#F5D742" stroke-width="1.5"/>
+      <circle cx="8" cy="10" r="1.5" fill="#6A3BB5"/>
+      <circle cx="12" cy="10" r="1.5" fill="#6A3BB5"/>
+      <circle cx="16" cy="10" r="1.5" fill="#6A3BB5"/>
+    </svg>
+  </a>
+  <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
+</div>
+
+<!-- Tournament Modal (same as index) -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-content">
+    <h3>TOURNAMENTS</h3>
+    <div class="modal-options">
+      <a href="index.html" id="modalPremierLink" class="modal-option">PREMIER LEAGUE</a>
+      <a href="nations.html" id="modalNationsLink" class="modal-option">UEFA NATIONS LEAGUE</a>
+      <a href="champions-league.html" class="modal-option">UEFA CHAMPIONS LEAGUE</a>
+      <a href="fifa-club-world-cup.html" class="modal-option">FIFA CLUB WORLD CUP</a>
+      <a href="uefa-europa-league.html" class="modal-option">UEFA EUROPA LEAGUE</a>
+      <a href="uefa-conference-league.html" class="modal-option">UEFA CONFERENCE LEAGUE</a>
+      <a href="uefa-super-league.html" class="modal-option">UEFA SUPER CUP</a>
+      <a href="player-titles.html" class="modal-option">PLAYER TITLES</a>
+      <a href="rules.html" class="modal-option">RULES</a>
+      <a href="calendar.html" class="modal-option">CALENDAR</a>
+      <div class="modal-option" id="logoutModalBtn" style="background:#ef4444; color:white;">LOGOUT</div>
+    </div>
+    <button class="close-modal" id="closeModalBtn">CLOSE</button>
+  </div>
+</div>
+
+<div class="dashboard-container">
+  <div class="profile-section">
+    <div class="profile-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="8" r="4" stroke="#F5D742" stroke-width="2"/>
+        <path d="M5 20v-2a7 7 0 0 1 14 0v2" stroke="#F5D742" stroke-width="2"/>
+      </svg>
+    </div>
+    <div class="username" id="usernameDisplay">Loading...</div>
+  </div>
+
+  <div class="leagues-grid" id="leaguesGrid">
+    <!-- League cards will be injected here -->
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
+    authDomain: "efootball-412.firebaseapp.com",
+    databaseURL: "https://efootball-412-default-rtdb.firebaseio.com",
+    projectId: "efootball-412",
+    storageBucket: "efootball-412.firebasestorage.app",
+    messagingSenderId: "596548424249",
+    appId: "1:596548424249:web:4349f6e87a40a1590bf3e8",
+    measurementId: "G-KHY86ZMPZH"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  // Define leagues data (icons, names, redirect placeholders)
+  const leagues = [
+    { name: "Premier League", icon: "images (14).png", redirect: "index.html" },
+    { name: "UEFA Nations League", icon: "IMG-20260425-WA4698.jpg", redirect: "nations.html" },
+    { name: "UEFA Champions League", icon: "images (15).png", redirect: "champions-league.html" },
+    { name: "FIFA Club World Cup", icon: "images - 2026-04-21T172601.589.jpeg", redirect: "fifa-club-world-cup.html" },
+    { name: "UEFA Europa League", icon: "uefa-europa-league-logo-on-transparent-background-free-vector.jpg", redirect: "uefa-europa-league.html" },
+    { name: "UEFA Conference League", icon: "images (16).png", redirect: "uefa-conference-league.html" },
+    { name: "UEFA Super Cup", icon: "images - 2026-04-21T172656.176.jpeg", redirect: "uefa-super-league.html" }
+  ];
+
+  function renderLeagues() {
+    const grid = document.getElementById("leaguesGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    leagues.forEach(league => {
+      const card = document.createElement("a");
+      card.className = "league-card";
+      card.href = league.redirect;
+      card.innerHTML = `
+        <img class="league-icon" src="${league.icon}" alt="${league.name}" onerror="this.src='data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22%23f5d742%22%3E%3Cpath%20d%3D%22M12%202L15%209H22L16%2014L19%2021L12%2016.5L5%2021L8%2014L2%209H9L12%202Z%22%2F%3E%3C%2Fsvg%3E';">
+        <div class="league-name">${league.name}</div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  // Update username display
+  function updateUserUI(user) {
+    const usernameSpan = document.getElementById("usernameDisplay");
+    if (user) {
+      const displayName = user.displayName || user.email.split('@')[0] || "Player";
+      usernameSpan.textContent = displayName;
+    } else {
+      usernameSpan.textContent = "Not logged in";
+    }
+  }
+
+  // Redirect to login if not authenticated
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+    updateUserUI(user);
+    renderLeagues();
+  });
+
+  // Modal logic (same as index)
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  const modalOverlay = document.getElementById("modalOverlay");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  function openModal() { modalOverlay.classList.add("active"); }
+  function closeModal() { modalOverlay.classList.remove("active"); }
+  if (hamburgerBtn) hamburgerBtn.addEventListener("click", openModal);
+  if (closeModalBtn) closeModalBtn.addEventListener("click", closeModal);
+  if (modalOverlay) modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
+
+  // Logout from modal
+  const logoutModalBtn = document.getElementById("logoutModalBtn");
+  if (logoutModalBtn) {
+    logoutModalBtn.addEventListener("click", async () => {
+      try {
+        await signOut(auth);
+        window.location.href = "login.html";
+      } catch (error) {
+        console.error("Logout error:", error);
+      }
+    });
+  }
+</script>
+</body>
+</html>
