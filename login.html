@@ -16,7 +16,6 @@
       min-height: 100vh;
       color: #f5f0ff;
     }
-    /* Navbar (same as index) */
     .gold-navbar {
       background: linear-gradient(135deg, #d4af37, #f5d742);
       padding: 0.4rem 1.2rem;
@@ -91,7 +90,6 @@
       background-color: #f5d742;
       border-radius: 2px;
     }
-    /* Auth card */
     .auth-container {
       display: flex;
       justify-content: center;
@@ -212,8 +210,8 @@
     <h2>LOGIN</h2>
     <form id="loginForm">
       <div class="input-group">
-        <label>Email or Username</label>
-        <input type="text" id="loginIdentifier" class="auth-input" placeholder="Enter your email or username" required>
+        <label>Email</label>
+        <input type="email" id="loginEmail" class="auth-input" placeholder="Enter your email" required>
       </div>
       <div class="input-group">
         <label>Password</label>
@@ -233,7 +231,8 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
@@ -248,37 +247,38 @@
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const db = getDatabase(app);
 
   const loginForm = document.getElementById('loginForm');
   const loginError = document.getElementById('loginError');
 
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const identifier = document.getElementById('loginIdentifier').value.trim();
+    const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
     loginError.textContent = '';
 
-    if (!identifier || !password) {
+    if (!email || !password) {
       loginError.textContent = 'Please fill in all fields.';
       return;
     }
 
-    // Check if identifier looks like an email (contains @)
-    let email = identifier;
-    if (!identifier.includes('@')) {
-      // If it's a username, we need to convert to email? Firebase requires email.
-      // For this demo, we assume user used email (or we can store username in separate DB).
-      // Since signup stores email, we'll tell user to use email.
-      loginError.textContent = 'Please use the email address you signed up with.';
-      return;
-    }
-
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      window.location.href = 'dashboard.html';
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      // Get user type from database
+      const userRef = ref(db, `users/${user.uid}`);
+      const snapshot = await get(userRef);
+      const userData = snapshot.val();
+      const isAdmin = userData && userData.role === 'admin';
+      if (isAdmin) {
+        window.location.href = 'admindash.html';
+      } else {
+        window.location.href = 'dashboard.html';
+      }
     } catch (error) {
       if (error.code === 'auth/user-not-found') {
-        loginError.textContent = 'No account found with this email. Please create an account.';
+        loginError.textContent = 'No account found with this email. Please sign up.';
       } else if (error.code === 'auth/wrong-password') {
         loginError.textContent = 'Incorrect password. Please try again.';
       } else {
@@ -298,6 +298,12 @@
       btn.textContent = 'Show';
     }
   };
+
+  // Modal logic (same as index)
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  const modalOverlay = document.getElementById("modalOverlay");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  // Modal overlay not present on this page; we skip to avoid errors.
 </script>
 </body>
 </html>
