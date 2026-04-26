@@ -541,7 +541,7 @@
 </div>
 
 <script>
-  // ---------- Player mapping (updated: Zazo for Germany) ----------
+  // ---------- Player mapping (updated with Izu & Ntsiki) ----------
   const playerMap = {
     "Brazil": "Karabo",
     "Portugal": "Mali",
@@ -550,8 +550,9 @@
     "Netherlands": "Qhawe",
     "Belgium": "Tapz",
     "France": "🅿️",
-    "Germany": "Zazo"
-    // All other nations will show "No Player yet"
+    "Germany": "Zazo",
+    "Argentina": "Izu",
+    "Spain": "Ntsiki"
   };
 
   // ---------- Nations data (12 teams) ----------
@@ -570,7 +571,6 @@
     { name: "Brazil", emoji: "🇧🇷", group: "D" }
   ];
 
-  // Group definitions
   const groups = {
     A: { name: "Group A", teams: nations.filter(n => n.group === "A") },
     B: { name: "Group B", teams: nations.filter(n => n.group === "B") },
@@ -578,17 +578,14 @@
     D: { name: "Group D", teams: nations.filter(n => n.group === "D") }
   };
 
-  // View state for each group (true = player view, false = team view)
   let groupViewMode = { A: false, B: false, C: false, D: false };
 
-  // Helper to get display name (team or player)
   function getDisplayName(teamName, usePlayerView) {
     if (!usePlayerView) return teamName;
     const player = playerMap[teamName];
     return player ? player : "No Player yet";
   }
 
-  // Render a single group table
   function renderGroupTable(groupKey, group, usePlayerView) {
     const container = document.getElementById(`group-table-${groupKey}`);
     if (!container) return;
@@ -599,8 +596,7 @@
       html += `<tr>
         <td class="rank-cell">${idx + 1}</td>
         <td><div class="team-name"><span class="country-emoji">${team.emoji}</span> ${displayName}</div></td>
-        <td>0</td>
-        <td>0</td>
+        <td>0</td><td>0</td>
         <td class="pts-cell">0</td>
       </tr>`;
     });
@@ -608,14 +604,6 @@
     container.innerHTML = html;
   }
 
-  // Re-render all groups (called when view mode toggles)
-  function renderAllGroups() {
-    for (const [key, group] of Object.entries(groups)) {
-      renderGroupTable(key, group, groupViewMode[key]);
-    }
-  }
-
-  // Build group cards with three-dot menus
   function buildGroupCards() {
     const container = document.getElementById("groupsContainer");
     if (!container) return;
@@ -624,34 +612,22 @@
       const groupDiv = document.createElement("div");
       groupDiv.className = "group-card";
       groupDiv.id = `group-card-${key}`;
-      
-      // Title bar with three-dot button
       const titleDiv = document.createElement("div");
       titleDiv.className = "group-title";
       titleDiv.innerHTML = `<span>${group.name}</span><button class="three-dot-group" data-group="${key}">⋮</button>`;
-      
-      // Table container
       const tableContainer = document.createElement("div");
       tableContainer.id = `group-table-${key}`;
-      
       groupDiv.appendChild(titleDiv);
       groupDiv.appendChild(tableContainer);
       container.appendChild(groupDiv);
-      
-      // Initial render
       renderGroupTable(key, group, groupViewMode[key]);
     }
-    
-    // Attach event listeners to all three-dot buttons
     document.querySelectorAll('.three-dot-group').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const groupKey = btn.getAttribute('data-group');
-        // Remove any existing popup
         const existingPopup = document.querySelector(`.group-popup[data-group="${groupKey}"]`);
         if (existingPopup) existingPopup.remove();
-        
-        // Create popup menu
         const rect = btn.getBoundingClientRect();
         const popup = document.createElement('div');
         popup.className = 'group-popup';
@@ -659,19 +635,15 @@
         popup.style.position = 'absolute';
         popup.style.top = (rect.bottom + window.scrollY + 5) + 'px';
         popup.style.left = (rect.left + window.scrollX - 40) + 'px';
-        
         const playersOption = document.createElement('div');
         playersOption.innerText = 'Players';
         playersOption.onclick = () => {
-          // Toggle view mode for this group
           groupViewMode[groupKey] = !groupViewMode[groupKey];
           renderGroupTable(groupKey, groups[groupKey], groupViewMode[groupKey]);
           popup.remove();
         };
         popup.appendChild(playersOption);
         document.body.appendChild(popup);
-        
-        // Close popup when clicking outside
         const closePopupHandler = (e) => {
           if (!popup.contains(e.target) && e.target !== btn) {
             popup.remove();
@@ -683,34 +655,43 @@
     });
   }
 
-  // Generate fixtures for all groups (home & away, each pair twice)
-  function generateFixtures() {
+  // ---------- Generate group fixtures (1 match per group per matchday, 6 matchdays) ----------
+  function generateGroupFixtures() {
     const fixtures = [];
-    let matchdayCounter = 1;
-    let currentDate = new Date(2026, 3, 28); // 28 April 2026
-    for (const [groupKey, group] of Object.entries(groups)) {
-      const teams = group.teams;
-      for (let i = 0; i < teams.length; i++) {
-        for (let j = i + 1; j < teams.length; j++) {
-          // Home & away
-          fixtures.push({ md: matchdayCounter, date: formatDate(currentDate), home: teams[i].name, away: teams[j].name, group: groupKey });
-          currentDate.setDate(currentDate.getDate() + 1);
-          matchdayCounter++;
-          fixtures.push({ md: matchdayCounter, date: formatDate(currentDate), home: teams[j].name, away: teams[i].name, group: groupKey });
-          currentDate.setDate(currentDate.getDate() + 1);
-          matchdayCounter++;
-        }
-      }
+    const groupsKeys = ['A', 'B', 'C', 'D'];
+    for (let g of groupsKeys) {
+      const teams = groups[g].teams.map(t => t.name);
+      if (teams.length !== 3) continue;
+      const [A, B, C] = teams;
+      const groupMatches = [
+        { md: 1, home: A, away: B },
+        { md: 2, home: B, away: C },
+        { md: 3, home: C, away: A },
+        { md: 4, home: B, away: A },
+        { md: 5, home: C, away: B },
+        { md: 6, home: A, away: C }
+      ];
+      fixtures.push(...groupMatches.map(m => ({ ...m, group: g })));
     }
     return fixtures;
   }
 
-  function formatDate(date) {
-    const months = ['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return `${months[date.getMonth()]} ${date.getDate()}`;
+  const groupFixturesRaw = generateGroupFixtures();
+
+  function getDateForMatchday(md) {
+    const startDate = new Date(2026, 3, 27); // 27 April 2026
+    startDate.setDate(startDate.getDate() + (md - 1));
+    const months = ['Apr','May'];
+    return `${months[startDate.getMonth()]} ${startDate.getDate()}`;
   }
 
-  const groupFixtures = generateFixtures();
+  const groupFixtures = groupFixturesRaw.map(f => ({
+    md: f.md,
+    date: getDateForMatchday(f.md),
+    home: f.home,
+    away: f.away,
+    group: f.group
+  }));
 
   function getNationEmoji(nationName) {
     const found = nations.find(n => n.name === nationName);
@@ -746,32 +727,33 @@
     }
   }
 
-  // Knockout stage structure
+  // Knockout stage (with correct dates)
   function renderKnockout() {
     const container = document.getElementById("knockoutBracket");
     if (!container) return;
     container.innerHTML = `
-      <div class="knockout-title">🏆 QUARTER-FINALS 🏆</div>
+      <div class="knockout-title">🏆 QUARTER-FINALS (3-4 May) 🏆</div>
       <div class="bracket">
-        <div class="round"><h4>Match 1</h4><div class="match">Group A Winner vs Group B Runner-up</div></div>
-        <div class="round"><h4>Match 2</h4><div class="match">Group B Winner vs Group A Runner-up</div></div>
-        <div class="round"><h4>Match 3</h4><div class="match">Group C Winner vs Group D Runner-up</div></div>
-        <div class="round"><h4>Match 4</h4><div class="match">Group D Winner vs Group C Runner-up</div></div>
+        <div class="round"><h4>3 May</h4><div class="match">QF1: Group A Winner vs Group B Runner-up</div><div class="match">QF2: Group B Winner vs Group A Runner-up</div></div>
+        <div class="round"><h4>4 May</h4><div class="match">QF3: Group C Winner vs Group D Runner-up</div><div class="match">QF4: Group D Winner vs Group C Runner-up</div></div>
       </div>
-      <div class="knockout-title" style="margin-top:1rem;">🏆 SEMI-FINALS 🏆</div>
+      <div class="knockout-title" style="margin-top:1rem;">🏆 SEMI-FINALS (5 May) 🏆</div>
       <div class="bracket">
-        <div class="round"><h4>SF 1</h4><div class="match">Winner QF1 vs Winner QF2</div></div>
-        <div class="round"><h4>SF 2</h4><div class="match">Winner QF3 vs Winner QF4</div></div>
+        <div class="round"><h4>5 May</h4><div class="match">SF1: Winner QF1 vs Winner QF2</div><div class="match">SF2: Winner QF3 vs Winner QF4</div></div>
       </div>
-      <div class="knockout-title" style="margin-top:1rem;">🏆 FINAL 🏆</div>
+      <div class="knockout-title" style="margin-top:1rem;">🏆 THIRD PLACE PLAY-OFF (6 May) 🏆</div>
       <div class="bracket">
-        <div class="round"><h4>FINAL</h4><div class="match">Winner SF1 vs Winner SF2</div></div>
+        <div class="round"><h4>6 May</h4><div class="match">Loser SF1 vs Loser SF2</div></div>
+      </div>
+      <div class="knockout-title" style="margin-top:1rem;">🏆 FINAL (7 May) 🏆</div>
+      <div class="bracket">
+        <div class="round"><h4>7 May</h4><div class="match">Winner SF1 vs Winner SF2</div></div>
       </div>
       <div style="font-size:0.7rem; margin-top:0.8rem; opacity:0.7;">* Matchups determined by group stage results</div>
     `;
   }
 
-  // Countdown timer
+  // Countdown to Monday midnight SAST (start of 27 April)
   function getNextMondayMidnightSAST() {
     const now = new Date();
     const nowUTC = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
@@ -822,13 +804,11 @@
     });
   }
 
-  // Search filter
   const searchInput = document.getElementById("fixturesSearchInput");
   if (searchInput) {
     searchInput.addEventListener("input", () => renderFixtures(searchInput.value));
   }
 
-  // Modal logic
   const hamburger = document.getElementById("hamburgerBtn");
   const modalOverlay = document.getElementById("modalOverlay");
   const closeModalBtn = document.getElementById("closeModalBtn");
@@ -838,7 +818,6 @@
   if (closeModalBtn) closeModalBtn.addEventListener("click", closeModal);
   if (modalOverlay) modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
 
-  // Initial render
   buildGroupCards();
   renderKnockout();
   updateCountdown();
