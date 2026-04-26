@@ -103,9 +103,33 @@
       border-radius: 2rem;
       border: 1px solid rgba(245, 215, 66, 0.4);
       padding: 2rem;
-      max-width: 420px;
+      max-width: 450px;
       width: 100%;
       text-align: center;
+    }
+    .role-selector {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .role-btn {
+      flex: 1;
+      background: rgba(106, 59, 181, 0.5);
+      border: 1px solid #f5d742;
+      border-radius: 2rem;
+      padding: 0.6rem;
+      font-weight: bold;
+      color: #f5e6ff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .role-btn.active {
+      background: #6a3bb5;
+      color: #f5d742;
+      box-shadow: 0 0 6px #f5d742;
+    }
+    .role-btn:hover {
+      background: #7e4acf;
     }
     .auth-card h2 {
       color: #f5d742;
@@ -185,6 +209,7 @@
     @media (max-width: 480px) {
       .auth-card { padding: 1.5rem; }
       .logo-area { font-size: 0.9rem; }
+      .role-btn { font-size: 0.8rem; }
     }
   </style>
 </head>
@@ -207,6 +232,10 @@
 
 <div class="auth-container">
   <div class="auth-card">
+    <div class="role-selector">
+      <div id="playerRoleBtn" class="role-btn active">👤 Player</div>
+      <div id="adminRoleBtn" class="role-btn">👑 Admin</div>
+    </div>
     <h2>SIGN UP</h2>
     <form id="signupForm">
       <div class="input-group">
@@ -224,9 +253,9 @@
           <button type="button" class="toggle-password" onclick="togglePassword('signupPassword')">Show</button>
         </div>
       </div>
-      <div class="input-group">
-        <label>Admin Key (optional)</label>
-        <input type="password" id="adminKey" class="auth-input" placeholder="Only if you are an admin">
+      <div id="adminKeyGroup" class="input-group" style="display: none;">
+        <label>Admin Key</label>
+        <input type="password" id="adminKey" class="auth-input" placeholder="Required for admin registration">
       </div>
       <button type="submit" class="btn-primary">Create Account</button>
       <div id="signupError" class="error-msg"></div>
@@ -257,58 +286,79 @@
   const auth = getAuth(app);
   const db = getDatabase(app);
 
-  const signupForm = document.getElementById('signupForm');
-  const signupError = document.getElementById('signupError');
+  const ADMIN_KEY = "@admin#123!";
 
-  const ADMIN_KEY = "@admin#123";
+  let selectedRole = "player"; // 'player' or 'admin'
 
-  signupForm.addEventListener('submit', async (e) => {
+  const playerRoleBtn = document.getElementById("playerRoleBtn");
+  const adminRoleBtn = document.getElementById("adminRoleBtn");
+  const adminKeyGroup = document.getElementById("adminKeyGroup");
+
+  playerRoleBtn.addEventListener("click", () => {
+    selectedRole = "player";
+    playerRoleBtn.classList.add("active");
+    adminRoleBtn.classList.remove("active");
+    adminKeyGroup.style.display = "none";
+  });
+  adminRoleBtn.addEventListener("click", () => {
+    selectedRole = "admin";
+    adminRoleBtn.classList.add("active");
+    playerRoleBtn.classList.remove("active");
+    adminKeyGroup.style.display = "block";
+  });
+
+  const signupForm = document.getElementById("signupForm");
+  const signupError = document.getElementById("signupError");
+
+  signupForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const email = document.getElementById('signupEmail').value.trim();
-    const username = document.getElementById('signupUsername').value.trim();
-    const password = document.getElementById('signupPassword').value;
-    const adminKey = document.getElementById('adminKey').value.trim();
-    signupError.textContent = '';
+    const email = document.getElementById("signupEmail").value.trim();
+    const username = document.getElementById("signupUsername").value.trim();
+    const password = document.getElementById("signupPassword").value;
+    const adminKeyValue = document.getElementById("adminKey").value.trim();
+    signupError.textContent = "";
 
     if (!email || !username || !password) {
-      signupError.textContent = 'Please fill in all fields.';
+      signupError.textContent = "Please fill in all fields.";
       return;
     }
     if (password.length < 6) {
-      signupError.textContent = 'Password must be at least 6 characters.';
+      signupError.textContent = "Password must be at least 6 characters.";
       return;
     }
-
-    // Determine role
-    let role = 'player';
-    if (adminKey === ADMIN_KEY) {
-      role = 'admin';
-    } else if (adminKey !== '') {
-      signupError.textContent = 'Invalid admin key.';
-      return;
+    if (selectedRole === "admin") {
+      if (!adminKeyValue) {
+        signupError.textContent = "Admin key is required for admin registration.";
+        return;
+      }
+      if (adminKeyValue !== ADMIN_KEY) {
+        signupError.textContent = "Invalid admin key.";
+        return;
+      }
     }
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: username });
-      // Store user info in Realtime Database
-      const userRef = ref(db, `users/${userCredential.user.uid}`);
-      await set(userRef, {
+      await set(ref(db, `users/${userCredential.user.uid}`), {
         uid: userCredential.user.uid,
         email: email,
         username: username,
-        role: role,
+        role: selectedRole,
         createdAt: Date.now()
       });
+      // After signup, also store credentials for auto-login next time
+      localStorage.setItem("lastLoginEmail", email);
+      localStorage.setItem("lastLoginPassword", password);
       // Redirect based on role
-      if (role === 'admin') {
-        window.location.href = 'admindash.html';
+      if (selectedRole === "admin") {
+        window.location.href = "admindash.html";
       } else {
-        window.location.href = 'login.html';
+        window.location.href = "dashboard.html";
       }
     } catch (error) {
-      if (error.code === 'auth/email-already-in-use') {
-        signupError.textContent = 'This email is already registered. Please login.';
+      if (error.code === "auth/email-already-in-use") {
+        signupError.textContent = "This email is already registered. Please login.";
       } else {
         signupError.textContent = error.message;
       }
@@ -318,12 +368,12 @@
   window.togglePassword = (fieldId) => {
     const field = document.getElementById(fieldId);
     const btn = field.nextElementSibling;
-    if (field.type === 'password') {
-      field.type = 'text';
-      btn.textContent = 'Hide';
+    if (field.type === "password") {
+      field.type = "text";
+      btn.textContent = "Hide";
     } else {
-      field.type = 'password';
-      btn.textContent = 'Show';
+      field.type = "password";
+      btn.textContent = "Show";
     }
   };
 </script>
