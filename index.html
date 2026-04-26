@@ -1,1 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>eFootball 412 · League Hub</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
+    body {
+      background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 100%);
+      font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
+      padding: 0;
+      color: #f5f0ff;
+    }
+
+    .gold-navbar {
+      background: linear-gradient(135deg, #d4af37, #f5d742);
+      padding: 0.4rem 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.8rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .login-btn {
+      background: #6a3bb5;
+      color: #f5d742;
+      text-decoration: none;
+      padding: 0.4rem 1rem;
+      border-radius: 30px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      transition: background 0.2s, transform 0.2s;
+      border: 1.5px solid #f5d742;
+      display: inline-block;
+    }
+    .login-btn:hover {
+      background: #7e4acf;
+      transform: scale(1.02);
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .nav-icon-btn {
+      background: #6a3bb5;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background 0.2s;
+      border: 1.5px solid #f5d742;
+      text-decoration: none;
+    }
+    .nav-icon-btn:hover {
+      transform: scale(1.05);
+      background: #7e4acf;
+    }
+    .chat-svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+    }
+
+    .hamburger-btn {
+      background: #6a3bb5;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background 0.2s;
+      border: 1.5px solid #f5d742;
+    }
+
+    .hamburger-btn:hover {
+      transform: scale(1.05);
+      background: #7e4acf;
+    }
+
+    .hamburger-btn span {
+      display: block;
+      width: 18px;
+      height: 2.5px;
+      background-color: #f5d742;
+      border-radius: 2px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: transparent;
+      z-index: 200;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .modal-overlay.active {
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      position: absolute;
+      top: 60px;
+      right: 20px;
+      background: linear-gradient(135deg, #f5d742, #e6c42c);
+      border-radius: 1.2rem;
+      padding: 1rem 1.2rem;
+      width: auto;
+      min-width: 200px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      animation: fadeInDown 0.2s ease;
+      border: 1px solid #6a3bb5;
+    }
+
+    @keyframes fadeInDown {
+      from {
+        transform: translateY(-15px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-content h3 {
+      font-size: 1.1rem;
+      color: #4a1d8c;
+      margin-bottom: 0.8rem;
+      font-weight: 800;
+      border-bottom: 1px solid #6a3bb5;
+      display: inline-block;
+      padding-bottom: 0.2rem;
+    }
+
+    .modal-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin: 0.8rem 0;
+    }
+
+    .modal-option {
+      background: rgba(106, 59, 181, 0.15);
+      padding: 0.4rem 0.8rem;
+      border-radius: 40px;
+      text-decoration: none;
+      color: #3c1a70;
+      font-weight: 700;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+      border: 1px solid #6a3bb5;
+      display: block;
+    }
+
+    .modal-option:hover {
+      background: #6a3bb5;
+      color: #f5d742;
+      transform: translateX(3px);
+    }
+
+    .close-modal {
+      background: #4a1d8c;
+      color: #f5d742;
+      border: none;
+      padding: 0.3rem 0.9rem;
+      border-radius: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      font-size: 0.7rem;
+    }
+
+    .close-modal:hover {
+      background: #2d0f5a;
+    }
+
+    .dashboard {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    .slideshow-container {
+      position: relative;
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .slideshow-img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+
+    .dots-container {
+      text-align: center;
+      margin-top: 0.8rem;
+      position: absolute;
+      bottom: 12px;
+      left: 0;
+      right: 0;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #f5d742;
+      margin: 0 4px;
+      cursor: pointer;
+    }
+
+    .dot.active {
+      background-color: #6a3bb5;
+    }
+
+    .card {
+      background: rgba(45, 25, 75, 0.85);
+      backdrop-filter: blur(10px);
+      border-radius: 2rem;
+      border: 1px solid rgba(245, 215, 66, 0.4);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-header {
+      padding: 1.2rem 1.8rem;
+      background: rgba(30, 15, 55, 0.9);
+      border-bottom: 2px solid #f5d742;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+
+    .card-header-left {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .card-header-left h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #f5e6ff;
+    }
+
+    .three-dot-menu {
+      background: none;
+      border: none;
+      color: #f5d742;
+      font-size: 1.8rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 0.2rem;
+      transition: transform 0.1s;
+      margin-left: auto;
+    }
+    .three-dot-menu:hover {
+      transform: scale(1.1);
+    }
+
+    .popup-menu {
+      position: absolute;
+      background: linear-gradient(135deg, #2d1b4e, #1f0f3a);
+      border: 1px solid #f5d742;
+      border-radius: 1rem;
+      padding: 0.5rem 0;
+      min-width: 120px;
+      z-index: 150;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      backdrop-filter: blur(12px);
+    }
+    .popup-menu div {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      color: #f5e6ff;
+      transition: background 0.1s;
+    }
+    .popup-menu div:hover {
+      background: rgba(245, 215, 66, 0.2);
+    }
+
+    .toggle-icon {
+      font-size: 1.3rem;
+      color: #f5d742;
+    }
+
+    .card-content {
+      transition: max-height 0.4s ease-out;
+      max-height: 2000px;
+      overflow: hidden;
+    }
+
+    .card-content.collapsed {
+      max-height: 0;
+    }
+
+    .scrollable-table {
+      max-height: 450px;
+      overflow-y: auto;
+      overflow-x: auto;
+    }
+
+    .scrollable-table::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    .scrollable-table::-webkit-scrollbar-track {
+      background: rgba(30, 15, 55, 0.5);
+      border-radius: 10px;
+    }
+    .scrollable-table::-webkit-scrollbar-thumb {
+      background: #f5d742;
+      border-radius: 10px;
+    }
+
+    .filter-container {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem 1.2rem;
+      background: rgba(30, 15, 55, 0.6);
+      border-bottom: 1px solid rgba(245, 215, 66, 0.3);
+      flex-wrap: wrap;
+    }
+    .filter-input, .filter-select {
+      background: rgba(45, 25, 75, 0.9);
+      border: 1px solid #f5d742;
+      border-radius: 30px;
+      padding: 0.5rem 1rem;
+      color: #f5e6ff;
+      font-size: 0.8rem;
+      outline: none;
+    }
+    .filter-input::placeholder {
+      color: #d4baff;
+    }
+    .filter-select option {
+      background: #2d1b4e;
+    }
+
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .stats-table th {
+      text-align: left;
+      padding: 0.9rem 0.8rem 0.7rem 1.2rem;
+      background: rgba(55, 35, 95, 0.7);
+      border-bottom: 1px solid #f5d742;
+      color: #f5e6ff;
+    }
+
+    .stats-table td {
+      padding: 0.75rem 0.8rem 0.75rem 1.2rem;
+      border-bottom: 1px solid rgba(245, 215, 66, 0.2);
+      color: #f0eaff;
+      vertical-align: middle;
+    }
+
+    .pos-with-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .vertical-bar {
+      width: 4px;
+      height: 18px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+    .blue-bar-vertical { background-color: #3b82f6; }
+    .orange-bar-vertical { background-color: #f97316; }
+    .green-bar-vertical { background-color: #22c55e; }
+    
+    .dashed-separator-gold { border-bottom: 2px dashed #d4af37 !important; }
+    .dashed-separator-white { border-bottom: 2px dashed #ffffff !important; }
+    .dashed-separator-red { border-bottom: 2px dashed #ef4444 !important; }
+
+    .rank-cell { font-weight: 700; width: 60px; color: #f5d742; }
+    .pts-cell { font-weight: 800; color: #f5d742; text-align: center; }
+
+    .team-name {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .team-icon {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+      background: transparent;
+    }
+    .inline-team-icon {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+      vertical-align: middle;
+      margin: 0 4px;
+      display: inline-block;
+    }
+
+    .fixture-icons {
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      white-space: nowrap;
+    }
+
+    .form-circles {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .circle-result {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: bold;
+    }
+    .circle-win { background-color: #22c55e; color: white; border: none; }
+    .circle-loss { background-color: #ef4444; color: white; border: none; }
+    .circle-draw { background-color: #6b7280; color: white; border: none; }
+    .circle-forfeit-win { background-color: #22c55e; color: white; border: none; }
+    .circle-forfeit-loss { background-color: #ef4444; color: white; border: none; }
+    .circle-forfeit-grey { background-color: #6b7280; color: white; border: none; }
+    .circle-blank { background-color: transparent; border: 1px solid #a0a0a0; color: transparent; }
+    .arrow-up { color: #22c55e; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
+    .arrow-down { color: #ef4444; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
+    .arrow-side { color: #f5d742; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
+
+    .legend-under-table {
+      margin-top: 1rem;
+      padding: 0.8rem 1.2rem;
+      background: rgba(30, 15, 55, 0.5);
+      border-radius: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      justify-content: center;
+      font-size: 0.7rem;
+    }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .legend-vertical-bar { width: 4px; height: 16px; border-radius: 2px; display: inline-block; }
+    .legend-blue { background-color: #3b82f6; }
+    .legend-orange { background-color: #f97316; }
+    .legend-green { background-color: #22c55e; }
+    .legend-dashed-white { display: inline-block; width: 20px; height: 2px; border-bottom: 2px dashed #ffffff; vertical-align: middle; }
+    .legend-text { color: #e6d5ff; }
+
+    .inner-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .inner-table th {
+      text-align: left;
+      padding: 0.9rem 0.8rem 0.7rem 1.2rem;
+      background: rgba(55, 35, 95, 0.5);
+      border-bottom: 1px solid #f5d742;
+      color: #f5e6ff;
+    }
+    .inner-table td {
+      padding: 0.9rem 0.8rem 0.9rem 1.2rem;
+      border-bottom: 1px solid rgba(245, 215, 66, 0.2);
+      vertical-align: middle;
+    }
+    .player-name {
+      font-size: 0.7rem;
+      color: #d4baff;
+      display: block;
+      margin-top: 2px;
+    }
+    .match-highlight {
+      background: #3d2a6b;
+      border-radius: 20px;
+      padding: 0.2rem 0.8rem;
+      display: inline-block;
+      font-size: 0.8rem;
+      color: #f5d742;
+    }
+    .empty-message {
+      text-align: center;
+      padding: 2rem;
+      color: #c4b0ff;
+      font-style: italic;
+    }
+    .date-badge {
+      font-size: 0.7rem;
+      background: rgba(0,0,0,0.4);
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      margin-left: 8px;
+    }
+    .result-with-forfeit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .forfeit-text {
+      font-size: 0.7rem;
+      color: #f5d742;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 780px) {
+      .dashboard { padding: 1rem; }
+      .stats-table th, .stats-table td { padding: 0.6rem 0.5rem; font-size: 0.75rem; }
+      .card-header-left h2 { font-size: 1.3rem; }
+      .dot { width: 6px; height: 6px; margin: 0 3px; }
+      .scrollable-table { max-height: 350px; }
+      .filter-container { flex-direction: column; }
+      .circle-result { width: 14px; height: 14px; font-size: 7px; }
+      .arrow-up, .arrow-down, .arrow-side { font-size: 1rem; width: 18px; }
+      .team-icon { width: 32px; height: 32px; }
+      .inline-team-icon { width: 32px; height: 32px; }
+      .login-btn { font-size: 0.75rem; padding: 0.3rem 0.7rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="gold-navbar">
+  <a href="login.html" class="login-btn">LOGIN</a>
+  <div class="nav-right">
+    <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-content">
+    <h3>TOURNAMENTS</h3>
+    <div class="modal-options">
+      <a href="nations.html" class="modal-option">UEFA NATIONS LEAGUE</a>
+      <a href="fifa-club-world-cup.html" class="modal-option">FIFA CLUB WORLD CUP</a>
+      <a href="uefa-champions-league.html" class="modal-option">UEFA CHAMPIONS LEAGUE</a>
+      <a href="uefa-europa-league.html" class="modal-option">UEFA EUROPA LEAGUE</a>
+      <a href="uefa-super-league.html" class="modal-option">UEFA SUPER LEAGUE</a>
+      <a href="uefa-conference-league.html" class="modal-option">UEFA CONFERENCE LEAGUE</a>
+      <a href="player-titles.html" class="modal-option">PLAYER TITLES</a>
+      <a href="rules.html" class="modal-option">RULES</a>
+      <a href="calendar.html" class="modal-option">CALENDAR</a>
+    </div>
+    <button class="close-modal" id="closeModalBtn">CLOSE</button>
+  </div>
+</div>
+
+<div class="dashboard">
+  <div class="slideshow-container">
+    <img id="slideshow-img" class="slideshow-img" src="images - 2026-04-19T121231.816.jpeg" alt="Slideshow">
+    <div class="dots-container" id="dotsContainer"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:2rem">
+    <div class="card-header" style="cursor:default;">
+      <div class="card-header-left">
+        <h2>PREMIER LEAGUE</h2>
+        <button class="three-dot-menu" id="threeDotBtn">⋮</button>
+      </div>
+    </div>
+    <div class="card-content">
+      <div style="overflow-x:auto;">
+        <table class="stats-table" id="leagueTable">
+          <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th></tr></thead>
+          <tbody id="leagueTableBody"></tbody>
+        </table>
+      </div>
+      <div class="legend-under-table">
+        <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: center; width: 100%;">
+          <span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span class="legend-text">UEFA Champions League</span></span>
+          <span class="legend-item"><span class="legend-vertical-bar legend-orange"></span><span class="legend-text">Europa League</span></span>
+          <span class="legend-item"><span class="legend-vertical-bar legend-green"></span><span class="legend-text">UEFA Conference League</span></span>
+          <span class="legend-item"><span class="legend-dashed-white"></span><span class="legend-text">FIFA Club World Cup</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" id="fixturesHeader"><div class="card-header-left"><h2>FIXTURES</h2></div><div class="toggle-icon" id="fixturesToggleIcon">▼</div></div>
+    <div class="card-content" id="fixturesContent">
+      <div class="filter-container">
+        <input type="text" id="searchInput" class="filter-input" placeholder="🔍 Search team or player name...">
+        <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
+      </div>
+      <div class="scrollable-table">
+        <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
+    <div class="card-content" id="resultsContent">
+      <div class="scrollable-table">
+        <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const images = ["images - 2026-04-19T121231.816.jpeg","images - 2026-04-19T155746.715.jpeg","37686bb3-06ce-401b-a022-026933c165e7.jpeg","12871.jpg","1f157df7-2054-4a9d-aa14-b9941ef4a743.jpeg"];
+  let currentIndex = 0;
+  const slideshowImg = document.getElementById("slideshow-img");
+  const dotsContainer = document.getElementById("dotsContainer");
+  function createDots() {
+    dotsContainer.innerHTML = "";
+    for (let i = 0; i < images.length; i++) {
+      const dot = document.createElement("span");
+      dot.classList.add("dot");
+      if (i === currentIndex) dot.classList.add("active");
+      dot.addEventListener("click", () => { currentIndex = i; slideshowImg.src = images[currentIndex]; updateDots(); });
+      dotsContainer.appendChild(dot);
+    }
+  }
+  function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
+  if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
+
+  // UPDATED LEAGUE_DATA after ALL MD13 matches
+  const LEAGUE_DATA = [
+    { pos: 1, club: "Real Madrid", p: 13, gd: 20, pts: 37 },
+    { pos: 2, club: "Liverpool", p: 13, gd: 26, pts: 29 },
+    { pos: 3, club: "Barcelona", p: 13, gd: 1, pts: 25 },
+    { pos: 4, club: "Dortmund", p: 13, gd: 8, pts: 24 },
+    { pos: 5, club: "Man City", p: 13, gd: 4, pts: 22 },
+    { pos: 6, club: "Arsenal", p: 13, gd: 6, pts: 20 },
+    { pos: 7, club: "PSG", p: 13, gd: -6, pts: 19 },
+    { pos: 8, club: "Chelsea", p: 13, gd: 12, pts: 18 },
+    { pos: 9, club: "Napoli", p: 13, gd: -2, pts: 11 },
+    { pos: 10, club: "AC Milan", p: 13, gd: -11, pts: 10 },
+    { pos: 11, club: "Atletico", p: 13, gd: -13, pts: 7 },
+    { pos: 12, club: "Newcastle", p: 13, gd: -30, pts: 6 },
+    { pos: 13, club: "Juventus", p: 13, gd: -15, pts: 3 },
+    { pos: 14, club: "Inter Milan", p: 13, gd: -2, pts: 2 }
+  ];
+
+  const playerMap = {
+    "FC Barcelona": "~Rea🫡",
+    "Barcelona": "~Rea🫡",
+    "Inter Milan": "Mali",
+    "Borussia Dortmund": "~Qhawe 🤍",
+    "Dortmund": "~Qhawe 🤍",
+    "Juventus": "~Lawree ✨",
+    "Atlético Madrid": "~Stalker.",
+    "Paris Saint-Germain": "~MJ",
+    "PSG": "~MJ",
+    "Napoli": "~PrettyBoy Tendancies. 👅",
+    "Real Madrid": "~Karabo",
+    "Arsenal": "Kath",
+    "AC Milan": "~Ntsiki",
+    "Chelsea": "~Zazo",
+    "Manchester City": "gry",
+    "Man City": "gry",
+    "Liverpool": "🅿️",
+    "Newcastle United": "~Oratile",
+    "Atletico": "~Stalker.",
+    "Newcastle": "~Oratile"
+  };
+
+  function getTeamIconHtml(teamName, className = "inline-team-icon") {
+    const iconMap = {
+      "Arsenal": "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png",
+      "AC Milan": "44e0f58a-e5db-445b-9896-db22ea99b936.png",
+      "PSG": "4dea795d-a516-46ae-bd34-07a784693d80.png",
+      "Barcelona": "IMG_20260421_085117.jpg",
+      "Inter Milan": "IMG_20260421_092951.png",
+      "Atletico": "IMG_20260421_093024.png",
+      "Newcastle": "IMG_20260421_093046.png",
+      "Napoli": "IMG_20260421_100318.jpg",
+      "Chelsea": "IMG_20260421_100354.jpg",
+      "Dortmund": "01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg",
+      "Real Madrid": "21259ea4-042f-48ff-902f-1e776d27fe58.jpeg",
+      "Man City": "9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg",
+      "Liverpool": "269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg",
+      "Manchester City": "9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg",
+      "Atlético Madrid": "IMG_20260421_093024.png",
+      "Newcastle United": "IMG_20260421_093046.png",
+      "FC Barcelona": "IMG_20260421_085117.jpg",
+      "Paris Saint-Germain": "4dea795d-a516-46ae-bd34-07a784693d80.png",
+      "Borussia Dortmund": "01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg",
+      "Juventus": "IMG_20260421_151224.jpg"
+    };
+    const src = iconMap[teamName];
+    if (src) return `<img class="${className}" src="${src}" alt="${teamName}">`;
+    return teamName;
+  }
+
+  // Updated allResultsOrder with ALL MD13 matches at the bottom
+  const allResultsOrder = [
+    // Older matches (MD7 to MD12)
+    { type: "win", winner: "Real Madrid", loser: "Napoli" },
+    { type: "draw", teams: ["Arsenal","AC Milan"] },
+    { type: "win", winner: "Liverpool", loser: "Newcastle" },
+    { type: "draw", teams: ["Man City","Chelsea"] },
+    { type: "win", winner: "Dortmund", loser: "Juventus" },
+    { type: "win", winner: "PSG", loser: "Atletico" },
+    { type: "win", winner: "Barcelona", loser: "Inter Milan" },
+    { type: "win", winner: "Barcelona", loser: "Juventus" },
+    { type: "win", winner: "Napoli", loser: "Man City" },
+    { type: "win", winner: "Real Madrid", loser: "Dortmund" },
+    { type: "win", winner: "Arsenal", loser: "Newcastle" },
+    { type: "draw", teams: ["Liverpool","Chelsea"] },
+    { type: "draw", teams: ["Inter Milan","PSG"] },
+    { type: "forfeit", teams: ["Atletico","AC Milan"] },
+    { type: "win", winner: "AC Milan", loser: "Inter Milan" },
+    { type: "draw", teams: ["Barcelona","PSG"] },
+    { type: "win", winner: "Atletico", loser: "Newcastle" },
+    { type: "win", winner: "Chelsea", loser: "Arsenal" },
+    { type: "win", winner: "Napoli", loser: "Liverpool" },
+    { type: "win", winner: "Man City", loser: "Dortmund" },
+    { type: "forfeit_win", winner: "Real Madrid", loser: "Juventus" },
+    { type: "win", winner: "Man City", loser: "Juventus" },
+    { type: "win", winner: "Inter Milan", loser: "Newcastle" },
+    { type: "win", winner: "Chelsea", loser: "Atletico" },
+    { type: "win", winner: "Arsenal", loser: "Napoli" },
+    { type: "win", winner: "Real Madrid", loser: "Barcelona" },
+    { type: "win", winner: "Dortmund", loser: "Liverpool" },
+    { type: "win", winner: "PSG", loser: "AC Milan" },
+    { type: "win", winner: "Chelsea", loser: "Inter Milan" },
+    { type: "win", winner: "Atletico", loser: "Napoli" },
+    { type: "win", winner: "Real Madrid", loser: "Man City" },
+    { type: "win", winner: "Arsenal", loser: "Dortmund" },
+    { type: "forfeit_win", winner: "PSG", loser: "Newcastle" },
+    { type: "win", winner: "Barcelona", loser: "AC Milan" },
+    { type: "forfeit_win", winner: "Liverpool", loser: "Juventus" },
+    // MD12 matches
+    { type: "draw", teams: ["PSG","Chelsea"] },
+    { type: "win", winner: "Newcastle", loser: "AC Milan" },
+    { type: "draw", teams: ["Napoli","Inter Milan"] },
+    { type: "forfeit_win", winner: "Barcelona", loser: "Man City" },
+    { type: "forfeit_win", winner: "Arsenal", loser: "Juventus" },
+    { type: "draw", teams: ["Real Madrid","Liverpool"] },
+    { type: "forfeit_win", winner: "Dortmund", loser: "Atletico" },
+    // ALL MD13 matches (most recent)
+    { type: "win", winner: "Real Madrid", loser: "Arsenal" },
+    { type: "draw", teams: ["Napoli","PSG"] },
+    { type: "win", winner: "Inter Milan", loser: "Dortmund" },
+    { type: "forfeit", teams: ["Juventus","Atletico"] },
+    { type: "win", winner: "Chelsea", loser: "AC Milan" },
+    { type: "win", winner: "Liverpool", loser: "Man City" },
+    { type: "forfeit_win", winner: "Barcelona", loser: "Newcastle" }
+  ];
+
+  const teamResults = {};
+  LEAGUE_DATA.forEach(t => { teamResults[t.club] = []; });
+  allResultsOrder.forEach(res => {
+    if (res.type === "draw") {
+      res.teams.forEach(t => { if (teamResults[t]) teamResults[t].push("D"); });
+    } else if (res.type === "win") {
+      if (teamResults[res.winner]) teamResults[res.winner].push("W");
+      if (teamResults[res.loser]) teamResults[res.loser].push("L");
+    } else if (res.type === "forfeit") {
+      res.teams.forEach(t => { if (teamResults[t]) teamResults[t].push("F"); });
+    } else if (res.type === "forfeit_win") {
+      if (teamResults[res.winner]) teamResults[res.winner].push("WF");
+      if (teamResults[res.loser]) teamResults[res.loser].push("LF");
+    }
+  });
+
+  function getLast5WithBlanks(team) {
+    const results = teamResults[team] || [];
+    const last5 = results.slice(-5).reverse();
+    while (last5.length < 5) last5.push(null);
+    return last5;
+  }
+
+  function getLatest(team) {
+    const arr = teamResults[team] || [];
+    return arr.length ? arr[arr.length-1] : null;
+  }
+
+  // Fixture list: removed ALL MD13 matches
+  const fixtureList = [
+    { md: 14, home: "Liverpool", away: "FC Barcelona" }, { md: 14, home: "Chelsea", away: "Newcastle United" }, { md: 14, home: "Arsenal", away: "Manchester City" }, { md: 14, home: "Napoli", away: "AC Milan" }, { md: 14, home: "Atlético Madrid", away: "Real Madrid" }, { md: 14, home: "Borussia Dortmund", away: "Paris Saint-Germain" }, { md: 14, home: "Inter Milan", away: "Juventus" },
+    { md: 15, home: "Chelsea", away: "FC Barcelona" }, { md: 15, home: "Arsenal", away: "Liverpool" }, { md: 15, home: "Napoli", away: "Newcastle United" }, { md: 15, home: "Atlético Madrid", away: "Manchester City" }, { md: 15, home: "Borussia Dortmund", away: "AC Milan" }, { md: 15, home: "Inter Milan", away: "Real Madrid" }, { md: 15, home: "Juventus", away: "Paris Saint-Germain" },
+    { md: 16, home: "Arsenal", away: "FC Barcelona" }, { md: 16, home: "Napoli", away: "Chelsea" }, { md: 16, home: "Atlético Madrid", away: "Liverpool" }, { md: 16, home: "Borussia Dortmund", away: "Newcastle United" }, { md: 16, home: "Inter Milan", away: "Manchester City" }, { md: 16, home: "Juventus", away: "AC Milan" }, { md: 16, home: "Paris Saint-Germain", away: "Real Madrid" },
+    { md: 17, home: "Napoli", away: "FC Barcelona" }, { md: 17, home: "Atlético Madrid", away: "Arsenal" }, { md: 17, home: "Borussia Dortmund", away: "Chelsea" }, { md: 17, home: "Inter Milan", away: "Liverpool" }, { md: 17, home: "Juventus", away: "Newcastle United" }, { md: 17, home: "Paris Saint-Germain", away: "Manchester City" }, { md: 17, home: "Real Madrid", away: "AC Milan" },
+    { md: 18, home: "Atlético Madrid", away: "FC Barcelona" }, { md: 18, home: "Borussia Dortmund", away: "Napoli" }, { md: 18, home: "Inter Milan", away: "Arsenal" }, { md: 18, home: "Juventus", away: "Chelsea" }, { md: 18, home: "Paris Saint-Germain", away: "Liverpool" }, { md: 18, home: "Real Madrid", away: "Newcastle United" }, { md: 18, home: "AC Milan", away: "Manchester City" },
+    { md: 19, home: "Borussia Dortmund", away: "FC Barcelona" }, { md: 19, home: "Inter Milan", away: "Atlético Madrid" }, { md: 19, home: "Juventus", away: "Napoli" }, { md: 19, home: "Paris Saint-Germain", away: "Arsenal" }, { md: 19, home: "Real Madrid", away: "Chelsea" }, { md: 19, home: "AC Milan", away: "Liverpool" }, { md: 19, home: "Manchester City", away: "Newcastle United" },
+    { md: 20, home: "Inter Milan", away: "FC Barcelona" }, { md: 20, home: "Juventus", away: "Borussia Dortmund" }, { md: 20, home: "Paris Saint-Germain", away: "Atlético Madrid" }, { md: 20, home: "Real Madrid", away: "Napoli" }, { md: 20, home: "AC Milan", away: "Arsenal" }, { md: 20, home: "Manchester City", away: "Chelsea" }, { md: 20, home: "Newcastle United", away: "Liverpool" },
+    { md: 21, home: "Juventus", away: "FC Barcelona" }, { md: 21, home: "Paris Saint-Germain", away: "Inter Milan" }, { md: 21, home: "Real Madrid", away: "Borussia Dortmund" }, { md: 21, home: "AC Milan", away: "Atlético Madrid" }, { md: 21, home: "Manchester City", away: "Napoli" }, { md: 21, home: "Newcastle United", away: "Arsenal" }, { md: 21, home: "Liverpool", away: "Chelsea" },
+    { md: 22, home: "Paris Saint-Germain", away: "FC Barcelona" }, { md: 22, home: "Real Madrid", away: "Juventus" }, { md: 22, home: "AC Milan", away: "Inter Milan" }, { md: 22, home: "Manchester City", away: "Borussia Dortmund" }, { md: 22, home: "Newcastle United", away: "Atlético Madrid" }, { md: 22, home: "Liverpool", away: "Napoli" }, { md: 22, home: "Chelsea", away: "Arsenal" },
+    { md: 23, home: "Real Madrid", away: "FC Barcelona" }, { md: 23, home: "AC Milan", away: "Paris Saint-Germain" }, { md: 23, home: "Manchester City", away: "Juventus" }, { md: 23, home: "Newcastle United", away: "Inter Milan" }, { md: 23, home: "Liverpool", away: "Borussia Dortmund" }, { md: 23, home: "Chelsea", away: "Atlético Madrid" }, { md: 23, home: "Arsenal", away: "Napoli" },
+    { md: 24, home: "AC Milan", away: "FC Barcelona" }, { md: 24, home: "Manchester City", away: "Real Madrid" }, { md: 24, home: "Newcastle United", away: "Paris Saint-Germain" }, { md: 24, home: "Liverpool", away: "Juventus" }, { md: 24, home: "Chelsea", away: "Inter Milan" }, { md: 24, home: "Arsenal", away: "Borussia Dortmund" }, { md: 24, home: "Napoli", away: "Atlético Madrid" },
+    { md: 25, home: "Manchester City", away: "FC Barcelona" }, { md: 25, home: "Newcastle United", away: "AC Milan" }, { md: 25, home: "Liverpool", away: "Real Madrid" }, { md: 25, home: "Chelsea", away: "Paris Saint-Germain" }, { md: 25, home: "Arsenal", away: "Juventus" }, { md: 25, home: "Napoli", away: "Inter Milan" }, { md: 25, home: "Atlético Madrid", away: "Borussia Dortmund" },
+    { md: 26, home: "Newcastle United", away: "FC Barcelona" }, { md: 26, home: "Liverpool", away: "Manchester City" }, { md: 26, home: "Chelsea", away: "AC Milan" }, { md: 26, home: "Arsenal", away: "Real Madrid" }, { md: 26, home: "Napoli", away: "Paris Saint-Germain" }, { md: 26, home: "Atlético Madrid", away: "Juventus" }, { md: 26, home: "Borussia Dortmund", away: "Inter Milan" }
+  ];
+
+  function formatDate(date) {
+    const months = ['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${months[date.getMonth()]} ${date.getDate()}`;
+  }
+
+  const fixturesWithDates = [];
+  let startDate = new Date(2026, 3, 25);
+  let currentMd = 13;
+  for (let f of fixtureList) {
+    if (f.md !== currentMd) {
+      startDate.setDate(startDate.getDate() + 1);
+      currentMd = f.md;
+    }
+    fixturesWithDates.push({
+      md: f.md,
+      home: f.home,
+      away: f.away,
+      date: formatDate(startDate),
+      homePlayer: playerMap[f.home] || "",
+      awayPlayer: playerMap[f.away] || ""
+    });
+  }
+
+  // RESULTS_DATA: ALL MD13 matches at the top
+  const RESULTS_DATA = [
+    { matchText: "Barcelona 3 - 0 Newcastle United (Forfeited on Agreement)", md: 13 },
+    { matchText: "Liverpool 2 - 0 Manchester City", md: 13 },
+    { matchText: "Chelsea 3 - 1 AC Milan", md: 13 },
+    { matchText: "Juventus F - F Atletico Madrid (No Contest)", md: 13 },
+    { matchText: "Inter Milan 3 - 2 Dortmund", md: 13 },
+    { matchText: "Napoli 1 - 1 PSG", md: 13 },
+    { matchText: "Real Madrid 3 - 2 Arsenal", md: 13 },
+    { matchText: "Dortmund 3 - 0 Atletico Madrid (Forfeited - No Reply)", md: 12 },
+    { matchText: "Real Madrid 1 - 1 Liverpool", md: 12 },
+    { matchText: "Juventus 0 - 3 Arsenal (Forfeited - No Reply)", md: 12 },
+    { matchText: "Barcelona 3 - 0 Manchester City (Forfeited on Agreement)", md: 12 },
+    { matchText: "Napoli 4 - 4 Inter Milan", md: 12 },
+    { matchText: "Newcastle 3 - 1 AC Milan", md: 12 },
+    { matchText: "PSG 0 - 0 Chelsea", md: 12 },
+    { matchText: "PSG 3 - 0 Newcastle United (Forfeited on Agreement)", md: 10 },
+    { matchText: "AC Milan 1 - 3 Barcelona", md: 10 },
+    { matchText: "Liverpool 3 - 0 Juventus (Forfeited - Late Reply)", md: 10 },
+    { matchText: "Real Madrid 3 - 0 Manchester City", md: 11 },
+    { matchText: "Arsenal 1 - 0 Dortmund", md: 11 },
+    { matchText: "Inter Milan 2 - 6 Chelsea", md: 10 },
+    { matchText: "Napoli 0 - 1 Atletico Madrid", md: 10 },
+    { matchText: "Liverpool 1 - 2 Dortmund", md: 10 },
+    { matchText: "PSG 2 - 1 AC Milan", md: 10 },
+    { matchText: "Real Madrid 1 - 0 Barcelona", md: 10 },
+    { matchText: "Arsenal 5 - 0 Napoli", md: 10 },
+    { matchText: "Atletico Madrid 2 - 4 Chelsea", md: 10 },
+    { matchText: "Manchester City 3 - 1 Juventus", md: 10 },
+    { matchText: "Inter Milan 2 - 0 Newcastle United", md: 10 },
+    { matchText: "Real Madrid 3 - 0 Juventus (Forfeited - No Reply)", md: 9 },
+    { matchText: "Manchester City 2 - 0 Dortmund", md: 9 },
+    { matchText: "Liverpool 1 - 2 Napoli", md: 9 },
+    { matchText: "Newcastle United 1 - 2 Atletico Madrid", md: 9 },
+    { matchText: "Arsenal 1 - 4 Chelsea", md: 9 },
+    { matchText: "Barcelona 0 - 0 PSG", md: 9 },
+    { matchText: "Inter Milan 1 - 2 AC Milan", md: 9 },
+    { matchText: "Atletico Madrid F - F AC Milan (No Contest)", md: 8 },
+    { matchText: "Barcelona 3 - 0 Juventus (Forfeited - No Reply)", md: 8 },
+    { matchText: "Manchester City 0 - 1 Napoli", md: 8 },
+    { matchText: "Real Madrid 1 - 0 Dortmund", md: 8 },
+    { matchText: "Newcastle United 1 - 6 Arsenal", md: 8 },
+    { matchText: "Liverpool 0 - 0 Chelsea", md: 8 },
+    { matchText: "Inter Milan 3 - 3 PSG", md: 8 },
+    { matchText: "Real Madrid 3 - 2 Napoli", md: 7 },
+    { matchText: "Arsenal 0 - 0 AC Milan", md: 7 },
+    { matchText: "Liverpool 3 - 0 Newcastle United", md: 7 },
+    { matchText: "Manchester City 1 - 1 Chelsea", md: 7 },
+    { matchText: "Dortmund 3 - 0 Juventus (Forfeited - No Reply)", md: 7 },
+    { matchText: "PSG 3 - 0 Atletico Madrid (Forfeited - No Reply)", md: 7 },
+    { matchText: "Barcelona 3 - 0 Inter Milan (Forfeited - Late Reply)", md: 7 }
+  ];
+
+  const allTeamsSet = new Set();
+  fixturesWithDates.forEach(f => { allTeamsSet.add(f.home); allTeamsSet.add(f.away); });
+  const allTeams = Array.from(allTeamsSet).sort();
+
+  let currentView = "team";
+  let showFormArrows = false;
+  let showLast5 = true;
+  let popup = null;
+
+  function renderLeagueTable() {
+    const tbody = document.getElementById("leagueTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    LEAGUE_DATA.forEach((team, idx) => {
+      const row = tbody.insertRow();
+      let barClass = "";
+      if (team.pos >= 1 && team.pos <= 4) barClass = "blue-bar-vertical";
+      else if (team.pos >= 5 && team.pos <= 8) barClass = "orange-bar-vertical";
+      else if (team.pos >= 9 && team.pos <= 12) barClass = "green-bar-vertical";
+      
+      if (team.pos === 1) row.classList.add("dashed-separator-gold");
+      else if (team.pos === 8) row.classList.add("dashed-separator-white");
+      else if (team.pos === 12) row.classList.add("dashed-separator-red");
+      
+      const posCell = row.insertCell(0);
+      posCell.className = "rank-cell";
+      if (barClass) posCell.innerHTML = `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${team.pos}</div>`;
+      else posCell.innerText = team.pos;
+
+      let displayName = team.club;
+      if (currentView === "player") displayName = playerMap[team.club] || team.club;
+      
+      let clubHtml = '';
+      if (showFormArrows) {
+        const latest = getLatest(team.club);
+        if (latest === "W") clubHtml += '<span class="arrow-up">↑</span> ';
+        else if (latest === "L") clubHtml += '<span class="arrow-down">↓</span> ';
+        else if (latest === "D") clubHtml += '<span class="arrow-side">→</span> ';
+        else if (latest === "WF") clubHtml += '<span class="arrow-up">↑</span> ';
+        else if (latest === "LF") clubHtml += '<span class="arrow-down">↓</span> ';
+        else clubHtml += '<span style="opacity:0.3; width:24px; display:inline-block;">—</span> ';
+      }
+      
+      let iconHtml = '';
+      if (team.club === "Arsenal") {
+        iconHtml = `<img class="team-icon" src="b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png" alt="Arsenal badge">`;
+      } else if (team.club === "AC Milan") {
+        iconHtml = `<img class="team-icon" src="44e0f58a-e5db-445b-9896-db22ea99b936.png" alt="AC Milan badge">`;
+      } else if (team.club === "PSG") {
+        iconHtml = `<img class="team-icon" src="4dea795d-a516-46ae-bd34-07a784693d80.png" alt="PSG badge">`;
+      } else if (team.club === "Barcelona") {
+        iconHtml = `<img class="team-icon" src="IMG_20260421_085117.jpg" alt="Barcelona badge">`;
+      } else if (team.club === "Inter Milan") {
+        iconHtml = `<img class="team-icon" src="IMG_20260421_092951.png" alt="Inter Milan badge">`;
+      } else if (team.club === "Atletico") {
+        iconHtml = `<img class="team-icon" src="IMG_20260421_093024.png" alt="Atletico Madrid badge">`;
+      } else if (team.club === "Newcastle") {
+        iconHtml = `<img class="team-icon" src="IMG_20260421_093046.png" alt="Newcastle badge">`;
+      } else if (team.club === "Napoli") {
+        iconHtml = `<img class="team-icon" src="IMG_20260421_100318.jpg" alt="Napoli badge">`;
+      } else if (team.club === "Chelsea") {
+        iconHtml = `<img class="team-icon" src="IMG_20260421_100354.jpg" alt="Chelsea badge">`;
+      } else if (team.club === "Dortmund") {
+        iconHtml = `<img class="team-icon" src="01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg" alt="Dortmund badge">`;
+      } else if (team.club === "Real Madrid") {
+        iconHtml = `<img class="team-icon" src="21259ea4-042f-48ff-902f-1e776d27fe58.jpeg" alt="Real Madrid badge">`;
+      } else if (team.club === "Man City") {
+        iconHtml = `<img class="team-icon" src="9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg" alt="Man City badge">`;
+      } else if (team.club === "Liverpool") {
+        iconHtml = `<img class="team-icon" src="269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg" alt="Liverpool badge">`;
+      } else if (team.club === "Juventus") {
+        iconHtml = `<img class="team-icon" src="IMG_20260421_151224.jpg" alt="Juventus badge">`;
+      }
+      
+      clubHtml += iconHtml + ' ' + displayName;
+      
+      row.insertCell(1).innerHTML = `<div class="team-name">${clubHtml}</div>`;
+      row.insertCell(2).innerText = team.p;
+      const gdValue = team.gd;
+      row.insertCell(3).innerText = gdValue > 0 ? `+${gdValue}` : `${gdValue}`;
+      const ptsCell = row.insertCell(4);
+      ptsCell.className = "pts-cell";
+      ptsCell.innerText = team.pts;
+
+      const last5Cell = row.insertCell(5);
+      if (showLast5) {
+        const last5 = getLast5WithBlanks(team.club);
+        const container = document.createElement("div");
+        container.className = "form-circles";
+        last5.forEach(res => {
+          const circle = document.createElement("span");
+          circle.className = "circle-result";
+          if (res === "W") { circle.classList.add("circle-win"); circle.innerHTML = "✓"; }
+          else if (res === "L") { circle.classList.add("circle-loss"); circle.innerHTML = "✗"; }
+          else if (res === "D") { circle.classList.add("circle-draw"); circle.innerHTML = "–"; }
+          else if (res === "F") { circle.classList.add("circle-forfeit-grey"); circle.innerHTML = "F"; }
+          else if (res === "WF") { circle.classList.add("circle-forfeit-win"); circle.innerHTML = "F"; }
+          else if (res === "LF") { circle.classList.add("circle-forfeit-loss"); circle.innerHTML = "F"; }
+          else { circle.classList.add("circle-blank"); circle.innerHTML = ""; }
+          container.appendChild(circle);
+        });
+        last5Cell.appendChild(container);
+      } else {
+        last5Cell.innerHTML = '';
+      }
+    });
+  }
+
+  const threeDotBtn = document.getElementById("threeDotBtn");
+  function closePopup() { if (popup) { popup.remove(); popup = null; } }
+  function togglePopup(e) {
+    e.stopPropagation();
+    if (popup) { closePopup(); return; }
+    const rect = threeDotBtn.getBoundingClientRect();
+    popup = document.createElement("div");
+    popup.className = "popup-menu";
+    popup.style.position = "absolute";
+    popup.style.top = (rect.bottom + window.scrollY + 5) + "px";
+    popup.style.left = (rect.left + window.scrollX - 60) + "px";
+    
+    const playersOpt = document.createElement("div");
+    playersOpt.innerText = currentView === "team" ? "Players" : "Team View";
+    playersOpt.onclick = () => {
+      currentView = currentView === "team" ? "player" : "team";
+      renderLeagueTable();
+      closePopup();
+    };
+    
+    const formOpt = document.createElement("div");
+    formOpt.innerText = showFormArrows ? "Hide Form" : "Show Form";
+    formOpt.onclick = () => {
+      showFormArrows = !showFormArrows;
+      renderLeagueTable();
+      closePopup();
+    };
+    
+    const last5Opt = document.createElement("div");
+    last5Opt.innerText = showLast5 ? "Hide Last 5" : "Show Last 5";
+    last5Opt.onclick = () => {
+      showLast5 = !showLast5;
+      renderLeagueTable();
+      closePopup();
+    };
+    
+    const calendarOpt = document.createElement("div");
+    calendarOpt.innerText = "Calendar";
+    calendarOpt.onclick = () => {
+      window.location.href = "calendar.html";
+      closePopup();
+    };
+    
+    const rulesOpt = document.createElement("div");
+    rulesOpt.innerText = "Rules";
+    rulesOpt.onclick = () => {
+      window.location.href = "rules.html";
+      closePopup();
+    };
+    
+    popup.appendChild(playersOpt);
+    popup.appendChild(formOpt);
+    popup.appendChild(last5Opt);
+    popup.appendChild(calendarOpt);
+    popup.appendChild(rulesOpt);
+    document.body.appendChild(popup);
+  }
+  threeDotBtn.addEventListener("click", togglePopup);
+  document.addEventListener("click", (e) => { if (popup && !popup.contains(e.target) && e.target !== threeDotBtn) closePopup(); });
+
+  function renderFixtures(filterText = "", filterTeam = "") {
+    const tbody = document.getElementById("fixturesTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    const lowerFilter = filterText.toLowerCase();
+    fixturesWithDates.forEach(f => {
+      let matchesSearch = true;
+      if (lowerFilter) {
+        matchesSearch = f.home.toLowerCase().includes(lowerFilter) || f.away.toLowerCase().includes(lowerFilter) ||
+                        f.homePlayer.toLowerCase().includes(lowerFilter) || f.awayPlayer.toLowerCase().includes(lowerFilter);
+      }
+      let matchesTeam = !filterTeam || f.home === filterTeam || f.away === filterTeam;
+      if (!matchesSearch || !matchesTeam) return;
+      const row = tbody.insertRow();
+      row.insertCell(0).innerHTML = `<span class="date-badge">${f.date}</span>`;
+      
+      const homeIcon = getTeamIconHtml(f.home, "inline-team-icon");
+      const awayIcon = getTeamIconHtml(f.away, "inline-team-icon");
+      row.insertCell(1).innerHTML = `<div class="fixture-icons">${homeIcon} <span style="margin:0 8px;">vs</span> ${awayIcon}</div>`;
+      row.insertCell(2).innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px;">MD ${f.md}</span>`;
+    });
+    if (tbody.rows.length === 0) { const r=tbody.insertRow(); r.insertCell(0).colSpan=3; r.cells[0].className="empty-message"; r.cells[0].innerText="No fixtures match."; }
+  }
+
+  function setupFilters() {
+    const searchInput = document.getElementById("searchInput");
+    const teamFilter = document.getElementById("teamFilter");
+    teamFilter.innerHTML = '<option value="">All Teams</option>';
+    allTeams.forEach(t => { const opt = document.createElement("option"); opt.value=t; opt.textContent=t; teamFilter.appendChild(opt); });
+    const update = () => renderFixtures(searchInput.value, teamFilter.value);
+    searchInput.addEventListener("input", update); teamFilter.addEventListener("change", update); update();
+  }
+
+  function renderResults() {
+    const tbody = document.getElementById("resultsTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    RESULTS_DATA.forEach(r => {
+      const row = tbody.insertRow();
+      let processedText = r.matchText;
+      const teamsToReplace = [
+        "Newcastle United", "Atletico Madrid", "Manchester City", "Paris Saint-Germain", "Borussia Dortmund",
+        "FC Barcelona", "Inter Milan", "Real Madrid", "AC Milan", "Atletico", "Newcastle",
+        "Arsenal", "Barcelona", "Chelsea", "Dortmund", "Juventus", "Liverpool", "Man City", "PSG", "Napoli"
+      ];
+      teamsToReplace.forEach(team => {
+        const regex = new RegExp(`\\b${team.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+        processedText = processedText.replace(regex, getTeamIconHtml(team, "inline-team-icon"));
+      });
+      processedText = processedText.replace(/\b(United|Madrid|City)\b/g, '');
+      processedText = processedText.replace(/\s+/g, ' ').trim();
+      
+      const isForfeit = r.matchText.includes("Forfeited") || r.matchText.includes("No Contest") || r.matchText.includes("F - F");
+      if (isForfeit) {
+        let forfeitText = "";
+        if (r.matchText.includes("No Contest")) forfeitText = "No Contest";
+        else if (r.matchText.includes("Forfeited - No Reply")) forfeitText = "Forfeited - No Reply";
+        else if (r.matchText.includes("Forfeited - Late Reply")) forfeitText = "Forfeited - Late Reply";
+        else if (r.matchText.includes("Forfeited on Agreement")) forfeitText = "Forfeited on Agreement";
+        else if (r.matchText.includes("F - F")) forfeitText = "No Contest";
+        row.insertCell(0).innerHTML = `<div class="result-with-forfeit"><strong>${processedText}</strong><div class="forfeit-text">${forfeitText}</div></div>`;
+      } else {
+        row.insertCell(0).innerHTML = `<strong>${processedText}</strong>`;
+      }
+      row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>`;
+    });
+  }
+
+  function setupCollapsible(headerId, contentId, iconId) {
+    const h=document.getElementById(headerId), c=document.getElementById(contentId), ic=document.getElementById(iconId);
+    if(!h||!c) return;
+    let collapsed=false;
+    h.addEventListener("click",()=>{ collapsed=!collapsed; if(collapsed){ c.classList.add("collapsed"); if(ic) ic.innerHTML="▶"; } else { c.classList.remove("collapsed"); if(ic) ic.innerHTML="▼"; } });
+  }
+
+  const hamburger=document.getElementById("hamburgerBtn"), modalOverlay=document.getElementById("modalOverlay"), closeBtn=document.getElementById("closeModalBtn");
+  function openModal(){ modalOverlay.classList.add("active"); }
+  function closeModal(){ modalOverlay.classList.remove("active"); }
+  hamburger.addEventListener("click",openModal); closeBtn.addEventListener("click",closeModal); modalOverlay.addEventListener("click",(e)=>{ if(e.target===modalOverlay) closeModal(); });
+
+  function init(){
+    renderLeagueTable(); renderResults(); setupFilters();
+    setupCollapsible("fixturesHeader","fixturesContent","fixturesToggleIcon");
+    setupCollapsible("resultsHeader","resultsContent","resultsToggleIcon");
+  }
+  init();
+</script>
+</body>
+</html>
