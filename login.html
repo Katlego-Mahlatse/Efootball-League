@@ -182,6 +182,53 @@
       font-size: 0.8rem;
       margin-top: 0.5rem;
     }
+    /* Continue dialog as an overlay */
+    .continue-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      visibility: hidden;
+    }
+    .continue-overlay.active {
+      visibility: visible;
+    }
+    .continue-card {
+      background: linear-gradient(135deg, #2d1b4e, #1f0f3a);
+      border: 2px solid #f5d742;
+      border-radius: 2rem;
+      padding: 2rem;
+      max-width: 350px;
+      width: 90%;
+      text-align: center;
+    }
+    .continue-card p {
+      margin-bottom: 1rem;
+      color: #f5e6ff;
+    }
+    .continue-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+    .continue-btn {
+      background: #6a3bb5;
+      border: 1px solid #f5d742;
+      color: #f5d742;
+      padding: 0.5rem 1rem;
+      border-radius: 2rem;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .continue-btn:hover {
+      background: #7e4acf;
+    }
     @media (max-width: 480px) {
       .auth-card { padding: 1.5rem; }
       .logo-area { font-size: 0.9rem; }
@@ -205,8 +252,8 @@
   </div>
 </div>
 
-<div class="auth-container">
-  <div class="auth-card">
+<div class="auth-container" id="authContainer">
+  <div class="auth-card" id="loginCard">
     <h2>LOGIN</h2>
     <form id="loginForm">
       <div class="input-group">
@@ -225,6 +272,17 @@
     </form>
     <div class="auth-footer">
       Don't have an account? <a href="signup.html">Create account</a>
+    </div>
+  </div>
+</div>
+
+<!-- Continue as dialog -->
+<div id="continueDialog" class="continue-overlay">
+  <div class="continue-card">
+    <p id="continueMessage"></p>
+    <div class="continue-buttons">
+      <button id="continueYesBtn" class="continue-btn">Continue</button>
+      <button id="continueNoBtn" class="continue-btn">Switch account</button>
     </div>
   </div>
 </div>
@@ -251,11 +309,45 @@
 
   const loginForm = document.getElementById('loginForm');
   const loginError = document.getElementById('loginError');
+  const loginEmail = document.getElementById('loginEmail');
+  const loginPassword = document.getElementById('loginPassword');
 
+  const continueDialog = document.getElementById('continueDialog');
+  const continueMessage = document.getElementById('continueMessage');
+  const continueYesBtn = document.getElementById('continueYesBtn');
+  const continueNoBtn = document.getElementById('continueNoBtn');
+
+  // Check for stored last user email
+  const lastUserEmail = localStorage.getItem('lastLoginEmail');
+
+  if (lastUserEmail) {
+    // Show continue dialog
+    continueMessage.innerText = `Welcome back, ${lastUserEmail}. Continue as this user?`;
+    continueDialog.classList.add('active');
+  }
+
+  // Continue as last user
+  continueYesBtn.onclick = () => {
+    continueDialog.classList.remove('active');
+    loginEmail.value = lastUserEmail;
+    loginEmail.disabled = true;  // Prevents editing, forces same email
+    loginForm.style.display = 'block';
+  };
+
+  // Switch account – clear stored email and show normal form
+  continueNoBtn.onclick = () => {
+    localStorage.removeItem('lastLoginEmail');
+    continueDialog.classList.remove('active');
+    loginEmail.disabled = false;
+    loginEmail.value = '';
+    loginForm.style.display = 'block';
+  };
+
+  // Normal login handler
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
+    const email = loginEmail.value.trim();
+    const password = loginPassword.value;
     loginError.textContent = '';
 
     if (!email || !password) {
@@ -266,6 +358,8 @@
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      // Store last used email
+      localStorage.setItem('lastLoginEmail', email);
       // Get user type from database
       const userRef = ref(db, `users/${user.uid}`);
       const snapshot = await get(userRef);
@@ -299,11 +393,11 @@
     }
   };
 
-  // Modal logic (same as index)
+  // Modal logic (hamburger)
   const hamburgerBtn = document.getElementById("hamburgerBtn");
   const modalOverlay = document.getElementById("modalOverlay");
   const closeModalBtn = document.getElementById("closeModalBtn");
-  // Modal overlay not present on this page; we skip to avoid errors.
+  // Modal overlay not present on this page; we just skip to avoid errors.
 </script>
 </body>
 </html>
