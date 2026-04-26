@@ -222,7 +222,6 @@
       font-size: 0.9rem;
       font-weight: 600;
     }
-    /* Bottom navbar - gold gradient */
     .bottom-navbar {
       position: fixed;
       bottom: 0;
@@ -303,13 +302,13 @@
   <div class="modal-content">
     <h3>TOURNAMENTS</h3>
     <div class="modal-options">
-      <a href="index.html" class="modal-option">PREMIER LEAGUE</a>
-      <a href="nations.html" class="modal-option">UEFA NATIONS LEAGUE</a>
-      <a href="uefa-champions-league.html" class="modal-option">UEFA CHAMPIONS LEAGUE</a>
-      <a href="fifa-club-world-cup.html" class="modal-option">FIFA CLUB WORLD CUP</a>
-      <a href="uefa-europa-league.html" class="modal-option">UEFA EUROPA LEAGUE</a>
-      <a href="uefa-conference-league.html" class="modal-option">UEFA CONFERENCE LEAGUE</a>
-      <a href="uefa-super-league.html" class="modal-option">UEFA SUPER CUP</a>
+      <a href="newpremier.html" class="modal-option">PREMIER LEAGUE</a>
+      <a href="newnations.html" class="modal-option">UEFA NATIONS LEAGUE</a>
+      <a href="newchampions.html" class="modal-option">UEFA CHAMPIONS LEAGUE</a>
+      <a href="newclubworldcup.html" class="modal-option">FIFA CLUB WORLD CUP</a>
+      <a href="neweuropa.html" class="modal-option">UEFA EUROPA LEAGUE</a>
+      <a href="newconference.html" class="modal-option">UEFA CONFERENCE LEAGUE</a>
+      <a href="newsupercup.html" class="modal-option">UEFA SUPER CUP</a>
       <a href="player-titles.html" class="modal-option">PLAYER TITLES</a>
       <a href="rules.html" class="modal-option">RULES</a>
       <a href="calendar.html" class="modal-option">CALENDAR</a>
@@ -385,13 +384,13 @@
   const db = getDatabase(app);
 
   const leagues = [
-    { name: "Premier League", icon: "images (14).png", redirect: "index.html" },
-    { name: "UEFA Nations League", icon: "IMG-20260425-WA4698.jpg", redirect: "nations.html" },
-    { name: "UEFA Champions League", icon: "images (15).png", redirect: "uefa-champions-league.html" },
-    { name: "FIFA Club World Cup", icon: "images - 2026-04-21T172601.589.jpeg", redirect: "fifa-club-world-cup.html" },
-    { name: "UEFA Europa League", icon: "uefa-europa-league-logo-on-transparent-background-free-vector.jpg", redirect: "uefa-europa-league.html" },
-    { name: "UEFA Conference League", icon: "images (16).png", redirect: "uefa-conference-league.html" },
-    { name: "UEFA Super Cup", icon: "images - 2026-04-21T172656.176.jpeg", redirect: "uefa-super-league.html" }
+    { name: "Premier League", icon: "images (14).png", redirect: "newpremier.html" },
+    { name: "UEFA Nations League", icon: "IMG-20260425-WA4698.jpg", redirect: "newnations.html" },
+    { name: "UEFA Champions League", icon: "images (15).png", redirect: "newchampions.html" },
+    { name: "FIFA Club World Cup", icon: "images - 2026-04-21T172601.589.jpeg", redirect: "newclubworldcup.html" },
+    { name: "UEFA Europa League", icon: "uefa-europa-league-logo-on-transparent-background-free-vector.jpg", redirect: "neweuropa.html" },
+    { name: "UEFA Conference League", icon: "images (16).png", redirect: "newconference.html" },
+    { name: "UEFA Super Cup", icon: "images - 2026-04-21T172656.176.jpeg", redirect: "newsupercup.html" }
   ];
 
   function renderLeagues() {
@@ -425,7 +424,6 @@
       window.location.href = "login.html";
       return;
     }
-    // Store last login email for future convenience
     if (user.email) localStorage.setItem('lastLoginEmail', user.email);
     const userRef = ref(db, `users/${user.uid}`);
     const snapshot = await get(userRef);
@@ -434,7 +432,6 @@
     renderLeagues();
   });
 
-  // Modal logic
   const hamburgerBtn = document.getElementById("hamburgerBtn");
   const modalOverlay = document.getElementById("modalOverlay");
   const closeModalBtn = document.getElementById("closeModalBtn");
@@ -449,6 +446,8 @@
     logoutModalBtn.addEventListener("click", async () => {
       try {
         await signOut(auth);
+        localStorage.removeItem('lastLoginEmail');
+        localStorage.removeItem('lastLoginPassword');
         window.location.href = "login.html";
       } catch (error) {
         console.error("Logout error:", error);
