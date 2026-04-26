@@ -103,9 +103,33 @@
       border-radius: 2rem;
       border: 1px solid rgba(245, 215, 66, 0.4);
       padding: 2rem;
-      max-width: 420px;
+      max-width: 450px;
       width: 100%;
       text-align: center;
+    }
+    .role-selector {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .role-btn {
+      flex: 1;
+      background: rgba(106, 59, 181, 0.5);
+      border: 1px solid #f5d742;
+      border-radius: 2rem;
+      padding: 0.6rem;
+      font-weight: bold;
+      color: #f5e6ff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .role-btn.active {
+      background: #6a3bb5;
+      color: #f5d742;
+      box-shadow: 0 0 6px #f5d742;
+    }
+    .role-btn:hover {
+      background: #7e4acf;
     }
     .auth-card h2 {
       color: #f5d742;
@@ -232,6 +256,7 @@
     @media (max-width: 480px) {
       .auth-card { padding: 1.5rem; }
       .logo-area { font-size: 0.9rem; }
+      .role-btn { font-size: 0.8rem; }
     }
   </style>
 </head>
@@ -254,6 +279,10 @@
 
 <div class="auth-container" id="authContainer">
   <div class="auth-card" id="loginCard">
+    <div class="role-selector">
+      <div id="playerRoleBtn" class="role-btn active">👤 Player</div>
+      <div id="adminRoleBtn" class="role-btn">👑 Admin</div>
+    </div>
     <h2>LOGIN</h2>
     <form id="loginForm">
       <div class="input-group">
@@ -266,6 +295,10 @@
           <input type="password" id="loginPassword" class="auth-input" placeholder="Enter password" required>
           <button type="button" class="toggle-password" onclick="togglePassword('loginPassword')">Show</button>
         </div>
+      </div>
+      <div id="adminKeyGroup" class="input-group" style="display: none;">
+        <label>Admin Key</label>
+        <input type="password" id="adminKey" class="auth-input" placeholder="Required for admin login">
       </div>
       <button type="submit" class="btn-primary">Login</button>
       <div id="loginError" class="error-msg"></div>
@@ -306,6 +339,26 @@
   const auth = getAuth(app);
   const db = getDatabase(app);
 
+  const ADMIN_KEY = "@admin#123!";
+  let selectedRole = "player"; // 'player' or 'admin'
+
+  const playerRoleBtn = document.getElementById("playerRoleBtn");
+  const adminRoleBtn = document.getElementById("adminRoleBtn");
+  const adminKeyGroup = document.getElementById("adminKeyGroup");
+
+  playerRoleBtn.addEventListener("click", () => {
+    selectedRole = "player";
+    playerRoleBtn.classList.add("active");
+    adminRoleBtn.classList.remove("active");
+    adminKeyGroup.style.display = "none";
+  });
+  adminRoleBtn.addEventListener("click", () => {
+    selectedRole = "admin";
+    adminRoleBtn.classList.add("active");
+    playerRoleBtn.classList.remove("active");
+    adminKeyGroup.style.display = "block";
+  });
+
   const loginForm = document.getElementById('loginForm');
   const loginError = document.getElementById('loginError');
   const loginEmail = document.getElementById('loginEmail');
@@ -326,9 +379,18 @@
       const userRef = ref(db, `users/${userCredential.user.uid}`);
       const snapshot = await get(userRef);
       const userData = snapshot.val();
-      const isAdmin = userData && userData.role === 'admin';
+      const isAdminFromDb = userData && userData.role === 'admin';
+      // If user selected admin but DB says player, optionally reject
+      if (selectedRole === "admin" && !isAdminFromDb) {
+        loginError.textContent = "This account is not an admin account.";
+        return false;
+      }
+      if (selectedRole === "player" && isAdminFromDb) {
+        loginError.textContent = "This account is an admin account. Please use admin login.";
+        return false;
+      }
       if (redirect) {
-        if (isAdmin) {
+        if (isAdminFromDb) {
           window.location.href = 'admindash.html';
         } else {
           window.location.href = 'dashboard.html';
@@ -336,10 +398,12 @@
       }
       return true;
     } catch (error) {
-      console.error("Auto login failed", error);
-      // Clear stored credentials if they are invalid
-      localStorage.removeItem('lastLoginEmail');
-      localStorage.removeItem('lastLoginPassword');
+      console.error("Login failed", error);
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+        loginError.textContent = 'Invalid email or password.';
+      } else {
+        loginError.textContent = error.message;
+      }
       return false;
     }
   }
@@ -353,11 +417,7 @@
     continueDialog.classList.add('active');
     continueYesBtn.onclick = async () => {
       continueDialog.classList.remove('active');
-      const success = await performLogin(storedEmail, storedPassword, true);
-      if (!success) {
-        loginError.textContent = 'Auto‑login failed. Please log in manually.';
-        loginForm.style.display = 'block';
-      }
+      await performLogin(storedEmail, storedPassword, true);
     };
     continueNoBtn.onclick = () => {
       localStorage.removeItem('lastLoginEmail');
@@ -366,6 +426,7 @@
       loginEmail.disabled = false;
       loginEmail.value = '';
       loginPassword.value = '';
+      document.getElementById('adminKey').value = '';
       loginForm.style.display = 'block';
     };
   } else {
@@ -377,9 +438,15 @@
     e.preventDefault();
     const email = loginEmail.value.trim();
     const password = loginPassword.value;
+    const adminKeyValue = document.getElementById('adminKey').value.trim();
     loginError.textContent = '';
+
     if (!email || !password) {
       loginError.textContent = 'Please fill in all fields.';
+      return;
+    }
+    if (selectedRole === "admin" && adminKeyValue !== ADMIN_KEY) {
+      loginError.textContent = 'Invalid admin key.';
       return;
     }
     await performLogin(email, password, true);
