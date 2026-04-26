@@ -224,6 +224,10 @@
           <button type="button" class="toggle-password" onclick="togglePassword('signupPassword')">Show</button>
         </div>
       </div>
+      <div class="input-group">
+        <label>Admin Key (optional)</label>
+        <input type="password" id="adminKey" class="auth-input" placeholder="Only if you are an admin">
+      </div>
       <button type="submit" class="btn-primary">Create Account</button>
       <div id="signupError" class="error-msg"></div>
     </form>
@@ -236,6 +240,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
@@ -250,15 +255,19 @@
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const db = getDatabase(app);
 
   const signupForm = document.getElementById('signupForm');
   const signupError = document.getElementById('signupError');
+
+  const ADMIN_KEY = "@admin#123";
 
   signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('signupEmail').value.trim();
     const username = document.getElementById('signupUsername').value.trim();
     const password = document.getElementById('signupPassword').value;
+    const adminKey = document.getElementById('adminKey').value.trim();
     signupError.textContent = '';
 
     if (!email || !username || !password) {
@@ -270,11 +279,33 @@
       return;
     }
 
+    // Determine role
+    let role = 'player';
+    if (adminKey === ADMIN_KEY) {
+      role = 'admin';
+    } else if (adminKey !== '') {
+      signupError.textContent = 'Invalid admin key.';
+      return;
+    }
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      // Update profile with username (displayName)
       await updateProfile(userCredential.user, { displayName: username });
-      window.location.href = 'login.html';
+      // Store user info in Realtime Database
+      const userRef = ref(db, `users/${userCredential.user.uid}`);
+      await set(userRef, {
+        uid: userCredential.user.uid,
+        email: email,
+        username: username,
+        role: role,
+        createdAt: Date.now()
+      });
+      // Redirect based on role
+      if (role === 'admin') {
+        window.location.href = 'admindash.html';
+      } else {
+        window.location.href = 'login.html';
+      }
     } catch (error) {
       if (error.code === 'auth/email-already-in-use') {
         signupError.textContent = 'This email is already registered. Please login.';
