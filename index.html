@@ -533,7 +533,7 @@
       margin-top: 4px;
     }
 
-    /* New Juventus announcement block */
+    /* Juventus announcement block */
     .juventus-announcement {
       text-align: center;
       background: rgba(45, 25, 75, 0.85);
@@ -560,8 +560,20 @@
       font-size: 1rem;
       line-height: 1.4;
       max-width: 800px;
-      margin: 0 auto 1.5rem auto;
+      margin: 0 auto 1rem auto;
       color: #f0eaff;
+    }
+    .article-link {
+      color: #3b82f6;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .juventus-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
     }
     .juventus-btn {
       background: #6a3bb5;
@@ -632,7 +644,7 @@
     <div class="dots-container" id="dotsContainer"></div>
   </div>
 
-  <!-- PREMIER LEAGUE TABLE CARD -->
+  <!-- PREMIER LEAGUE TABLE -->
   <div class="card" style="margin-bottom:2rem">
     <div class="card-header" style="cursor:default;">
       <div class="card-header-left">
@@ -658,14 +670,17 @@
     </div>
   </div>
 
-  <!-- JUVENTUS ANNOUNCEMENT BLOCK (added between table and fixtures) -->
+  <!-- JUVENTUS ANNOUNCEMENT BLOCK -->
   <div class="juventus-announcement">
     <img class="juventus-logo" src="IMG_20260421_151224.jpg" alt="Juventus logo">
     <div class="juventus-title">JUVENTUS</div>
     <div class="juventus-description">
-      Due to failure to oblige to article 6, Lawree has been sacked as the manager for Juventus. A interim manager will be appointed to represent Juventus for the rest of the season and a knockout tournament may be held if necessary.
+      Due to failure to oblige to <span class="article-link" onclick="location.href='rules.html'">Article 6</span> and <span class="article-link" onclick="location.href='rules.html'">Article 2</span>, Lawree has been sacked as the manager for Juventus. An interim manager will be appointed to represent Juventus for the rest of the season and a knockout tournament may be held if necessary. Juventus games will be postponed till further notice, Thank You.
     </div>
-    <a href="juventus.html" class="juventus-btn">VIEW MANAGER SELECTION TOURNAMENT</a>
+    <div class="juventus-buttons">
+      <a href="juventus.html" class="juventus-btn">VIEW MANAGER SELECTION TOURNAMENT</a>
+      <a href="rules.html" class="juventus-btn">VIEW RULES</a>
+    </div>
   </div>
 
   <!-- FIXTURES CARD -->
@@ -677,7 +692,7 @@
         <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
       </div>
       <div class="scrollable-table">
-        <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
+        <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th><tr></thead><tbody id="fixturesTableBody"></tbody></table>
       </div>
     </div>
   </div>
@@ -711,7 +726,7 @@
   function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
   if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-  // UPDATED LEAGUE_DATA after MD15 (corrected: PSG 1-1 Juventus)
+  // LEAGUE DATA after MD15
   const LEAGUE_DATA = [
     { pos: 1, club: "Real Madrid", p: 15, gd: 22, pts: 43 },
     { pos: 2, club: "Liverpool", p: 15, gd: 27, pts: 35 },
@@ -780,9 +795,8 @@
     return teamName;
   }
 
-  // Updated allResultsOrder with corrected MD15
+  // allResultsOrder (unchanged, already correct after MD15)
   const allResultsOrder = [
-    // Older matches (MD7 to MD14)
     { type: "win", winner: "Real Madrid", loser: "Napoli" },
     { type: "draw", teams: ["Arsenal","AC Milan"] },
     { type: "win", winner: "Liverpool", loser: "Newcastle" },
@@ -818,7 +832,6 @@
     { type: "forfeit_win", winner: "PSG", loser: "Newcastle" },
     { type: "win", winner: "Barcelona", loser: "AC Milan" },
     { type: "forfeit_win", winner: "Liverpool", loser: "Juventus" },
-    // MD12 matches
     { type: "draw", teams: ["PSG","Chelsea"] },
     { type: "win", winner: "Newcastle", loser: "AC Milan" },
     { type: "draw", teams: ["Napoli","Inter Milan"] },
@@ -826,7 +839,6 @@
     { type: "forfeit_win", winner: "Arsenal", loser: "Juventus" },
     { type: "draw", teams: ["Real Madrid","Liverpool"] },
     { type: "forfeit_win", winner: "Dortmund", loser: "Atletico" },
-    // MD13 matches
     { type: "win", winner: "Real Madrid", loser: "Arsenal" },
     { type: "draw", teams: ["Napoli","PSG"] },
     { type: "win", winner: "Inter Milan", loser: "Dortmund" },
@@ -834,7 +846,6 @@
     { type: "win", winner: "Chelsea", loser: "AC Milan" },
     { type: "win", winner: "Liverpool", loser: "Man City" },
     { type: "forfeit_win", winner: "Barcelona", loser: "Newcastle" },
-    // MD14 matches
     { type: "forfeit_win", winner: "Liverpool", loser: "Barcelona" },
     { type: "forfeit_win", winner: "Arsenal", loser: "Man City" },
     { type: "forfeit_win", winner: "Real Madrid", loser: "Atletico" },
@@ -842,7 +853,7 @@
     { type: "forfeit_win", winner: "AC Milan", loser: "Napoli" },
     { type: "forfeit_win", winner: "Inter Milan", loser: "Juventus" },
     { type: "forfeit_win", winner: "Chelsea", loser: "Newcastle" },
-    // ALL MD15 matches (most recent)
+    // MD15
     { type: "win", winner: "Liverpool", loser: "Arsenal" },
     { type: "win", winner: "Napoli", loser: "Newcastle" },
     { type: "win", winner: "Dortmund", loser: "AC Milan" },
@@ -880,7 +891,7 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // Fixture list: removed MD15 matches (remainder from MD16)
+  // Fixture list (original, unchanged)
   const fixtureList = [
     { md: 16, home: "Arsenal", away: "FC Barcelona" }, { md: 16, home: "Napoli", away: "Chelsea" }, { md: 16, home: "Atlético Madrid", away: "Liverpool" }, { md: 16, home: "Borussia Dortmund", away: "Newcastle United" }, { md: 16, home: "Inter Milan", away: "Manchester City" }, { md: 16, home: "Juventus", away: "AC Milan" }, { md: 16, home: "Paris Saint-Germain", away: "Real Madrid" },
     { md: 17, home: "Napoli", away: "FC Barcelona" }, { md: 17, home: "Atlético Madrid", away: "Arsenal" }, { md: 17, home: "Borussia Dortmund", away: "Chelsea" }, { md: 17, home: "Inter Milan", away: "Liverpool" }, { md: 17, home: "Juventus", away: "Newcastle United" }, { md: 17, home: "Paris Saint-Germain", away: "Manchester City" }, { md: 17, home: "Real Madrid", away: "AC Milan" },
@@ -900,6 +911,7 @@
     return `${months[date.getMonth()]} ${date.getDate()}`;
   }
 
+  // Build fixturesWithDates, but for any fixture involving Juventus, set date to "POSTPONED-TBD"
   const fixturesWithDates = [];
   let startDate = new Date(2026, 3, 25);
   let currentMd = 13;
@@ -908,11 +920,16 @@
       startDate.setDate(startDate.getDate() + 1);
       currentMd = f.md;
     }
+    let dateStr = formatDate(startDate);
+    // If Juventus is involved, override date
+    if (f.home === "Juventus" || f.away === "Juventus") {
+      dateStr = "POSTPONED-TBD";
+    }
     fixturesWithDates.push({
       md: f.md,
       home: f.home,
       away: f.away,
-      date: formatDate(startDate),
+      date: dateStr,
       homePlayer: playerMap[f.home] || "",
       awayPlayer: playerMap[f.away] || ""
     });
@@ -993,30 +1010,25 @@
   let showLast5 = true;
   let popup = null;
 
-  function renderLeagueTable() {
+  function renderLeagueTable() { /* unchanged */ 
     const tbody = document.getElementById("leagueTableBody");
     if (!tbody) return;
     tbody.innerHTML = "";
-
     LEAGUE_DATA.forEach((team, idx) => {
       const row = tbody.insertRow();
       let barClass = "";
       if (team.pos >= 1 && team.pos <= 4) barClass = "blue-bar-vertical";
       else if (team.pos >= 5 && team.pos <= 8) barClass = "orange-bar-vertical";
       else if (team.pos >= 9 && team.pos <= 12) barClass = "green-bar-vertical";
-      
       if (team.pos === 1) row.classList.add("dashed-separator-gold");
       else if (team.pos === 8) row.classList.add("dashed-separator-white");
       else if (team.pos === 12) row.classList.add("dashed-separator-red");
-      
       const posCell = row.insertCell(0);
       posCell.className = "rank-cell";
       if (barClass) posCell.innerHTML = `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${team.pos}</div>`;
       else posCell.innerText = team.pos;
-
       let displayName = team.club;
       if (currentView === "player") displayName = playerMap[team.club] || team.club;
-      
       let clubHtml = '';
       if (showFormArrows) {
         const latest = getLatest(team.club);
@@ -1027,40 +1039,22 @@
         else if (latest === "LF") clubHtml += '<span class="arrow-down">↓</span> ';
         else clubHtml += '<span style="opacity:0.3; width:24px; display:inline-block;">—</span> ';
       }
-      
       let iconHtml = '';
-      if (team.club === "Arsenal") {
-        iconHtml = `<img class="team-icon" src="b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png" alt="Arsenal badge">`;
-      } else if (team.club === "AC Milan") {
-        iconHtml = `<img class="team-icon" src="44e0f58a-e5db-445b-9896-db22ea99b936.png" alt="AC Milan badge">`;
-      } else if (team.club === "PSG") {
-        iconHtml = `<img class="team-icon" src="4dea795d-a516-46ae-bd34-07a784693d80.png" alt="PSG badge">`;
-      } else if (team.club === "Barcelona") {
-        iconHtml = `<img class="team-icon" src="IMG_20260421_085117.jpg" alt="Barcelona badge">`;
-      } else if (team.club === "Inter Milan") {
-        iconHtml = `<img class="team-icon" src="IMG_20260421_092951.png" alt="Inter Milan badge">`;
-      } else if (team.club === "Atletico") {
-        iconHtml = `<img class="team-icon" src="IMG_20260421_093024.png" alt="Atletico Madrid badge">`;
-      } else if (team.club === "Newcastle") {
-        iconHtml = `<img class="team-icon" src="IMG_20260421_093046.png" alt="Newcastle badge">`;
-      } else if (team.club === "Napoli") {
-        iconHtml = `<img class="team-icon" src="IMG_20260421_100318.jpg" alt="Napoli badge">`;
-      } else if (team.club === "Chelsea") {
-        iconHtml = `<img class="team-icon" src="IMG_20260421_100354.jpg" alt="Chelsea badge">`;
-      } else if (team.club === "Dortmund") {
-        iconHtml = `<img class="team-icon" src="01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg" alt="Dortmund badge">`;
-      } else if (team.club === "Real Madrid") {
-        iconHtml = `<img class="team-icon" src="21259ea4-042f-48ff-902f-1e776d27fe58.jpeg" alt="Real Madrid badge">`;
-      } else if (team.club === "Man City") {
-        iconHtml = `<img class="team-icon" src="9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg" alt="Man City badge">`;
-      } else if (team.club === "Liverpool") {
-        iconHtml = `<img class="team-icon" src="269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg" alt="Liverpool badge">`;
-      } else if (team.club === "Juventus") {
-        iconHtml = `<img class="team-icon" src="IMG_20260421_151224.jpg" alt="Juventus badge">`;
-      }
-      
+      if (team.club === "Arsenal") iconHtml = `<img class="team-icon" src="b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png" alt="Arsenal badge">`;
+      else if (team.club === "AC Milan") iconHtml = `<img class="team-icon" src="44e0f58a-e5db-445b-9896-db22ea99b936.png" alt="AC Milan badge">`;
+      else if (team.club === "PSG") iconHtml = `<img class="team-icon" src="4dea795d-a516-46ae-bd34-07a784693d80.png" alt="PSG badge">`;
+      else if (team.club === "Barcelona") iconHtml = `<img class="team-icon" src="IMG_20260421_085117.jpg" alt="Barcelona badge">`;
+      else if (team.club === "Inter Milan") iconHtml = `<img class="team-icon" src="IMG_20260421_092951.png" alt="Inter Milan badge">`;
+      else if (team.club === "Atletico") iconHtml = `<img class="team-icon" src="IMG_20260421_093024.png" alt="Atletico Madrid badge">`;
+      else if (team.club === "Newcastle") iconHtml = `<img class="team-icon" src="IMG_20260421_093046.png" alt="Newcastle badge">`;
+      else if (team.club === "Napoli") iconHtml = `<img class="team-icon" src="IMG_20260421_100318.jpg" alt="Napoli badge">`;
+      else if (team.club === "Chelsea") iconHtml = `<img class="team-icon" src="IMG_20260421_100354.jpg" alt="Chelsea badge">`;
+      else if (team.club === "Dortmund") iconHtml = `<img class="team-icon" src="01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg" alt="Dortmund badge">`;
+      else if (team.club === "Real Madrid") iconHtml = `<img class="team-icon" src="21259ea4-042f-48ff-902f-1e776d27fe58.jpeg" alt="Real Madrid badge">`;
+      else if (team.club === "Man City") iconHtml = `<img class="team-icon" src="9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg" alt="Man City badge">`;
+      else if (team.club === "Liverpool") iconHtml = `<img class="team-icon" src="269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg" alt="Liverpool badge">`;
+      else if (team.club === "Juventus") iconHtml = `<img class="team-icon" src="IMG_20260421_151224.jpg" alt="Juventus badge">`;
       clubHtml += iconHtml + ' ' + displayName;
-      
       row.insertCell(1).innerHTML = `<div class="team-name">${clubHtml}</div>`;
       row.insertCell(2).innerText = team.p;
       const gdValue = team.gd;
@@ -1068,7 +1062,6 @@
       const ptsCell = row.insertCell(4);
       ptsCell.className = "pts-cell";
       ptsCell.innerText = team.pts;
-
       const last5Cell = row.insertCell(5);
       if (showLast5) {
         const last5 = getLast5WithBlanks(team.club);
@@ -1112,7 +1105,6 @@
       renderLeagueTable();
       closePopup();
     };
-    
     const formOpt = document.createElement("div");
     formOpt.innerText = showFormArrows ? "Hide Form" : "Show Form";
     formOpt.onclick = () => {
@@ -1120,7 +1112,6 @@
       renderLeagueTable();
       closePopup();
     };
-    
     const last5Opt = document.createElement("div");
     last5Opt.innerText = showLast5 ? "Hide Last 5" : "Show Last 5";
     last5Opt.onclick = () => {
@@ -1128,21 +1119,12 @@
       renderLeagueTable();
       closePopup();
     };
-    
     const calendarOpt = document.createElement("div");
     calendarOpt.innerText = "Calendar";
-    calendarOpt.onclick = () => {
-      window.location.href = "calendar.html";
-      closePopup();
-    };
-    
+    calendarOpt.onclick = () => { window.location.href = "calendar.html"; closePopup(); };
     const rulesOpt = document.createElement("div");
     rulesOpt.innerText = "Rules";
-    rulesOpt.onclick = () => {
-      window.location.href = "rules.html";
-      closePopup();
-    };
-    
+    rulesOpt.onclick = () => { window.location.href = "rules.html"; closePopup(); };
     popup.appendChild(playersOpt);
     popup.appendChild(formOpt);
     popup.appendChild(last5Opt);
@@ -1168,7 +1150,6 @@
       if (!matchesSearch || !matchesTeam) return;
       const row = tbody.insertRow();
       row.insertCell(0).innerHTML = `<span class="date-badge">${f.date}</span>`;
-      
       const homeIcon = getTeamIconHtml(f.home, "inline-team-icon");
       const awayIcon = getTeamIconHtml(f.away, "inline-team-icon");
       row.insertCell(1).innerHTML = `<div class="fixture-icons">${homeIcon} <span style="margin:0 8px;">vs</span> ${awayIcon}</div>`;
@@ -1204,7 +1185,6 @@
       });
       processedText = processedText.replace(/\b(United|Madrid|City)\b/g, '');
       processedText = processedText.replace(/\s+/g, ' ').trim();
-      
       const isForfeit = r.matchText.includes("Forfeited") || r.matchText.includes("No Contest") || r.matchText.includes("F - F");
       if (isForfeit) {
         let forfeitText = "";
