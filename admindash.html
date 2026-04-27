@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>Admin Dashboard · eFootball 412</title>
   <style>
-    /* (Full CSS – unchanged from your previous admindash.html) */
+    /* Same styling as dashboard.html – only difference is the league redirects (admin prefixed) */
     * {
       margin: 0;
       padding: 0;
@@ -154,17 +154,27 @@
     .close-modal:hover {
       background: #2d0f5a;
     }
+
     .dashboard-container {
       max-width: 1200px;
       margin: 0 auto;
       padding: 2rem 1.5rem;
     }
+
     .profile-section {
       text-align: center;
       margin-bottom: 2.5rem;
       animation: fadeIn 0.5s ease;
     }
-    .profile-icon {
+    .profile-picture {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #f5d742;
+      margin-bottom: 0.8rem;
+    }
+    .fallback-icon {
       width: 100px;
       height: 100px;
       background: #6a3bb5;
@@ -173,9 +183,9 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 1rem;
+      margin-bottom: 0.8rem;
     }
-    .profile-icon svg {
+    .fallback-icon svg {
       width: 60px;
       height: 60px;
       fill: #f5d742;
@@ -190,6 +200,7 @@
       border-radius: 40px;
       backdrop-filter: blur(5px);
     }
+
     .leagues-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -223,6 +234,7 @@
       font-size: 0.9rem;
       font-weight: 600;
     }
+
     .bottom-navbar {
       position: fixed;
       bottom: 0;
@@ -259,13 +271,33 @@
       display: block;
     }
     @media (max-width: 680px) {
-      .leagues-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 1rem; }
-      .league-icon { width: 60px; height: 60px; }
-      .profile-icon { width: 80px; height: 80px; }
-      .profile-icon svg { width: 45px; height: 45px; }
-      .username { font-size: 1.4rem; }
-      .bottom-nav-icon { width: 45px; height: 45px; }
-      .bottom-nav-icon svg { width: 24px; height: 24px; }
+      .leagues-grid {
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 1rem;
+      }
+      .league-icon {
+        width: 60px;
+        height: 60px;
+      }
+      .profile-picture, .fallback-icon {
+        width: 80px;
+        height: 80px;
+      }
+      .fallback-icon svg {
+        width: 45px;
+        height: 45px;
+      }
+      .username {
+        font-size: 1.4rem;
+      }
+      .bottom-nav-icon {
+        width: 45px;
+        height: 45px;
+      }
+      .bottom-nav-icon svg {
+        width: 24px;
+        height: 24px;
+      }
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(-10px); }
@@ -301,14 +333,10 @@
 
 <div class="dashboard-container">
   <div class="profile-section">
-    <div class="profile-icon">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="8" r="4" stroke="#F5D742" stroke-width="2"/>
-        <path d="M5 20v-2a7 7 0 0 1 14 0v2" stroke="#F5D742" stroke-width="2"/>
-      </svg>
-    </div>
+    <div id="profilePictureContainer"></div>
     <div class="username" id="usernameDisplay">Loading...</div>
   </div>
+
   <div class="leagues-grid" id="leaguesGrid"></div>
 </div>
 
@@ -389,11 +417,19 @@
 
   function updateUserUI(user, userData) {
     const usernameSpan = document.getElementById("usernameDisplay");
+    const container = document.getElementById("profilePictureContainer");
     if (user) {
       const displayName = userData?.username || user.displayName || user.email?.split('@')[0] || "Admin";
       usernameSpan.textContent = displayName;
+      const photoURL = userData?.photoURL;
+      if (photoURL) {
+        container.innerHTML = `<img class="profile-picture" src="${photoURL}" alt="Profile">`;
+      } else {
+        container.innerHTML = `<div class="fallback-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" stroke="#F5D742" stroke-width="2"/><path d="M5 20v-2a7 7 0 0 1 14 0v2" stroke="#F5D742" stroke-width="2"/></svg></div>`;
+      }
     } else {
       usernameSpan.textContent = "Not logged in";
+      container.innerHTML = `<div class="fallback-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" stroke="#F5D742" stroke-width="2"/><path d="M5 20v-2a7 7 0 0 1 14 0v2" stroke="#F5D742" stroke-width="2"/></svg></div>`;
     }
   }
 
