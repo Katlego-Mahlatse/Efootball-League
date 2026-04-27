@@ -163,8 +163,9 @@
     .user-avatar {
       width: 48px;
       height: 48px;
-      background: #f5d742;
       border-radius: 50%;
+      object-fit: cover;
+      background: #f5d742;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -439,8 +440,16 @@
         const isAdmin = user.role === 'admin';
         const div = document.createElement('div');
         div.className = 'user-item';
+        // Profile picture if available
+        const photoURL = user.photoURL;
+        let avatarHtml = '';
+        if (photoURL) {
+          avatarHtml = `<img class="user-avatar" src="${photoURL}" alt="avatar">`;
+        } else {
+          avatarHtml = `<div class="user-avatar" style="background:#f5d742; display:flex; align-items:center; justify-content:center;">${firstChar}</div>`;
+        }
         div.innerHTML = `
-          <div class="user-avatar">${firstChar}</div>
+          ${avatarHtml}
           <span class="user-name">${escapeHtml(displayName)}${isAdmin ? ' <span class="admin-gear">⚙️</span>' : ''}</span>
         `;
         div.addEventListener('click', () => openChat(user));
@@ -523,7 +532,6 @@
   // Authentication & user data
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
-      // Not logged in – redirect to login
       window.location.href = 'login.html';
       return;
     }
@@ -538,7 +546,7 @@
         uid: user.uid,
         email: user.email,
         username: username,
-        role: 'player', // default; admin would have been set during signup
+        role: 'player',
         createdAt: Date.now()
       });
     }
