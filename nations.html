@@ -221,6 +221,7 @@
       border: 1px solid rgba(245, 215, 66, 0.4);
       overflow: hidden;
       position: relative;
+      margin-bottom: 1rem;
     }
     .group-title {
       background: rgba(55, 35, 95, 0.8);
@@ -284,7 +285,21 @@
       padding: 0.4rem;
       border-bottom: 1px solid rgba(245, 215, 66, 0.2);
       color: #f0eaff;
+      vertical-align: middle;
     }
+    .pos-with-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .vertical-bar {
+      width: 4px;
+      height: 18px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+    .green-bar-vertical { background-color: #22c55e; }
+    .red-bar-vertical { background-color: #ef4444; }
     .team-name {
       display: flex;
       align-items: center;
@@ -307,6 +322,22 @@
       font-weight: 800;
       color: #f5d742;
       text-align: center;
+    }
+    .group-legend {
+      font-size: 0.65rem;
+      padding: 0.4rem;
+      background: rgba(20, 10, 40, 0.6);
+      margin-top: 0.3rem;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
     }
     .subheading {
       text-align: center;
@@ -421,14 +452,6 @@
 <body>
 
 <div class="gold-navbar">
-  <a href="chat.html" class="nav-icon-btn" id="chatBtn">
-    <svg class="chat-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z" fill="#F5D742" stroke="#F5D742" stroke-width="1.5"/>
-      <circle cx="8" cy="10" r="1.5" fill="#6A3BB5"/>
-      <circle cx="12" cy="10" r="1.5" fill="#6A3BB5"/>
-      <circle cx="16" cy="10" r="1.5" fill="#6A3BB5"/>
-    </svg>
-  </a>
   <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
 </div>
 
@@ -510,7 +533,9 @@
     "France": "🅿️",
     "Germany": "Zazo",
     "Argentina": "Izu",
-    "Spain": "Ntsiki"
+    "Spain": "Ntsiki",
+    "Croatia": "Oratile",
+    "Morocco": "Spectre007"
   };
 
   // ---------- Nations data (12 teams) ----------
@@ -548,18 +573,34 @@
     const container = document.getElementById(`group-table-${groupKey}`);
     if (!container) return;
     const teams = group.teams;
+    // Sort by position (currently 0,0,0 – still need to show 1,2,3)
     let html = `<table class="group-table"><thead><tr><th>Pos</th><th>Nation</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody>`;
     teams.forEach((team, idx) => {
+      const position = idx + 1;
+      let barClass = "";
+      if (position === 1 || position === 2) barClass = "green-bar-vertical";
+      else if (position === 3) barClass = "red-bar-vertical";
       const displayName = getDisplayName(team.name, usePlayerView);
       html += `<tr>
-        <td class="rank-cell">${idx + 1}</td>
+        <td class="rank-cell"><div class="pos-with-bar">${barClass ? `<span class="vertical-bar ${barClass}"></span>` : ""}${position}</div></td>
         <td><div class="team-name"><span class="country-emoji">${team.emoji}</span> ${displayName}</div></td>
         <td>0</td><td>0</td>
         <td class="pts-cell">0</td>
       </tr>`;
     });
-    html += `</tbody></table>`;
+    html += `</tbody><table>`;
     container.innerHTML = html;
+    // Add legend below the table
+    const legendDiv = document.createElement("div");
+    legendDiv.className = "group-legend";
+    legendDiv.innerHTML = `
+      <div class="legend-item"><span class="vertical-bar green-bar-vertical" style="display:inline-block; width:4px; height:16px;"></span> <span>1st & 2nd → Knockout stage</span></div>
+      <div class="legend-item"><span class="vertical-bar red-bar-vertical" style="display:inline-block; width:4px; height:16px;"></span> <span>3rd → Eliminated</span></div>
+    `;
+    // Remove any existing legend to avoid duplication
+    const existingLegend = container.parentNode.querySelector(".group-legend");
+    if (existingLegend) existingLegend.remove();
+    container.parentNode.appendChild(legendDiv);
   }
 
   function buildGroupCards() {
@@ -613,7 +654,7 @@
     });
   }
 
-  // ---------- Generate group fixtures ----------
+  // ---------- Generate group fixtures (unchanged) ----------
   function generateGroupFixtures() {
     const fixtures = [];
     const groupsKeys = ['A', 'B', 'C', 'D'];
@@ -637,13 +678,12 @@
   const groupFixturesRaw = generateGroupFixtures();
 
   function getDateForMatchday(md) {
-    const startDate = new Date(2026, 3, 27); // 27 April 2026
+    const startDate = new Date(2026, 3, 27);
     startDate.setDate(startDate.getDate() + (md - 1));
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return `${months[startDate.getMonth()]} ${startDate.getDate()}`;
   }
 
-  // Create the array and SORT BY MATCHDAY (MD)
   let groupFixtures = groupFixturesRaw.map(f => ({
     md: f.md,
     date: getDateForMatchday(f.md),
@@ -652,7 +692,6 @@
     group: f.group
   }));
 
-  // Sort by matchday (MD1, MD2, ...)
   groupFixtures.sort((a, b) => a.md - b.md);
 
   function getNationEmoji(nationName) {
@@ -689,7 +728,6 @@
     }
   }
 
-  // Knockout stage
   function renderKnockout() {
     const container = document.getElementById("knockoutBracket");
     if (!container) return;
@@ -715,7 +753,6 @@
     `;
   }
 
-  // Collapsible fixtures
   const fixturesHeader = document.getElementById("fixturesHeader");
   const fixturesContent = document.getElementById("fixturesContent");
   const fixturesToggleIcon = document.getElementById("fixturesToggleIcon");
