@@ -285,66 +285,6 @@
       border-bottom: 1px solid rgba(245, 215, 66, 0.2);
       color: #f0eaff;
     }
-    .group-emoji {
-      font-size: 1.2rem;
-      margin-right: 6px;
-    }
-    .knockout-stage {
-      margin-top: 1rem;
-      background: rgba(30, 15, 55, 0.6);
-      border-radius: 1.5rem;
-      padding: 1rem;
-      text-align: center;
-    }
-    .knockout-title {
-      font-size: 1.3rem;
-      font-weight: bold;
-      color: #f5d742;
-      margin-bottom: 1rem;
-    }
-    .bracket {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 1.5rem;
-    }
-    .round {
-      background: rgba(45, 25, 75, 0.7);
-      border-radius: 1rem;
-      padding: 0.8rem;
-      min-width: 180px;
-    }
-    .round h4 {
-      text-align: center;
-      color: #f5d742;
-      margin-bottom: 0.8rem;
-    }
-    .match {
-      background: rgba(20, 10, 40, 0.8);
-      margin-bottom: 0.6rem;
-      padding: 0.4rem;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      text-align: center;
-    }
-    .stats-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9rem;
-    }
-    .stats-table th {
-      text-align: left;
-      padding: 0.9rem 0.8rem 0.7rem 1.2rem;
-      background: rgba(55, 35, 95, 0.7);
-      border-bottom: 1px solid #f5d742;
-      color: #f5e6ff;
-    }
-    .stats-table td {
-      padding: 0.75rem 0.8rem 0.75rem 1.2rem;
-      border-bottom: 1px solid rgba(245, 215, 66, 0.2);
-      color: #f0eaff;
-      vertical-align: middle;
-    }
     .team-name {
       display: flex;
       align-items: center;
@@ -357,11 +297,6 @@
       width: 32px;
       text-align: center;
       display: inline-block;
-    }
-    .inline-emoji {
-      font-size: 1.2rem;
-      vertical-align: middle;
-      margin: 0 4px;
     }
     .rank-cell {
       font-weight: 700;
@@ -430,6 +365,49 @@
       flex-wrap: nowrap;
       white-space: nowrap;
     }
+    .inline-emoji {
+      font-size: 1.2rem;
+      vertical-align: middle;
+      margin: 0 4px;
+    }
+    .knockout-stage {
+      margin-top: 1rem;
+      background: rgba(30, 15, 55, 0.6);
+      border-radius: 1.5rem;
+      padding: 1rem;
+      text-align: center;
+    }
+    .knockout-title {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #f5d742;
+      margin-bottom: 1rem;
+    }
+    .bracket {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+    }
+    .round {
+      background: rgba(45, 25, 75, 0.7);
+      border-radius: 1rem;
+      padding: 0.8rem;
+      min-width: 180px;
+    }
+    .round h4 {
+      text-align: center;
+      color: #f5d742;
+      margin-bottom: 0.8rem;
+    }
+    .match {
+      background: rgba(20, 10, 40, 0.8);
+      margin-bottom: 0.6rem;
+      padding: 0.4rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      text-align: center;
+    }
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
       .group-card { min-width: 100%; }
@@ -473,6 +451,7 @@
 </div>
 
 <div class="dashboard">
+  <!-- GROUP TABLES (first) -->
   <div class="card">
     <div class="card-header" style="cursor:default;">
       <div class="card-header-left">
@@ -485,20 +464,7 @@
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-header" style="cursor:default;">
-      <div class="card-header-left">
-        <h2>🏆 KNOCKOUT STAGE</h2>
-      </div>
-    </div>
-    <div class="card-content">
-      <div class="knockout-stage" id="knockoutBracket"></div>
-    </div>
-  </div>
-
-  <div class="subheading">🏆 NATIONS LEAGUE DRAFT IN PROGRESS 🏆</div>
-
-  <!-- Fixtures Section -->
+  <!-- GROUP FIXTURES (second) -->
   <div class="card">
     <div class="card-header" id="fixturesHeader">
       <div class="card-header-left"><h2>GROUP FIXTURES</h2></div>
@@ -516,10 +482,25 @@
       </div>
     </div>
   </div>
+
+  <!-- DRAFT SUBHEADING (still appears, now above knockout stage) -->
+  <div class="subheading">🏆 NATIONS LEAGUE DRAFT IN PROGRESS 🏆</div>
+
+  <!-- KNOCKOUT STAGE (third) -->
+  <div class="card">
+    <div class="card-header" style="cursor:default;">
+      <div class="card-header-left">
+        <h2>🏆 KNOCKOUT STAGE</h2>
+      </div>
+    </div>
+    <div class="card-content">
+      <div class="knockout-stage" id="knockoutBracket"></div>
+    </div>
+  </div>
 </div>
 
 <script>
-  // ---------- Player mapping (updated with Izu & Ntsiki) ----------
+  // ---------- Player mapping ----------
   const playerMap = {
     "Brazil": "Karabo",
     "Portugal": "Mali",
@@ -568,10 +549,10 @@
     const container = document.getElementById(`group-table-${groupKey}`);
     if (!container) return;
     const teams = group.teams;
-    let html = `<table class="group-table"><thead><table><th>Pos</th><th>Nation</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody>`;
+    let html = `<table class="group-table"><thead><tr><th>Pos</th><th>Nation</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody>`;
     teams.forEach((team, idx) => {
       const displayName = getDisplayName(team.name, usePlayerView);
-      html += `<tr>
+      html += `</tr>
         <td class="rank-cell">${idx + 1}</td>
         <td><div class="team-name"><span class="country-emoji">${team.emoji}</span> ${displayName}</div></td>
         <td>0</td><td>0</td>
@@ -633,7 +614,7 @@
     });
   }
 
-  // ---------- Generate group fixtures (1 match per group per matchday, 6 matchdays) ----------
+  // ---------- Generate group fixtures ----------
   function generateGroupFixtures() {
     const fixtures = [];
     const groupsKeys = ['A', 'B', 'C', 'D'];
@@ -656,7 +637,6 @@
 
   const groupFixturesRaw = generateGroupFixtures();
 
-  // Fixed date formatting: returns "Apr 27", "Apr 28", ..., "May 2"
   function getDateForMatchday(md) {
     const startDate = new Date(2026, 3, 27); // 27 April 2026
     startDate.setDate(startDate.getDate() + (md - 1));
@@ -706,7 +686,7 @@
     }
   }
 
-  // Knockout stage (with correct dates)
+  // Knockout stage (unchanged)
   function renderKnockout() {
     const container = document.getElementById("knockoutBracket");
     if (!container) return;
@@ -755,6 +735,7 @@
     searchInput.addEventListener("input", () => renderFixtures(searchInput.value));
   }
 
+  // Modal logic
   const hamburger = document.getElementById("hamburgerBtn");
   const modalOverlay = document.getElementById("modalOverlay");
   const closeModalBtn = document.getElementById("closeModalBtn");
