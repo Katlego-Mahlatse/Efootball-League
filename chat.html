@@ -134,70 +134,35 @@
       background: #7e4acf;
     }
 
-    /* Chat layout */
-    .chat-container {
-      max-width: 1200px;
+    /* Full‑screen user list */
+    .user-list-container {
+      width: 100%;
+      max-width: 800px;
       margin: 2rem auto;
-      padding: 0 1.5rem;
-      display: flex;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-    }
-    .users-panel {
-      flex: 1;
-      min-width: 250px;
-      background: rgba(45, 25, 75, 0.85);
-      backdrop-filter: blur(10px);
-      border-radius: 2rem;
-      border: 1px solid rgba(245, 215, 66, 0.4);
       padding: 1rem;
-      height: fit-content;
-      max-height: 70vh;
-      overflow-y: auto;
-    }
-    .chat-panel {
-      flex: 2;
-      min-width: 300px;
-      background: rgba(45, 25, 75, 0.85);
-      backdrop-filter: blur(10px);
-      border-radius: 2rem;
-      border: 1px solid rgba(245, 215, 66, 0.4);
-      display: flex;
-      flex-direction: column;
-      height: 70vh;
-    }
-    .panel-title {
-      padding: 1rem;
-      border-bottom: 1px solid rgba(245, 215, 66, 0.3);
-      font-size: 1.2rem;
-      font-weight: bold;
-      color: #f5d742;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
     }
     .user-list {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
+      gap: 0.8rem;
     }
     .user-item {
       background: rgba(55, 35, 95, 0.6);
       border-radius: 1rem;
-      padding: 0.6rem 1rem;
+      padding: 1rem;
       cursor: pointer;
       transition: background 0.2s;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 1rem;
+      font-size: 1.1rem;
     }
     .user-item:hover {
       background: rgba(106, 59, 181, 0.8);
     }
     .user-avatar {
-      width: 32px;
-      height: 32px;
+      width: 48px;
+      height: 48px;
       background: #f5d742;
       border-radius: 50%;
       display: flex;
@@ -205,10 +170,58 @@
       justify-content: center;
       color: #2d1b4e;
       font-weight: bold;
+      font-size: 1.2rem;
       text-transform: uppercase;
     }
     .user-name {
+      flex: 1;
       font-weight: 500;
+    }
+    .admin-gear {
+      margin-left: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    /* Full‑screen chat view (initially hidden) */
+    .chat-view {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 100%);
+      z-index: 150;
+      display: flex;
+      flex-direction: column;
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0.2s, opacity 0.2s;
+    }
+    .chat-view.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    .chat-header {
+      background: rgba(30, 15, 55, 0.9);
+      padding: 1rem;
+      border-bottom: 2px solid #f5d742;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .close-chat {
+      background: none;
+      border: none;
+      color: #f5d742;
+      font-size: 1.8rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 0.5rem;
+    }
+    .chat-header h3 {
+      flex: 1;
+      margin: 0;
+      font-size: 1.2rem;
     }
     .messages-area {
       flex: 1;
@@ -252,6 +265,7 @@
       border-top: 1px solid rgba(245, 215, 66, 0.3);
       display: flex;
       gap: 0.5rem;
+      background: rgba(30, 15, 55, 0.9);
     }
     .input-area input {
       flex: 1;
@@ -275,17 +289,14 @@
     .input-area button:hover {
       background: #7e4acf;
     }
-
-    /* Loading / empty states */
     .loading {
       text-align: center;
       padding: 2rem;
       color: #c4b0ff;
     }
-
     @media (max-width: 780px) {
-      .chat-container { flex-direction: column; }
-      .users-panel { max-height: 40vh; }
+      .user-avatar { width: 40px; height: 40px; font-size: 1rem; }
+      .user-item { font-size: 1rem; padding: 0.8rem; }
     }
   </style>
 </head>
@@ -319,19 +330,21 @@
   </div>
 </div>
 
-<!-- Main Chat UI -->
-<div class="chat-container">
-  <div class="users-panel">
-    <div class="panel-title">👥 All Members</div>
-    <div id="userList" class="user-list">Loading users...</div>
+<!-- User List (full screen, shown initially) -->
+<div id="userListContainer" class="user-list-container">
+  <div id="userList" class="user-list">Loading users...</div>
+</div>
+
+<!-- Chat View (full screen, hidden until a user is selected) -->
+<div id="chatView" class="chat-view">
+  <div class="chat-header">
+    <button id="closeChatBtn" class="close-chat">✕</button>
+    <h3 id="chatHeader">Chat</h3>
   </div>
-  <div class="chat-panel">
-    <div class="panel-title" id="chatHeader">Select a user to start chatting</div>
-    <div id="messagesArea" class="messages-area"></div>
-    <div class="input-area" id="inputArea" style="display: none;">
-      <input type="text" id="messageInput" placeholder="Type a message...">
-      <button id="sendBtn">Send</button>
-    </div>
+  <div id="messagesArea" class="messages-area"></div>
+  <div class="input-area" id="inputArea">
+    <input type="text" id="messageInput" placeholder="Type a message...">
+    <button id="sendBtn">Send</button>
   </div>
 </div>
 
@@ -347,7 +360,7 @@
 
 <script type="module">
   import { initializeApp } from "firebase/app";
-  import { getAuth, onAuthStateChanged } from "firebase/auth";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
   import { getDatabase, ref, push, onChildAdded, query, limitToLast, set, get, child } from "firebase/database";
 
   const firebaseConfig = {
@@ -365,30 +378,29 @@
   const auth = getAuth(app);
   const db = getDatabase(app);
 
-  // Current logged-in user
   let currentUser = null;
   let currentUserId = null;
-
-  // Selected chat partner
   let selectedUser = null;
   let currentChatId = null;
   let unsubscribeMessages = null;
 
   // DOM elements
   const userListDiv = document.getElementById("userList");
+  const chatView = document.getElementById("chatView");
+  const userListContainer = document.getElementById("userListContainer");
+  const closeChatBtn = document.getElementById("closeChatBtn");
   const chatHeader = document.getElementById("chatHeader");
   const messagesArea = document.getElementById("messagesArea");
   const inputArea = document.getElementById("inputArea");
   const messageInput = document.getElementById("messageInput");
   const sendBtn = document.getElementById("sendBtn");
 
-  // Helper: generate chat room ID from two user IDs (sorted)
+  // Helper: get chat ID from two UIDs
   function getChatId(uid1, uid2) {
     const [a, b] = [uid1, uid2].sort();
     return `${a}_${b}`;
   }
 
-  // Escape HTML to prevent injection
   function escapeHtml(str) {
     return str.replace(/[&<>]/g, function(m) {
       if (m === '&') return '&amp;';
@@ -398,7 +410,7 @@
     });
   }
 
-  // Load all users from the "users" node in Realtime Database
+  // Load all users from "users" node and display in list
   async function loadUsers() {
     if (!currentUserId) return;
     userListDiv.innerHTML = '<div class="loading">Loading users...</div>';
@@ -424,11 +436,12 @@
       otherUsers.forEach(user => {
         const displayName = user.username || user.email || 'Anonymous';
         const firstChar = displayName.charAt(0).toUpperCase();
+        const isAdmin = user.role === 'admin';
         const div = document.createElement('div');
         div.className = 'user-item';
         div.innerHTML = `
           <div class="user-avatar">${firstChar}</div>
-          <span class="user-name">${escapeHtml(displayName)}</span>
+          <span class="user-name">${escapeHtml(displayName)}${isAdmin ? ' <span class="admin-gear">⚙️</span>' : ''}</span>
         `;
         div.addEventListener('click', () => openChat(user));
         userListDiv.appendChild(div);
@@ -439,7 +452,7 @@
     }
   }
 
-  // Open chat with a selected user
+  // Open chat with the selected user
   async function openChat(user) {
     if (!currentUserId) return;
     selectedUser = user;
@@ -447,11 +460,10 @@
     currentChatId = chatId;
     const displayName = user.username || user.email || 'Anonymous';
     chatHeader.innerHTML = `💬 Chat with ${escapeHtml(displayName)}`;
-    inputArea.style.display = 'flex';
     messagesArea.innerHTML = '';
     // Unsubscribe from previous listener
     if (unsubscribeMessages) unsubscribeMessages();
-    // Listen for new messages
+    // Listen for messages
     const messagesRef = ref(db, `private_messages/${chatId}/messages`);
     const recentQuery = query(messagesRef, limitToLast(50));
     unsubscribeMessages = onChildAdded(recentQuery, (snapshot) => {
@@ -470,6 +482,23 @@
       messagesArea.appendChild(div);
       messagesArea.scrollTop = messagesArea.scrollHeight;
     });
+    // Hide user list and show chat view
+    userListContainer.style.display = 'none';
+    chatView.classList.add('active');
+    // Focus input
+    messageInput.focus();
+  }
+
+  // Close chat and return to user list
+  function closeChat() {
+    chatView.classList.remove('active');
+    userListContainer.style.display = 'block';
+    if (unsubscribeMessages) {
+      unsubscribeMessages();
+      unsubscribeMessages = null;
+    }
+    selectedUser = null;
+    currentChatId = null;
   }
 
   // Send a message
@@ -489,42 +518,42 @@
 
   sendBtn.onclick = sendMessage;
   messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+  closeChatBtn.addEventListener('click', closeChat);
 
-  // Authentication state listener
+  // Authentication & user data
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
-      // Not logged in - redirect to login
+      // Not logged in – redirect to login
       window.location.href = 'login.html';
       return;
     }
     currentUser = user;
     currentUserId = user.uid;
-    // Ensure this user exists in the "users" database node (so they appear in others' lists)
+    // Ensure this user exists in the "users" node
     const userRef = ref(db, `users/${user.uid}`);
     const snapshot = await get(userRef);
     if (!snapshot.exists()) {
-      // Store user info: use displayName (from signup) or email
       const username = user.displayName || user.email?.split('@')[0] || 'Player';
       await set(userRef, {
         uid: user.uid,
         email: user.email,
         username: username,
+        role: 'player', // default; admin would have been set during signup
         createdAt: Date.now()
       });
     }
-    // Load the list of other users
     await loadUsers();
   });
 
   // Modal hamburger menu
   const hamburgerBtn = document.getElementById("hamburgerBtn");
-  const modalOverlayEl = document.getElementById("modalOverlay");
+  const modalOverlay = document.getElementById("modalOverlay");
   const closeModalBtn = document.getElementById("closeModalBtn");
-  function openModal() { modalOverlayEl.classList.add("active"); }
-  function closeModalFunc() { modalOverlayEl.classList.remove("active"); }
+  function openModal() { modalOverlay.classList.add("active"); }
+  function closeModalFunc() { modalOverlay.classList.remove("active"); }
   hamburgerBtn.addEventListener("click", openModal);
   closeModalBtn.addEventListener("click", closeModalFunc);
-  modalOverlayEl.addEventListener("click", (e) => { if (e.target === modalOverlayEl) closeModalFunc(); });
+  modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModalFunc(); });
 </script>
 </body>
 </html>
