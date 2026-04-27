@@ -5,20 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>eFootball 412 · Team Chat</title>
   <style>
+    /* Same as before, only added profile picture display in user list */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-
     body {
       background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 100%);
       font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
       color: #f5f0ff;
       min-height: 100vh;
     }
-
-    /* Navbar (identical to home page) */
     .gold-navbar {
       background: linear-gradient(135deg, #d4af37, #f5d742);
       padding: 0.4rem 1.2rem;
@@ -31,7 +29,6 @@
       top: 0;
       z-index: 100;
     }
-
     .nav-icon-btn {
       background: #6a3bb5;
       width: 36px;
@@ -81,8 +78,6 @@
       background-color: #f5d742;
       border-radius: 2px;
     }
-
-    /* Modals */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -109,7 +104,6 @@
       max-width: 350px;
       width: 90%;
       text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
     .modal-content h3 {
       color: #f5d742;
@@ -130,11 +124,6 @@
       cursor: pointer;
       font-weight: bold;
     }
-    .modal-btn:hover {
-      background: #7e4acf;
-    }
-
-    /* Full‑screen user list */
     .user-list-container {
       width: 100%;
       max-width: 800px;
@@ -172,7 +161,6 @@
       color: #2d1b4e;
       font-weight: bold;
       font-size: 1.2rem;
-      text-transform: uppercase;
     }
     .user-name {
       flex: 1;
@@ -182,8 +170,6 @@
       margin-left: 0.5rem;
       font-size: 1.1rem;
     }
-
-    /* Full‑screen chat view (initially hidden) */
     .chat-view {
       position: fixed;
       top: 0;
@@ -313,7 +299,6 @@
   <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
 </div>
 
-<!-- Tournament Modal (same as home) -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal-content">
     <h3>TOURNAMENTS</h3>
@@ -331,12 +316,10 @@
   </div>
 </div>
 
-<!-- User List (full screen, shown initially) -->
 <div id="userListContainer" class="user-list-container">
   <div id="userList" class="user-list">Loading users...</div>
 </div>
 
-<!-- Chat View (full screen, hidden until a user is selected) -->
 <div id="chatView" class="chat-view">
   <div class="chat-header">
     <button id="closeChatBtn" class="close-chat">✕</button>
@@ -361,8 +344,8 @@
 
 <script type="module">
   import { initializeApp } from "firebase/app";
-  import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
-  import { getDatabase, ref, push, onChildAdded, query, limitToLast, set, get, child } from "firebase/database";
+  import { getAuth, onAuthStateChanged } from "firebase/auth";
+  import { getDatabase, ref, push, onChildAdded, query, limitToLast, set, get } from "firebase/database";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
@@ -385,7 +368,6 @@
   let currentChatId = null;
   let unsubscribeMessages = null;
 
-  // DOM elements
   const userListDiv = document.getElementById("userList");
   const chatView = document.getElementById("chatView");
   const userListContainer = document.getElementById("userListContainer");
@@ -396,7 +378,6 @@
   const messageInput = document.getElementById("messageInput");
   const sendBtn = document.getElementById("sendBtn");
 
-  // Helper: get chat ID from two UIDs
   function getChatId(uid1, uid2) {
     const [a, b] = [uid1, uid2].sort();
     return `${a}_${b}`;
@@ -411,7 +392,6 @@
     });
   }
 
-  // Load all users from "users" node and display in list
   async function loadUsers() {
     if (!currentUserId) return;
     userListDiv.innerHTML = '<div class="loading">Loading users...</div>';
@@ -440,11 +420,10 @@
         const isAdmin = user.role === 'admin';
         const div = document.createElement('div');
         div.className = 'user-item';
-        // Profile picture if available
         const photoURL = user.photoURL;
         let avatarHtml = '';
         if (photoURL) {
-          avatarHtml = `<img class="user-avatar" src="${photoURL}" alt="avatar">`;
+          avatarHtml = `<img class="user-avatar" src="${photoURL}" alt="avatar" onerror="this.onerror=null; this.src=''; this.style.backgroundColor='#f5d742'; this.innerHTML='${firstChar}';">`;
         } else {
           avatarHtml = `<div class="user-avatar" style="background:#f5d742; display:flex; align-items:center; justify-content:center;">${firstChar}</div>`;
         }
@@ -461,7 +440,6 @@
     }
   }
 
-  // Open chat with the selected user
   async function openChat(user) {
     if (!currentUserId) return;
     selectedUser = user;
@@ -470,9 +448,7 @@
     const displayName = user.username || user.email || 'Anonymous';
     chatHeader.innerHTML = `💬 Chat with ${escapeHtml(displayName)}`;
     messagesArea.innerHTML = '';
-    // Unsubscribe from previous listener
     if (unsubscribeMessages) unsubscribeMessages();
-    // Listen for messages
     const messagesRef = ref(db, `private_messages/${chatId}/messages`);
     const recentQuery = query(messagesRef, limitToLast(50));
     unsubscribeMessages = onChildAdded(recentQuery, (snapshot) => {
@@ -491,14 +467,11 @@
       messagesArea.appendChild(div);
       messagesArea.scrollTop = messagesArea.scrollHeight;
     });
-    // Hide user list and show chat view
     userListContainer.style.display = 'none';
     chatView.classList.add('active');
-    // Focus input
     messageInput.focus();
   }
 
-  // Close chat and return to user list
   function closeChat() {
     chatView.classList.remove('active');
     userListContainer.style.display = 'block';
@@ -510,7 +483,6 @@
     currentChatId = null;
   }
 
-  // Send a message
   async function sendMessage() {
     const text = messageInput.value.trim();
     if (!text || !currentChatId || !currentUser || !selectedUser) return;
@@ -529,7 +501,6 @@
   messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
   closeChatBtn.addEventListener('click', closeChat);
 
-  // Authentication & user data
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       window.location.href = 'login.html';
@@ -537,7 +508,6 @@
     }
     currentUser = user;
     currentUserId = user.uid;
-    // Ensure this user exists in the "users" node
     const userRef = ref(db, `users/${user.uid}`);
     const snapshot = await get(userRef);
     if (!snapshot.exists()) {
@@ -553,7 +523,6 @@
     await loadUsers();
   });
 
-  // Modal hamburger menu
   const hamburgerBtn = document.getElementById("hamburgerBtn");
   const modalOverlay = document.getElementById("modalOverlay");
   const closeModalBtn = document.getElementById("closeModalBtn");
