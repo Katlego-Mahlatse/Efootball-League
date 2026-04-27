@@ -533,6 +533,54 @@
       margin-top: 4px;
     }
 
+    /* New Juventus announcement block */
+    .juventus-announcement {
+      text-align: center;
+      background: rgba(45, 25, 75, 0.85);
+      backdrop-filter: blur(10px);
+      border-radius: 2rem;
+      border: 1px solid rgba(245, 215, 66, 0.4);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .juventus-logo {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      margin-bottom: 0.5rem;
+    }
+    .juventus-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #f5d742;
+      letter-spacing: 2px;
+      margin-bottom: 1rem;
+    }
+    .juventus-description {
+      font-size: 1rem;
+      line-height: 1.4;
+      max-width: 800px;
+      margin: 0 auto 1.5rem auto;
+      color: #f0eaff;
+    }
+    .juventus-btn {
+      background: #6a3bb5;
+      border: 1px solid #f5d742;
+      border-radius: 40px;
+      padding: 0.6rem 1.5rem;
+      color: #f5d742;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .juventus-btn:hover {
+      background: #7e4acf;
+      transform: scale(1.02);
+    }
+
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
       .stats-table th, .stats-table td { padding: 0.6rem 0.5rem; font-size: 0.75rem; }
@@ -545,6 +593,9 @@
       .team-icon { width: 32px; height: 32px; }
       .inline-team-icon { width: 32px; height: 32px; }
       .login-btn { font-size: 0.75rem; padding: 0.3rem 0.7rem; }
+      .juventus-logo { width: 80px; height: 80px; }
+      .juventus-title { font-size: 1.6rem; }
+      .juventus-description { font-size: 0.85rem; }
     }
   </style>
 </head>
@@ -581,6 +632,7 @@
     <div class="dots-container" id="dotsContainer"></div>
   </div>
 
+  <!-- PREMIER LEAGUE TABLE CARD -->
   <div class="card" style="margin-bottom:2rem">
     <div class="card-header" style="cursor:default;">
       <div class="card-header-left">
@@ -606,6 +658,17 @@
     </div>
   </div>
 
+  <!-- JUVENTUS ANNOUNCEMENT BLOCK (added between table and fixtures) -->
+  <div class="juventus-announcement">
+    <img class="juventus-logo" src="IMG_20260421_151224.jpg" alt="Juventus logo">
+    <div class="juventus-title">JUVENTUS</div>
+    <div class="juventus-description">
+      Due to failure to oblige to article 6, Lawree has been sacked as the manager for Juventus. A interim manager will be appointed to represent Juventus for the rest of the season and a knockout tournament may be held if necessary.
+    </div>
+    <a href="juventus.html" class="juventus-btn">VIEW MANAGER SELECTION TOURNAMENT</a>
+  </div>
+
+  <!-- FIXTURES CARD -->
   <div class="card">
     <div class="card-header" id="fixturesHeader"><div class="card-header-left"><h2>FIXTURES</h2></div><div class="toggle-icon" id="fixturesToggleIcon">▼</div></div>
     <div class="card-content" id="fixturesContent">
@@ -614,11 +677,12 @@
         <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
       </div>
       <div class="scrollable-table">
-        <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></td>
+        <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
       </div>
     </div>
   </div>
 
+  <!-- RESULTS CARD -->
   <div class="card">
     <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
     <div class="card-content" id="resultsContent">
@@ -647,22 +711,22 @@
   function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
   if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-  // UPDATED LEAGUE_DATA after MD15 (all 7 matches)
+  // UPDATED LEAGUE_DATA after MD15 (corrected: PSG 1-1 Juventus)
   const LEAGUE_DATA = [
     { pos: 1, club: "Real Madrid", p: 15, gd: 22, pts: 43 },
     { pos: 2, club: "Liverpool", p: 15, gd: 27, pts: 35 },
     { pos: 3, club: "Dortmund", p: 15, gd: 10, pts: 30 },
     { pos: 4, club: "Barcelona", p: 15, gd: -1, pts: 28 },
     { pos: 5, club: "Arsenal", p: 15, gd: 5, pts: 23 },
-    { pos: 6, club: "PSG", p: 15, gd: -9, pts: 22 },
+    { pos: 6, club: "PSG", p: 15, gd: -9, pts: 20 },
     { pos: 7, club: "Man City", p: 15, gd: 1, pts: 22 },
     { pos: 8, club: "Chelsea", p: 15, gd: 11, pts: 21 },
     { pos: 9, club: "Napoli", p: 15, gd: -3, pts: 14 },
     { pos: 10, club: "AC Milan", p: 15, gd: -13, pts: 13 },
     { pos: 11, club: "Atletico", p: 15, gd: -16, pts: 7 },
-    { pos: 12, club: "Newcastle", p: 15, gd: -35, pts: 6 },
-    { pos: 13, club: "Inter Milan", p: 15, gd: -4, pts: 5 },
-    { pos: 14, club: "Juventus", p: 15, gd: -21, pts: 3 }
+    { pos: 12, club: "Juventus", p: 15, gd: -18, pts: 4 },
+    { pos: 13, club: "Newcastle", p: 15, gd: -35, pts: 6 },
+    { pos: 14, club: "Inter Milan", p: 15, gd: -4, pts: 5 }
   ];
 
   const playerMap = {
@@ -671,7 +735,7 @@
     "Inter Milan": "Mali",
     "Borussia Dortmund": "~Qhawe 🤍",
     "Dortmund": "~Qhawe 🤍",
-    "Juventus": "~Lawree ✨",
+    "Juventus": "TBD",
     "Atlético Madrid": "~Stalker.",
     "Paris Saint-Germain": "~MJ",
     "PSG": "~MJ",
@@ -716,7 +780,7 @@
     return teamName;
   }
 
-  // Updated allResultsOrder with ALL MD15 matches at the bottom (most recent)
+  // Updated allResultsOrder with corrected MD15
   const allResultsOrder = [
     // Older matches (MD7 to MD14)
     { type: "win", winner: "Real Madrid", loser: "Napoli" },
@@ -782,7 +846,7 @@
     { type: "win", winner: "Liverpool", loser: "Arsenal" },
     { type: "win", winner: "Napoli", loser: "Newcastle" },
     { type: "win", winner: "Dortmund", loser: "AC Milan" },
-    { type: "forfeit_win", winner: "PSG", loser: "Juventus" },
+    { type: "draw", teams: ["PSG","Juventus"] },
     { type: "win", winner: "Barcelona", loser: "Chelsea" },
     { type: "win", winner: "Real Madrid", loser: "Inter Milan" },
     { type: "forfeit", teams: ["Atletico","Man City"] }
@@ -816,8 +880,7 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // Fixture list: removed ALL MD15 matches (they are now played)
-  // Remaining fixtures start from MD16
+  // Fixture list: removed MD15 matches (remainder from MD16)
   const fixtureList = [
     { md: 16, home: "Arsenal", away: "FC Barcelona" }, { md: 16, home: "Napoli", away: "Chelsea" }, { md: 16, home: "Atlético Madrid", away: "Liverpool" }, { md: 16, home: "Borussia Dortmund", away: "Newcastle United" }, { md: 16, home: "Inter Milan", away: "Manchester City" }, { md: 16, home: "Juventus", away: "AC Milan" }, { md: 16, home: "Paris Saint-Germain", away: "Real Madrid" },
     { md: 17, home: "Napoli", away: "FC Barcelona" }, { md: 17, home: "Atlético Madrid", away: "Arsenal" }, { md: 17, home: "Borussia Dortmund", away: "Chelsea" }, { md: 17, home: "Inter Milan", away: "Liverpool" }, { md: 17, home: "Juventus", away: "Newcastle United" }, { md: 17, home: "Paris Saint-Germain", away: "Manchester City" }, { md: 17, home: "Real Madrid", away: "AC Milan" },
@@ -832,14 +895,13 @@
     { md: 26, home: "Newcastle United", away: "FC Barcelona" }, { md: 26, home: "Liverpool", away: "Manchester City" }, { md: 26, home: "Chelsea", away: "AC Milan" }, { md: 26, home: "Arsenal", away: "Real Madrid" }, { md: 26, home: "Napoli", away: "Paris Saint-Germain" }, { md: 26, home: "Atlético Madrid", away: "Juventus" }, { md: 26, home: "Borussia Dortmund", away: "Inter Milan" }
   ];
 
-  // FIXED date formatting: full month names so April => 'Apr', May => 'May'
   function formatDate(date) {
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return `${months[date.getMonth()]} ${date.getDate()}`;
   }
 
   const fixturesWithDates = [];
-  let startDate = new Date(2026, 3, 25); // 25 April 2026 (MD13 date)
+  let startDate = new Date(2026, 3, 25);
   let currentMd = 13;
   for (let f of fixtureList) {
     if (f.md !== currentMd) {
@@ -856,12 +918,11 @@
     });
   }
 
-  // RESULTS_DATA: ALL MD15 matches at the top, then MD14, MD13 etc.
   const RESULTS_DATA = [
     { matchText: "Atletico Madrid F - F Manchester City (No Contest)", md: 15 },
     { matchText: "Inter Milan 1 - 3 Real Madrid", md: 15 },
     { matchText: "Barcelona 1 - 0 Chelsea", md: 15 },
-    { matchText: "Juventus 0 - 3 Paris Saint-Germain (Forfeited - No Reply)", md: 15 },
+    { matchText: "PSG 1 - 1 Juventus", md: 15 },
     { matchText: "Dortmund 3 - 1 AC Milan", md: 15 },
     { matchText: "Napoli 3 - 1 Newcastle United", md: 15 },
     { matchText: "Arsenal 1 - 2 Liverpool", md: 15 },
