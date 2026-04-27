@@ -451,7 +451,7 @@
 </div>
 
 <div class="dashboard">
-  <!-- GROUP TABLES (first) -->
+  <!-- GROUP TABLES -->
   <div class="card">
     <div class="card-header" style="cursor:default;">
       <div class="card-header-left">
@@ -464,7 +464,7 @@
     </div>
   </div>
 
-  <!-- GROUP FIXTURES (second) -->
+  <!-- GROUP FIXTURES -->
   <div class="card">
     <div class="card-header" id="fixturesHeader">
       <div class="card-header-left"><h2>GROUP FIXTURES</h2></div>
@@ -483,10 +483,9 @@
     </div>
   </div>
 
-  <!-- DRAFT SUBHEADING (still appears, now above knockout stage) -->
   <div class="subheading">🏆 NATIONS LEAGUE DRAFT IN PROGRESS 🏆</div>
 
-  <!-- KNOCKOUT STAGE (third) -->
+  <!-- KNOCKOUT STAGE -->
   <div class="card">
     <div class="card-header" style="cursor:default;">
       <div class="card-header-left">
@@ -552,7 +551,7 @@
     let html = `<table class="group-table"><thead><tr><th>Pos</th><th>Nation</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody>`;
     teams.forEach((team, idx) => {
       const displayName = getDisplayName(team.name, usePlayerView);
-      html += `</tr>
+      html += `<tr>
         <td class="rank-cell">${idx + 1}</td>
         <td><div class="team-name"><span class="country-emoji">${team.emoji}</span> ${displayName}</div></td>
         <td>0</td><td>0</td>
@@ -644,13 +643,17 @@
     return `${months[startDate.getMonth()]} ${startDate.getDate()}`;
   }
 
-  const groupFixtures = groupFixturesRaw.map(f => ({
+  // Create the array and SORT BY MATCHDAY (MD)
+  let groupFixtures = groupFixturesRaw.map(f => ({
     md: f.md,
     date: getDateForMatchday(f.md),
     home: f.home,
     away: f.away,
     group: f.group
   }));
+
+  // Sort by matchday (MD1, MD2, ...)
+  groupFixtures.sort((a, b) => a.md - b.md);
 
   function getNationEmoji(nationName) {
     const found = nations.find(n => n.name === nationName);
@@ -686,7 +689,7 @@
     }
   }
 
-  // Knockout stage (unchanged)
+  // Knockout stage
   function renderKnockout() {
     const container = document.getElementById("knockoutBracket");
     if (!container) return;
@@ -735,7 +738,6 @@
     searchInput.addEventListener("input", () => renderFixtures(searchInput.value));
   }
 
-  // Modal logic
   const hamburger = document.getElementById("hamburgerBtn");
   const modalOverlay = document.getElementById("modalOverlay");
   const closeModalBtn = document.getElementById("closeModalBtn");
@@ -747,7 +749,7 @@
 
   buildGroupCards();
   renderKnockout();
-  renderFixtures("");
+  renderFixtures();
 </script>
 </body>
 </html>
