@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>Admin Profile · eFootball 412</title>
   <style>
+    /* Same as before – includes user list and team assignment */
     * {
       margin: 0;
       padding: 0;
@@ -54,6 +55,64 @@
       height: 2.5px;
       background-color: #f5d742;
       border-radius: 2px;
+    }
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      z-index: 200;
+      visibility: hidden;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active {
+      visibility: visible;
+      pointer-events: auto;
+    }
+    .modal-content {
+      background: linear-gradient(135deg, #2d1b4e, #1f0f3a);
+      border: 2px solid #f5d742;
+      border-radius: 2rem;
+      padding: 1.5rem;
+      max-width: 350px;
+      width: 90%;
+      text-align: center;
+    }
+    .modal-content h3 {
+      color: #f5d742;
+      margin-bottom: 1rem;
+    }
+    .modal-option {
+      background: rgba(106, 59, 181, 0.15);
+      padding: 0.4rem 0.8rem;
+      border-radius: 40px;
+      text-decoration: none;
+      color: #f5e6ff;
+      font-weight: 700;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+      border: 1px solid #f5d742;
+      display: block;
+      margin: 0.5rem 0;
+      cursor: pointer;
+    }
+    .modal-option:hover {
+      background: #6a3bb5;
+      color: #f5d742;
+    }
+    .close-modal {
+      background: #4a1d8c;
+      color: #f5d742;
+      border: none;
+      padding: 0.3rem 0.9rem;
+      border-radius: 30px;
+      cursor: pointer;
+      margin-top: 0.5rem;
     }
     .container {
       max-width: 1000px;
@@ -126,6 +185,7 @@
       display: flex;
       align-items: center;
       gap: 0.8rem;
+      flex-wrap: wrap;
     }
     .user-avatar {
       width: 32px;
@@ -144,6 +204,7 @@
       border-radius: 2rem;
       padding: 0.3rem 0.8rem;
       color: white;
+      width: 200px;
     }
     .assign-btn {
       background: #6a3bb5;
@@ -163,6 +224,7 @@
       padding: 0.2rem 0.8rem;
       border-radius: 2rem;
       font-size: 0.8rem;
+      margin-top: 0.3rem;
     }
     .avatar-preview {
       width: 80px;
@@ -174,6 +236,7 @@
     }
     @media (max-width: 680px) {
       .user-item { flex-direction: column; align-items: flex-start; }
+      .team-select { width: 100%; margin-bottom: 0.5rem; }
     }
   </style>
 </head>
@@ -183,8 +246,18 @@
   <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
 </div>
 
+<div id="modalOverlay" class="modal-overlay">
+  <div class="modal-content">
+    <h3>MENU</h3>
+    <div class="modal-option" id="rulesModalBtn">RULES</div>
+    <div class="modal-option" id="calendarModalBtn">CALENDAR</div>
+    <div class="modal-option" id="playerTitlesModalBtn">PLAYER TITLES</div>
+    <div class="modal-option" id="logoutModalBtn" style="background:#ef4444; color:white;">LOGOUT</div>
+    <button class="close-modal" id="closeModalBtn">CLOSE</button>
+  </div>
+</div>
+
 <div class="container">
-  <!-- Admin's own profile edit -->
   <div class="card">
     <div class="card-header"><h2>👑 Admin Profile</h2></div>
     <div class="form-group">
@@ -202,7 +275,7 @@
       <input type="email" id="email" placeholder="Email">
     </div>
     <div class="form-group">
-      <label>Phone Number</label>
+      <label>Phone Number (optional)</label>
       <input type="tel" id="phone" placeholder="Phone number">
     </div>
     <div class="form-group">
@@ -212,7 +285,6 @@
     <button id="saveProfileBtn" class="btn-primary">Save Changes</button>
   </div>
 
-  <!-- Manage all users: assign teams -->
   <div class="card">
     <div class="card-header"><h2>👥 Manage Users & Teams</h2></div>
     <div id="usersList" class="user-list">Loading users...</div>
@@ -248,10 +320,8 @@
   const db = getDatabase(app);
 
   const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
-
   let currentUser = null;
 
-  // Admin own profile elements
   const usernameInput = document.getElementById('username');
   const emailInput = document.getElementById('email');
   const phoneInput = document.getElementById('phone');
@@ -276,7 +346,6 @@
     }
   }
 
-  // Load all users for team assignment
   async function loadAllUsers() {
     const usersRef = ref(db, 'users');
     const snapshot = await get(usersRef);
@@ -288,33 +357,31 @@
       div.className = 'user-item';
       const displayName = userData.username || userData.email || 'Anonymous';
       const firstChar = displayName.charAt(0).toUpperCase();
-      const currentTeam = userData.team || 'Not assigned';
+      let currentTeams = userData.teams || [];
+      if (typeof currentTeams === 'string') currentTeams = currentTeams ? [currentTeams] : [];
+      const teamsStr = currentTeams.join(', ');
       div.innerHTML = `
         <div class="user-info">
           <div class="user-avatar">${firstChar}</div>
-          <div><strong>${escapeHtml(displayName)}</strong><br><span class="team-badge">Team: ${escapeHtml(currentTeam)}</span></div>
+          <div><strong>${escapeHtml(displayName)}</strong><br><span class="team-badge">Teams: ${escapeHtml(teamsStr || 'None')}</span></div>
         </div>
         <div>
-          <input type="text" id="teamInput-${uid}" class="team-select" placeholder="Team name" value="${escapeHtml(currentTeam !== 'Not assigned' ? currentTeam : '')}">
-          <button class="assign-btn" data-uid="${uid}">+ Select Team</button>
+          <input type="text" id="teamInput-${uid}" class="team-select" placeholder="Team names (comma separated)" value="${escapeHtml(teamsStr)}">
+          <button class="assign-btn" data-uid="${uid}">+ Assign Teams</button>
         </div>
       `;
       userListDiv.appendChild(div);
     }
-    // Attach assign event listeners
     document.querySelectorAll('.assign-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const targetUid = btn.getAttribute('data-uid');
         const teamInput = document.getElementById(`teamInput-${targetUid}`);
-        const newTeam = teamInput.value.trim();
-        if (!newTeam) {
-          alert('Please enter a team name.');
-          return;
-        }
+        const teamsRaw = teamInput.value.trim();
+        let teamsArray = teamsRaw ? teamsRaw.split(',').map(t => t.trim()).filter(t => t) : [];
         try {
-          await set(ref(db, `users/${targetUid}/team`), newTeam);
-          alert(`Team "${newTeam}" assigned to user.`);
-          loadAllUsers(); // refresh list
+          await set(ref(db, `users/${targetUid}/teams`), teamsArray);
+          alert(`Teams assigned: ${teamsArray.join(', ') || 'none'}`);
+          loadAllUsers();
         } catch (error) {
           alert('Error: ' + error.message);
         }
@@ -337,7 +404,6 @@
       return;
     }
     currentUser = user;
-    // Verify admin role
     const userRef = ref(db, `users/${user.uid}`);
     const snapshot = await get(userRef);
     const userData = snapshot.val();
@@ -377,7 +443,6 @@
     }
   });
 
-  // Upload picture via ImgBB
   uploadPictureBtn.addEventListener('click', async () => {
     const file = pictureInput.files[0];
     if (!file) {
@@ -392,9 +457,7 @@
         body: formData
       });
       const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.error?.message || 'Upload failed');
-      }
+      if (!result.success) throw new Error(result.error?.message || 'Upload failed');
       const imageUrl = result.data.url;
       await updateProfile(currentUser, { photoURL: imageUrl });
       await set(ref(db, `users/${currentUser.uid}/photoURL`), imageUrl);
@@ -402,10 +465,26 @@
       avatarImg.style.display = 'block';
       alert('Profile picture updated!');
     } catch (error) {
-      console.error(error);
       alert('Upload failed: ' + error.message);
     }
   });
+
+  // Modal menu
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  const modalOverlay = document.getElementById("modalOverlay");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  function openModal() { modalOverlay.classList.add("active"); }
+  function closeModalFunc() { modalOverlay.classList.remove("active"); }
+  hamburgerBtn.addEventListener("click", openModal);
+  closeModalBtn.addEventListener("click", closeModalFunc);
+  modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModalFunc(); });
+  document.getElementById('rulesModalBtn').onclick = () => window.location.href = 'rules.html';
+  document.getElementById('calendarModalBtn').onclick = () => window.location.href = 'calendar.html';
+  document.getElementById('playerTitlesModalBtn').onclick = () => window.location.href = 'player-titles.html';
+  document.getElementById('logoutModalBtn').onclick = async () => {
+    await auth.signOut();
+    window.location.href = 'login.html';
+  };
 </script>
 </body>
 </html>
