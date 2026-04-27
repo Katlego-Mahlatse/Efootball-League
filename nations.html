@@ -373,21 +373,6 @@
       color: #f5d742;
       text-align: center;
     }
-    .countdown-container {
-      text-align: center;
-      margin-bottom: 1.5rem;
-      font-size: 1.2rem;
-      background: rgba(30, 15, 55, 0.7);
-      padding: 0.8rem;
-      border-radius: 2rem;
-      border: 1px solid #f5d742;
-    }
-    .countdown {
-      font-weight: bold;
-      color: #f5d742;
-      font-size: 1.5rem;
-      letter-spacing: 2px;
-    }
     .subheading {
       text-align: center;
       margin: 1rem 0;
@@ -450,7 +435,6 @@
       .group-card { min-width: 100%; }
       .country-emoji { font-size: 1.2rem; width: 28px; }
       .inline-emoji { font-size: 1rem; }
-      .countdown { font-size: 1.2rem; }
       .nations-header-image { height: 35px; }
       .card-header-left h2 { font-size: 1.2rem; }
     }
@@ -489,12 +473,6 @@
 </div>
 
 <div class="dashboard">
-  <div class="countdown-container">
-    <div>🏆 UEFA NATIONS LEAGUE STARTS 🏆</div>
-    <div class="countdown" id="countdownTimer">--d --h --m --s</div>
-    <div style="font-size:0.8rem; margin-top:5px;">(Monday midnight SAST)</div>
-  </div>
-
   <div class="card">
     <div class="card-header" style="cursor:default;">
       <div class="card-header-left">
@@ -590,7 +568,7 @@
     const container = document.getElementById(`group-table-${groupKey}`);
     if (!container) return;
     const teams = group.teams;
-    let html = `<table class="group-table"><thead><tr><th>Pos</th><th>Nation</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody>`;
+    let html = `<table class="group-table"><thead><table><th>Pos</th><th>Nation</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody>`;
     teams.forEach((team, idx) => {
       const displayName = getDisplayName(team.name, usePlayerView);
       html += `<tr>
@@ -678,10 +656,11 @@
 
   const groupFixturesRaw = generateGroupFixtures();
 
+  // Fixed date formatting: returns "Apr 27", "Apr 28", ..., "May 2"
   function getDateForMatchday(md) {
     const startDate = new Date(2026, 3, 27); // 27 April 2026
     startDate.setDate(startDate.getDate() + (md - 1));
-    const months = ['Apr','May'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return `${months[startDate.getMonth()]} ${startDate.getDate()}`;
   }
 
@@ -753,39 +732,6 @@
     `;
   }
 
-  // Countdown to Monday midnight SAST (start of 27 April)
-  function getNextMondayMidnightSAST() {
-    const now = new Date();
-    const nowUTC = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
-    const nowSAST = new Date(nowUTC.getTime() + 2 * 3600000);
-    const target = new Date(nowSAST);
-    const day = target.getDay();
-    const daysUntilMonday = (day === 1 ? 0 : (1 - day + 7) % 7);
-    target.setDate(target.getDate() + daysUntilMonday);
-    target.setHours(0, 0, 0, 0);
-    if (day === 1 && nowSAST > target) {
-      target.setDate(target.getDate() + 7);
-    }
-    return target;
-  }
-
-  function updateCountdown() {
-    const target = getNextMondayMidnightSAST();
-    const now = new Date();
-    const nowUTC = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
-    const nowSAST = new Date(nowUTC.getTime() + 2 * 3600000);
-    const diff = target - nowSAST;
-    if (diff <= 0) {
-      document.getElementById("countdownTimer").innerHTML = "00d 00h 00m 00s";
-      return;
-    }
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (86400000)) / (3600000));
-    const minutes = Math.floor((diff % 3600000) / 60000);
-    const seconds = Math.floor((diff % 60000) / 1000);
-    document.getElementById("countdownTimer").innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
-  }
-
   // Collapsible fixtures
   const fixturesHeader = document.getElementById("fixturesHeader");
   const fixturesContent = document.getElementById("fixturesContent");
@@ -820,8 +766,6 @@
 
   buildGroupCards();
   renderKnockout();
-  updateCountdown();
-  setInterval(updateCountdown, 1000);
   renderFixtures("");
 </script>
 </body>
