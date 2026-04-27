@@ -55,6 +55,64 @@
       background-color: #f5d742;
       border-radius: 2px;
     }
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      z-index: 200;
+      visibility: hidden;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active {
+      visibility: visible;
+      pointer-events: auto;
+    }
+    .modal-content {
+      background: linear-gradient(135deg, #2d1b4e, #1f0f3a);
+      border: 2px solid #f5d742;
+      border-radius: 2rem;
+      padding: 1.5rem;
+      max-width: 350px;
+      width: 90%;
+      text-align: center;
+    }
+    .modal-content h3 {
+      color: #f5d742;
+      margin-bottom: 1rem;
+    }
+    .modal-option {
+      background: rgba(106, 59, 181, 0.15);
+      padding: 0.4rem 0.8rem;
+      border-radius: 40px;
+      text-decoration: none;
+      color: #f5e6ff;
+      font-weight: 700;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+      border: 1px solid #f5d742;
+      display: block;
+      margin: 0.5rem 0;
+      cursor: pointer;
+    }
+    .modal-option:hover {
+      background: #6a3bb5;
+      color: #f5d742;
+    }
+    .close-modal {
+      background: #4a1d8c;
+      color: #f5d742;
+      border: none;
+      padding: 0.3rem 0.9rem;
+      border-radius: 30px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
     .container {
       max-width: 800px;
       margin: 2rem auto;
@@ -108,11 +166,6 @@
     .btn-primary:hover {
       background: #7e4acf;
     }
-    .info-text {
-      padding: 0 1.5rem 1.5rem;
-      color: #c4b0ff;
-      font-size: 0.9rem;
-    }
     .team-badge {
       background: rgba(106, 59, 181, 0.5);
       display: inline-block;
@@ -139,6 +192,17 @@
   <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
 </div>
 
+<div id="modalOverlay" class="modal-overlay">
+  <div class="modal-content">
+    <h3>MENU</h3>
+    <div class="modal-option" id="rulesModalBtn">RULES</div>
+    <div class="modal-option" id="calendarModalBtn">CALENDAR</div>
+    <div class="modal-option" id="playerTitlesModalBtn">PLAYER TITLES</div>
+    <div class="modal-option" id="logoutModalBtn" style="background:#ef4444; color:white;">LOGOUT</div>
+    <button class="close-modal" id="closeModalBtn">CLOSE</button>
+  </div>
+</div>
+
 <div class="container">
   <div class="card">
     <div class="card-header"><h2>👤 Player Profile</h2></div>
@@ -157,7 +221,7 @@
       <input type="email" id="email" placeholder="Email">
     </div>
     <div class="form-group">
-      <label>Phone Number</label>
+      <label>Phone Number (optional)</label>
       <input type="tel" id="phone" placeholder="Phone number">
     </div>
     <div class="form-group">
@@ -165,7 +229,7 @@
       <input type="password" id="newPassword" placeholder="New password">
     </div>
     <button id="saveProfileBtn" class="btn-primary">Save Changes</button>
-    <div class="card-header" style="margin-top:0.5rem;"><h2>🏆 Team Managed</h2></div>
+    <div class="card-header" style="margin-top:0.5rem;"><h2>🏆 Teams Managed</h2></div>
     <div id="teamDisplay" class="team-badge">Loading...</div>
   </div>
 </div>
@@ -199,7 +263,6 @@
   const db = getDatabase(app);
 
   const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
-
   let currentUser = null;
   let currentUserData = null;
 
@@ -220,8 +283,11 @@
     usernameInput.value = currentUserData.username || '';
     emailInput.value = currentUserData.email || '';
     phoneInput.value = currentUserData.phone || '';
-    const team = currentUserData.team || 'No team assigned';
-    teamDisplay.innerText = team;
+    // Display teams (as array or string)
+    let teams = currentUserData.teams || [];
+    if (typeof teams === 'string') teams = teams ? [teams] : [];
+    teamDisplay.innerText = teams.length ? teams.join(', ') : 'No teams assigned';
+    // Display profile picture
     const photoURL = currentUserData.photoURL || '';
     if (photoURL) {
       avatarImg.src = photoURL;
@@ -269,7 +335,6 @@
     }
   });
 
-  // Upload picture via ImgBB
   uploadPictureBtn.addEventListener('click', async () => {
     const file = pictureInput.files[0];
     if (!file) {
@@ -279,6 +344,7 @@
     const formData = new FormData();
     formData.append('image', file);
     try {
+      console.log('Uploading to ImgBB...');
       const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
         method: 'POST',
         body: formData
@@ -288,18 +354,36 @@
         throw new Error(result.error?.message || 'Upload failed');
       }
       const imageUrl = result.data.url;
-      // Update Auth profile photoURL
+      console.log('Image URL from ImgBB:', imageUrl);
+      // Save to Firebase Auth
       await updateProfile(currentUser, { photoURL: imageUrl });
       // Save to Realtime Database
       await set(ref(db, `users/${currentUser.uid}/photoURL`), imageUrl);
       avatarImg.src = imageUrl;
       avatarImg.style.display = 'block';
-      alert('Profile picture updated!');
+      alert('Profile picture updated! URL: ' + imageUrl);
     } catch (error) {
       console.error(error);
       alert('Upload failed: ' + error.message);
     }
   });
+
+  // Modal menu
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  const modalOverlay = document.getElementById("modalOverlay");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  function openModal() { modalOverlay.classList.add("active"); }
+  function closeModalFunc() { modalOverlay.classList.remove("active"); }
+  hamburgerBtn.addEventListener("click", openModal);
+  closeModalBtn.addEventListener("click", closeModalFunc);
+  modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModalFunc(); });
+  document.getElementById('rulesModalBtn').onclick = () => window.location.href = 'rules.html';
+  document.getElementById('calendarModalBtn').onclick = () => window.location.href = 'calendar.html';
+  document.getElementById('playerTitlesModalBtn').onclick = () => window.location.href = 'player-titles.html';
+  document.getElementById('logoutModalBtn').onclick = async () => {
+    await auth.signOut();
+    window.location.href = 'login.html';
+  };
 </script>
 </body>
 </html>
