@@ -487,7 +487,7 @@
     </div>
   </div>
 
-  <!-- GROUP FIXTURES -->
+  <!-- GROUP FIXTURES (MD1 removed) -->
   <div class="card">
     <div class="card-header" id="fixturesHeader">
       <div class="card-header-left"><h2>GROUP FIXTURES</h2></div>
@@ -561,6 +561,23 @@
     D: { name: "Group D", teams: nations.filter(n => n.group === "D") }
   };
 
+  // Statistics after MD1
+  const stats = {
+    "France": { p: 1, gd: 0, pts: 1 },
+    "Belgium": { p: 1, gd: 0, pts: 1 },
+    "Portugal": { p: 1, gd: 2, pts: 3 },
+    "England": { p: 1, gd: -2, pts: 0 },
+    "Netherlands": { p: 1, gd: 4, pts: 3 },
+    "Germany": { p: 1, gd: -4, pts: 0 },
+    "Spain": { p: 1, gd: 5, pts: 3 },
+    "Argentina": { p: 1, gd: -5, pts: 0 },
+    // Other teams have not played yet
+    "Morocco": { p: 0, gd: 0, pts: 0 },
+    "Croatia": { p: 0, gd: 0, pts: 0 },
+    "Italy": { p: 0, gd: 0, pts: 0 },
+    "Brazil": { p: 0, gd: 0, pts: 0 }
+  };
+
   let groupViewMode = { A: false, B: false, C: false, D: false };
 
   function getDisplayName(teamName, usePlayerView) {
@@ -573,9 +590,17 @@
     const container = document.getElementById(`group-table-${groupKey}`);
     if (!container) return;
     const teams = group.teams;
-    // Sort by position (currently 0,0,0 – still need to show 1,2,3)
+    // Sort by points, then GD (descending) for correct order
+    const teamsWithStats = teams.map(t => ({
+      name: t.name,
+      emoji: t.emoji,
+      stats: stats[t.name] || { p: 0, gd: 0, pts: 0 }
+    })).sort((a, b) => {
+      if (a.stats.pts !== b.stats.pts) return b.stats.pts - a.stats.pts;
+      return b.stats.gd - a.stats.gd;
+    });
     let html = `<table class="group-table"><thead><tr><th>Pos</th><th>Nation</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody>`;
-    teams.forEach((team, idx) => {
+    teamsWithStats.forEach((team, idx) => {
       const position = idx + 1;
       let barClass = "";
       if (position === 1 || position === 2) barClass = "green-bar-vertical";
@@ -584,23 +609,21 @@
       html += `<tr>
         <td class="rank-cell"><div class="pos-with-bar">${barClass ? `<span class="vertical-bar ${barClass}"></span>` : ""}${position}</div></td>
         <td><div class="team-name"><span class="country-emoji">${team.emoji}</span> ${displayName}</div></td>
-        <td>0</td><td>0</td>
-        <td class="pts-cell">0</td>
+        <td>${team.stats.p}</td>
+        <td>${team.stats.gd > 0 ? `+${team.stats.gd}` : team.stats.gd}</td>
+        <td class="pts-cell">${team.stats.pts}</td>
       </tr>`;
     });
-    html += `</tbody><table>`;
+    html += `</tbody></table>`;
     container.innerHTML = html;
-    // Add legend below the table
-    const legendDiv = document.createElement("div");
+    // Legend
+    const legendDiv = container.parentNode.querySelector(".group-legend") || document.createElement("div");
     legendDiv.className = "group-legend";
     legendDiv.innerHTML = `
       <div class="legend-item"><span class="vertical-bar green-bar-vertical" style="display:inline-block; width:4px; height:16px;"></span> <span>1st & 2nd → Knockout stage</span></div>
       <div class="legend-item"><span class="vertical-bar red-bar-vertical" style="display:inline-block; width:4px; height:16px;"></span> <span>3rd → Eliminated</span></div>
     `;
-    // Remove any existing legend to avoid duplication
-    const existingLegend = container.parentNode.querySelector(".group-legend");
-    if (existingLegend) existingLegend.remove();
-    container.parentNode.appendChild(legendDiv);
+    if (!container.parentNode.querySelector(".group-legend")) container.parentNode.appendChild(legendDiv);
   }
 
   function buildGroupCards() {
@@ -654,7 +677,7 @@
     });
   }
 
-  // ---------- Generate group fixtures (unchanged) ----------
+  // ---------- Generate group fixtures (skip MD1) ----------
   function generateGroupFixtures() {
     const fixtures = [];
     const groupsKeys = ['A', 'B', 'C', 'D'];
@@ -684,14 +707,16 @@
     return `${months[startDate.getMonth()]} ${startDate.getDate()}`;
   }
 
-  let groupFixtures = groupFixturesRaw.map(f => ({
-    md: f.md,
-    date: getDateForMatchday(f.md),
-    home: f.home,
-    away: f.away,
-    group: f.group
-  }));
-
+  // Filter out MD1 fixtures (md === 1) so they are not displayed
+  let groupFixtures = groupFixturesRaw
+    .filter(f => f.md !== 1)
+    .map(f => ({
+      md: f.md,
+      date: getDateForMatchday(f.md),
+      home: f.home,
+      away: f.away,
+      group: f.group
+    }));
   groupFixtures.sort((a, b) => a.md - b.md);
 
   function getNationEmoji(nationName) {
@@ -728,6 +753,15 @@
     }
   }
 
+  // Updated RESULTS_DATA with MD1 results at the top
+  const RESULTS_DATA = [
+    { matchText: "Spain 5 - 0 Argentina", md: 1 },
+    { matchText: "Netherlands 4 - 0 Germany", md: 1 },
+    { matchText: "Portugal 2 - 0 England", md: 1 },
+    { matchText: "France 0 - 0 Belgium", md: 1 }
+  ];
+
+  // Knockout stage (unchanged)
   function renderKnockout() {
     const container = document.getElementById("knockoutBracket");
     if (!container) return;
@@ -753,6 +787,7 @@
     `;
   }
 
+  // Collapsible fixtures
   const fixturesHeader = document.getElementById("fixturesHeader");
   const fixturesContent = document.getElementById("fixturesContent");
   const fixturesToggleIcon = document.getElementById("fixturesToggleIcon");
