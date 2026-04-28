@@ -911,16 +911,19 @@
     return `${months[date.getMonth()]} ${date.getDate()}`;
   }
 
-  // Build fixturesWithDates; Juventus fixtures get postponed date
+  // Build fixturesWithDates: start from MD16 = April 28
   const fixturesWithDates = [];
-  let startDate = new Date(2026, 3, 25);
-  let currentMd = 13;
+  // MD13 = 25 April, MD14 = 26 April, MD15 = 27 April, MD16 = 28 April
+  let startDate = new Date(2026, 3, 28); // 28 April 2026
+  let currentMd = 16;
   for (let f of fixtureList) {
     if (f.md !== currentMd) {
+      // Move to next day only when matchday changes
       startDate.setDate(startDate.getDate() + 1);
       currentMd = f.md;
     }
     let dateStr = formatDate(startDate);
+    // If Juventus is involved, override date
     if (f.home === "Juventus" || f.away === "Juventus") {
       dateStr = "POSTPONED-TBD";
     }
