@@ -1,1 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Juventus · Manager Selection</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
+    body {
+      background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 100%);
+      font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
+      padding: 0;
+      color: #f5f0ff;
+      min-height: 100vh;
+    }
+
+    .gold-navbar {
+      background: linear-gradient(135deg, #d4af37, #f5d742);
+      padding: 0.4rem 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.8rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .login-btn {
+      background: #6a3bb5;
+      color: #f5d742;
+      text-decoration: none;
+      padding: 0.4rem 1rem;
+      border-radius: 30px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      transition: background 0.2s, transform 0.2s;
+      border: 1.5px solid #f5d742;
+      display: inline-block;
+    }
+    .login-btn:hover {
+      background: #7e4acf;
+      transform: scale(1.02);
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .hamburger-btn {
+      background: #6a3bb5;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background 0.2s;
+      border: 1.5px solid #f5d742;
+    }
+    .hamburger-btn:hover {
+      transform: scale(1.05);
+      background: #7e4acf;
+    }
+    .hamburger-btn span {
+      display: block;
+      width: 18px;
+      height: 2.5px;
+      background-color: #f5d742;
+      border-radius: 2px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      z-index: 200;
+      visibility: hidden;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active {
+      visibility: visible;
+      pointer-events: auto;
+    }
+    .modal-content {
+      background: linear-gradient(135deg, #2d1b4e, #1f0f3a);
+      border: 2px solid #f5d742;
+      border-radius: 2rem;
+      padding: 1.5rem;
+      max-width: 350px;
+      width: 90%;
+      text-align: center;
+    }
+    .modal-content h3 {
+      color: #f5d742;
+      margin-bottom: 1rem;
+    }
+    .modal-option {
+      background: rgba(106, 59, 181, 0.15);
+      padding: 0.4rem 0.8rem;
+      border-radius: 40px;
+      text-decoration: none;
+      color: #f5e6ff;
+      font-weight: 700;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+      border: 1px solid #f5d742;
+      display: block;
+      margin: 0.5rem 0;
+      cursor: pointer;
+    }
+    .modal-option:hover {
+      background: #6a3bb5;
+      color: #f5d742;
+    }
+    .close-modal {
+      background: #4a1d8c;
+      color: #f5d742;
+      border: none;
+      padding: 0.3rem 0.9rem;
+      border-radius: 30px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 3rem auto;
+      padding: 0 1.5rem;
+      text-align: center;
+    }
+
+    .heading {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #f5d742;
+      letter-spacing: 2px;
+      margin-bottom: 2rem;
+      text-transform: uppercase;
+    }
+
+    .contenders-list {
+      background: rgba(45, 25, 75, 0.85);
+      backdrop-filter: blur(10px);
+      border-radius: 2rem;
+      border: 1px solid rgba(245, 215, 66, 0.4);
+      overflow: hidden;
+    }
+
+    .contender-item {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid rgba(245, 215, 66, 0.2);
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: #f0eaff;
+      transition: background 0.2s;
+    }
+    .contender-item:last-child {
+      border-bottom: none;
+    }
+    .contender-item:hover {
+      background: rgba(106, 59, 181, 0.4);
+    }
+
+    @media (max-width: 680px) {
+      .heading { font-size: 1.8rem; }
+      .contender-item { font-size: 1rem; padding: 0.8rem 1rem; }
+      .container { margin: 2rem auto; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="gold-navbar">
+  <a href="login.html" class="login-btn">LOGIN</a>
+  <div class="nav-right">
+    <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-content">
+    <h3>MENU</h3>
+    <div class="modal-option" id="rulesModalBtn">RULES</div>
+    <div class="modal-option" id="calendarModalBtn">CALENDAR</div>
+    <div class="modal-option" id="playerTitlesModalBtn">PLAYER TITLES</div>
+    <div class="modal-option" id="logoutModalBtn" style="background:#ef4444; color:white;">LOGOUT</div>
+    <button class="close-modal" id="closeModalBtn">CLOSE</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="heading">CONTENDERS</div>
+  <div class="contenders-list">
+    <div class="contender-item">General</div>
+    <div class="contender-item">Tapz</div>
+    <div class="contender-item">Guguz</div>
+    <div class="contender-item">Itumeleng</div>
+    <div class="contender-item">Izu</div>
+    <div class="contender-item">Spectre007</div>
+  </div>
+</div>
+
+<script type="module">
+  import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
+    authDomain: "efootball-412.firebaseapp.com",
+    databaseURL: "https://efootball-412-default-rtdb.firebaseio.com",
+    projectId: "efootball-412",
+    storageBucket: "efootball-412.firebasestorage.app",
+    messagingSenderId: "596548424249",
+    appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  // Modal menu
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  const modalOverlay = document.getElementById("modalOverlay");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  function openModal() { modalOverlay.classList.add("active"); }
+  function closeModalFunc() { modalOverlay.classList.remove("active"); }
+  hamburgerBtn.addEventListener("click", openModal);
+  closeModalBtn.addEventListener("click", closeModalFunc);
+  modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModalFunc(); });
+  document.getElementById('rulesModalBtn').onclick = () => window.location.href = 'rules.html';
+  document.getElementById('calendarModalBtn').onclick = () => window.location.href = 'calendar.html';
+  document.getElementById('playerTitlesModalBtn').onclick = () => window.location.href = 'player-titles.html';
+  document.getElementById('logoutModalBtn').onclick = async () => {
+    await signOut(auth);
+    window.location.href = 'login.html';
+  };
+</script>
+</body>
+</html>
