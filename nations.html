@@ -401,6 +401,14 @@
       vertical-align: middle;
       margin: 0 4px;
     }
+    .match-highlight {
+      background: #3d2a6b;
+      border-radius: 20px;
+      padding: 0.2rem 0.8rem;
+      display: inline-block;
+      font-size: 0.8rem;
+      color: #f5d742;
+    }
     .knockout-stage {
       margin-top: 1rem;
       background: rgba(30, 15, 55, 0.6);
@@ -487,7 +495,7 @@
     </div>
   </div>
 
-  <!-- GROUP FIXTURES (MD1 removed) -->
+  <!-- GROUP FIXTURES (MD1, MD2, and MD3 Portugal-Croatia removed) -->
   <div class="card">
     <div class="card-header" id="fixturesHeader">
       <div class="card-header-left"><h2>GROUP FIXTURES</h2></div>
@@ -501,6 +509,22 @@
         <table class="inner-table" id="fixturesTable">
           <thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead>
           <tbody id="fixturesTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS CARD -->
+  <div class="card">
+    <div class="card-header" id="resultsHeader">
+      <div class="card-header-left"><h2>RESULTS</h2></div>
+      <div class="toggle-icon" id="resultsToggleIcon">▼</div>
+    </div>
+    <div class="card-content" id="resultsContent">
+      <div class="scrollable-table">
+        <table class="inner-table" id="resultsTable">
+          <thead><tr><th>Match</th><th>Match Day</th></tr></thead>
+          <tbody id="resultsTableBody"></tbody>
         </table>
       </div>
     </div>
@@ -561,21 +585,24 @@
     D: { name: "Group D", teams: nations.filter(n => n.group === "D") }
   };
 
-  // Statistics after MD1
+  // Statistics after MD1, MD2, and MD3 (Portugal 1-1 Croatia)
   const stats = {
+    // Group A
     "France": { p: 1, gd: 0, pts: 1 },
-    "Belgium": { p: 1, gd: 0, pts: 1 },
-    "Portugal": { p: 1, gd: 2, pts: 3 },
-    "England": { p: 1, gd: -2, pts: 0 },
-    "Netherlands": { p: 1, gd: 4, pts: 3 },
+    "Belgium": { p: 2, gd: 0, pts: 4 },
+    "Morocco": { p: 2, gd: -3, pts: 0 },
+    // Group B
+    "Portugal": { p: 2, gd: 2, pts: 4 },
+    "England": { p: 2, gd: -2, pts: 3 },
+    "Croatia": { p: 3, gd: -3, pts: 1 },
+    // Group C
+    "Netherlands": { p: 2, gd: 4, pts: 4 },
+    "Italy": { p: 1, gd: 0, pts: 1 },
     "Germany": { p: 1, gd: -4, pts: 0 },
+    // Group D
     "Spain": { p: 1, gd: 5, pts: 3 },
-    "Argentina": { p: 1, gd: -5, pts: 0 },
-    // Other teams have not played yet
-    "Morocco": { p: 0, gd: 0, pts: 0 },
-    "Croatia": { p: 0, gd: 0, pts: 0 },
-    "Italy": { p: 0, gd: 0, pts: 0 },
-    "Brazil": { p: 0, gd: 0, pts: 0 }
+    "Argentina": { p: 2, gd: 3, pts: 3 },
+    "Brazil": { p: 2, gd: -8, pts: 0 }
   };
 
   let groupViewMode = { A: false, B: false, C: false, D: false };
@@ -590,7 +617,6 @@
     const container = document.getElementById(`group-table-${groupKey}`);
     if (!container) return;
     const teams = group.teams;
-    // Sort by points, then GD (descending) for correct order
     const teamsWithStats = teams.map(t => ({
       name: t.name,
       emoji: t.emoji,
@@ -599,7 +625,7 @@
       if (a.stats.pts !== b.stats.pts) return b.stats.pts - a.stats.pts;
       return b.stats.gd - a.stats.gd;
     });
-    let html = `<table class="group-table"><thead><tr><th>Pos</th><th>Nation</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody>`;
+    let html = `<table class="group-table"><thead><tr><th>Pos</th><th>Nation</th><th>P</th><th>GD</th><th>Pts</th></table></thead><tbody>`;
     teamsWithStats.forEach((team, idx) => {
       const position = idx + 1;
       let barClass = "";
@@ -677,7 +703,7 @@
     });
   }
 
-  // ---------- Generate group fixtures (skip MD1) ----------
+  // ---------- Generate group fixtures (skip MD1, MD2, and MD3 Portugal-Croatia) ----------
   function generateGroupFixtures() {
     const fixtures = [];
     const groupsKeys = ['A', 'B', 'C', 'D'];
@@ -707,9 +733,9 @@
     return `${months[startDate.getMonth()]} ${startDate.getDate()}`;
   }
 
-  // Filter out MD1 fixtures (md === 1) so they are not displayed
+  // Filter out MD1, MD2, and the MD3 match Portugal vs Croatia
   let groupFixtures = groupFixturesRaw
-    .filter(f => f.md !== 1)
+    .filter(f => f.md !== 1 && f.md !== 2 && !(f.md === 3 && f.home === "Portugal" && f.away === "Croatia"))
     .map(f => ({
       md: f.md,
       date: getDateForMatchday(f.md),
@@ -753,13 +779,38 @@
     }
   }
 
-  // Updated RESULTS_DATA with MD1 results at the top
+  // RESULTS_DATA with MD3 result added at the top
   const RESULTS_DATA = [
+    { matchText: "Portugal 1 - 1 Croatia", md: 3 },
+    { matchText: "Argentina 5 - 2 Brazil", md: 2 },
+    { matchText: "Italy 1 - 1 Netherlands", md: 2 },
+    { matchText: "England 3 - 0 Croatia (Forfeited - No Reply)", md: 2 },
+    { matchText: "Belgium 3 - 0 Morocco (Forfeited - No Reply)", md: 2 },
     { matchText: "Spain 5 - 0 Argentina", md: 1 },
     { matchText: "Netherlands 4 - 0 Germany", md: 1 },
     { matchText: "Portugal 2 - 0 England", md: 1 },
     { matchText: "France 0 - 0 Belgium", md: 1 }
   ];
+
+  function renderResults() {
+    const tbody = document.getElementById("resultsTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    RESULTS_DATA.forEach(r => {
+      const row = tbody.insertRow();
+      let processedText = r.matchText;
+      const teamsToReplace = [
+        "France", "Belgium", "Morocco", "Portugal", "England", "Croatia",
+        "Germany", "Netherlands", "Italy", "Spain", "Argentina", "Brazil"
+      ];
+      teamsToReplace.forEach(team => {
+        const regex = new RegExp(`\\b${team}\\b`, 'g');
+        processedText = processedText.replace(regex, `${getNationEmoji(team)} ${team}`);
+      });
+      row.insertCell(0).innerHTML = `<strong>${processedText}</strong>`;
+      row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>`;
+    });
+  }
 
   // Knockout stage (unchanged)
   function renderKnockout() {
@@ -787,7 +838,7 @@
     `;
   }
 
-  // Collapsible fixtures
+  // Collapsible fixtures and results
   const fixturesHeader = document.getElementById("fixturesHeader");
   const fixturesContent = document.getElementById("fixturesContent");
   const fixturesToggleIcon = document.getElementById("fixturesToggleIcon");
@@ -801,6 +852,23 @@
       } else {
         fixturesContent.classList.remove("collapsed");
         if (fixturesToggleIcon) fixturesToggleIcon.innerHTML = "▼";
+      }
+    });
+  }
+
+  const resultsHeader = document.getElementById("resultsHeader");
+  const resultsContent = document.getElementById("resultsContent");
+  const resultsToggleIcon = document.getElementById("resultsToggleIcon");
+  if (resultsHeader && resultsContent) {
+    let collapsed = false;
+    resultsHeader.addEventListener("click", () => {
+      collapsed = !collapsed;
+      if (collapsed) {
+        resultsContent.classList.add("collapsed");
+        if (resultsToggleIcon) resultsToggleIcon.innerHTML = "▶";
+      } else {
+        resultsContent.classList.remove("collapsed");
+        if (resultsToggleIcon) resultsToggleIcon.innerHTML = "▼";
       }
     });
   }
@@ -822,6 +890,7 @@
   buildGroupCards();
   renderKnockout();
   renderFixtures();
+  renderResults();
 </script>
 </body>
 </html>
