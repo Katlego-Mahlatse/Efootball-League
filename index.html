@@ -581,7 +581,6 @@
     <div class="dots-container" id="dotsContainer"></div>
   </div>
 
-  <!-- PREMIER LEAGUE TABLE -->
   <div class="card" style="margin-bottom:2rem">
     <div class="card-header" style="cursor:default;">
       <div class="card-header-left">
@@ -607,7 +606,6 @@
     </div>
   </div>
 
-  <!-- FIXTURES CARD -->
   <div class="card">
     <div class="card-header" id="fixturesHeader"><div class="card-header-left"><h2>FIXTURES</h2></div><div class="toggle-icon" id="fixturesToggleIcon">▼</div></div>
     <div class="card-content" id="fixturesContent">
@@ -621,7 +619,6 @@
     </div>
   </div>
 
-  <!-- RESULTS CARD -->
   <div class="card">
     <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
     <div class="card-content" id="resultsContent">
@@ -785,14 +782,14 @@
     { type: "win", winner: "Barcelona", loser: "Chelsea" },
     { type: "win", winner: "Real Madrid", loser: "Inter Milan" },
     { type: "forfeit", teams: ["Atletico","Man City"] },
-    // MD16 (including Juventus forfeit vs AC Milan)
+    // MD16
     { type: "win", winner: "Barcelona", loser: "Arsenal" },
     { type: "win", winner: "Man City", loser: "Inter Milan" },
     { type: "win", winner: "Liverpool", loser: "Atletico" },
     { type: "win", winner: "Real Madrid", loser: "PSG" },
     { type: "forfeit_win", winner: "Dortmund", loser: "Newcastle" },
     { type: "forfeit_win", winner: "Chelsea", loser: "Napoli" },
-    { type: "forfeit_win", winner: "AC Milan", loser: "Juventus" },   // MD16 Juventus forfeit
+    { type: "forfeit_win", winner: "AC Milan", loser: "Juventus" },
     // MD17 (most recent)
     { type: "win", winner: "Barcelona", loser: "Napoli" },
     { type: "win", winner: "Arsenal", loser: "Atletico" },
@@ -828,9 +825,14 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // Fixture list: removed all played MD16 and MD17 matches
-  // Remaining fixtures start from MD18
+  // Fixture list: keep ALL unplayed fixtures from MD17 onward (including MD17 matches not yet played)
+  // MD17: played: Napoli-Barcelona, Arsenal-Atletico, Chelsea-Dortmund, Liverpool-Inter. Remove those.
+  // Keep: Real Madrid vs AC Milan, PSG vs Man City, Juventus vs Newcastle (and also the postponed ones? They are now normal)
   const fixtureList = [
+    // MD17 remaining (unplayed)
+    { md: 17, home: "Real Madrid", away: "AC Milan" },
+    { md: 17, home: "Paris Saint-Germain", away: "Manchester City" },
+    { md: 17, home: "Juventus", away: "Newcastle United" },
     // MD18
     { md: 18, home: "Atlético Madrid", away: "FC Barcelona" }, { md: 18, home: "Borussia Dortmund", away: "Napoli" }, { md: 18, home: "Inter Milan", away: "Arsenal" }, { md: 18, home: "Juventus", away: "Chelsea" }, { md: 18, home: "Paris Saint-Germain", away: "Liverpool" }, { md: 18, home: "Real Madrid", away: "Newcastle United" }, { md: 18, home: "AC Milan", away: "Manchester City" },
     // MD19
@@ -856,24 +858,17 @@
     return `${months[date.getMonth()]} ${date.getDate()}`;
   }
 
-  // Build fixturesWithDates: start from MD18 = April 30 (since MD16 = Apr 28, MD17 = Apr 29, MD18 = Apr 30)
+  // Build fixturesWithDates: start from MD17 = Apr 29, then consecutive days
   const fixturesWithDates = [];
-  let startDate = new Date(2026, 3, 30); // 30 April 2026
-  let currentMd = 18;
+  let startDate = new Date(2026, 3, 29); // 29 April 2026
+  let currentMd = 17;
   for (let f of fixtureList) {
     if (f.md !== currentMd) {
       startDate.setDate(startDate.getDate() + 1);
       currentMd = f.md;
     }
     let dateStr = formatDate(startDate);
-    // Postpone future Juventus matches
-    if (f.home === "Juventus" || f.away === "Juventus") {
-      dateStr = "POSTPONED-TBD";
-    }
-    // Postpone future PSG matches (except those already played? All future postponed)
-    if ((f.home === "Paris Saint-Germain" || f.home === "PSG" || f.away === "Paris Saint-Germain" || f.away === "PSG") && f.md >= 18) {
-      dateStr = "POSTPONED-TBD";
-    }
+    // No more postponements – all matches get normal dates
     fixturesWithDates.push({
       md: f.md,
       home: f.home,
@@ -884,7 +879,7 @@
     });
   }
 
-  // RESULTS_DATA: MD17 and MD16 results at the top, then previous
+  // RESULTS_DATA: same as before (MD17 and MD16 results at the top)
   const RESULTS_DATA = [
     { matchText: "Liverpool 3 - 0 Inter Milan", md: 17 },
     { matchText: "Chelsea 2 - 1 Dortmund", md: 17 },
