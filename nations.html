@@ -28,29 +28,6 @@
       top: 0;
       z-index: 100;
     }
-    .nav-icon-btn {
-      background: #6a3bb5;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      transition: transform 0.2s, background 0.2s;
-      border: 1.5px solid #f5d742;
-      text-decoration: none;
-    }
-    .nav-icon-btn:hover {
-      transform: scale(1.05);
-      background: #7e4acf;
-    }
-    .chat-svg {
-      width: 20px;
-      height: 20px;
-      display: block;
-    }
     .hamburger-btn {
       background: #6a3bb5;
       width: 36px;
@@ -221,7 +198,7 @@
       border: 1px solid rgba(245, 215, 66, 0.4);
       overflow: hidden;
       position: relative;
-      margin-bottom: 1rem;
+      margin-bottom: 0;
     }
     .group-title {
       background: rgba(55, 35, 95, 0.8);
@@ -482,7 +459,7 @@
 </div>
 
 <div class="dashboard">
-  <!-- GROUP TABLES -->
+  <!-- GROUP TABLES (side by side in rows) -->
   <div class="card">
     <div class="card-header" style="cursor:default;">
       <div class="card-header-left">
@@ -495,7 +472,7 @@
     </div>
   </div>
 
-  <!-- GROUP FIXTURES (MD1, MD2, and MD3 Portugal-Croatia removed) -->
+  <!-- GROUP FIXTURES -->
   <div class="card">
     <div class="card-header" id="fixturesHeader">
       <div class="card-header-left"><h2>GROUP FIXTURES</h2></div>
@@ -507,7 +484,7 @@
       </div>
       <div class="scrollable-table" style="max-height:450px; overflow-y:auto;">
         <table class="inner-table" id="fixturesTable">
-          <thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead>
+          <thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th><tr></thead>
           <tbody id="fixturesTableBody"></tbody>
         </table>
       </div>
@@ -585,21 +562,17 @@
     D: { name: "Group D", teams: nations.filter(n => n.group === "D") }
   };
 
-  // Statistics after MD1, MD2, and MD3 (Portugal 1-1 Croatia)
+  // Updated statistics after MD1, MD2, MD3 (Portugal 1-1 Croatia, Italy 4-1 Germany)
   const stats = {
-    // Group A
     "France": { p: 1, gd: 0, pts: 1 },
     "Belgium": { p: 2, gd: 0, pts: 4 },
     "Morocco": { p: 2, gd: -3, pts: 0 },
-    // Group B
     "Portugal": { p: 2, gd: 2, pts: 4 },
     "England": { p: 2, gd: -2, pts: 3 },
     "Croatia": { p: 3, gd: -3, pts: 1 },
-    // Group C
     "Netherlands": { p: 2, gd: 4, pts: 4 },
-    "Italy": { p: 1, gd: 0, pts: 1 },
-    "Germany": { p: 1, gd: -4, pts: 0 },
-    // Group D
+    "Italy": { p: 2, gd: 3, pts: 4 },      // +3 from previous, now 1-0-1? wait: Italy had draw vs Netherlands (MD2), now win 4-1 vs Germany => GD: 0+3=+3, Pts: 1+3=4
+    "Germany": { p: 2, gd: -8, pts: 0 },   // -4 from Netherlands, -4 from Italy = -8
     "Spain": { p: 1, gd: 5, pts: 3 },
     "Argentina": { p: 2, gd: 3, pts: 3 },
     "Brazil": { p: 2, gd: -8, pts: 0 }
@@ -625,7 +598,7 @@
       if (a.stats.pts !== b.stats.pts) return b.stats.pts - a.stats.pts;
       return b.stats.gd - a.stats.gd;
     });
-    let html = `<table class="group-table"><thead><tr><th>Pos</th><th>Nation</th><th>P</th><th>GD</th><th>Pts</th></table></thead><tbody>`;
+    let html = `<table class="group-table"><thead><tr><th>Pos</th><th>Nation</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody>`;
     teamsWithStats.forEach((team, idx) => {
       const position = idx + 1;
       let barClass = "";
@@ -703,7 +676,7 @@
     });
   }
 
-  // ---------- Generate group fixtures (skip MD1, MD2, and MD3 Portugal-Croatia) ----------
+  // ---------- Generate group fixtures (skip MD1, MD2, MD3) ----------
   function generateGroupFixtures() {
     const fixtures = [];
     const groupsKeys = ['A', 'B', 'C', 'D'];
@@ -733,9 +706,9 @@
     return `${months[startDate.getMonth()]} ${startDate.getDate()}`;
   }
 
-  // Filter out MD1, MD2, and the MD3 match Portugal vs Croatia
+  // Remove MD1, MD2, and all MD3 matches (Portugal-Croatia already removed, now also Italy-Germany)
   let groupFixtures = groupFixturesRaw
-    .filter(f => f.md !== 1 && f.md !== 2 && !(f.md === 3 && f.home === "Portugal" && f.away === "Croatia"))
+    .filter(f => f.md !== 1 && f.md !== 2 && f.md !== 3)
     .map(f => ({
       md: f.md,
       date: getDateForMatchday(f.md),
@@ -779,8 +752,9 @@
     }
   }
 
-  // RESULTS_DATA with MD3 result added at the top
+  // RESULTS_DATA: add Italy 4-1 Germany at the top
   const RESULTS_DATA = [
+    { matchText: "Italy 4 - 1 Germany", md: 3 },
     { matchText: "Portugal 1 - 1 Croatia", md: 3 },
     { matchText: "Argentina 5 - 2 Brazil", md: 2 },
     { matchText: "Italy 1 - 1 Netherlands", md: 2 },
@@ -812,7 +786,6 @@
     });
   }
 
-  // Knockout stage (unchanged)
   function renderKnockout() {
     const container = document.getElementById("knockoutBracket");
     if (!container) return;
