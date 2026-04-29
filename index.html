@@ -533,7 +533,7 @@
       margin-top: 4px;
     }
 
-    /* Announcement blocks (PSG and Juventus) */
+    /* Juventus announcement block (PSG block removed) */
     .announcement {
       text-align: center;
       background: rgba(45, 25, 75, 0.85);
@@ -655,7 +655,7 @@
     <div class="card-content">
       <div style="overflow-x:auto;">
         <table class="stats-table" id="leagueTable">
-          <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th></tr></thead>
+          <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th></td></thead>
           <tbody id="leagueTableBody"></tbody>
         </table>
       </div>
@@ -670,20 +670,7 @@
     </div>
   </div>
 
-  <!-- PSG ANNOUNCEMENT BLOCK -->
-  <div class="announcement">
-    <img class="announcement-logo" src="4dea795d-a516-46ae-bd34-07a784693d80.png" alt="PSG logo">
-    <div class="announcement-title">PARIS SAINT-GERMAIN</div>
-    <div class="announcement-description">
-      Due to the high level of competition and the lack of balls from Sir Alex MJ, he has decided to part ways with Paris Saint-Germain after a very successful career with 0 trophies won. The PSG has begun negotiations with the new manager for PSG. The leading candidates are Tapz and Izu. PSG games will be postponed till further notice, Thank you.
-    </div>
-    <div class="announcement-buttons">
-      <a href="psg-manager.html" class="announcement-btn">VIEW MANAGER SELECTION</a>
-      <a href="rules.html" class="announcement-btn">VIEW RULES</a>
-    </div>
-  </div>
-
-  <!-- JUVENTUS ANNOUNCEMENT BLOCK -->
+  <!-- JUVENTUS ANNOUNCEMENT BLOCK (PSG BLOCK REMOVED) -->
   <div class="announcement">
     <img class="announcement-logo" src="IMG_20260421_151224.jpg" alt="Juventus logo">
     <div class="announcement-title">JUVENTUS</div>
@@ -739,17 +726,17 @@
   function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
   if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-  // LEAGUE DATA after ALL MD16 results (including Real Madrid 5-0 PSG, Dortmund forfeit win over Newcastle)
+  // LEAGUE DATA after ALL MD16 results (including Chelsea forfeit win over Napoli)
   const LEAGUE_DATA = [
     { pos: 1, club: "Real Madrid", p: 16, gd: 27, pts: 46 },
     { pos: 2, club: "Liverpool", p: 16, gd: 28, pts: 38 },
     { pos: 3, club: "Dortmund", p: 16, gd: 10, pts: 33 },
     { pos: 4, club: "Barcelona", p: 16, gd: 2, pts: 31 },
     { pos: 5, club: "Man City", p: 16, gd: 4, pts: 25 },
-    { pos: 6, club: "Arsenal", p: 16, gd: 2, pts: 23 },
-    { pos: 7, club: "Chelsea", p: 15, gd: 11, pts: 21 },
+    { pos: 6, club: "Chelsea", p: 16, gd: 11, pts: 24 },
+    { pos: 7, club: "Arsenal", p: 16, gd: 2, pts: 23 },
     { pos: 8, club: "PSG", p: 16, gd: -14, pts: 20 },
-    { pos: 9, club: "Napoli", p: 15, gd: -3, pts: 14 },
+    { pos: 9, club: "Napoli", p: 16, gd: -6, pts: 14 },
     { pos: 10, club: "AC Milan", p: 15, gd: -13, pts: 13 },
     { pos: 11, club: "Atletico", p: 16, gd: -17, pts: 7 },
     { pos: 12, club: "Newcastle", p: 16, gd: -38, pts: 6 },
@@ -757,7 +744,7 @@
     { pos: 14, club: "Juventus", p: 15, gd: -18, pts: 4 }
   ];
 
-  // Player map: PSG and PSG changed to TBD
+  // Player map: PSG restored to ~MJ
   const playerMap = {
     "FC Barcelona": "~Rea🫡",
     "Barcelona": "~Rea🫡",
@@ -766,8 +753,8 @@
     "Dortmund": "~Qhawe 🤍",
     "Juventus": "TBD",
     "Atlético Madrid": "~Stalker.",
-    "Paris Saint-Germain": "TBD",
-    "PSG": "TBD",
+    "Paris Saint-Germain": "~MJ",
+    "PSG": "~MJ",
     "Napoli": "~PrettyBoy Tendancies. 👅",
     "Real Madrid": "~Karabo",
     "Arsenal": "Kath",
@@ -809,7 +796,7 @@
     return teamName;
   }
 
-  // allResultsOrder with MD16 results at the bottom
+  // allResultsOrder with Chelsea forfeit added at the bottom
   const allResultsOrder = [
     { type: "win", winner: "Real Madrid", loser: "Napoli" },
     { type: "draw", teams: ["Arsenal","AC Milan"] },
@@ -880,7 +867,8 @@
     { type: "win", winner: "Man City", loser: "Inter Milan" },
     { type: "win", winner: "Liverpool", loser: "Atletico" },
     { type: "win", winner: "Real Madrid", loser: "PSG" },
-    { type: "forfeit_win", winner: "Dortmund", loser: "Newcastle" }
+    { type: "forfeit_win", winner: "Dortmund", loser: "Newcastle" },
+    { type: "forfeit_win", winner: "Chelsea", loser: "Napoli" }   // Chelsea forfeit win
   ];
 
   const teamResults = {};
@@ -911,10 +899,10 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // Fixture list: remove all played MD16 matches, keep Napoli-Chelsea, postpone future PSG matches
+  // Fixture list: remove Napoli-Chelsea (played), keep Juventus-AC Milan with normal date
   const fixtureList = [
-    // MD16 (only Napoli vs Chelsea remains, all others removed)
-    { md: 16, home: "Napoli", away: "Chelsea" },
+    // MD16 (Juventus vs AC Milan still there, others removed)
+    { md: 16, home: "Juventus", away: "AC Milan" },
     // MD17
     { md: 17, home: "Napoli", away: "FC Barcelona" }, { md: 17, home: "Atlético Madrid", away: "Arsenal" }, { md: 17, home: "Borussia Dortmund", away: "Chelsea" }, { md: 17, home: "Inter Milan", away: "Liverpool" }, { md: 17, home: "Juventus", away: "Newcastle United" }, { md: 17, home: "Paris Saint-Germain", away: "Manchester City" }, { md: 17, home: "Real Madrid", away: "AC Milan" },
     // MD18
@@ -942,7 +930,7 @@
     return `${months[date.getMonth()]} ${date.getDate()}`;
   }
 
-  // Build fixturesWithDates: start from MD16 = April 28
+  // Build fixturesWithDates: start from MD16 = April 28, but Juventus-AC Milan gets Apr 29
   const fixturesWithDates = [];
   let startDate = new Date(2026, 3, 28); // 28 April 2026
   let currentMd = 16;
@@ -952,12 +940,11 @@
       currentMd = f.md;
     }
     let dateStr = formatDate(startDate);
-    // Postpone Juventus matches
-    if (f.home === "Juventus" || f.away === "Juventus") {
-      dateStr = "POSTPONED-TBD";
-    }
-    // Postpone PSG matches (all future matches, but MD16 PSG-Real Madrid is already played and removed from list)
-    if ((f.home === "Paris Saint-Germain" || f.home === "PSG" || f.away === "Paris Saint-Germain" || f.away === "PSG") && f.md !== 16) {
+    // Only postpone Juventus matches that are NOT the one we are setting to Apr 29
+    // The Juventus vs AC Milan (MD16) is now played on Apr 29 (one day later than other MD16 matches)
+    if (f.home === "Juventus" && f.away === "AC Milan" && f.md === 16) {
+      dateStr = "Apr 29";
+    } else if (f.home === "Juventus" || f.away === "Juventus") {
       dateStr = "POSTPONED-TBD";
     }
     fixturesWithDates.push({
@@ -970,8 +957,9 @@
     });
   }
 
-  // RESULTS_DATA: MD16 results at the top, then previous
+  // RESULTS_DATA: Chelsea forfeit at the top
   const RESULTS_DATA = [
+    { matchText: "Chelsea 3 - 0 Napoli (Forfeited - No Reply)", md: 16 },
     { matchText: "Borussia Dortmund 3 - 0 Newcastle United (Forfeited - No Reply)", md: 16 },
     { matchText: "Paris Saint-Germain 0 - 5 Real Madrid", md: 16 },
     { matchText: "Liverpool 2 - 1 Atletico Madrid", md: 16 },
