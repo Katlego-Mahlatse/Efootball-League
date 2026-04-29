@@ -484,7 +484,7 @@
       </div>
       <div class="scrollable-table" style="max-height:450px; overflow-y:auto;">
         <table class="inner-table" id="fixturesTable">
-          <thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th><tr></thead>
+          <thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead>
           <tbody id="fixturesTableBody"></tbody>
         </table>
       </div>
@@ -562,17 +562,17 @@
     D: { name: "Group D", teams: nations.filter(n => n.group === "D") }
   };
 
-  // Updated statistics after MD1, MD2, MD3 (Portugal 1-1 Croatia, Italy 4-1 Germany)
+  // Statistics after MD1, MD2, and MD3 (only played matches)
   const stats = {
     "France": { p: 1, gd: 0, pts: 1 },
     "Belgium": { p: 2, gd: 0, pts: 4 },
     "Morocco": { p: 2, gd: -3, pts: 0 },
     "Portugal": { p: 2, gd: 2, pts: 4 },
     "England": { p: 2, gd: -2, pts: 3 },
-    "Croatia": { p: 3, gd: -3, pts: 1 },
+    "Croatia": { p: 2, gd: -3, pts: 1 },   // Fixed: 2 matches played
     "Netherlands": { p: 2, gd: 4, pts: 4 },
-    "Italy": { p: 2, gd: 3, pts: 4 },      // +3 from previous, now 1-0-1? wait: Italy had draw vs Netherlands (MD2), now win 4-1 vs Germany => GD: 0+3=+3, Pts: 1+3=4
-    "Germany": { p: 2, gd: -8, pts: 0 },   // -4 from Netherlands, -4 from Italy = -8
+    "Italy": { p: 2, gd: 3, pts: 4 },
+    "Germany": { p: 2, gd: -8, pts: 0 },
     "Spain": { p: 1, gd: 5, pts: 3 },
     "Argentina": { p: 2, gd: 3, pts: 3 },
     "Brazil": { p: 2, gd: -8, pts: 0 }
@@ -676,7 +676,7 @@
     });
   }
 
-  // ---------- Generate group fixtures (skip MD1, MD2, MD3) ----------
+  // ---------- Generate group fixtures (skip MD1, MD2, and played MD3 matches) ----------
   function generateGroupFixtures() {
     const fixtures = [];
     const groupsKeys = ['A', 'B', 'C', 'D'];
@@ -706,9 +706,10 @@
     return `${months[startDate.getMonth()]} ${startDate.getDate()}`;
   }
 
-  // Remove MD1, MD2, and all MD3 matches (Portugal-Croatia already removed, now also Italy-Germany)
+  // Remove MD1, MD2, and only the played MD3 matches (Croatia vs Portugal, Germany vs Italy)
+  // Keep unplayed MD3 matches (Morocco vs France, Brazil vs Spain)
   let groupFixtures = groupFixturesRaw
-    .filter(f => f.md !== 1 && f.md !== 2 && f.md !== 3)
+    .filter(f => f.md !== 1 && f.md !== 2 && !(f.md === 3 && f.home === "Croatia" && f.away === "Portugal") && !(f.md === 3 && f.home === "Germany" && f.away === "Italy"))
     .map(f => ({
       md: f.md,
       date: getDateForMatchday(f.md),
@@ -752,7 +753,7 @@
     }
   }
 
-  // RESULTS_DATA: add Italy 4-1 Germany at the top
+  // RESULTS_DATA: all played matches (MD1, MD2, MD3)
   const RESULTS_DATA = [
     { matchText: "Italy 4 - 1 Germany", md: 3 },
     { matchText: "Portugal 1 - 1 Croatia", md: 3 },
