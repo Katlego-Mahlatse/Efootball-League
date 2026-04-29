@@ -533,66 +533,6 @@
       margin-top: 4px;
     }
 
-    /* Juventus announcement block (PSG block removed) */
-    .announcement {
-      text-align: center;
-      background: rgba(45, 25, 75, 0.85);
-      backdrop-filter: blur(10px);
-      border-radius: 2rem;
-      border: 1px solid rgba(245, 215, 66, 0.4);
-      padding: 2rem;
-      margin-bottom: 1.5rem;
-    }
-    .announcement-logo {
-      width: 120px;
-      height: 120px;
-      object-fit: contain;
-      margin-bottom: 0.5rem;
-    }
-    .announcement-title {
-      font-size: 2.2rem;
-      font-weight: 800;
-      color: #f5d742;
-      letter-spacing: 2px;
-      margin-bottom: 1rem;
-    }
-    .announcement-description {
-      font-size: 1rem;
-      line-height: 1.4;
-      max-width: 800px;
-      margin: 0 auto 1rem auto;
-      color: #f0eaff;
-    }
-    .article-link {
-      color: #3b82f6;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-    .announcement-buttons {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-top: 0.5rem;
-    }
-    .announcement-btn {
-      background: #6a3bb5;
-      border: 1px solid #f5d742;
-      border-radius: 40px;
-      padding: 0.6rem 1.5rem;
-      color: #f5d742;
-      font-weight: bold;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-decoration: none;
-      display: inline-block;
-    }
-    .announcement-btn:hover {
-      background: #7e4acf;
-      transform: scale(1.02);
-    }
-
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
       .stats-table th, .stats-table td { padding: 0.6rem 0.5rem; font-size: 0.75rem; }
@@ -605,9 +545,6 @@
       .team-icon { width: 32px; height: 32px; }
       .inline-team-icon { width: 32px; height: 32px; }
       .login-btn { font-size: 0.75rem; padding: 0.3rem 0.7rem; }
-      .announcement-logo { width: 80px; height: 80px; }
-      .announcement-title { font-size: 1.6rem; }
-      .announcement-description { font-size: 0.85rem; }
     }
   </style>
 </head>
@@ -655,7 +592,7 @@
     <div class="card-content">
       <div style="overflow-x:auto;">
         <table class="stats-table" id="leagueTable">
-          <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th></td></thead>
+          <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th></tr></thead>
           <tbody id="leagueTableBody"></tbody>
         </table>
       </div>
@@ -667,19 +604,6 @@
           <span class="legend-item"><span class="legend-dashed-white"></span><span class="legend-text">FIFA Club World Cup</span></span>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- JUVENTUS ANNOUNCEMENT BLOCK (PSG BLOCK REMOVED) -->
-  <div class="announcement">
-    <img class="announcement-logo" src="IMG_20260421_151224.jpg" alt="Juventus logo">
-    <div class="announcement-title">JUVENTUS</div>
-    <div class="announcement-description">
-      Due to failure to oblige to <span class="article-link" onclick="location.href='rules.html'">Article 6</span> and <span class="article-link" onclick="location.href='rules.html'">Article 2</span>, Lawree has been sacked as the manager for Juventus. An interim manager will be appointed to represent Juventus for the rest of the season and a knockout tournament may be held if necessary. Juventus games will be postponed till further notice, Thank You.
-    </div>
-    <div class="announcement-buttons">
-      <a href="juventus.html" class="announcement-btn">VIEW MANAGER SELECTION TOURNAMENT</a>
-      <a href="rules.html" class="announcement-btn">VIEW RULES</a>
     </div>
   </div>
 
@@ -726,25 +650,24 @@
   function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
   if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-  // LEAGUE DATA after ALL MD16 results (including Chelsea forfeit win over Napoli)
+  // LEAGUE DATA after MD16 (complete) and MD17
   const LEAGUE_DATA = [
     { pos: 1, club: "Real Madrid", p: 16, gd: 27, pts: 46 },
-    { pos: 2, club: "Liverpool", p: 16, gd: 28, pts: 38 },
-    { pos: 3, club: "Dortmund", p: 16, gd: 10, pts: 33 },
-    { pos: 4, club: "Barcelona", p: 16, gd: 2, pts: 31 },
-    { pos: 5, club: "Man City", p: 16, gd: 4, pts: 25 },
-    { pos: 6, club: "Chelsea", p: 16, gd: 11, pts: 24 },
-    { pos: 7, club: "Arsenal", p: 16, gd: 2, pts: 23 },
+    { pos: 2, club: "Liverpool", p: 17, gd: 31, pts: 41 },
+    { pos: 3, club: "Barcelona", p: 17, gd: 6, pts: 34 },
+    { pos: 4, club: "Dortmund", p: 17, gd: 9, pts: 33 },
+    { pos: 5, club: "Chelsea", p: 17, gd: 12, pts: 27 },
+    { pos: 6, club: "Arsenal", p: 17, gd: 5, pts: 26 },
+    { pos: 7, club: "Man City", p: 16, gd: 4, pts: 25 },
     { pos: 8, club: "PSG", p: 16, gd: -14, pts: 20 },
-    { pos: 9, club: "Napoli", p: 16, gd: -6, pts: 14 },
-    { pos: 10, club: "AC Milan", p: 15, gd: -13, pts: 13 },
-    { pos: 11, club: "Atletico", p: 16, gd: -17, pts: 7 },
+    { pos: 9, club: "AC Milan", p: 16, gd: -13, pts: 16 },
+    { pos: 10, club: "Napoli", p: 17, gd: -10, pts: 14 },
+    { pos: 11, club: "Atletico", p: 17, gd: -20, pts: 7 },
     { pos: 12, club: "Newcastle", p: 16, gd: -38, pts: 6 },
-    { pos: 13, club: "Inter Milan", p: 16, gd: -7, pts: 5 },
-    { pos: 14, club: "Juventus", p: 15, gd: -18, pts: 4 }
+    { pos: 13, club: "Inter Milan", p: 17, gd: -10, pts: 5 },
+    { pos: 14, club: "Juventus", p: 16, gd: -21, pts: 4 }
   ];
 
-  // Player map: PSG restored to ~MJ
   const playerMap = {
     "FC Barcelona": "~Rea🫡",
     "Barcelona": "~Rea🫡",
@@ -796,7 +719,7 @@
     return teamName;
   }
 
-  // allResultsOrder with Chelsea forfeit added at the bottom
+  // allResultsOrder with MD16 (Juventus forfeit) and MD17 results added at the bottom (most recent)
   const allResultsOrder = [
     { type: "win", winner: "Real Madrid", loser: "Napoli" },
     { type: "draw", teams: ["Arsenal","AC Milan"] },
@@ -862,13 +785,19 @@
     { type: "win", winner: "Barcelona", loser: "Chelsea" },
     { type: "win", winner: "Real Madrid", loser: "Inter Milan" },
     { type: "forfeit", teams: ["Atletico","Man City"] },
-    // MD16 (most recent)
+    // MD16 (including Juventus forfeit vs AC Milan)
     { type: "win", winner: "Barcelona", loser: "Arsenal" },
     { type: "win", winner: "Man City", loser: "Inter Milan" },
     { type: "win", winner: "Liverpool", loser: "Atletico" },
     { type: "win", winner: "Real Madrid", loser: "PSG" },
     { type: "forfeit_win", winner: "Dortmund", loser: "Newcastle" },
-    { type: "forfeit_win", winner: "Chelsea", loser: "Napoli" }   // Chelsea forfeit win
+    { type: "forfeit_win", winner: "Chelsea", loser: "Napoli" },
+    { type: "forfeit_win", winner: "AC Milan", loser: "Juventus" },   // MD16 Juventus forfeit
+    // MD17 (most recent)
+    { type: "win", winner: "Barcelona", loser: "Napoli" },
+    { type: "win", winner: "Arsenal", loser: "Atletico" },
+    { type: "win", winner: "Chelsea", loser: "Dortmund" },
+    { type: "win", winner: "Liverpool", loser: "Inter Milan" }
   ];
 
   const teamResults = {};
@@ -899,12 +828,9 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // Fixture list: remove Napoli-Chelsea (played), keep Juventus-AC Milan with normal date
+  // Fixture list: removed all played MD16 and MD17 matches
+  // Remaining fixtures start from MD18
   const fixtureList = [
-    // MD16 (Juventus vs AC Milan still there, others removed)
-    { md: 16, home: "Juventus", away: "AC Milan" },
-    // MD17
-    { md: 17, home: "Napoli", away: "FC Barcelona" }, { md: 17, home: "Atlético Madrid", away: "Arsenal" }, { md: 17, home: "Borussia Dortmund", away: "Chelsea" }, { md: 17, home: "Inter Milan", away: "Liverpool" }, { md: 17, home: "Juventus", away: "Newcastle United" }, { md: 17, home: "Paris Saint-Germain", away: "Manchester City" }, { md: 17, home: "Real Madrid", away: "AC Milan" },
     // MD18
     { md: 18, home: "Atlético Madrid", away: "FC Barcelona" }, { md: 18, home: "Borussia Dortmund", away: "Napoli" }, { md: 18, home: "Inter Milan", away: "Arsenal" }, { md: 18, home: "Juventus", away: "Chelsea" }, { md: 18, home: "Paris Saint-Germain", away: "Liverpool" }, { md: 18, home: "Real Madrid", away: "Newcastle United" }, { md: 18, home: "AC Milan", away: "Manchester City" },
     // MD19
@@ -930,21 +856,22 @@
     return `${months[date.getMonth()]} ${date.getDate()}`;
   }
 
-  // Build fixturesWithDates: start from MD16 = April 28, but Juventus-AC Milan gets Apr 29
+  // Build fixturesWithDates: start from MD18 = April 30 (since MD16 = Apr 28, MD17 = Apr 29, MD18 = Apr 30)
   const fixturesWithDates = [];
-  let startDate = new Date(2026, 3, 28); // 28 April 2026
-  let currentMd = 16;
+  let startDate = new Date(2026, 3, 30); // 30 April 2026
+  let currentMd = 18;
   for (let f of fixtureList) {
     if (f.md !== currentMd) {
       startDate.setDate(startDate.getDate() + 1);
       currentMd = f.md;
     }
     let dateStr = formatDate(startDate);
-    // Only postpone Juventus matches that are NOT the one we are setting to Apr 29
-    // The Juventus vs AC Milan (MD16) is now played on Apr 29 (one day later than other MD16 matches)
-    if (f.home === "Juventus" && f.away === "AC Milan" && f.md === 16) {
-      dateStr = "Apr 29";
-    } else if (f.home === "Juventus" || f.away === "Juventus") {
+    // Postpone future Juventus matches
+    if (f.home === "Juventus" || f.away === "Juventus") {
+      dateStr = "POSTPONED-TBD";
+    }
+    // Postpone future PSG matches (except those already played? All future postponed)
+    if ((f.home === "Paris Saint-Germain" || f.home === "PSG" || f.away === "Paris Saint-Germain" || f.away === "PSG") && f.md >= 18) {
       dateStr = "POSTPONED-TBD";
     }
     fixturesWithDates.push({
@@ -957,8 +884,13 @@
     });
   }
 
-  // RESULTS_DATA: Chelsea forfeit at the top
+  // RESULTS_DATA: MD17 and MD16 results at the top, then previous
   const RESULTS_DATA = [
+    { matchText: "Liverpool 3 - 0 Inter Milan", md: 17 },
+    { matchText: "Chelsea 2 - 1 Dortmund", md: 17 },
+    { matchText: "Arsenal 4 - 1 Atletico Madrid", md: 17 },
+    { matchText: "Napoli 0 - 4 Barcelona", md: 17 },
+    { matchText: "Juventus 0 - 3 AC Milan (Forfeited - No Reply)", md: 16 },
     { matchText: "Chelsea 3 - 0 Napoli (Forfeited - No Reply)", md: 16 },
     { matchText: "Borussia Dortmund 3 - 0 Newcastle United (Forfeited - No Reply)", md: 16 },
     { matchText: "Paris Saint-Germain 0 - 5 Real Madrid", md: 16 },
