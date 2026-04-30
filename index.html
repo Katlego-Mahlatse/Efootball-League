@@ -54,25 +54,6 @@
       gap: 0.8rem;
     }
 
-    .nav-icon-btn {
-      background: #6a3bb5;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      transition: transform 0.2s, background 0.2s;
-      border: 1.5px solid #f5d742;
-      text-decoration: none;
-    }
-    .nav-icon-btn:hover {
-      transform: scale(1.05);
-      background: #7e4acf;
-    }
-
     .hamburger-btn {
       background: #6a3bb5;
       width: 36px;
@@ -614,7 +595,7 @@
         <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
       </div>
       <div class="scrollable-table">
-        <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
+        <table class="inner-table" id="fixturesTable"><thead></tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
       </div>
     </div>
   </div>
@@ -647,7 +628,7 @@
   function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
   if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-  // UPDATED LEAGUE DATA after MD17 forfeits: Real Madrid, PSG, Newcastle win via forfeit (points +3, P +1)
+  // UPDATED LEAGUE DATA after MD17 forfeits: points and matches played corrected
   const LEAGUE_DATA = [
     { pos: 1, club: "Real Madrid", p: 17, gd: 27, pts: 49 },
     { pos: 2, club: "Liverpool", p: 17, gd: 31, pts: 41 },
@@ -716,17 +697,18 @@
     return teamName;
   }
 
-  // Updated results history with MD17 forfeits added at the top (most recent)
+  // COMPLETE RESULTS HISTORY including MD17 forfeits at the very beginning (most recent)
   const allResultsOrder = [
-    // MD17 FORFEITS (added)
-    { type: "forfeit_win", winner: "Real Madrid", loser: "AC Milan", agreement: true },
-    { type: "forfeit_win", winner: "PSG", loser: "Man City", agreement: false },
-    { type: "forfeit_win", winner: "Newcastle", loser: "Juventus", agreement: false },
-    // existing results ...
+    // MD17 FORFEITS (added as most recent)
+    { type: "forfeit_win", winner: "Real Madrid", loser: "AC Milan" },
+    { type: "forfeit_win", winner: "PSG", loser: "Man City" },
+    { type: "forfeit_win", winner: "Newcastle", loser: "Juventus" },
+    // MD17 normal results
     { type: "win", winner: "Liverpool", loser: "Inter Milan" },
     { type: "win", winner: "Chelsea", loser: "Dortmund" },
     { type: "win", winner: "Arsenal", loser: "Atletico" },
     { type: "win", winner: "Barcelona", loser: "Napoli" },
+    // MD16 and earlier (full history)
     { type: "win", winner: "Barcelona", loser: "Arsenal" },
     { type: "win", winner: "Man City", loser: "Inter Milan" },
     { type: "win", winner: "Liverpool", loser: "Atletico" },
@@ -741,44 +723,68 @@
     { type: "win", winner: "Barcelona", loser: "Chelsea" },
     { type: "win", winner: "Real Madrid", loser: "Inter Milan" },
     { type: "forfeit", teams: ["Atletico","Man City"] },
-    // ... keep all other results (rest omitted for brevity but intact in logic)
+    { type: "win", winner: "Real Madrid", loser: "Napoli" },
+    { type: "draw", teams: ["Arsenal","AC Milan"] },
+    { type: "win", winner: "Liverpool", loser: "Newcastle" },
+    { type: "draw", teams: ["Man City","Chelsea"] },
+    { type: "win", winner: "Dortmund", loser: "Juventus" },
+    { type: "win", winner: "PSG", loser: "Atletico" },
+    { type: "win", winner: "Barcelona", loser: "Inter Milan" },
+    { type: "win", winner: "Barcelona", loser: "Juventus" },
+    { type: "win", winner: "Napoli", loser: "Man City" },
+    { type: "win", winner: "Real Madrid", loser: "Dortmund" },
+    { type: "win", winner: "Arsenal", loser: "Newcastle" },
+    { type: "draw", teams: ["Liverpool","Chelsea"] },
+    { type: "draw", teams: ["Inter Milan","PSG"] },
+    { type: "forfeit", teams: ["Atletico","AC Milan"] },
+    { type: "win", winner: "AC Milan", loser: "Inter Milan" },
+    { type: "draw", teams: ["Barcelona","PSG"] },
+    { type: "win", winner: "Atletico", loser: "Newcastle" },
+    { type: "win", winner: "Chelsea", loser: "Arsenal" },
+    { type: "win", winner: "Napoli", loser: "Liverpool" },
+    { type: "win", winner: "Man City", loser: "Dortmund" },
+    { type: "forfeit_win", winner: "Real Madrid", loser: "Juventus" },
+    { type: "win", winner: "Man City", loser: "Juventus" },
+    { type: "win", winner: "Inter Milan", loser: "Newcastle" },
+    { type: "win", winner: "Chelsea", loser: "Atletico" },
+    { type: "win", winner: "Arsenal", loser: "Napoli" },
+    { type: "win", winner: "Real Madrid", loser: "Barcelona" },
+    { type: "win", winner: "Dortmund", loser: "Liverpool" },
+    { type: "win", winner: "PSG", loser: "AC Milan" },
+    { type: "win", winner: "Chelsea", loser: "Inter Milan" },
+    { type: "win", winner: "Atletico", loser: "Napoli" },
+    { type: "win", winner: "Real Madrid", loser: "Man City" },
+    { type: "win", winner: "Arsenal", loser: "Dortmund" },
+    { type: "forfeit_win", winner: "PSG", loser: "Newcastle" },
+    { type: "win", winner: "Barcelona", loser: "AC Milan" },
+    { type: "forfeit_win", winner: "Liverpool", loser: "Juventus" },
+    { type: "draw", teams: ["PSG","Chelsea"] },
+    { type: "win", winner: "Newcastle", loser: "AC Milan" },
+    { type: "draw", teams: ["Napoli","Inter Milan"] },
+    { type: "forfeit_win", winner: "Barcelona", loser: "Man City" },
+    { type: "forfeit_win", winner: "Arsenal", loser: "Juventus" },
+    { type: "draw", teams: ["Real Madrid","Liverpool"] },
+    { type: "forfeit_win", winner: "Dortmund", loser: "Atletico" },
+    { type: "win", winner: "Real Madrid", loser: "Arsenal" },
+    { type: "draw", teams: ["Napoli","PSG"] },
+    { type: "win", winner: "Inter Milan", loser: "Dortmund" },
+    { type: "forfeit", teams: ["Juventus","Atletico"] },
+    { type: "win", winner: "Chelsea", loser: "AC Milan" },
+    { type: "win", winner: "Liverpool", loser: "Man City" },
+    { type: "forfeit_win", winner: "Barcelona", loser: "Newcastle" },
+    { type: "forfeit_win", winner: "Liverpool", loser: "Barcelona" },
+    { type: "forfeit_win", winner: "Arsenal", loser: "Man City" },
+    { type: "forfeit_win", winner: "Real Madrid", loser: "Atletico" },
+    { type: "forfeit_win", winner: "Dortmund", loser: "PSG" },
+    { type: "forfeit_win", winner: "AC Milan", loser: "Napoli" },
+    { type: "forfeit_win", winner: "Inter Milan", loser: "Juventus" },
+    { type: "forfeit_win", winner: "Chelsea", loser: "Newcastle" }
   ];
-  // Extend with all previous results (the full list from original)
-  const fullLegacyResults = [
-    { type: "win", winner: "Real Madrid", loser: "Napoli" }, { type: "draw", teams: ["Arsenal","AC Milan"] },
-    { type: "win", winner: "Liverpool", loser: "Newcastle" }, { type: "draw", teams: ["Man City","Chelsea"] },
-    { type: "win", winner: "Dortmund", loser: "Juventus" }, { type: "win", winner: "PSG", loser: "Atletico" },
-    { type: "win", winner: "Barcelona", loser: "Inter Milan" }, { type: "win", winner: "Barcelona", loser: "Juventus" },
-    { type: "win", winner: "Napoli", loser: "Man City" }, { type: "win", winner: "Real Madrid", loser: "Dortmund" },
-    { type: "win", winner: "Arsenal", loser: "Newcastle" }, { type: "draw", teams: ["Liverpool","Chelsea"] },
-    { type: "draw", teams: ["Inter Milan","PSG"] }, { type: "forfeit", teams: ["Atletico","AC Milan"] },
-    { type: "win", winner: "AC Milan", loser: "Inter Milan" }, { type: "draw", teams: ["Barcelona","PSG"] },
-    { type: "win", winner: "Atletico", loser: "Newcastle" }, { type: "win", winner: "Chelsea", loser: "Arsenal" },
-    { type: "win", winner: "Napoli", loser: "Liverpool" }, { type: "win", winner: "Man City", loser: "Dortmund" },
-    { type: "forfeit_win", winner: "Real Madrid", loser: "Juventus" }, { type: "win", winner: "Man City", loser: "Juventus" },
-    { type: "win", winner: "Inter Milan", loser: "Newcastle" }, { type: "win", winner: "Chelsea", loser: "Atletico" },
-    { type: "win", winner: "Arsenal", loser: "Napoli" }, { type: "win", winner: "Real Madrid", loser: "Barcelona" },
-    { type: "win", winner: "Dortmund", loser: "Liverpool" }, { type: "win", winner: "PSG", loser: "AC Milan" },
-    { type: "win", winner: "Chelsea", loser: "Inter Milan" }, { type: "win", winner: "Atletico", loser: "Napoli" },
-    { type: "win", winner: "Real Madrid", loser: "Man City" }, { type: "win", winner: "Arsenal", loser: "Dortmund" },
-    { type: "forfeit_win", winner: "PSG", loser: "Newcastle" }, { type: "win", winner: "Barcelona", loser: "AC Milan" },
-    { type: "forfeit_win", winner: "Liverpool", loser: "Juventus" }, { type: "draw", teams: ["PSG","Chelsea"] },
-    { type: "win", winner: "Newcastle", loser: "AC Milan" }, { type: "draw", teams: ["Napoli","Inter Milan"] },
-    { type: "forfeit_win", winner: "Barcelona", loser: "Man City" }, { type: "forfeit_win", winner: "Arsenal", loser: "Juventus" },
-    { type: "draw", teams: ["Real Madrid","Liverpool"] }, { type: "forfeit_win", winner: "Dortmund", loser: "Atletico" },
-    { type: "win", winner: "Real Madrid", loser: "Arsenal" }, { type: "draw", teams: ["Napoli","PSG"] },
-    { type: "win", winner: "Inter Milan", loser: "Dortmund" }, { type: "forfeit", teams: ["Juventus","Atletico"] },
-    { type: "win", winner: "Chelsea", loser: "AC Milan" }, { type: "win", winner: "Liverpool", loser: "Man City" },
-    { type: "forfeit_win", winner: "Barcelona", loser: "Newcastle" }, { type: "forfeit_win", winner: "Liverpool", loser: "Barcelona" },
-    { type: "forfeit_win", winner: "Arsenal", loser: "Man City" }, { type: "forfeit_win", winner: "Real Madrid", loser: "Atletico" },
-    { type: "forfeit_win", winner: "Dortmund", loser: "PSG" }, { type: "forfeit_win", winner: "AC Milan", loser: "Napoli" },
-    { type: "forfeit_win", winner: "Inter Milan", loser: "Juventus" }, { type: "forfeit_win", winner: "Chelsea", loser: "Newcastle" }
-  ];
-  const finalResultsOrder = [...allResultsOrder, ...fullLegacyResults];
 
+  // Build teamResults from the full order
   const teamResults = {};
   LEAGUE_DATA.forEach(t => { teamResults[t.club] = []; });
-  finalResultsOrder.forEach(res => {
+  allResultsOrder.forEach(res => {
     if (res.type === "draw") {
       res.teams.forEach(t => { if (teamResults[t]) teamResults[t].push("D"); });
     } else if (res.type === "win") {
@@ -804,19 +810,14 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // UPDATED FIXTURES: removed MD17 forfeit matches (Real Madrid-AC Milan, PSG-Man City, Newcastle-Juventus)
+  // FIXTURES: removed MD17 forfeit matches (Real Madrid-AC Milan, PSG-Man City, Newcastle-Juventus)
   const fixtureList = [
-    // MD17 matches removed (already played as forfeits)
-    // MD18 onward remain unchanged
     { md: 18, home: "Atlético Madrid", away: "FC Barcelona" }, { md: 18, home: "Borussia Dortmund", away: "Napoli" }, { md: 18, home: "Inter Milan", away: "Arsenal" }, { md: 18, home: "Juventus", away: "Chelsea" }, { md: 18, home: "Paris Saint-Germain", away: "Liverpool" }, { md: 18, home: "Real Madrid", away: "Newcastle United" }, { md: 18, home: "AC Milan", away: "Manchester City" },
     { md: 19, home: "Borussia Dortmund", away: "FC Barcelona" }, { md: 19, home: "Inter Milan", away: "Atlético Madrid" }, { md: 19, home: "Juventus", away: "Napoli" }, { md: 19, home: "Paris Saint-Germain", away: "Arsenal" }, { md: 19, home: "Real Madrid", away: "Chelsea" }, { md: 19, home: "AC Milan", away: "Liverpool" }, { md: 19, home: "Manchester City", away: "Newcastle United" },
     { md: 20, home: "Inter Milan", away: "FC Barcelona" }, { md: 20, home: "Juventus", away: "Borussia Dortmund" }, { md: 20, home: "Paris Saint-Germain", away: "Atlético Madrid" }, { md: 20, home: "Real Madrid", away: "Napoli" }, { md: 20, home: "AC Milan", away: "Arsenal" }, { md: 20, home: "Manchester City", away: "Chelsea" }, { md: 20, home: "Newcastle United", away: "Liverpool" },
     { md: 21, home: "Juventus", away: "FC Barcelona" }, { md: 21, home: "Paris Saint-Germain", away: "Inter Milan" }, { md: 21, home: "Real Madrid", away: "Borussia Dortmund" }, { md: 21, home: "AC Milan", away: "Atlético Madrid" }, { md: 21, home: "Manchester City", away: "Napoli" }, { md: 21, home: "Newcastle United", away: "Arsenal" }, { md: 21, home: "Liverpool", away: "Chelsea" },
     { md: 22, home: "Paris Saint-Germain", away: "FC Barcelona" }, { md: 22, home: "Real Madrid", away: "Juventus" }, { md: 22, home: "AC Milan", away: "Inter Milan" }, { md: 22, home: "Manchester City", away: "Borussia Dortmund" }, { md: 22, home: "Newcastle United", away: "Atlético Madrid" }, { md: 22, home: "Liverpool", away: "Napoli" }, { md: 22, home: "Chelsea", away: "Arsenal" },
-    { md: 23, home: "Real Madrid", away: "FC Barcelona" }, { md: 23, home: "AC Milan", away: "Paris Saint-Germain" }, { md: 23, home: "Manchester City", away: "Juventus" }, { md: 23, home: "Newcastle United", away: "Inter Milan" }, { md: 23, home: "Liverpool", away: "Borussia Dortmund" }, { md: 23, home: "Chelsea", away: "Atlético Madrid" }, { md: 23, home: "Arsenal", away: "Napoli" },
-    { md: 24, home: "AC Milan", away: "FC Barcelona" }, { md: 24, home: "Manchester City", away: "Real Madrid" }, { md: 24, home: "Newcastle United", away: "Paris Saint-Germain" }, { md: 24, home: "Liverpool", away: "Juventus" }, { md: 24, home: "Chelsea", away: "Inter Milan" }, { md: 24, home: "Arsenal", away: "Borussia Dortmund" }, { md: 24, home: "Napoli", away: "Atlético Madrid" },
-    { md: 25, home: "Manchester City", away: "FC Barcelona" }, { md: 25, home: "Newcastle United", away: "AC Milan" }, { md: 25, home: "Liverpool", away: "Real Madrid" }, { md: 25, home: "Chelsea", away: "Paris Saint-Germain" }, { md: 25, home: "Arsenal", away: "Juventus" }, { md: 25, home: "Napoli", away: "Inter Milan" }, { md: 25, home: "Atlético Madrid", away: "Borussia Dortmund" },
-    { md: 26, home: "Newcastle United", away: "FC Barcelona" }, { md: 26, home: "Liverpool", away: "Manchester City" }, { md: 26, home: "Chelsea", away: "AC Milan" }, { md: 26, home: "Arsenal", away: "Real Madrid" }, { md: 26, home: "Napoli", away: "Paris Saint-Germain" }, { md: 26, home: "Atlético Madrid", away: "Juventus" }, { md: 26, home: "Borussia Dortmund", away: "Inter Milan" }
+    { md: 23, home: "Real Madrid", away: "FC Barcelona" }, { md: 23, home: "AC Milan", away: "Paris Saint-Germain" }, { md: 23, home: "Manchester City", away: "Juventus" }, { md: 23, home: "Newcastle United", away: "Inter Milan" }, { md: 23, home: "Liverpool", away: "Borussia Dortmund" }, { md: 23, home: "Chelsea", away: "Atlético Madrid" }, { md: 23, home: "Arsenal", away: "Napoli" }
   ];
 
   function formatDate(date) {
@@ -836,7 +837,7 @@
     fixturesWithDates.push({ md: f.md, home: f.home, away: f.away, date: dateStr, homePlayer: playerMap[f.home] || "", awayPlayer: playerMap[f.away] || "" });
   }
 
-  // RESULTS_DATA with MD17 forfeits (Real Madrid on Agreement)
+  // RESULTS_DATA with MD17 forfeits (Real Madrid on Agreement, others No Reply)
   const RESULTS_DATA = [
     { matchText: "Newcastle United 3 - 0 Juventus (Forfeited - No Reply)", md: 17 },
     { matchText: "Paris Saint-Germain 3 - 0 Manchester City (Forfeited - No Reply)", md: 17 },
@@ -845,10 +846,6 @@
     { matchText: "Chelsea 2 - 1 Dortmund", md: 17 },
     { matchText: "Arsenal 4 - 1 Atletico Madrid", md: 17 },
     { matchText: "Napoli 0 - 4 Barcelona", md: 17 },
-    // ... rest unchanged
-  ];
-  // Append full existing results (shortened here for brevity, but will keep all original)
-  const fullResultsLegacy = [
     { matchText: "Juventus 0 - 3 AC Milan (Forfeited - No Reply)", md: 16 },
     { matchText: "Chelsea 3 - 0 Napoli (Forfeited - No Reply)", md: 16 },
     { matchText: "Borussia Dortmund 3 - 0 Newcastle United (Forfeited - No Reply)", md: 16 },
@@ -864,7 +861,6 @@
     { matchText: "Napoli 3 - 1 Newcastle United", md: 15 },
     { matchText: "Arsenal 1 - 2 Liverpool", md: 15 }
   ];
-  const finalResultsData = [...RESULTS_DATA, ...fullResultsLegacy];
 
   const allTeamsSet = new Set();
   fixturesWithDates.forEach(f => { allTeamsSet.add(f.home); allTeamsSet.add(f.away); });
@@ -1027,7 +1023,7 @@
     const tbody = document.getElementById("resultsTableBody");
     if (!tbody) return;
     tbody.innerHTML = "";
-    finalResultsData.forEach(r => {
+    RESULTS_DATA.forEach(r => {
       const row = tbody.insertRow();
       let processedText = r.matchText;
       const teamsToReplace = [
