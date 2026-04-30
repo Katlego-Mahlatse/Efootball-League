@@ -628,22 +628,22 @@
   function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
   if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-  // UPDATED LEAGUE DATA after MD17 forfeits: points and matches played corrected
+  // UPDATED LEAGUE DATA after MD18 (all played except Dortmund vs Napoli)
   const LEAGUE_DATA = [
-    { pos: 1, club: "Real Madrid", p: 17, gd: 27, pts: 49 },
-    { pos: 2, club: "Liverpool", p: 17, gd: 31, pts: 41 },
-    { pos: 3, club: "Barcelona", p: 17, gd: 6, pts: 34 },
+    { pos: 1, club: "Real Madrid", p: 18, gd: 27, pts: 52 },
+    { pos: 2, club: "Liverpool", p: 18, gd: 31, pts: 44 },
+    { pos: 3, club: "Barcelona", p: 18, gd: 6, pts: 37 },
     { pos: 4, club: "Dortmund", p: 17, gd: 9, pts: 33 },
-    { pos: 5, club: "Chelsea", p: 17, gd: 12, pts: 27 },
-    { pos: 6, club: "Arsenal", p: 17, gd: 5, pts: 26 },
-    { pos: 7, club: "Man City", p: 17, gd: 4, pts: 25 },
-    { pos: 8, club: "PSG", p: 17, gd: -14, pts: 23 },
-    { pos: 9, club: "AC Milan", p: 17, gd: -13, pts: 16 },
+    { pos: 5, club: "Arsenal", p: 18, gd: 7, pts: 29 },
+    { pos: 6, club: "Man City", p: 18, gd: 4, pts: 28 },
+    { pos: 7, club: "Chelsea", p: 18, gd: 11, pts: 27 },
+    { pos: 8, club: "PSG", p: 18, gd: -14, pts: 23 },
+    { pos: 9, club: "AC Milan", p: 18, gd: -13, pts: 16 },
     { pos: 10, club: "Napoli", p: 17, gd: -10, pts: 14 },
-    { pos: 11, club: "Atletico", p: 17, gd: -20, pts: 7 },
-    { pos: 12, club: "Newcastle", p: 17, gd: -38, pts: 9 },
-    { pos: 13, club: "Inter Milan", p: 17, gd: -10, pts: 5 },
-    { pos: 14, club: "Juventus", p: 17, gd: -21, pts: 4 }
+    { pos: 11, club: "Newcastle", p: 18, gd: -38, pts: 9 },
+    { pos: 12, club: "Juventus", p: 18, gd: -20, pts: 7 },
+    { pos: 13, club: "Atletico", p: 18, gd: -20, pts: 7 },
+    { pos: 14, club: "Inter Milan", p: 18, gd: -13, pts: 5 }
   ];
 
   const playerMap = {
@@ -697,47 +697,36 @@
     return teamName;
   }
 
-  // ----- DIRECTLY SET LAST 5 RESULTS FOR EACH TEAM (MD13 to MD17, oldest to newest) -----
-  // Format: [MD13, MD14, MD15, MD16, MD17]  (leftmost = MD13, rightmost = MD17)
+  // LAST 5 RESULTS FOR EACH TEAM (MD14 to MD18, oldest to newest)
   const last5Exact = {
-    "Real Madrid":   ["W", "WF", "W", "W", "WF"],
-    "Liverpool":     ["W", "WF", "W", "W", "W"],
-    "Barcelona":     ["WF", "WF", "W", "W", "W"],
-    "Dortmund":      ["WF", "WF", "W", "WF", "L"],
-    "Chelsea":       ["W", "WF", "L", "WF", "W"],
-    "Arsenal":       ["L", "WF", "L", "L", "W"],
-    "Man City":      ["L", "LF", "W", "W", "LF"],
-    "PSG":           ["D", "LF", "D", "L", "WF"],
-    "AC Milan":      ["L", "WF", "L", "WF", "LF"],
-    "Napoli":        ["D", "LF", "W", "LF", "L"],
-    "Atletico":      ["LF", "LF", "F", "L", "L"],
-    "Newcastle":     ["LF", "LF", "L", "LF", "WF"],
-    "Inter Milan":   ["W", "WF", "L", "L", "L"],
-    "Juventus":      ["F", "LF", "D", "LF", "LF"]   // Note: MD13 was No Contest (F)
+    "Real Madrid":   ["W", "W", "WF", "W", "WF"],
+    "Liverpool":     ["W", "W", "W", "W", "WF"],
+    "Barcelona":     ["WF", "W", "W", "W", "WF"],
+    "Dortmund":      ["WF", "W", "WF", "L", null],   // MD18 not played yet
+    "Arsenal":       ["WF", "L", "L", "W", "W"],
+    "Man City":      ["LF", "W", "W", "LF", "WF"],
+    "Chelsea":       ["WF", "L", "WF", "W", "L"],
+    "PSG":           ["LF", "D", "L", "WF", "LF"],
+    "AC Milan":      ["WF", "L", "WF", "LF", "LF"],
+    "Napoli":        ["LF", "W", "LF", "L", null],   // MD18 not played yet
+    "Newcastle":     ["LF", "L", "LF", "WF", "LF"],
+    "Juventus":      ["LF", "D", "LF", "LF", "W"],
+    "Atletico":      ["LF", "F", "L", "L", "LF"],
+    "Inter Milan":   ["WF", "L", "L", "L", "L"]
   };
 
-  // Build teamResults array with these exact sequences (store as array, oldest first)
+  // Build teamResults array
   const teamResults = {};
   LEAGUE_DATA.forEach(t => { teamResults[t.club] = []; });
   for (const [club, results] of Object.entries(last5Exact)) {
-    teamResults[club] = [...results];  // already oldest to newest
+    teamResults[club] = results.filter(r => r !== null);
   }
-
-  // Also add a few older dummy results for teams that might need more than 5 for display? 
-  // getLast5WithBlanks will take last 5, so with exactly 5 entries it's fine.
 
   function getLast5WithBlanks(team) {
     const results = teamResults[team] || [];
-    // take last 5 (if less than 5, pad with nulls at the beginning)
-    const last5 = results.slice(-5).reverse();  // reverse so that newest is first? Wait, our display uses .reverse() later? Let's check.
-    // In renderLeagueTable, we call getLast5WithBlanks then .reverse()? No, getLast5WithBlanks returns array with oldest first? Let's see original:
-    // original: const last5 = results.slice(-5).reverse(); while (last5.length < 5) last5.push(null); return last5;
-    // Then in renderLeagueTable: last5.forEach(res => { ... }); That means the array order is as returned: newest first? Actually .reverse() makes newest first.
-    // But we want leftmost = oldest (MD13). So we need to reverse again. Simpler: we'll store results oldest to newest, and in getLast5WithBlanks we return them as is (oldest first) without reversing.
-    // Let's rewrite getLast5WithBlanks to return oldest first.
     const last5 = results.slice(-5);
     while (last5.length < 5) last5.unshift(null);
-    return last5;  // oldest first (index0 = MD13)
+    return last5;  // oldest first (MD14 to MD18)
   }
 
   function getLatest(team) {
@@ -745,9 +734,9 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // FIXTURES: removed MD17 forfeit matches (same as before)
+  // FIXTURES: only keep Dortmund vs Napoli (MD18) and all MD19-23
   const fixtureList = [
-    { md: 18, home: "Atlético Madrid", away: "FC Barcelona" }, { md: 18, home: "Borussia Dortmund", away: "Napoli" }, { md: 18, home: "Inter Milan", away: "Arsenal" }, { md: 18, home: "Juventus", away: "Chelsea" }, { md: 18, home: "Paris Saint-Germain", away: "Liverpool" }, { md: 18, home: "Real Madrid", away: "Newcastle United" }, { md: 18, home: "AC Milan", away: "Manchester City" },
+    { md: 18, home: "Borussia Dortmund", away: "Napoli" },
     { md: 19, home: "Borussia Dortmund", away: "FC Barcelona" }, { md: 19, home: "Inter Milan", away: "Atlético Madrid" }, { md: 19, home: "Juventus", away: "Napoli" }, { md: 19, home: "Paris Saint-Germain", away: "Arsenal" }, { md: 19, home: "Real Madrid", away: "Chelsea" }, { md: 19, home: "AC Milan", away: "Liverpool" }, { md: 19, home: "Manchester City", away: "Newcastle United" },
     { md: 20, home: "Inter Milan", away: "FC Barcelona" }, { md: 20, home: "Juventus", away: "Borussia Dortmund" }, { md: 20, home: "Paris Saint-Germain", away: "Atlético Madrid" }, { md: 20, home: "Real Madrid", away: "Napoli" }, { md: 20, home: "AC Milan", away: "Arsenal" }, { md: 20, home: "Manchester City", away: "Chelsea" }, { md: 20, home: "Newcastle United", away: "Liverpool" },
     { md: 21, home: "Juventus", away: "FC Barcelona" }, { md: 21, home: "Paris Saint-Germain", away: "Inter Milan" }, { md: 21, home: "Real Madrid", away: "Borussia Dortmund" }, { md: 21, home: "AC Milan", away: "Atlético Madrid" }, { md: 21, home: "Manchester City", away: "Napoli" }, { md: 21, home: "Newcastle United", away: "Arsenal" }, { md: 21, home: "Liverpool", away: "Chelsea" },
@@ -772,8 +761,16 @@
     fixturesWithDates.push({ md: f.md, home: f.home, away: f.away, date: dateStr, homePlayer: playerMap[f.home] || "", awayPlayer: playerMap[f.away] || "" });
   }
 
-  // RESULTS_DATA unchanged (already correct)
+  // RESULTS_DATA: include all MD18 results (played) and previous MDs
   const RESULTS_DATA = [
+    // MD18 results (newest first)
+    { matchText: "Liverpool 3 - 0 PSG (Forfeited - No Reply)", md: 18 },
+    { matchText: "Manchester City 3 - 0 AC Milan (Forfeited - No Reply)", md: 18 },
+    { matchText: "Arsenal 2 - 0 Inter Milan", md: 18 },
+    { matchText: "FC Barcelona 3 - 0 Atlético Madrid (Forfeited - No Reply)", md: 18 },
+    { matchText: "Juventus 1 - 0 Chelsea", md: 18 },
+    { matchText: "Real Madrid 3 - 0 Newcastle United (Forfeited - No Reply)", md: 18 },
+    // MD17 and earlier
     { matchText: "Newcastle United 3 - 0 Juventus (Forfeited - No Reply)", md: 17 },
     { matchText: "Paris Saint-Germain 3 - 0 Manchester City (Forfeited - No Reply)", md: 17 },
     { matchText: "Real Madrid 3 - 0 AC Milan (Forfeited on Agreement)", md: 17 },
@@ -835,8 +832,8 @@
         if (latest === "W" || latest === "WF") clubHtml += '<span class="arrow-up">↑</span> ';
         else if (latest === "L" || latest === "LF") clubHtml += '<span class="arrow-down">↓</span> ';
         else if (latest === "D") clubHtml += '<span class="arrow-side">→</span> ';
-        else if (latest === "F") clubHtml += '<span style="opacity:0.5; width:24px; display:inline-block;">⚪</span> ';
-        else clubHtml += '<span style="opacity:0.3; width:24px; display:inline-block;">—</span> ';
+        else if (latest === "F") clubHtml += '<span style="opacity:0.5;">⚪</span> ';
+        else clubHtml += '<span style="opacity:0.3;">—</span> ';
       }
       
       let iconHtml = getTeamIconHtml(team.club, "team-icon");
@@ -852,7 +849,7 @@
 
       const last5Cell = row.insertCell(5);
       if (showLast5) {
-        const last5 = getLast5WithBlanks(team.club);  // returns array oldest to newest (MD13 to MD17)
+        const last5 = getLast5WithBlanks(team.club);
         const container = document.createElement("div");
         container.className = "form-circles";
         last5.forEach(res => {
