@@ -595,7 +595,7 @@
         <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
       </div>
       <div class="scrollable-table">
-        <table class="inner-table" id="fixturesTable"><thead></tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
+        <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
       </div>
     </div>
   </div>
@@ -697,112 +697,47 @@
     return teamName;
   }
 
-  // COMPLETE RESULTS HISTORY including MD17 forfeits at the very beginning (most recent)
-  const allResultsOrder = [
-    // MD17 FORFEITS (added as most recent)
-    { type: "forfeit_win", winner: "Real Madrid", loser: "AC Milan" },
-    { type: "forfeit_win", winner: "PSG", loser: "Man City" },
-    { type: "forfeit_win", winner: "Newcastle", loser: "Juventus" },
-    // MD17 normal results
-    { type: "win", winner: "Liverpool", loser: "Inter Milan" },
-    { type: "win", winner: "Chelsea", loser: "Dortmund" },
-    { type: "win", winner: "Arsenal", loser: "Atletico" },
-    { type: "win", winner: "Barcelona", loser: "Napoli" },
-    // MD16 and earlier (full history)
-    { type: "win", winner: "Barcelona", loser: "Arsenal" },
-    { type: "win", winner: "Man City", loser: "Inter Milan" },
-    { type: "win", winner: "Liverpool", loser: "Atletico" },
-    { type: "win", winner: "Real Madrid", loser: "PSG" },
-    { type: "forfeit_win", winner: "Dortmund", loser: "Newcastle" },
-    { type: "forfeit_win", winner: "Chelsea", loser: "Napoli" },
-    { type: "forfeit_win", winner: "AC Milan", loser: "Juventus" },
-    { type: "win", winner: "Liverpool", loser: "Arsenal" },
-    { type: "win", winner: "Napoli", loser: "Newcastle" },
-    { type: "win", winner: "Dortmund", loser: "AC Milan" },
-    { type: "draw", teams: ["PSG","Juventus"] },
-    { type: "win", winner: "Barcelona", loser: "Chelsea" },
-    { type: "win", winner: "Real Madrid", loser: "Inter Milan" },
-    { type: "forfeit", teams: ["Atletico","Man City"] },
-    { type: "win", winner: "Real Madrid", loser: "Napoli" },
-    { type: "draw", teams: ["Arsenal","AC Milan"] },
-    { type: "win", winner: "Liverpool", loser: "Newcastle" },
-    { type: "draw", teams: ["Man City","Chelsea"] },
-    { type: "win", winner: "Dortmund", loser: "Juventus" },
-    { type: "win", winner: "PSG", loser: "Atletico" },
-    { type: "win", winner: "Barcelona", loser: "Inter Milan" },
-    { type: "win", winner: "Barcelona", loser: "Juventus" },
-    { type: "win", winner: "Napoli", loser: "Man City" },
-    { type: "win", winner: "Real Madrid", loser: "Dortmund" },
-    { type: "win", winner: "Arsenal", loser: "Newcastle" },
-    { type: "draw", teams: ["Liverpool","Chelsea"] },
-    { type: "draw", teams: ["Inter Milan","PSG"] },
-    { type: "forfeit", teams: ["Atletico","AC Milan"] },
-    { type: "win", winner: "AC Milan", loser: "Inter Milan" },
-    { type: "draw", teams: ["Barcelona","PSG"] },
-    { type: "win", winner: "Atletico", loser: "Newcastle" },
-    { type: "win", winner: "Chelsea", loser: "Arsenal" },
-    { type: "win", winner: "Napoli", loser: "Liverpool" },
-    { type: "win", winner: "Man City", loser: "Dortmund" },
-    { type: "forfeit_win", winner: "Real Madrid", loser: "Juventus" },
-    { type: "win", winner: "Man City", loser: "Juventus" },
-    { type: "win", winner: "Inter Milan", loser: "Newcastle" },
-    { type: "win", winner: "Chelsea", loser: "Atletico" },
-    { type: "win", winner: "Arsenal", loser: "Napoli" },
-    { type: "win", winner: "Real Madrid", loser: "Barcelona" },
-    { type: "win", winner: "Dortmund", loser: "Liverpool" },
-    { type: "win", winner: "PSG", loser: "AC Milan" },
-    { type: "win", winner: "Chelsea", loser: "Inter Milan" },
-    { type: "win", winner: "Atletico", loser: "Napoli" },
-    { type: "win", winner: "Real Madrid", loser: "Man City" },
-    { type: "win", winner: "Arsenal", loser: "Dortmund" },
-    { type: "forfeit_win", winner: "PSG", loser: "Newcastle" },
-    { type: "win", winner: "Barcelona", loser: "AC Milan" },
-    { type: "forfeit_win", winner: "Liverpool", loser: "Juventus" },
-    { type: "draw", teams: ["PSG","Chelsea"] },
-    { type: "win", winner: "Newcastle", loser: "AC Milan" },
-    { type: "draw", teams: ["Napoli","Inter Milan"] },
-    { type: "forfeit_win", winner: "Barcelona", loser: "Man City" },
-    { type: "forfeit_win", winner: "Arsenal", loser: "Juventus" },
-    { type: "draw", teams: ["Real Madrid","Liverpool"] },
-    { type: "forfeit_win", winner: "Dortmund", loser: "Atletico" },
-    { type: "win", winner: "Real Madrid", loser: "Arsenal" },
-    { type: "draw", teams: ["Napoli","PSG"] },
-    { type: "win", winner: "Inter Milan", loser: "Dortmund" },
-    { type: "forfeit", teams: ["Juventus","Atletico"] },
-    { type: "win", winner: "Chelsea", loser: "AC Milan" },
-    { type: "win", winner: "Liverpool", loser: "Man City" },
-    { type: "forfeit_win", winner: "Barcelona", loser: "Newcastle" },
-    { type: "forfeit_win", winner: "Liverpool", loser: "Barcelona" },
-    { type: "forfeit_win", winner: "Arsenal", loser: "Man City" },
-    { type: "forfeit_win", winner: "Real Madrid", loser: "Atletico" },
-    { type: "forfeit_win", winner: "Dortmund", loser: "PSG" },
-    { type: "forfeit_win", winner: "AC Milan", loser: "Napoli" },
-    { type: "forfeit_win", winner: "Inter Milan", loser: "Juventus" },
-    { type: "forfeit_win", winner: "Chelsea", loser: "Newcastle" }
-  ];
+  // ----- DIRECTLY SET LAST 5 RESULTS FOR EACH TEAM (MD13 to MD17, oldest to newest) -----
+  // Format: [MD13, MD14, MD15, MD16, MD17]  (leftmost = MD13, rightmost = MD17)
+  const last5Exact = {
+    "Real Madrid":   ["W", "WF", "W", "W", "WF"],
+    "Liverpool":     ["W", "WF", "W", "W", "W"],
+    "Barcelona":     ["WF", "WF", "W", "W", "W"],
+    "Dortmund":      ["WF", "WF", "W", "WF", "L"],
+    "Chelsea":       ["W", "WF", "L", "WF", "W"],
+    "Arsenal":       ["L", "WF", "L", "L", "W"],
+    "Man City":      ["L", "LF", "W", "W", "LF"],
+    "PSG":           ["D", "LF", "D", "L", "WF"],
+    "AC Milan":      ["L", "WF", "L", "WF", "LF"],
+    "Napoli":        ["D", "LF", "W", "LF", "L"],
+    "Atletico":      ["LF", "LF", "F", "L", "L"],
+    "Newcastle":     ["LF", "LF", "L", "LF", "WF"],
+    "Inter Milan":   ["W", "WF", "L", "L", "L"],
+    "Juventus":      ["F", "LF", "D", "LF", "LF"]   // Note: MD13 was No Contest (F)
+  };
 
-  // Build teamResults from the full order
+  // Build teamResults array with these exact sequences (store as array, oldest first)
   const teamResults = {};
   LEAGUE_DATA.forEach(t => { teamResults[t.club] = []; });
-  allResultsOrder.forEach(res => {
-    if (res.type === "draw") {
-      res.teams.forEach(t => { if (teamResults[t]) teamResults[t].push("D"); });
-    } else if (res.type === "win") {
-      if (teamResults[res.winner]) teamResults[res.winner].push("W");
-      if (teamResults[res.loser]) teamResults[res.loser].push("L");
-    } else if (res.type === "forfeit") {
-      res.teams.forEach(t => { if (teamResults[t]) teamResults[t].push("F"); });
-    } else if (res.type === "forfeit_win") {
-      if (teamResults[res.winner]) teamResults[res.winner].push("WF");
-      if (teamResults[res.loser]) teamResults[res.loser].push("LF");
-    }
-  });
+  for (const [club, results] of Object.entries(last5Exact)) {
+    teamResults[club] = [...results];  // already oldest to newest
+  }
+
+  // Also add a few older dummy results for teams that might need more than 5 for display? 
+  // getLast5WithBlanks will take last 5, so with exactly 5 entries it's fine.
 
   function getLast5WithBlanks(team) {
     const results = teamResults[team] || [];
-    const last5 = results.slice(-5).reverse();
-    while (last5.length < 5) last5.push(null);
-    return last5;
+    // take last 5 (if less than 5, pad with nulls at the beginning)
+    const last5 = results.slice(-5).reverse();  // reverse so that newest is first? Wait, our display uses .reverse() later? Let's check.
+    // In renderLeagueTable, we call getLast5WithBlanks then .reverse()? No, getLast5WithBlanks returns array with oldest first? Let's see original:
+    // original: const last5 = results.slice(-5).reverse(); while (last5.length < 5) last5.push(null); return last5;
+    // Then in renderLeagueTable: last5.forEach(res => { ... }); That means the array order is as returned: newest first? Actually .reverse() makes newest first.
+    // But we want leftmost = oldest (MD13). So we need to reverse again. Simpler: we'll store results oldest to newest, and in getLast5WithBlanks we return them as is (oldest first) without reversing.
+    // Let's rewrite getLast5WithBlanks to return oldest first.
+    const last5 = results.slice(-5);
+    while (last5.length < 5) last5.unshift(null);
+    return last5;  // oldest first (index0 = MD13)
   }
 
   function getLatest(team) {
@@ -810,7 +745,7 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // FIXTURES: removed MD17 forfeit matches (Real Madrid-AC Milan, PSG-Man City, Newcastle-Juventus)
+  // FIXTURES: removed MD17 forfeit matches (same as before)
   const fixtureList = [
     { md: 18, home: "Atlético Madrid", away: "FC Barcelona" }, { md: 18, home: "Borussia Dortmund", away: "Napoli" }, { md: 18, home: "Inter Milan", away: "Arsenal" }, { md: 18, home: "Juventus", away: "Chelsea" }, { md: 18, home: "Paris Saint-Germain", away: "Liverpool" }, { md: 18, home: "Real Madrid", away: "Newcastle United" }, { md: 18, home: "AC Milan", away: "Manchester City" },
     { md: 19, home: "Borussia Dortmund", away: "FC Barcelona" }, { md: 19, home: "Inter Milan", away: "Atlético Madrid" }, { md: 19, home: "Juventus", away: "Napoli" }, { md: 19, home: "Paris Saint-Germain", away: "Arsenal" }, { md: 19, home: "Real Madrid", away: "Chelsea" }, { md: 19, home: "AC Milan", away: "Liverpool" }, { md: 19, home: "Manchester City", away: "Newcastle United" },
@@ -837,7 +772,7 @@
     fixturesWithDates.push({ md: f.md, home: f.home, away: f.away, date: dateStr, homePlayer: playerMap[f.home] || "", awayPlayer: playerMap[f.away] || "" });
   }
 
-  // RESULTS_DATA with MD17 forfeits (Real Madrid on Agreement, others No Reply)
+  // RESULTS_DATA unchanged (already correct)
   const RESULTS_DATA = [
     { matchText: "Newcastle United 3 - 0 Juventus (Forfeited - No Reply)", md: 17 },
     { matchText: "Paris Saint-Germain 3 - 0 Manchester City (Forfeited - No Reply)", md: 17 },
@@ -900,6 +835,7 @@
         if (latest === "W" || latest === "WF") clubHtml += '<span class="arrow-up">↑</span> ';
         else if (latest === "L" || latest === "LF") clubHtml += '<span class="arrow-down">↓</span> ';
         else if (latest === "D") clubHtml += '<span class="arrow-side">→</span> ';
+        else if (latest === "F") clubHtml += '<span style="opacity:0.5; width:24px; display:inline-block;">⚪</span> ';
         else clubHtml += '<span style="opacity:0.3; width:24px; display:inline-block;">—</span> ';
       }
       
@@ -916,7 +852,7 @@
 
       const last5Cell = row.insertCell(5);
       if (showLast5) {
-        const last5 = getLast5WithBlanks(team.club);
+        const last5 = getLast5WithBlanks(team.club);  // returns array oldest to newest (MD13 to MD17)
         const container = document.createElement("div");
         container.className = "form-circles";
         last5.forEach(res => {
