@@ -558,7 +558,7 @@
 
 <div class="dashboard">
   <div class="slideshow-container">
-    <img id="slideshow-img" class="slideshow-img" src="images - 2026-04-19T121231.816.jpeg" alt="Slideshow">
+    <img id="slideshow-img" class="slideshow-img" src="9b4fe954-1702-43d7-a73b-d58516e5bda0.jpeg" alt="Slideshow">
     <div class="dots-container" id="dotsContainer"></div>
   </div>
 
@@ -572,7 +572,7 @@
     <div class="card-content">
       <div style="overflow-x:auto;">
         <table class="stats-table" id="leagueTable">
-          <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th></tr></thead>
+          <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th><tr></thead>
           <tbody id="leagueTableBody"></tbody>
         </table>
       </div>
@@ -611,7 +611,12 @@
 </div>
 
 <script>
-  const images = ["images - 2026-04-19T121231.816.jpeg","images - 2026-04-19T155746.715.jpeg","37686bb3-06ce-401b-a022-026933c165e7.jpeg","12871.jpg","1f157df7-2054-4a9d-aa14-b9941ef4a743.jpeg"];
+  // New slideshow images (3 images only)
+  const images = [
+    "9b4fe954-1702-43d7-a73b-d58516e5bda0.jpeg",
+    "121206b7-59b2-48d5-a3a4-e3744ee6a44d.jpeg",
+    "d1e02146-3462-4119-9abc-60d4a4eb41c5.jpeg"
+  ];
   let currentIndex = 0;
   const slideshowImg = document.getElementById("slideshow-img");
   const dotsContainer = document.getElementById("dotsContainer");
@@ -659,7 +664,7 @@
     "Napoli": "~PrettyBoy Tendancies. 👅",
     "Real Madrid": "~Karabo",
     "Arsenal": "Kath",
-    "AC Milan": "~Ntsiki",
+    "AC Milan": "Tapz",
     "Chelsea": "~Zazo",
     "Manchester City": "gry",
     "Man City": "gry",
@@ -698,7 +703,6 @@
   }
 
   // LAST 5 RESULTS: stored as [MD15, MD16, MD17, MD18, MD19] (oldest to newest)
-  // Updated with MD19 results
   const last5Exact = {
     "Real Madrid":   ["W", "WF", "W", "WF", "WF"],
     "Liverpool":     ["W", "W", "W", "WF", "LF"],
@@ -722,7 +726,6 @@
     teamResults[club] = results.filter(r => r !== null);
   }
 
-  // Return last 5 with newest FIRST (for display: left = newest)
   function getLast5NewestFirst(team) {
     const results = teamResults[team] || [];
     const last5 = results.slice(-5).reverse();
@@ -760,9 +763,7 @@
     fixturesWithDates.push({ md: f.md, home: f.home, away: f.away, date: dateStr, homePlayer: playerMap[f.home] || "", awayPlayer: playerMap[f.away] || "" });
   }
 
-  // RESULTS_DATA: includes all MD19 results at the top (newest first)
   const RESULTS_DATA = [
-    // MD19 results (1 May)
     { matchText: "Juventus 3 - 0 Napoli (Forfeited - No Reply)", md: 19 },
     { matchText: "Manchester City 3 - 2 Newcastle United", md: 19 },
     { matchText: "AC Milan 3 - 0 Liverpool (Forfeited - No Reply)", md: 19 },
@@ -770,7 +771,6 @@
     { matchText: "Borussia Dortmund 3 - 0 FC Barcelona (Forfeited - No Reply)", md: 19 },
     { matchText: "Arsenal 3 - 0 Paris Saint-Germain (Forfeited - No Reply)", md: 19 },
     { matchText: "Real Madrid 3 - 0 Chelsea (Forfeited - No Reply)", md: 19 },
-    // MD18 results (30 April)
     { matchText: "Liverpool 3 - 0 PSG (Forfeited - No Reply)", md: 18 },
     { matchText: "Manchester City 3 - 0 AC Milan (Forfeited - No Reply)", md: 18 },
     { matchText: "Arsenal 2 - 0 Inter Milan", md: 18 },
@@ -778,7 +778,6 @@
     { matchText: "Juventus 1 - 0 Chelsea", md: 18 },
     { matchText: "Real Madrid 3 - 0 Newcastle United (Forfeited - No Reply)", md: 18 },
     { matchText: "Borussia Dortmund F - F Napoli (No Contest)", md: 18 },
-    // MD17
     { matchText: "Newcastle United 3 - 0 Juventus (Forfeited - No Reply)", md: 17 },
     { matchText: "Paris Saint-Germain 3 - 0 Manchester City (Forfeited - No Reply)", md: 17 },
     { matchText: "Real Madrid 3 - 0 AC Milan (Forfeited on Agreement)", md: 17 },
@@ -786,7 +785,6 @@
     { matchText: "Chelsea 2 - 1 Dortmund", md: 17 },
     { matchText: "Arsenal 4 - 1 Atletico Madrid", md: 17 },
     { matchText: "Napoli 0 - 4 Barcelona", md: 17 },
-    // MD16
     { matchText: "Juventus 0 - 3 AC Milan (Forfeited - No Reply)", md: 16 },
     { matchText: "Chelsea 3 - 0 Napoli (Forfeited - No Reply)", md: 16 },
     { matchText: "Borussia Dortmund 3 - 0 Newcastle United (Forfeited - No Reply)", md: 16 },
@@ -794,7 +792,6 @@
     { matchText: "Liverpool 2 - 1 Atletico Madrid", md: 16 },
     { matchText: "Manchester City 3 - 0 Inter Milan", md: 16 },
     { matchText: "Arsenal 1 - 4 Barcelona", md: 16 },
-    // MD15
     { matchText: "Atletico Madrid F - F Manchester City (No Contest)", md: 15 },
     { matchText: "Inter Milan 1 - 3 Real Madrid", md: 15 },
     { matchText: "Barcelona 1 - 0 Chelsea", md: 15 },
@@ -894,7 +891,7 @@
     popup.style.left = (rect.left + window.scrollX - 60) + "px";
     
     const playersOpt = document.createElement("div");
-    playersOpt.innerText = currentView === "team" ? "Players" : "Team View";
+    playersOpt.innerText = currentView === "team" ? "Manager names" : "Team View";
     playersOpt.onclick = () => {
       currentView = currentView === "team" ? "player" : "team";
       renderLeagueTable();
@@ -1015,7 +1012,6 @@
     renderLeagueTable(); renderResults(); setupFilters();
     setupCollapsible("fixturesHeader","fixturesContent","fixturesToggleIcon");
     setupCollapsible("resultsHeader","resultsContent","resultsToggleIcon");
-    // Ensure initial collapsed state icons
     const fixturesIcon = document.getElementById("fixturesToggleIcon");
     if (fixturesIcon) fixturesIcon.innerHTML = "▶";
     const resultsIcon = document.getElementById("resultsToggleIcon");
