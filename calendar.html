@@ -318,8 +318,8 @@
       flex-wrap: wrap;
     }
     .competition-icon {
-      width: 40px;
-      height: 40px;
+      width: 60px;
+      height: 60px;
       object-fit: contain;
     }
     .competition-details {
@@ -384,7 +384,7 @@
       .calendar-container { padding: 1rem; }
       .event-icon { width: 32px; height: 32px; }
       .day-number { font-size: 0.7rem; }
-      .competition-icon { width: 30px; height: 30px; }
+      .competition-icon { width: 45px; height: 45px; }
       .weekday { font-size: 0.8rem; padding: 0.5rem; }
       .day-cell { min-height: 70px; padding: 4px; }
     }
@@ -542,12 +542,12 @@
   let matchdayDates = buildMatchdayDates();
 
   // ---------- NEW GROUPED SCHEDULE (May 13 - June 15) with correct popup icons ----------
-  // Tournament specific icons
+  // Tournament specific icons (Nations League updated to IMG-20260425-WA4698.jpg)
   const tournamentIcons = {
     champions: "images (15).png",
     europa: "uefa-europa-league-logo-on-transparent-background-free-vector.jpg",
     conference: "images (16).png",
-    nations: "aavgzoshm.webp",
+    nations: "IMG-20260425-WA4698.jpg",
     worldcup: "fifa-vector-flag-official-colors-aspect-ratio-white-logo-blue-background-fifa-vector-flag-436952842.jpg",
     clubworldcup: "images - 2026-04-21T172601.589.jpeg",
     fa_cup: "images - 2026-05-01T145542.658.jpeg",
@@ -652,7 +652,7 @@
       ] }
   ];
 
-  // Build eventMap: first add Premier League matches (April 22 - May 8)
+  // Build eventMap: first add Premier League matches (April 22 - May 8) - keep original display style
   const eventMap = new Map();
   for (let md in matchdayDates) {
     const dateStr = matchdayDates[md].date;
@@ -673,7 +673,6 @@
   // Helper to get day cell icon from competitions
   function getDayCellIcon(comps) {
     if (!comps || comps.length === 0) return null;
-    // check if any UEFA competition (Champions, Europa, Conference, Nations)
     const uefaNames = ["Champions League", "Europa League", "Conference League", "Nations League"];
     const hasUefa = comps.some(c => uefaNames.includes(c.name));
     const hasFifa = comps.some(c => c.name === "World Cup" || c.name === "Club World Cup");
@@ -769,13 +768,14 @@
     const event = eventMap.get(dateStr);
     if (event) {
       if (event.matches && event.matches.length > 0) {
-        // Original Premier League matches (April 22 - May 8) - restore original look
+        // Original Premier League matches (April 22 - May 8) - restore original look (no zoom, clean)
         event.matches.forEach(match => {
           const matchDiv = document.createElement("div");
           matchDiv.className = "match-item";
           const homeIcon = getTeamIconHtml(match.home, "match-icon");
           const awayIcon = getTeamIconHtml(match.away, "match-icon");
-          matchDiv.innerHTML = `<div class="tournament-header">${homeIcon} <span class="match-text">vs</span> ${awayIcon}</div>`;
+          // Original simple layout without extra nested divs that caused zoom
+          matchDiv.innerHTML = `<div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; justify-content: center;">${homeIcon} <span class="match-text">vs</span> ${awayIcon}</div>`;
           popupMatchesDiv.appendChild(matchDiv);
         });
       } else if (event.competitions && event.competitions.length > 0) {
