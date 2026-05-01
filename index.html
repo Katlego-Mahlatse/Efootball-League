@@ -628,7 +628,7 @@
   function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
   if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-  // UPDATED LEAGUE DATA after MD18 (all played except Dortmund vs Napoli)
+  // LEAGUE DATA AFTER MD18 (all played except Dortmund vs Napoli)
   const LEAGUE_DATA = [
     { pos: 1, club: "Real Madrid", p: 18, gd: 27, pts: 52 },
     { pos: 2, club: "Liverpool", p: 18, gd: 31, pts: 44 },
@@ -697,25 +697,24 @@
     return teamName;
   }
 
-  // LAST 5 RESULTS FOR EACH TEAM (MD14 to MD18, oldest to newest)
+  // LAST 5 RESULTS AFTER MD18 (MD14 -> MD15 -> MD16 -> MD17 -> MD18)
   const last5Exact = {
     "Real Madrid":   ["W", "W", "WF", "W", "WF"],
     "Liverpool":     ["W", "W", "W", "W", "WF"],
     "Barcelona":     ["WF", "W", "W", "W", "WF"],
-    "Dortmund":      ["WF", "W", "WF", "L", null],   // MD18 not played yet
+    "Dortmund":      ["WF", "W", "WF", "L", null],
     "Arsenal":       ["WF", "L", "L", "W", "W"],
     "Man City":      ["LF", "W", "W", "LF", "WF"],
     "Chelsea":       ["WF", "L", "WF", "W", "L"],
     "PSG":           ["LF", "D", "L", "WF", "LF"],
     "AC Milan":      ["WF", "L", "WF", "LF", "LF"],
-    "Napoli":        ["LF", "W", "LF", "L", null],   // MD18 not played yet
+    "Napoli":        ["LF", "W", "LF", "L", null],
     "Newcastle":     ["LF", "L", "LF", "WF", "LF"],
     "Juventus":      ["LF", "D", "LF", "LF", "W"],
     "Atletico":      ["LF", "F", "L", "L", "LF"],
     "Inter Milan":   ["WF", "L", "L", "L", "L"]
   };
 
-  // Build teamResults array
   const teamResults = {};
   LEAGUE_DATA.forEach(t => { teamResults[t.club] = []; });
   for (const [club, results] of Object.entries(last5Exact)) {
@@ -726,7 +725,7 @@
     const results = teamResults[team] || [];
     const last5 = results.slice(-5);
     while (last5.length < 5) last5.unshift(null);
-    return last5;  // oldest first (MD14 to MD18)
+    return last5;
   }
 
   function getLatest(team) {
@@ -734,7 +733,7 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // FIXTURES: only keep Dortmund vs Napoli (MD18) and all MD19-23
+  // FIXTURES: only Dortmund vs Napoli (MD18) remains; all other MD18 matches removed
   const fixtureList = [
     { md: 18, home: "Borussia Dortmund", away: "Napoli" },
     { md: 19, home: "Borussia Dortmund", away: "FC Barcelona" }, { md: 19, home: "Inter Milan", away: "Atlético Madrid" }, { md: 19, home: "Juventus", away: "Napoli" }, { md: 19, home: "Paris Saint-Germain", away: "Arsenal" }, { md: 19, home: "Real Madrid", away: "Chelsea" }, { md: 19, home: "AC Milan", away: "Liverpool" }, { md: 19, home: "Manchester City", away: "Newcastle United" },
@@ -761,16 +760,14 @@
     fixturesWithDates.push({ md: f.md, home: f.home, away: f.away, date: dateStr, homePlayer: playerMap[f.home] || "", awayPlayer: playerMap[f.away] || "" });
   }
 
-  // RESULTS_DATA: include all MD18 results (played) and previous MDs
+  // RESULTS_DATA: includes all MD18 results (normal and forfeit)
   const RESULTS_DATA = [
-    // MD18 results (newest first)
     { matchText: "Liverpool 3 - 0 PSG (Forfeited - No Reply)", md: 18 },
     { matchText: "Manchester City 3 - 0 AC Milan (Forfeited - No Reply)", md: 18 },
     { matchText: "Arsenal 2 - 0 Inter Milan", md: 18 },
     { matchText: "FC Barcelona 3 - 0 Atlético Madrid (Forfeited - No Reply)", md: 18 },
     { matchText: "Juventus 1 - 0 Chelsea", md: 18 },
     { matchText: "Real Madrid 3 - 0 Newcastle United (Forfeited - No Reply)", md: 18 },
-    // MD17 and earlier
     { matchText: "Newcastle United 3 - 0 Juventus (Forfeited - No Reply)", md: 17 },
     { matchText: "Paris Saint-Germain 3 - 0 Manchester City (Forfeited - No Reply)", md: 17 },
     { matchText: "Real Madrid 3 - 0 AC Milan (Forfeited on Agreement)", md: 17 },
