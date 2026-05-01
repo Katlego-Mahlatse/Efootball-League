@@ -49,7 +49,6 @@
       transform: scale(1.05);
       background: #7e4acf;
     }
-    /* chat icon removed */
     .filter-svg {
       width: 20px;
       height: 20px;
@@ -168,6 +167,7 @@
       transition: all 0.2s;
       border: 1px solid #f5d742;
     }
+
     .calendar-container {
       max-width: 1400px;
       margin: 0 auto;
@@ -415,7 +415,6 @@
       <circle cx="14" cy="18" r="2" stroke="#F5D742" stroke-width="2"/>
     </svg>
   </div>
-  <!-- chat icon removed -->
   <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
 </div>
 
@@ -433,7 +432,7 @@
   </div>
 </div>
 
-<!-- Filter Modal (unchanged) -->
+<!-- Filter Modal -->
 <div class="filter-modal-overlay" id="filterModal">
   <div class="filter-modal-content">
     <h3>FILTER BY TEAM</h3>
@@ -502,7 +501,7 @@
     return `<span class="match-text">${teamName}</span>`;
   }
 
-  // ---------- PREMIER LEAGUE FIXTURES (MD10 to MD26, unchanged) ----------
+  // ---------- PREMIER LEAGUE FIXTURES (MD10 to MD26, unchanged, April 22 - May 8) ----------
   const fixtureList = [
     { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Juventus", away: "Manchester City" }, { md: 10, home: "Inter Milan", away: "Newcastle United" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Atlético Madrid", away: "Chelsea" }, { md: 10, home: "Napoli", away: "Arsenal" },
       { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
@@ -546,8 +545,7 @@
 
   let matchdayDates = buildMatchdayDates();
 
-  // ---------- NEW GROUPED SCHEDULE (shifted: May 13-16 empty, start May 17) ----------
-  // Tournament specific icons
+  // ---------- TOURNAMENT ICONS ----------
   const tournamentIcons = {
     champions: "images (15).png",
     europa: "uefa-europa-league-logo-on-transparent-background-free-vector.jpg",
@@ -558,104 +556,64 @@
     fa_cup: "images - 2026-05-01T145542.658.jpeg",
     premier: "images (14).png",
     community: "images - 2026-05-01T144809.144.jpeg",
-    supercup: "images - 2026-04-21T172656.176.jpeg"
+    supercup: "images - 2026-04-21T172656.176.jpeg",
+    superleague: "images - 2026-05-01T151142.585.jpeg"  // using domestic logo as placeholder
   };
 
-  // Schedule originally from May 13, now shifted +4 days (May 13->17, etc.)
-  // May 13-16 empty, so first event May 17
+  // ---------- SCHEDULE (May 17 - July 4) ----------
   const finalSchedule = [
-    { date: "2026-05-17", comps: [
-        { name: "Champions League", icon: tournamentIcons.champions, round: "Semi-Final 1st Leg" },
-        { name: "Europa League", icon: tournamentIcons.europa, round: "Semi-Final 1st Leg" },
-        { name: "Conference League", icon: tournamentIcons.conference, round: "Semi-Final 1st Leg" }
-      ] },
-    { date: "2026-05-18", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "Group Stage MD1" }] },
-    { date: "2026-05-19", comps: [{ name: "World Cup", icon: tournamentIcons.worldcup, round: "Quarter-Final" }] },
-    { date: "2026-05-20", comps: [{ name: "Club World Cup", icon: tournamentIcons.clubworldcup, round: "Quarter-Final" }] },
-    { date: "2026-05-21", comps: [
-        { name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 1" },
-        { name: "Premier League", icon: tournamentIcons.premier, round: "Matchday 1" },
-        { name: "Community Shield", icon: tournamentIcons.community, round: "Leg 1" }
-      ] },
-    { date: "2026-05-22", comps: [
-        { name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 2" },
-        { name: "Premier League", icon: tournamentIcons.premier, round: "Matchday 2" }
-      ] },
-    { date: "2026-05-23", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "Group Stage MD2" }] },
-    { date: "2026-05-24", comps: [{ name: "World Cup", icon: tournamentIcons.worldcup, round: "Semi-Final" }] },
-    { date: "2026-05-25", comps: [{ name: "Club World Cup", icon: tournamentIcons.clubworldcup, round: "Semi-Final" }] },
-    { date: "2026-05-26", comps: [
-        { name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 3" },
-        { name: "Premier League", icon: tournamentIcons.premier, round: "Matchday 3" }
-      ] },
-    { date: "2026-05-27", comps: [
-        { name: "Champions League", icon: tournamentIcons.champions, round: "Semi-Final 2nd Leg" },
-        { name: "Europa League", icon: tournamentIcons.europa, round: "Semi-Final 2nd Leg" },
-        { name: "Conference League", icon: tournamentIcons.conference, round: "Semi-Final 2nd Leg" }
-      ] },
-    { date: "2026-05-28", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "Group Stage MD3" }] },
-    { date: "2026-05-29", comps: [{ name: "World Cup", icon: tournamentIcons.worldcup, round: "Final" }] },
-    { date: "2026-05-30", comps: [{ name: "Club World Cup", icon: tournamentIcons.clubworldcup, round: "Final" }] },
-    { date: "2026-05-31", comps: [
-        { name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 4" },
-        { name: "Premier League", icon: tournamentIcons.premier, round: "Matchday 4" },
-        { name: "Community Shield", icon: tournamentIcons.community, round: "Leg 2" }
-      ] },
-    { date: "2026-06-01", comps: [
-        { name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 5" },
-        { name: "Premier League", icon: tournamentIcons.premier, round: "Matchday 5" }
-      ] },
-    { date: "2026-06-02", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "Group Stage MD4" }] },
-    { date: "2026-06-03", comps: [
-        { name: "Champions League", icon: tournamentIcons.champions, round: "Final" },
-        { name: "Europa League", icon: tournamentIcons.europa, round: "Final" },
-        { name: "Conference League", icon: tournamentIcons.conference, round: "Final" }
-      ] },
-    { date: "2026-06-04", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "Group Stage MD5" }] },
-    { date: "2026-06-05", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "Group Stage MD6" }] },
-    { date: "2026-06-06", comps: [
-        { name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 6" },
-        { name: "Premier League", icon: tournamentIcons.premier, round: "Matchday 6" }
-      ] },
-    { date: "2026-06-07", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "Quarter-Finals" }] },
-    { date: "2026-06-08", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "Semi-Finals" }] },
-    { date: "2026-06-09", comps: [
-        { name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 7" },
-        { name: "Premier League", icon: tournamentIcons.premier, round: "Matchday 7" },
-        { name: "Community Shield", icon: tournamentIcons.community, round: "Leg 3" }
-      ] },
-    { date: "2026-06-10", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "3rd Place Play-off" }] },
-    { date: "2026-06-11", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "Final" }] },
-    { date: "2026-06-12", comps: [{ name: "UEFA Super Cup", icon: tournamentIcons.supercup, round: "Final" }] },
-    { date: "2026-06-13", comps: [
-        { name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 8" },
-        { name: "Premier League", icon: tournamentIcons.premier, round: "Matchday 8" }
-      ] },
-    { date: "2026-06-14", comps: [
-        { name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 9" },
-        { name: "Premier League", icon: tournamentIcons.premier, round: "Matchday 9" }
-      ] },
-    { date: "2026-06-15", comps: [
-        { name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 10" },
-        { name: "Premier League", icon: tournamentIcons.premier, round: "Matchday 10" },
-        { name: "Community Shield", icon: tournamentIcons.community, round: "Leg 4" }
-      ] },
-    { date: "2026-06-16", comps: [
-        { name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 11" },
-        { name: "Premier League", icon: tournamentIcons.premier, round: "Matchday 11" }
-      ] },
-    { date: "2026-06-17", comps: [
-        { name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 12" },
-        { name: "Premier League", icon: tournamentIcons.premier, round: "Matchday 12" }
-      ] },
-    { date: "2026-06-18", comps: [
-        { name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 13" },
-        { name: "Premier League", icon: tournamentIcons.premier, round: "Matchday 13" }
-      ] },
-    { date: "2026-06-19", comps: [
-        { name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 14 (Final)" },
-        { name: "Premier League", icon: tournamentIcons.premier, round: "Matchday 14" }
-      ] }
+    // May
+    { date: "2026-05-17", comps: [{ name: "Champions League", icon: tournamentIcons.champions, round: "Semi-Final 1st Leg" }, { name: "Europa League", icon: tournamentIcons.europa, round: "Semi-Final 1st Leg" }, { name: "Conference League", icon: tournamentIcons.conference, round: "Semi-Final 1st Leg" }, { name: "Nations League", icon: tournamentIcons.nations, round: "Group Stage MD1" }] },
+    { date: "2026-05-18", comps: [{ name: "World Cup", icon: tournamentIcons.worldcup, round: "Quarter-Final 1st Leg" }] },
+    { date: "2026-05-19", comps: [{ name: "Club World Cup", icon: tournamentIcons.clubworldcup, round: "Quarter-Final 1st Leg" }] },
+    { date: "2026-05-20", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 1" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD1" }, { name: "Community Shield", icon: tournamentIcons.community, round: "Leg 1" }] },
+    { date: "2026-05-21", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 2" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD2" }] },
+    { date: "2026-05-22", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 3" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD3" }] },
+    { date: "2026-05-23", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 4" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD4" }] },
+    { date: "2026-05-24", comps: [{ name: "World Cup", icon: tournamentIcons.worldcup, round: "Quarter-Final 2nd Leg" }] },
+    { date: "2026-05-25", comps: [{ name: "Club World Cup", icon: tournamentIcons.clubworldcup, round: "Quarter-Final 2nd Leg" }] },
+    { date: "2026-05-26", comps: [{ name: "Champions League", icon: tournamentIcons.champions, round: "Semi-Final 2nd Leg" }, { name: "Europa League", icon: tournamentIcons.europa, round: "Semi-Final 2nd Leg" }, { name: "Conference League", icon: tournamentIcons.conference, round: "Semi-Final 2nd Leg" }, { name: "Nations League", icon: tournamentIcons.nations, round: "Group Stage MD2" }] },
+    { date: "2026-05-27", comps: [{ name: "World Cup", icon: tournamentIcons.worldcup, round: "Semi-Final 1st Leg" }] },
+    { date: "2026-05-28", comps: [{ name: "Club World Cup", icon: tournamentIcons.clubworldcup, round: "Semi-Final 1st Leg" }] },
+    { date: "2026-05-29", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 5" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD5" }] },
+    { date: "2026-05-30", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 6" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD6" }] },
+    { date: "2026-05-31", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 7" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD7" }, { name: "Community Shield", icon: tournamentIcons.community, round: "Leg 2" }] },
+    // June
+    { date: "2026-06-01", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 8" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD8" }] },
+    { date: "2026-06-02", comps: [{ name: "World Cup", icon: tournamentIcons.worldcup, round: "Semi-Final 2nd Leg" }] },
+    { date: "2026-06-03", comps: [{ name: "Club World Cup", icon: tournamentIcons.clubworldcup, round: "Semi-Final 2nd Leg" }] },
+    { date: "2026-06-04", comps: [{ name: "Champions League", icon: tournamentIcons.champions, round: "Final" }, { name: "Europa League", icon: tournamentIcons.europa, round: "Final" }, { name: "Conference League", icon: tournamentIcons.conference, round: "Final" }, { name: "Nations League", icon: tournamentIcons.nations, round: "Group Stage MD3" }] },
+    { date: "2026-06-05", comps: [{ name: "World Cup", icon: tournamentIcons.worldcup, round: "Final" }] },
+    { date: "2026-06-06", comps: [{ name: "Club World Cup", icon: tournamentIcons.clubworldcup, round: "Final" }] },
+    { date: "2026-06-07", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 9" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD9" }] },
+    { date: "2026-06-08", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 10" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD10" }] },
+    { date: "2026-06-09", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 11" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD11" }, { name: "Community Shield", icon: tournamentIcons.community, round: "Leg 3" }] },
+    { date: "2026-06-10", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 12" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD12" }] },
+    { date: "2026-06-11", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "Group Stage MD4" }, { name: "UEFA Super Cup", icon: tournamentIcons.supercup, round: "Final" }] },
+    { date: "2026-06-12", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 13" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD13" }] },
+    { date: "2026-06-13", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 14" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD14" }] },
+    { date: "2026-06-14", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 15" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD15" }] },
+    { date: "2026-06-15", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 16" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD16" }] },
+    { date: "2026-06-16", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "Group Stage MD5" }] },
+    { date: "2026-06-17", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 17" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD17" }] },
+    { date: "2026-06-18", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 18" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD18" }, { name: "Community Shield", icon: tournamentIcons.community, round: "Leg 4" }] },
+    { date: "2026-06-19", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 19" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD19" }] },
+    { date: "2026-06-20", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 20" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD20" }] },
+    { date: "2026-06-21", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "Group Stage MD6" }] },
+    { date: "2026-06-22", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "Quarter-Final 1st Leg" }] },
+    { date: "2026-06-23", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "Quarter-Final 2nd Leg" }] },
+    { date: "2026-06-24", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "Semi-Final 1st Leg" }] },
+    { date: "2026-06-25", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "Semi-Final 2nd Leg" }] },
+    { date: "2026-06-26", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "3rd Place Play-off" }] },
+    { date: "2026-06-27", comps: [{ name: "Nations League", icon: tournamentIcons.nations, round: "Final" }] },
+    { date: "2026-06-28", comps: [{ name: "UEFA Super League", icon: tournamentIcons.superleague, round: "Final" }] },
+    { date: "2026-06-29", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 21" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD21" }] },
+    { date: "2026-06-30", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 22" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD22" }] },
+    // July
+    { date: "2026-07-01", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 23" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD23" }, { name: "Community Shield", icon: tournamentIcons.community, round: "Leg 5" }] },
+    { date: "2026-07-02", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 24" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD24" }] },
+    { date: "2026-07-03", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 25" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD25" }] },
+    { date: "2026-07-04", comps: [{ name: "FA Cup", icon: tournamentIcons.fa_cup, round: "Round 26 (Final)" }, { name: "Premier League", icon: tournamentIcons.premier, round: "MD26" }] }
   ];
 
   // Build eventMap: first add Premier League matches (April 22 - May 8)
@@ -665,7 +623,7 @@
     eventMap.set(dateStr, { type: "premier_league", matches: matchdayDates[md].fixtures, title: null, competitions: null });
   }
 
-  // Overlay new schedule (May 17 - June 19) - May 13-16 have no events
+  // Overlay new schedule (May 17 - July 4)
   for (let item of finalSchedule) {
     eventMap.set(item.date, { type: "grouped", matches: [], title: null, competitions: item.comps });
   }
@@ -673,14 +631,14 @@
   // Helper to get day cell icon from competitions
   function getDayCellIcon(comps) {
     if (!comps || comps.length === 0) return null;
-    const uefaNames = ["Champions League", "Europa League", "Conference League", "Nations League"];
+    const uefaNames = ["Champions League", "Europa League", "Conference League", "Nations League", "UEFA Super Cup"];
     const hasUefa = comps.some(c => uefaNames.includes(c.name));
     const hasFifa = comps.some(c => c.name === "World Cup" || c.name === "Club World Cup");
     const hasDomestic = comps.some(c => c.name === "FA Cup" || c.name === "Premier League" || c.name === "Community Shield");
     if (hasUefa) return "aavgzoshm.webp";
     if (hasFifa) return "fifa-vector-flag-official-colors-aspect-ratio-white-logo-blue-background-fifa-vector-flag-436952842.jpg";
     if (hasDomestic) return "images - 2026-05-01T151142.585.jpeg";
-    if (comps.some(c => c.name === "UEFA Super Cup")) return "images - 2026-04-21T172656.176.jpeg";
+    if (comps.some(c => c.name === "UEFA Super League")) return "images - 2026-05-01T151142.585.jpeg";
     return "images (14).png";
   }
 
@@ -768,7 +726,7 @@
     const event = eventMap.get(dateStr);
     if (event) {
       if (event.matches && event.matches.length > 0) {
-        // Original Premier League matches (April 22 - May 8) - original simple layout
+        // Original Premier League matches (April 22 - May 8)
         event.matches.forEach(match => {
           const matchDiv = document.createElement("div");
           matchDiv.className = "match-item";
@@ -778,11 +736,10 @@
           popupMatchesDiv.appendChild(matchDiv);
         });
       } else if (event.competitions && event.competitions.length > 0) {
-        // New grouped competitions (May 17 onward)
+        // New grouped competitions
         event.competitions.forEach(comp => {
           const compDiv = document.createElement("div");
           compDiv.className = "match-item";
-          // override match-item style for competition popups to allow larger icons
           compDiv.style.flexDirection = "column";
           compDiv.style.alignItems = "flex-start";
           const headerDiv = document.createElement("div");
@@ -824,7 +781,7 @@
     popup.classList.add("active");
   }
 
-  // ---------- FILTER MODAL (unchanged) ----------
+  // ---------- FILTER MODAL ----------
   const filterBtn = document.getElementById("filterBtn");
   const filterModal = document.getElementById("filterModal");
   const closeFilterBtn = document.getElementById("closeFilterBtn");
@@ -859,7 +816,7 @@
     renderCalendar();
   });
 
-  // ---------- TOURNAMENT MODAL (updated) ----------
+  // ---------- TOURNAMENT MODAL ----------
   const hamburgerBtn = document.getElementById("hamburgerBtn");
   const modalOverlay = document.getElementById("modalOverlay");
   const closeModalBtn = document.getElementById("closeModalBtn");
@@ -869,7 +826,7 @@
   closeModalBtn.addEventListener("click", closeModal);
   modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
 
-  // ---------- CLOSE POPUP with X and button ----------
+  // ---------- CLOSE POPUP ----------
   const closePopupBtn = document.getElementById("closePopupBtn");
   const popupOverlay = document.getElementById("matchPopup");
   const popupCloseX = document.getElementById("popupCloseX");
