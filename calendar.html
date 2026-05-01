@@ -390,13 +390,12 @@
 </div>
 
 <script>
-  // ---------- TEAM LIST & ICONS (with extended mapping for all variations) ----------
+  // ---------- TEAM LIST & ICONS ----------
   const allTeams = [
     "Real Madrid", "Liverpool", "Dortmund", "Man City", "Barcelona", "Arsenal", "PSG",
     "AC Milan", "Chelsea", "Napoli", "Atletico", "Juventus", "Newcastle", "Inter Milan"
   ];
   
-  // Original icon map (canonical names)
   const teamIconMap = {
     "Arsenal": "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png",
     "AC Milan": "44e0f58a-e5db-445b-9896-db22ea99b936.png",
@@ -414,7 +413,6 @@
     "Juventus": "IMG_20260421_151224.jpg"
   };
   
-  // Normalize team name from fixture list to canonical key
   function normalizeTeamName(name) {
     if (name === "FC Barcelona") return "Barcelona";
     if (name === "Paris Saint-Germain") return "PSG";
@@ -440,7 +438,7 @@
     return `<span class="match-text">${teamName}</span>`;
   }
 
-  // ---------- FIXTURE DATA (Premier League MD10 to MD26) ----------
+  // ---------- FIXTURE DATA (Premier League MD10 to MD26, unchanged) ----------
   const fixtureList = [
     { md: 10, home: "FC Barcelona", away: "Real Madrid" }, { md: 10, home: "Paris Saint-Germain", away: "AC Milan" }, { md: 10, home: "Juventus", away: "Manchester City" }, { md: 10, home: "Inter Milan", away: "Newcastle United" }, { md: 10, home: "Borussia Dortmund", away: "Liverpool" }, { md: 10, home: "Atlético Madrid", away: "Chelsea" }, { md: 10, home: "Napoli", away: "Arsenal" },
       { md: 11, home: "FC Barcelona", away: "AC Milan" }, { md: 11, home: "Real Madrid", away: "Manchester City" }, { md: 11, home: "Paris Saint-Germain", away: "Newcastle United" }, { md: 11, home: "Juventus", away: "Liverpool" }, { md: 11, home: "Inter Milan", away: "Chelsea" }, { md: 11, home: "Borussia Dortmund", away: "Arsenal" }, { md: 11, home: "Atlético Madrid", away: "Napoli" },
@@ -465,7 +463,7 @@
     return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
   }
 
-  // Build Premier League matchday dates (MD10 to MD26)
+  // Build original Premier League matchday dates (April 22 to May 8)
   function buildMatchdayDates() {
     const matchdayDates = {};
     let currentDate = new Date(2026, 3, 22);
@@ -483,95 +481,66 @@
   }
 
   let matchdayDates = buildMatchdayDates();
-  let selectedTeam = null;
 
-  // ---------- COMPETITION EVENTS (Season 2 and future seasons) ----------
-  const typeToIcon = {
-    "premier_league": "images (14).png",
-    "champions_league": "images (15).png",
-    "europa_league": "uefa-europa-league-logo-on-transparent-background-free-vector.jpg",
-    "conference_league": "images (16).png",
-    "club_world_cup": "images - 2026-04-21T172601.589.jpeg",
-    "super_cup": "images - 2026-04-21T172656.176.jpeg",
-    "fa_cup": "GEryYr_5YQv6lyYkYIMYdH-pgvv7tZ5nGqQ4sCna6ewduDy5v_LTbGqjg3g81Fx8ZA1a_Mae5g5HI7VEY_6uQQ.webp"
-  };
-
-  const season2Events = [
-    { date: "2026-05-13", type: "champions_league", title: "UEFA Champions League Semi-Final 1st Leg" },
-    { date: "2026-05-14", type: "europa_league", title: "UEFA Europa League Semi-Final 1st Leg" },
-    { date: "2026-05-15", type: "premier_league", title: "Premier League Matchday 1" },
-    { date: "2026-05-16", type: "conference_league", title: "UEFA Conference League Semi-Final 1st Leg" },
-    { date: "2026-05-17", type: "premier_league", title: "Premier League Matchday 2" },
-    { date: "2026-05-18", type: "club_world_cup", title: "FIFA Club World Cup Quarter-Final" },
-    { date: "2026-05-19", type: "premier_league", title: "Premier League Matchday 3" },
-    { date: "2026-05-21", type: "champions_league", title: "UEFA Champions League Semi-Final 2nd Leg" },
-    { date: "2026-05-22", type: "premier_league", title: "Premier League Matchday 4" },
-    { date: "2026-05-23", type: "europa_league", title: "UEFA Europa League Semi-Final 2nd Leg" },
-    { date: "2026-05-24", type: "premier_league", title: "Premier League Matchday 5" },
-    { date: "2026-05-25", type: "conference_league", title: "UEFA Conference League Semi-Final 2nd Leg" },
-    { date: "2026-05-26", type: "premier_league", title: "Premier League Matchday 6" },
-    { date: "2026-05-27", type: "club_world_cup", title: "FIFA Club World Cup Semi-Final" },
-    { date: "2026-05-28", type: "premier_league", title: "Premier League Matchday 7" },
-    { date: "2026-05-29", type: "champions_league", title: "UEFA Champions League Final" },
-    { date: "2026-05-31", type: "premier_league", title: "Premier League Matchday 8" },
-    { date: "2026-06-02", type: "europa_league", title: "UEFA Europa League Final" },
-    { date: "2026-06-03", type: "premier_league", title: "Premier League Matchday 9" },
-    { date: "2026-06-04", type: "conference_league", title: "UEFA Conference League Final" },
-    { date: "2026-06-05", type: "premier_league", title: "Premier League Matchday 10" },
-    { date: "2026-06-06", type: "club_world_cup", title: "FIFA Club World Cup Final" },
-    { date: "2026-06-08", type: "super_cup", title: "UEFA Super Cup Final" },
-    { date: "2026-06-09", type: "premier_league", title: "Premier League Matchday 11" },
-    { date: "2026-06-10", type: "premier_league", title: "Premier League Matchday 12" },
-    { date: "2026-06-11", type: "premier_league", title: "Premier League Matchday 13" },
-    { date: "2026-06-12", type: "premier_league", title: "Premier League Matchday 14" }
+  // ---------- GROUPED EVENTS (May 13 - June 12) ----------
+  // Custom schedule based on user instructions
+  const groupedEvents = [
+    { date: "2026-05-13", type: "uefa", title: "UEFA Day: Champions League + Europa League + Conference League + Nations League" },
+    { date: "2026-05-15", type: "domestic", title: "Domestic: FA Cup + Premier League + Community Shield" },
+    { date: "2026-05-17", type: "domestic", title: "Domestic: FA Cup + Premier League + Community Shield" },
+    { date: "2026-05-18", type: "fifa", title: "FIFA Day: World Cup + Club World Cup" },
+    { date: "2026-05-19", type: "domestic", title: "Domestic: FA Cup + Premier League + Community Shield" },
+    { date: "2026-05-21", type: "uefa", title: "UEFA Day: Champions League + Europa League + Conference League + Nations League" },
+    { date: "2026-05-22", type: "domestic", title: "Domestic: FA Cup + Premier League + Community Shield" },
+    { date: "2026-05-24", type: "domestic", title: "Domestic: FA Cup + Premier League + Community Shield" },
+    { date: "2026-05-26", type: "domestic", title: "Domestic: FA Cup + Premier League + Community Shield" },
+    { date: "2026-05-27", type: "fifa", title: "FIFA Day: World Cup + Club World Cup" },
+    { date: "2026-05-28", type: "domestic", title: "Domestic: FA Cup + Premier League + Community Shield" },
+    { date: "2026-05-29", type: "uefa", title: "UEFA Day (Finals): Champions League + Europa League + Conference League + Nations League" },
+    { date: "2026-05-31", type: "domestic", title: "Domestic: FA Cup + Premier League + Community Shield" },
+    { date: "2026-06-03", type: "domestic", title: "Domestic: FA Cup + Premier League + Community Shield" },
+    { date: "2026-06-05", type: "domestic", title: "Domestic: FA Cup + Premier League + Community Shield" },
+    { date: "2026-06-06", type: "fifa", title: "FIFA Day (Finals): World Cup + Club World Cup" },
+    { date: "2026-06-08", type: "super_cup", title: "UEFA Super Cup" },
+    { date: "2026-06-09", type: "domestic", title: "Domestic: FA Cup + Premier League + Community Shield" },
+    { date: "2026-06-10", type: "domestic", title: "Domestic: FA Cup + Premier League + Community Shield" },
+    { date: "2026-06-11", type: "domestic", title: "Domestic: FA Cup + Premier League + Community Shield" },
+    { date: "2026-06-12", type: "domestic", title: "Domestic: FA Cup + Premier League + Community Shield" }
   ];
 
-  function generateFutureSeasons() {
-    const futureEvents = [];
-    let startDate = new Date(2026, 5, 13);
-    const endDate = new Date(2026, 11, 31);
-    const seasonDuration = 31;
-    while (startDate <= endDate) {
-      for (let ev of season2Events) {
-        const evDate = new Date(ev.date);
-        const offset = evDate.getDate() - 13;
-        const newDate = new Date(startDate);
-        newDate.setDate(startDate.getDate() + offset);
-        if (newDate <= endDate) {
-          futureEvents.push({
-            date: formatYMD(newDate),
-            type: ev.type,
-            title: "TBD"
-          });
-        }
-      }
-      startDate.setDate(startDate.getDate() + seasonDuration);
-    }
-    return futureEvents;
-  }
+  // Icon mapping (new icons added)
+  const typeToIcon = {
+    "premier_league": "images (14).png",
+    "champions_league": "aavgzoshm.webp",
+    "europa_league": "aavgzoshm.webp",
+    "conference_league": "aavgzoshm.webp",
+    "nations_league": "aavgzoshm.webp",
+    "uefa": "aavgzoshm.webp",
+    "fifa": "fifa-vector-flag-official-colors-aspect-ratio-white-logo-blue-background-fifa-vector-flag-436952842.jpg",
+    "domestic": "images - 2026-05-01T151142.585.jpeg",
+    "super_cup": "images - 2026-04-21T172656.176.jpeg"
+  };
 
+  // Build eventMap: first add all Premier League matches (April 22 - May 8)
   const eventMap = new Map();
   for (let md in matchdayDates) {
     const dateStr = matchdayDates[md].date;
     eventMap.set(dateStr, { type: "premier_league", matches: matchdayDates[md].fixtures, title: null });
   }
-  for (let ev of season2Events) {
-    if (!eventMap.has(ev.date)) {
-      eventMap.set(ev.date, { type: ev.type, matches: [], title: ev.title });
-    }
+
+  // Overlay grouped events from May 13 to June 12 (remove any existing events on those dates)
+  for (let ev of groupedEvents) {
+    eventMap.set(ev.date, { type: ev.type, matches: [], title: ev.title });
   }
-  const futureEvents = generateFutureSeasons();
-  for (let ev of futureEvents) {
-    if (!eventMap.has(ev.date)) {
-      eventMap.set(ev.date, { type: ev.type, matches: [], title: ev.title });
-    }
-  }
+
+  // No future TBD events added
 
   // ---------- CALENDAR RENDERING ----------
   function renderCalendar() {
     const root = document.getElementById("calendarRoot");
     root.innerHTML = "";
     const monthsData = [];
+    // Show April to December 2026 (but only events up to June 12, rest empty)
     for (let m = 3; m <= 11; m++) {
       const year = 2026;
       const firstDay = new Date(year, m, 1);
@@ -621,7 +590,7 @@
           if (event) {
             const icon = document.createElement("img");
             icon.className = "event-icon";
-            icon.src = typeToIcon[event.type];
+            icon.src = typeToIcon[event.type] || "images (14).png";
             icon.alt = event.type;
             cell.appendChild(icon);
           }
@@ -643,6 +612,7 @@
     const event = eventMap.get(dateStr);
     if (event) {
       if (event.matches && event.matches.length > 0) {
+        // Show actual Premier League matches
         event.matches.forEach(match => {
           const matchDiv = document.createElement("div");
           matchDiv.className = "match-item";
@@ -671,7 +641,7 @@
     popup.classList.add("active");
   }
 
-  // ---------- FILTER MODAL ----------
+  // ---------- FILTER MODAL (unchanged) ----------
   const filterBtn = document.getElementById("filterBtn");
   const filterModal = document.getElementById("filterModal");
   const closeFilterBtn = document.getElementById("closeFilterBtn");
@@ -698,6 +668,7 @@
       teamListContainer.appendChild(div);
     });
   }
+  let selectedTeam = null;
   buildTeamList();
   clearFilterBtn.addEventListener("click", () => {
     selectedTeam = null;
@@ -705,7 +676,7 @@
     renderCalendar();
   });
 
-  // ---------- TOURNAMENT MODAL ----------
+  // ---------- TOURNAMENT MODAL (unchanged) ----------
   const hamburgerBtn = document.getElementById("hamburgerBtn");
   const modalOverlay = document.getElementById("modalOverlay");
   const closeModalBtn = document.getElementById("closeModalBtn");
