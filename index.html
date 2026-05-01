@@ -604,7 +604,7 @@
     <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
     <div class="card-content" id="resultsContent">
       <div class="scrollable-table">
-        <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></table>
+        <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></tr>
       </div>
     </div>
   </div>
@@ -697,7 +697,7 @@
     return teamName;
   }
 
-  // LAST 5 RESULTS AFTER MD18 (MD14 -> MD15 -> MD16 -> MD17 -> MD18)
+  // LAST 5 RESULTS: stored as [MD14, MD15, MD16, MD17, MD18] (oldest to newest)
   const last5Exact = {
     "Real Madrid":   ["W", "W", "WF", "W", "WF"],
     "Liverpool":     ["W", "W", "W", "W", "WF"],
@@ -721,10 +721,11 @@
     teamResults[club] = results.filter(r => r !== null);
   }
 
-  function getLast5WithBlanks(team) {
+  // Return last 5 with newest FIRST (for display: left = newest)
+  function getLast5NewestFirst(team) {
     const results = teamResults[team] || [];
-    const last5 = results.slice(-5);
-    while (last5.length < 5) last5.unshift(null);
+    const last5 = results.slice(-5).reverse();
+    while (last5.length < 5) last5.push(null);
     return last5;
   }
 
@@ -846,7 +847,7 @@
 
       const last5Cell = row.insertCell(5);
       if (showLast5) {
-        const last5 = getLast5WithBlanks(team.club);
+        const last5 = getLast5NewestFirst(team.club);
         const container = document.createElement("div");
         container.className = "form-circles";
         last5.forEach(res => {
