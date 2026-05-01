@@ -316,14 +316,6 @@
       align-items: center;
       gap: 5px;
     }
-    .subheading {
-      text-align: center;
-      margin: 1rem 0;
-      font-size: 1rem;
-      color: #f5d742;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-    }
     .filter-container {
       display: flex;
       gap: 1rem;
@@ -478,7 +470,7 @@
       <div class="card-header-left"><h2>GROUP FIXTURES</h2></div>
       <div class="toggle-icon" id="fixturesToggleIcon">▼</div>
     </div>
-    <div class="card-content" id="fixturesContent">
+    <div class="card-content collapsed" id="fixturesContent">
       <div class="filter-container">
         <input type="text" id="fixturesSearchInput" class="filter-input" placeholder="🔍 Search team name...">
       </div>
@@ -497,7 +489,7 @@
       <div class="card-header-left"><h2>RESULTS</h2></div>
       <div class="toggle-icon" id="resultsToggleIcon">▼</div>
     </div>
-    <div class="card-content" id="resultsContent">
+    <div class="card-content collapsed" id="resultsContent">
       <div class="scrollable-table">
         <table class="inner-table" id="resultsTable">
           <thead><tr><th>Match</th><th>Match Day</th></tr></thead>
@@ -506,8 +498,6 @@
       </div>
     </div>
   </div>
-
-  <div class="subheading">🏆 NATIONS LEAGUE DRAFT IN PROGRESS 🏆</div>
 
   <!-- KNOCKOUT STAGE -->
   <div class="card">
@@ -602,7 +592,7 @@
       if (a.stats.pts !== b.stats.pts) return b.stats.pts - a.stats.pts;
       return b.stats.gd - a.stats.gd;
     });
-    let html = `<table class="group-table"><thead>高效<th>Pos</th><th>Nation</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody>`;
+    let html = `<table class="group-table"><thead><tr><th>Pos</th><th>Nation</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody>`;
     teamsWithStats.forEach((team, idx) => {
       const position = idx + 1;
       let barClass = "";
@@ -822,12 +812,12 @@
     `;
   }
 
-  // Collapsible fixtures and results
+  // Collapsible fixtures and results - start collapsed
   const fixturesHeader = document.getElementById("fixturesHeader");
   const fixturesContent = document.getElementById("fixturesContent");
   const fixturesToggleIcon = document.getElementById("fixturesToggleIcon");
   if (fixturesHeader && fixturesContent) {
-    let collapsed = false;
+    let collapsed = true; // start collapsed
     fixturesHeader.addEventListener("click", () => {
       collapsed = !collapsed;
       if (collapsed) {
@@ -838,13 +828,15 @@
         if (fixturesToggleIcon) fixturesToggleIcon.innerHTML = "▼";
       }
     });
+    // initial icon state (collapsed)
+    if (fixturesToggleIcon) fixturesToggleIcon.innerHTML = "▶";
   }
 
   const resultsHeader = document.getElementById("resultsHeader");
   const resultsContent = document.getElementById("resultsContent");
   const resultsToggleIcon = document.getElementById("resultsToggleIcon");
   if (resultsHeader && resultsContent) {
-    let collapsed = false;
+    let collapsed = true; // start collapsed
     resultsHeader.addEventListener("click", () => {
       collapsed = !collapsed;
       if (collapsed) {
@@ -855,6 +847,7 @@
         if (resultsToggleIcon) resultsToggleIcon.innerHTML = "▼";
       }
     });
+    if (resultsToggleIcon) resultsToggleIcon.innerHTML = "▶";
   }
 
   const searchInput = document.getElementById("fixturesSearchInput");
@@ -877,4 +870,4 @@
   renderResults();
 </script>
 </body>
-</html>
+                              </html>
