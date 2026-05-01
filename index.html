@@ -604,7 +604,7 @@
     <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
     <div class="card-content" id="resultsContent">
       <div class="scrollable-table">
-        <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></tr>
+        <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></table>
       </div>
     </div>
   </div>
@@ -628,18 +628,18 @@
   function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
   if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-  // LEAGUE DATA AFTER MD18 (all played except Dortmund vs Napoli)
+  // LEAGUE DATA AFTER MD18 (all matches complete: Dortmund vs Napoli F-F)
   const LEAGUE_DATA = [
     { pos: 1, club: "Real Madrid", p: 18, gd: 27, pts: 52 },
     { pos: 2, club: "Liverpool", p: 18, gd: 31, pts: 44 },
     { pos: 3, club: "Barcelona", p: 18, gd: 6, pts: 37 },
-    { pos: 4, club: "Dortmund", p: 17, gd: 9, pts: 33 },
+    { pos: 4, club: "Dortmund", p: 18, gd: 9, pts: 33 },
     { pos: 5, club: "Arsenal", p: 18, gd: 7, pts: 29 },
     { pos: 6, club: "Man City", p: 18, gd: 4, pts: 28 },
     { pos: 7, club: "Chelsea", p: 18, gd: 11, pts: 27 },
     { pos: 8, club: "PSG", p: 18, gd: -14, pts: 23 },
     { pos: 9, club: "AC Milan", p: 18, gd: -13, pts: 16 },
-    { pos: 10, club: "Napoli", p: 17, gd: -10, pts: 14 },
+    { pos: 10, club: "Napoli", p: 18, gd: -10, pts: 14 },
     { pos: 11, club: "Newcastle", p: 18, gd: -38, pts: 9 },
     { pos: 12, club: "Juventus", p: 18, gd: -20, pts: 7 },
     { pos: 13, club: "Atletico", p: 18, gd: -20, pts: 7 },
@@ -697,18 +697,19 @@
     return teamName;
   }
 
-  // LAST 5 RESULTS: stored as [MD14, MD15, MD16, MD17, MD18] (oldest to newest)
+  // LAST 5 RESULTS stored as [MD14, MD15, MD16, MD17, MD18] (oldest to newest)
+  // Updated: Dortmund and Napoli now have "F" for MD18 (No Contest)
   const last5Exact = {
     "Real Madrid":   ["W", "W", "WF", "W", "WF"],
     "Liverpool":     ["W", "W", "W", "W", "WF"],
     "Barcelona":     ["WF", "W", "W", "W", "WF"],
-    "Dortmund":      ["WF", "W", "WF", "L", null],
+    "Dortmund":      ["WF", "W", "WF", "L", "F"],
     "Arsenal":       ["WF", "L", "L", "W", "W"],
     "Man City":      ["LF", "W", "W", "LF", "WF"],
     "Chelsea":       ["WF", "L", "WF", "W", "L"],
     "PSG":           ["LF", "D", "L", "WF", "LF"],
     "AC Milan":      ["WF", "L", "WF", "LF", "LF"],
-    "Napoli":        ["LF", "W", "LF", "L", null],
+    "Napoli":        ["LF", "W", "LF", "L", "F"],
     "Newcastle":     ["LF", "L", "LF", "WF", "LF"],
     "Juventus":      ["LF", "D", "LF", "LF", "W"],
     "Atletico":      ["LF", "F", "L", "L", "LF"],
@@ -734,9 +735,8 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // FIXTURES: only Dortmund vs Napoli (MD18) remains; all other MD18 matches removed
+  // FIXTURES: all MD18 matches played, so start from MD19 onward
   const fixtureList = [
-    { md: 18, home: "Borussia Dortmund", away: "Napoli" },
     { md: 19, home: "Borussia Dortmund", away: "FC Barcelona" }, { md: 19, home: "Inter Milan", away: "Atlético Madrid" }, { md: 19, home: "Juventus", away: "Napoli" }, { md: 19, home: "Paris Saint-Germain", away: "Arsenal" }, { md: 19, home: "Real Madrid", away: "Chelsea" }, { md: 19, home: "AC Milan", away: "Liverpool" }, { md: 19, home: "Manchester City", away: "Newcastle United" },
     { md: 20, home: "Inter Milan", away: "FC Barcelona" }, { md: 20, home: "Juventus", away: "Borussia Dortmund" }, { md: 20, home: "Paris Saint-Germain", away: "Atlético Madrid" }, { md: 20, home: "Real Madrid", away: "Napoli" }, { md: 20, home: "AC Milan", away: "Arsenal" }, { md: 20, home: "Manchester City", away: "Chelsea" }, { md: 20, home: "Newcastle United", away: "Liverpool" },
     { md: 21, home: "Juventus", away: "FC Barcelona" }, { md: 21, home: "Paris Saint-Germain", away: "Inter Milan" }, { md: 21, home: "Real Madrid", away: "Borussia Dortmund" }, { md: 21, home: "AC Milan", away: "Atlético Madrid" }, { md: 21, home: "Manchester City", away: "Napoli" }, { md: 21, home: "Newcastle United", away: "Arsenal" }, { md: 21, home: "Liverpool", away: "Chelsea" },
@@ -751,7 +751,7 @@
 
   const fixturesWithDates = [];
   let startDate = new Date(2026, 3, 29);
-  let currentMd = 17;
+  let currentMd = 18;
   for (let f of fixtureList) {
     if (f.md !== currentMd) {
       startDate.setDate(startDate.getDate() + 1);
@@ -761,8 +761,9 @@
     fixturesWithDates.push({ md: f.md, home: f.home, away: f.away, date: dateStr, homePlayer: playerMap[f.home] || "", awayPlayer: playerMap[f.away] || "" });
   }
 
-  // RESULTS_DATA: includes all MD18 results (normal and forfeit)
+  // RESULTS_DATA: includes all MD18 results including Dortmund vs Napoli No Contest
   const RESULTS_DATA = [
+    { matchText: "Borussia Dortmund F - F Napoli (No Contest)", md: 18 },
     { matchText: "Liverpool 3 - 0 PSG (Forfeited - No Reply)", md: 18 },
     { matchText: "Manchester City 3 - 0 AC Milan (Forfeited - No Reply)", md: 18 },
     { matchText: "Arsenal 2 - 0 Inter Milan", md: 18 },
