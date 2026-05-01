@@ -562,28 +562,24 @@
     D: { name: "Group D", teams: nations.filter(n => n.group === "D") }
   };
 
-  // ---------- CORRECTED STATS after MD1 (Argentina 5-0 Spain), MD2, MD3 ----------
-  // Group A: France draw Belgium (0-0), France forfeit win vs Morocco, Belgium forfeit win vs Morocco.
-  // France: p2, GD 0, 4pts; Belgium: p2, GD 0, 4pts; Morocco: p2, GD -6, 0pts
-  // Group B: Portugal 2-0 England, Portugal 1-1 Croatia, England 3-0 forfeit vs Croatia.
-  // Portugal: p2, GD +2, 4pts; England: p2, GD -2, 3pts; Croatia: p2, GD -3, 1pt
-  // Group C: Netherlands 4-0 Germany, Italy 1-1 Netherlands, Italy 4-1 Germany.
-  // Netherlands: p2, GD +4, 4pts; Italy: p2, GD +3, 4pts; Germany: p2, GD -8, 0pts
-  // Group D: Argentina 5-0 Spain, Argentina 5-2 Brazil, Brazil forfeit win vs Spain.
-  // Argentina: p2, GD +8, 6pts; Brazil: p2, GD -3, 3pts; Spain: p2, GD -8, 0pts
+  // ---------- CORRECTED STATS AFTER MD4 ----------
+  // Group A: Belgium 1-2 France (normal win)
+  // Group B: England vs Portugal - Portugal forfeit win (England -3 GD, Portugal no GD change)
+  // Group C: Netherlands vs Germany - No Contest (F-F, both P+1, GD unchanged)
+  // Group D: Spain vs Argentina - Argentina forfeit win (Spain -3 GD, Argentina no GD change)
   const stats = {
-    "France": { p: 2, gd: 0, pts: 4 },
-    "Belgium": { p: 2, gd: 0, pts: 4 },
+    "France": { p: 3, gd: 1, pts: 7 },
+    "Belgium": { p: 3, gd: -1, pts: 4 },
     "Morocco": { p: 2, gd: -6, pts: 0 },
-    "Portugal": { p: 2, gd: 2, pts: 4 },
-    "England": { p: 2, gd: -2, pts: 3 },
+    "Portugal": { p: 3, gd: 2, pts: 7 },
+    "England": { p: 3, gd: -5, pts: 3 },
     "Croatia": { p: 2, gd: -3, pts: 1 },
-    "Netherlands": { p: 2, gd: 4, pts: 4 },
+    "Netherlands": { p: 3, gd: 4, pts: 4 },
     "Italy": { p: 2, gd: 3, pts: 4 },
-    "Germany": { p: 2, gd: -8, pts: 0 },
-    "Argentina": { p: 2, gd: 8, pts: 6 },
+    "Germany": { p: 3, gd: -8, pts: 0 },
+    "Argentina": { p: 3, gd: 8, pts: 9 },
     "Brazil": { p: 2, gd: -3, pts: 3 },
-    "Spain": { p: 2, gd: -8, pts: 0 }
+    "Spain": { p: 3, gd: -11, pts: 0 }
   };
 
   let groupViewMode = { A: false, B: false, C: false, D: false };
@@ -614,7 +610,7 @@
       else if (position === 3) barClass = "red-bar-vertical";
       const displayName = getDisplayName(team.name, usePlayerView);
       html += `<tr>
-        <td class="rank-cell"><div class="pos-with-bar">${barClass ? `<span class="vertical-bar ${barClass}"></span>` : ""}${position}</div></td>
+        <td class="rank-cell"><div class="pos-with-bar">${barClass ? `<span class="vertical-bar ${barClass}"></span>` : ""}${position}</div></table>
         <td><div class="team-name"><span class="country-emoji">${team.emoji}</span> ${displayName}</div></td>
         <td>${team.stats.p}</td>
         <td>${team.stats.gd > 0 ? `+${team.stats.gd}` : team.stats.gd}</td>
@@ -713,8 +709,8 @@
     return `${months[startDate.getMonth()]} ${startDate.getDate()}`;
   }
 
-  // Keep only MD4, MD5, MD6 as upcoming fixtures (MD1, MD2, MD3 completed)
-  let groupFixtures = allFixtures.filter(f => f.md >= 4).map(f => ({
+  // Keep only MD5 and MD6 as upcoming fixtures (MD1-MD4 completed)
+  let groupFixtures = allFixtures.filter(f => f.md >= 5).map(f => ({
     md: f.md,
     date: getDateForMatchday(f.md),
     home: f.home,
@@ -757,9 +753,14 @@
     }
   }
 
-  // RESULTS_DATA: corrected MD1 (Argentina 5-0 Spain), MD2, MD3 with forfeits
+  // RESULTS_DATA: includes MD1, MD2, MD3 and new MD4 results
   const RESULTS_DATA = [
-    // MD1 (corrected)
+    // MD4 results (30 April)
+    { matchText: "Belgium 1 - 2 France", md: 4 },
+    { matchText: "England 0 - 3 Portugal (Forfeit win Portugal)", md: 4 },
+    { matchText: "Netherlands F - F Germany (No Contest)", md: 4 },
+    { matchText: "Spain 0 - 3 Argentina (Forfeit win Argentina)", md: 4 },
+    // MD1
     { matchText: "Argentina 5 - 0 Spain", md: 1 },
     { matchText: "Netherlands 4 - 0 Germany", md: 1 },
     { matchText: "Portugal 2 - 0 England", md: 1 },
