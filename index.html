@@ -501,7 +501,6 @@
       background: rgba(0,0,0,0.4);
       padding: 0.2rem 0.6rem;
       border-radius: 20px;
-      margin-left: 8px;
     }
     .result-with-forfeit {
       display: flex;
@@ -704,17 +703,17 @@
     return teamName;
   }
 
-  // LAST 5 RESULTS: stored as [MD16, MD17, MD18, MD19, MD20] (oldest to newest) - corrected MD19
+  // LAST 5 RESULTS: corrected MD19 and MD20
   const last5Exact = {
     "Real Madrid":   ["WF", "W", "WF", "WF", "?"],
-    "Liverpool":     ["W", "W", "WF", "W", "W"],   // MD19: W (2-0), MD20: W (7-0)
+    "Liverpool":     ["W", "W", "WF", "W", "W"],
     "Barcelona":     ["W", "W", "WF", "LF", "?"],
     "Dortmund":      ["WF", "L", "F", "WF", "?"],
     "Arsenal":       ["L", "W", "W", "WF", "L"],
     "Man City":      ["W", "LF", "WF", "W", "?"],
     "Chelsea":       ["WF", "W", "L", "LF", "?"],
     "PSG":           ["L", "WF", "LF", "LF", "?"],
-    "AC Milan":      ["WF", "LF", "LF", "L", "W"], // MD19: L (0-2), MD20: W (2-1)
+    "AC Milan":      ["WF", "LF", "LF", "L", "W"],
     "Napoli":        ["LF", "L", "F", "LF", "?"],
     "Newcastle":     ["LF", "WF", "LF", "L", "L"],
     "Juventus":      ["LF", "LF", "W", "WF", "?"],
@@ -740,9 +739,25 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // FIXTURES: added MD24, MD25, MD26; removed AC Milan vs Arsenal and Newcastle vs Liverpool (MD20)
+  // Hardcoded dates for each matchday (based on MD20 = May 2)
+  const matchdayDates = {
+    15: "Apr 27",
+    16: "Apr 28",
+    17: "Apr 29",
+    18: "Apr 30",
+    19: "May 1",
+    20: "May 2",
+    21: "May 3",
+    22: "May 4",
+    23: "May 5",
+    24: "May 6",
+    25: "May 7",
+    26: "May 8"
+  };
+
+  // Fixture list with hardcoded dates
   const fixtureList = [
-    // MD20 remaining fixtures
+    // MD20 remaining fixtures (AC Milan vs Arsenal and Newcastle vs Liverpool already removed)
     { md: 20, home: "Inter Milan", away: "FC Barcelona" },
     { md: 20, home: "Juventus", away: "Borussia Dortmund" },
     { md: 20, home: "Paris Saint-Germain", away: "Atlético Madrid" },
@@ -772,7 +787,7 @@
     { md: 23, home: "Liverpool", away: "Borussia Dortmund" },
     { md: 23, home: "Chelsea", away: "Atlético Madrid" },
     { md: 23, home: "Arsenal", away: "Napoli" },
-    // MD24 (new)
+    // MD24
     { md: 24, home: "AC Milan", away: "FC Barcelona" },
     { md: 24, home: "Manchester City", away: "Real Madrid" },
     { md: 24, home: "Newcastle United", away: "Paris Saint-Germain" },
@@ -780,7 +795,7 @@
     { md: 24, home: "Chelsea", away: "Aston Villa" },
     { md: 24, home: "Arsenal", away: "Borussia Dortmund" },
     { md: 24, home: "Napoli", away: "Atlético Madrid" },
-    // MD25 (new)
+    // MD25
     { md: 25, home: "Manchester City", away: "FC Barcelona" },
     { md: 25, home: "Newcastle United", away: "AC Milan" },
     { md: 25, home: "Liverpool", away: "Real Madrid" },
@@ -788,7 +803,7 @@
     { md: 25, home: "Arsenal", away: "Juventus" },
     { md: 25, home: "Napoli", away: "Aston Villa" },
     { md: 25, home: "Atlético Madrid", away: "Borussia Dortmund" },
-    // MD26 (new)
+    // MD26
     { md: 26, home: "Newcastle United", away: "FC Barcelona" },
     { md: 26, home: "Liverpool", away: "Manchester City" },
     { md: 26, home: "Chelsea", away: "AC Milan" },
@@ -798,28 +813,20 @@
     { md: 26, home: "Borussia Dortmund", away: "Aston Villa" }
   ];
 
-  function formatDate(date) {
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return `${months[date.getMonth()]} ${date.getDate()}`;
-  }
-
-  const fixturesWithDates = [];
-  let startDate = new Date(2026, 3, 29);
-  let currentMd = 20;
-  for (let f of fixtureList) {
-    if (f.md !== currentMd) {
-      startDate.setDate(startDate.getDate() + 1);
-      currentMd = f.md;
-    }
-    let dateStr = formatDate(startDate);
-    fixturesWithDates.push({ md: f.md, home: f.home, away: f.away, date: dateStr, homePlayer: playerMap[f.home] || "", awayPlayer: playerMap[f.away] || "" });
-  }
+  const fixturesWithDates = fixtureList.map(f => ({
+    md: f.md,
+    date: matchdayDates[f.md],
+    home: f.home,
+    away: f.away,
+    homePlayer: playerMap[f.home] || "",
+    awayPlayer: playerMap[f.away] || ""
+  }));
 
   const RESULTS_DATA = [
-    // MD20 results (new)
+    // MD20 results
     { matchText: "AC Milan 2 - 1 Arsenal", md: 20 },
     { matchText: "Liverpool 7 - 0 Newcastle United", md: 20 },
-    // MD19 (corrected: Liverpool 2-0 AC Milan)
+    // MD19 (corrected)
     { matchText: "Liverpool 2 - 0 AC Milan", md: 19 },
     { matchText: "Juventus 3 - 0 Napoli (Forfeited - No Reply)", md: 19 },
     { matchText: "Manchester City 3 - 2 Newcastle United", md: 19 },
