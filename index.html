@@ -558,7 +558,7 @@
 
 <div class="dashboard">
   <div class="slideshow-container">
-    <img id="slideshow-img" class="slideshow-img" src="9b4fe954-1702-43d7-a73b-d58516e5bda0.jpeg" alt="Slideshow">
+    <img id="slideshow-img" class="slideshow-img" src="images - 2026-04-19T121231.816.jpeg" alt="Slideshow">
     <div class="dots-container" id="dotsContainer"></div>
   </div>
 
@@ -572,7 +572,7 @@
     <div class="card-content">
       <div style="overflow-x:auto;">
         <table class="stats-table" id="leagueTable">
-          <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th><tr></thead>
+          <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th></tr></thead>
           <tbody id="leagueTableBody"></tbody>
         </table>
       </div>
@@ -611,11 +611,13 @@
 </div>
 
 <script>
-  // New slideshow images (3 images only)
+  // Restored old slideshow images (5 images)
   const images = [
-    "9b4fe954-1702-43d7-a73b-d58516e5bda0.jpeg",
-    "121206b7-59b2-48d5-a3a4-e3744ee6a44d.jpeg",
-    "d1e02146-3462-4119-9abc-60d4a4eb41c5.jpeg"
+    "images - 2026-04-19T121231.816.jpeg",
+    "images - 2026-04-19T155746.715.jpeg",
+    "37686bb3-06ce-401b-a022-026933c165e7.jpeg",
+    "12871.jpg",
+    "1f157df7-2054-4a9d-aa14-b9941ef4a743.jpeg"
   ];
   let currentIndex = 0;
   const slideshowImg = document.getElementById("slideshow-img");
@@ -633,20 +635,20 @@
   function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
   if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-  // UPDATED LEAGUE DATA AFTER MD19
+  // UPDATED LEAGUE DATA AFTER MD20 (AC Milan 2-1 Arsenal, Liverpool 7-0 Newcastle)
   const LEAGUE_DATA = [
     { pos: 1, club: "Real Madrid", p: 19, gd: 27, pts: 55 },
-    { pos: 2, club: "Liverpool", p: 19, gd: 28, pts: 44 },
+    { pos: 2, club: "Liverpool", p: 20, gd: 35, pts: 47 },
     { pos: 3, club: "Barcelona", p: 19, gd: 3, pts: 37 },
     { pos: 4, club: "Dortmund", p: 19, gd: 9, pts: 36 },
-    { pos: 5, club: "Arsenal", p: 19, gd: 7, pts: 32 },
+    { pos: 5, club: "Arsenal", p: 20, gd: 6, pts: 32 },
     { pos: 6, club: "Man City", p: 19, gd: 5, pts: 31 },
     { pos: 7, club: "Chelsea", p: 19, gd: 8, pts: 27 },
     { pos: 8, club: "PSG", p: 19, gd: -17, pts: 23 },
-    { pos: 9, club: "AC Milan", p: 19, gd: -13, pts: 19 },
+    { pos: 9, club: "AC Milan", p: 20, gd: -12, pts: 22 },
     { pos: 10, club: "Napoli", p: 19, gd: -13, pts: 14 },
     { pos: 11, club: "Juventus", p: 19, gd: -20, pts: 10 },
-    { pos: 12, club: "Newcastle", p: 19, gd: -39, pts: 9 },
+    { pos: 12, club: "Newcastle", p: 20, gd: -46, pts: 9 },
     { pos: 13, club: "Inter Milan", p: 19, gd: -13, pts: 8 },
     { pos: 14, club: "Atletico", p: 19, gd: -23, pts: 7 }
   ];
@@ -702,28 +704,28 @@
     return teamName;
   }
 
-  // LAST 5 RESULTS: stored as [MD15, MD16, MD17, MD18, MD19] (oldest to newest)
+  // LAST 5 RESULTS: stored as [MD16, MD17, MD18, MD19, MD20] (oldest to newest) - updated for MD20
   const last5Exact = {
-    "Real Madrid":   ["W", "WF", "W", "WF", "WF"],
-    "Liverpool":     ["W", "W", "W", "WF", "LF"],
-    "Barcelona":     ["W", "W", "W", "WF", "LF"],
-    "Dortmund":      ["W", "WF", "L", "F", "WF"],
-    "Arsenal":       ["L", "L", "W", "W", "WF"],
-    "Man City":      ["W", "W", "LF", "WF", "W"],
-    "Chelsea":       ["L", "WF", "W", "L", "LF"],
-    "PSG":           ["D", "L", "WF", "LF", "LF"],
-    "AC Milan":      ["L", "WF", "LF", "LF", "WF"],
-    "Napoli":        ["W", "LF", "L", "F", "LF"],
-    "Newcastle":     ["L", "LF", "WF", "LF", "L"],
-    "Juventus":      ["D", "LF", "LF", "W", "WF"],
-    "Atletico":      ["F", "L", "L", "LF", "LF"],
-    "Inter Milan":   ["L", "L", "L", "L", "WF"]
+    "Real Madrid":   ["WF", "W", "WF", "WF", "?"],   // MD20 not played yet (keep old)
+    "Liverpool":     ["W", "W", "WF", "LF", "W"],    // MD20 win 7-0
+    "Barcelona":     ["W", "W", "WF", "LF", "?"],
+    "Dortmund":      ["WF", "L", "F", "WF", "?"],
+    "Arsenal":       ["L", "W", "W", "WF", "L"],     // MD20 loss 1-2
+    "Man City":      ["W", "LF", "WF", "W", "?"],
+    "Chelsea":       ["WF", "W", "L", "LF", "?"],
+    "PSG":           ["L", "WF", "LF", "LF", "?"],
+    "AC Milan":      ["WF", "LF", "LF", "WF", "W"],  // MD20 win 2-1
+    "Napoli":        ["LF", "L", "F", "LF", "?"],
+    "Newcastle":     ["LF", "WF", "LF", "L", "L"],   // MD20 loss 0-7
+    "Juventus":      ["LF", "LF", "W", "WF", "?"],
+    "Atletico":      ["L", "L", "LF", "LF", "?"],
+    "Inter Milan":   ["L", "L", "L", "WF", "?"]
   };
 
   const teamResults = {};
   LEAGUE_DATA.forEach(t => { teamResults[t.club] = []; });
   for (const [club, results] of Object.entries(last5Exact)) {
-    teamResults[club] = results.filter(r => r !== null);
+    teamResults[club] = results.filter(r => r !== "?");
   }
 
   function getLast5NewestFirst(team) {
@@ -738,12 +740,62 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // FIXTURES: all MD19 matches removed, keep MD20 onward
+  // FIXTURES: added MD24, MD25, MD26; removed AC Milan vs Arsenal and Newcastle vs Liverpool (MD20)
   const fixtureList = [
-    { md: 20, home: "Inter Milan", away: "FC Barcelona" }, { md: 20, home: "Juventus", away: "Borussia Dortmund" }, { md: 20, home: "Paris Saint-Germain", away: "Atlético Madrid" }, { md: 20, home: "Real Madrid", away: "Napoli" }, { md: 20, home: "AC Milan", away: "Arsenal" }, { md: 20, home: "Manchester City", away: "Chelsea" }, { md: 20, home: "Newcastle United", away: "Liverpool" },
-    { md: 21, home: "Juventus", away: "FC Barcelona" }, { md: 21, home: "Paris Saint-Germain", away: "Inter Milan" }, { md: 21, home: "Real Madrid", away: "Borussia Dortmund" }, { md: 21, home: "AC Milan", away: "Atlético Madrid" }, { md: 21, home: "Manchester City", away: "Napoli" }, { md: 21, home: "Newcastle United", away: "Arsenal" }, { md: 21, home: "Liverpool", away: "Chelsea" },
-    { md: 22, home: "Paris Saint-Germain", away: "FC Barcelona" }, { md: 22, home: "Real Madrid", away: "Juventus" }, { md: 22, home: "AC Milan", away: "Inter Milan" }, { md: 22, home: "Manchester City", away: "Borussia Dortmund" }, { md: 22, home: "Newcastle United", away: "Atlético Madrid" }, { md: 22, home: "Liverpool", away: "Napoli" }, { md: 22, home: "Chelsea", away: "Arsenal" },
-    { md: 23, home: "Real Madrid", away: "FC Barcelona" }, { md: 23, home: "AC Milan", away: "Paris Saint-Germain" }, { md: 23, home: "Manchester City", away: "Juventus" }, { md: 23, home: "Newcastle United", away: "Inter Milan" }, { md: 23, home: "Liverpool", away: "Borussia Dortmund" }, { md: 23, home: "Chelsea", away: "Atlético Madrid" }, { md: 23, home: "Arsenal", away: "Napoli" }
+    // MD20 remaining fixtures (AC Milan vs Arsenal and Newcastle vs Liverpool removed)
+    { md: 20, home: "Inter Milan", away: "FC Barcelona" },
+    { md: 20, home: "Juventus", away: "Borussia Dortmund" },
+    { md: 20, home: "Paris Saint-Germain", away: "Atlético Madrid" },
+    { md: 20, home: "Real Madrid", away: "Napoli" },
+    { md: 20, home: "Manchester City", away: "Chelsea" },
+    // MD21
+    { md: 21, home: "Juventus", away: "FC Barcelona" },
+    { md: 21, home: "Paris Saint-Germain", away: "Inter Milan" },
+    { md: 21, home: "Real Madrid", away: "Borussia Dortmund" },
+    { md: 21, home: "AC Milan", away: "Atlético Madrid" },
+    { md: 21, home: "Manchester City", away: "Napoli" },
+    { md: 21, home: "Newcastle United", away: "Arsenal" },
+    { md: 21, home: "Liverpool", away: "Chelsea" },
+    // MD22
+    { md: 22, home: "Paris Saint-Germain", away: "FC Barcelona" },
+    { md: 22, home: "Real Madrid", away: "Juventus" },
+    { md: 22, home: "AC Milan", away: "Inter Milan" },
+    { md: 22, home: "Manchester City", away: "Borussia Dortmund" },
+    { md: 22, home: "Newcastle United", away: "Atlético Madrid" },
+    { md: 22, home: "Liverpool", away: "Napoli" },
+    { md: 22, home: "Chelsea", away: "Arsenal" },
+    // MD23
+    { md: 23, home: "Real Madrid", away: "FC Barcelona" },
+    { md: 23, home: "AC Milan", away: "Paris Saint-Germain" },
+    { md: 23, home: "Manchester City", away: "Juventus" },
+    { md: 23, home: "Newcastle United", away: "Inter Milan" },
+    { md: 23, home: "Liverpool", away: "Borussia Dortmund" },
+    { md: 23, home: "Chelsea", away: "Atlético Madrid" },
+    { md: 23, home: "Arsenal", away: "Napoli" },
+    // MD24 (new)
+    { md: 24, home: "AC Milan", away: "FC Barcelona" },
+    { md: 24, home: "Manchester City", away: "Real Madrid" },
+    { md: 24, home: "Newcastle United", away: "Paris Saint-Germain" },
+    { md: 24, home: "Liverpool", away: "Juventus" },
+    { md: 24, home: "Chelsea", away: "Aston Villa" },
+    { md: 24, home: "Arsenal", away: "Borussia Dortmund" },
+    { md: 24, home: "Napoli", away: "Atlético Madrid" },
+    // MD25 (new)
+    { md: 25, home: "Manchester City", away: "FC Barcelona" },
+    { md: 25, home: "Newcastle United", away: "AC Milan" },
+    { md: 25, home: "Liverpool", away: "Real Madrid" },
+    { md: 25, home: "Chelsea", away: "Paris Saint-Germain" },
+    { md: 25, home: "Arsenal", away: "Juventus" },
+    { md: 25, home: "Napoli", away: "Aston Villa" },
+    { md: 25, home: "Atlético Madrid", away: "Borussia Dortmund" },
+    // MD26 (new)
+    { md: 26, home: "Newcastle United", away: "FC Barcelona" },
+    { md: 26, home: "Liverpool", away: "Manchester City" },
+    { md: 26, home: "Chelsea", away: "AC Milan" },
+    { md: 26, home: "Arsenal", away: "Real Madrid" },
+    { md: 26, home: "Napoli", away: "Paris Saint-Germain" },
+    { md: 26, home: "Atlético Madrid", away: "Juventus" },
+    { md: 26, home: "Borussia Dortmund", away: "Aston Villa" }
   ];
 
   function formatDate(date) {
@@ -753,7 +805,7 @@
 
   const fixturesWithDates = [];
   let startDate = new Date(2026, 3, 29);
-  let currentMd = 19;
+  let currentMd = 20;
   for (let f of fixtureList) {
     if (f.md !== currentMd) {
       startDate.setDate(startDate.getDate() + 1);
@@ -764,6 +816,10 @@
   }
 
   const RESULTS_DATA = [
+    // MD20 results (new)
+    { matchText: "AC Milan 2 - 1 Arsenal", md: 20 },
+    { matchText: "Liverpool 7 - 0 Newcastle United", md: 20 },
+    // MD19
     { matchText: "Juventus 3 - 0 Napoli (Forfeited - No Reply)", md: 19 },
     { matchText: "Manchester City 3 - 2 Newcastle United", md: 19 },
     { matchText: "AC Milan 3 - 0 Liverpool (Forfeited - No Reply)", md: 19 },
@@ -771,6 +827,7 @@
     { matchText: "Borussia Dortmund 3 - 0 FC Barcelona (Forfeited - No Reply)", md: 19 },
     { matchText: "Arsenal 3 - 0 Paris Saint-Germain (Forfeited - No Reply)", md: 19 },
     { matchText: "Real Madrid 3 - 0 Chelsea (Forfeited - No Reply)", md: 19 },
+    // MD18
     { matchText: "Liverpool 3 - 0 PSG (Forfeited - No Reply)", md: 18 },
     { matchText: "Manchester City 3 - 0 AC Milan (Forfeited - No Reply)", md: 18 },
     { matchText: "Arsenal 2 - 0 Inter Milan", md: 18 },
@@ -778,6 +835,7 @@
     { matchText: "Juventus 1 - 0 Chelsea", md: 18 },
     { matchText: "Real Madrid 3 - 0 Newcastle United (Forfeited - No Reply)", md: 18 },
     { matchText: "Borussia Dortmund F - F Napoli (No Contest)", md: 18 },
+    // MD17
     { matchText: "Newcastle United 3 - 0 Juventus (Forfeited - No Reply)", md: 17 },
     { matchText: "Paris Saint-Germain 3 - 0 Manchester City (Forfeited - No Reply)", md: 17 },
     { matchText: "Real Madrid 3 - 0 AC Milan (Forfeited on Agreement)", md: 17 },
@@ -785,6 +843,7 @@
     { matchText: "Chelsea 2 - 1 Dortmund", md: 17 },
     { matchText: "Arsenal 4 - 1 Atletico Madrid", md: 17 },
     { matchText: "Napoli 0 - 4 Barcelona", md: 17 },
+    // MD16
     { matchText: "Juventus 0 - 3 AC Milan (Forfeited - No Reply)", md: 16 },
     { matchText: "Chelsea 3 - 0 Napoli (Forfeited - No Reply)", md: 16 },
     { matchText: "Borussia Dortmund 3 - 0 Newcastle United (Forfeited - No Reply)", md: 16 },
@@ -792,6 +851,7 @@
     { matchText: "Liverpool 2 - 1 Atletico Madrid", md: 16 },
     { matchText: "Manchester City 3 - 0 Inter Milan", md: 16 },
     { matchText: "Arsenal 1 - 4 Barcelona", md: 16 },
+    // MD15
     { matchText: "Atletico Madrid F - F Manchester City (No Contest)", md: 15 },
     { matchText: "Inter Milan 1 - 3 Real Madrid", md: 15 },
     { matchText: "Barcelona 1 - 0 Chelsea", md: 15 },
