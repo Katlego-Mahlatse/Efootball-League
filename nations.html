@@ -416,6 +416,21 @@
       font-size: 0.8rem;
       text-align: center;
     }
+    .team-flag-above {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .team-flag-above .flag {
+      font-size: 1.8rem;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .team-flag-above .name {
+      font-size: 0.8rem;
+      font-weight: normal;
+    }
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
       .group-card { min-width: 100%; }
@@ -423,6 +438,8 @@
       .inline-emoji { font-size: 1rem; }
       .nations-header-image { height: 35px; }
       .card-header-left h2 { font-size: 1.2rem; }
+      .team-flag-above .flag { font-size: 1.4rem; }
+      .team-flag-above .name { font-size: 0.7rem; }
     }
   </style>
 </head>
@@ -552,7 +569,7 @@
     D: { name: "Group D", teams: nations.filter(n => n.group === "D") }
   };
 
-  // ---------- UPDATED STATS AFTER MD5 & MD6 (all results in) ----------
+  // ---------- UPDATED STATS AFTER MD5 (Brazil vs Argentina No Contest) ----------
   const stats = {
     "France": { p: 4, gd: 1, pts: 10 },
     "Belgium": { p: 4, gd: -1, pts: 7 },
@@ -695,10 +712,10 @@
     return `${months[startDate.getMonth()]} ${startDate.getDate()}`;
   }
 
-  // Keep only remaining fixtures: Argentina vs Spain (MD6) and Netherlands vs Germany (MD6)
+  // Keep only the two remaining MD6 fixtures: Italy vs Germany (Group C) and Brazil vs Spain (Group D)
   let groupFixtures = allFixtures.filter(f => 
-    (f.md === 6 && f.home === "Argentina" && f.away === "Spain") ||
-    (f.md === 6 && f.home === "Netherlands" && f.away === "Germany")
+    (f.md === 6 && f.home === "Italy" && f.away === "Germany") ||
+    (f.md === 6 && f.home === "Brazil" && f.away === "Spain")
   ).map(f => ({
     md: f.md,
     date: getDateForMatchday(f.md),
@@ -797,11 +814,32 @@
   function renderKnockout() {
     const container = document.getElementById("knockoutBracket");
     if (!container) return;
+    // Emoji mapping for countries
+    const flagMap = {
+      "France": "🇫🇷",
+      "Croatia": "🇭🇷",
+      "Portugal": "🇵🇹",
+      "Belgium": "🇧🇪",
+      "Netherlands": "🇳🇱",
+      "Brazil": "🇧🇷",
+      "Argentina": "🇦🇷",
+      "Italy": "🇮🇹"
+    };
+    const makeTeamHtml = (team) => {
+      const flag = flagMap[team] || "🏳️";
+      return `<div class="team-flag-above"><span class="flag">${flag}</span><span class="name">${team}</span></div>`;
+    };
     container.innerHTML = `
       <div class="knockout-title">🏆 QUARTER-FINALS (3-4 May) 🏆</div>
       <div class="bracket">
-        <div class="round"><h4>3 May</h4><div class="match">QF1: France vs Croatia</div><div class="match">QF2: Portugal vs Belgium</div></div>
-        <div class="round"><h4>4 May</h4><div class="match">QF3: Netherlands vs Brazil</div><div class="match">QF4: Argentina vs Italy</div></div>
+        <div class="round"><h4>3 May</h4>
+          <div class="match">QF1: ${makeTeamHtml("France")} vs ${makeTeamHtml("Croatia")}</div>
+          <div class="match">QF2: ${makeTeamHtml("Portugal")} vs ${makeTeamHtml("Belgium")}</div>
+        </div>
+        <div class="round"><h4>4 May</h4>
+          <div class="match">QF3: ${makeTeamHtml("Netherlands")} vs ${makeTeamHtml("Brazil")}</div>
+          <div class="match">QF4: ${makeTeamHtml("Argentina")} vs ${makeTeamHtml("Italy")}</div>
+        </div>
       </div>
       <div class="knockout-title" style="margin-top:1rem;">🏆 SEMI-FINALS (5 May) 🏆</div>
       <div class="bracket">
