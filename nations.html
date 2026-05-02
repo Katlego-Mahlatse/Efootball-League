@@ -620,7 +620,7 @@
         <td class="pts-cell">${team.stats.pts}</td>
       </tr>`;
     });
-    html += `</tbody></table>`;
+    html += `</tbody></tr>`;
     container.innerHTML = html;
     const legendDiv = container.parentNode.querySelector(".group-legend") || document.createElement("div");
     legendDiv.className = "group-legend";
@@ -714,8 +714,10 @@
 
   // Keep only the two remaining MD6 fixtures: Italy vs Germany (Group C) and Brazil vs Spain (Group D)
   let groupFixtures = allFixtures.filter(f => 
-    (f.md === 6 && f.home === "Italy" && f.away === "Germany") ||
-    (f.md === 6 && f.home === "Brazil" && f.away === "Spain")
+    f.md === 6 && (
+      (f.home === "Italy" && f.away === "Germany") ||
+      (f.home === "Brazil" && f.away === "Spain")
+    )
   ).map(f => ({
     md: f.md,
     date: getDateForMatchday(f.md),
