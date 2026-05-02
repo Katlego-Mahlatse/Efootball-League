@@ -552,20 +552,16 @@
     D: { name: "Group D", teams: nations.filter(n => n.group === "D") }
   };
 
-  // ---------- CORRECTED STATS AFTER MD4 ----------
-  // Group A: Belgium 1-2 France (normal win)
-  // Group B: England vs Portugal - Portugal forfeit win (England -3 GD, Portugal no GD change)
-  // Group C: Netherlands vs Germany - No Contest (F-F, both P+1, GD unchanged)
-  // Group D: Spain vs Argentina - Argentina forfeit win (Spain -3 GD, Argentina no GD change)
+  // ---------- UPDATED STATS AFTER MD5 (Morocco vs Belgium forfeit, Croatia vs England forfeit, Italy vs Netherlands normal) ----------
   const stats = {
     "France": { p: 3, gd: 1, pts: 7 },
-    "Belgium": { p: 3, gd: -1, pts: 4 },
-    "Morocco": { p: 2, gd: -6, pts: 0 },
+    "Belgium": { p: 4, gd: -1, pts: 7 },
+    "Morocco": { p: 3, gd: -9, pts: 0 },
     "Portugal": { p: 3, gd: 2, pts: 7 },
-    "England": { p: 3, gd: -5, pts: 3 },
-    "Croatia": { p: 2, gd: -3, pts: 1 },
-    "Netherlands": { p: 3, gd: 4, pts: 4 },
-    "Italy": { p: 2, gd: 3, pts: 4 },
+    "England": { p: 4, gd: -5, pts: 6 },
+    "Croatia": { p: 3, gd: -6, pts: 1 },
+    "Netherlands": { p: 4, gd: 5, pts: 7 },
+    "Italy": { p: 3, gd: 2, pts: 4 },
     "Germany": { p: 3, gd: -8, pts: 0 },
     "Argentina": { p: 3, gd: 8, pts: 9 },
     "Brazil": { p: 2, gd: -3, pts: 3 },
@@ -699,8 +695,10 @@
     return `${months[startDate.getMonth()]} ${startDate.getDate()}`;
   }
 
-  // Keep only MD5 and MD6 as upcoming fixtures (MD1-MD4 completed)
-  let groupFixtures = allFixtures.filter(f => f.md >= 5).map(f => ({
+  // Keep only remaining MD5 (Brazil vs Argentina) and all MD6 as upcoming fixtures
+  let groupFixtures = allFixtures.filter(f => 
+    (f.md === 5 && f.home === "Brazil" && f.away === "Argentina") || f.md >= 6
+  ).map(f => ({
     md: f.md,
     date: getDateForMatchday(f.md),
     home: f.home,
@@ -743,8 +741,12 @@
     }
   }
 
-  // RESULTS_DATA: includes MD1, MD2, MD3 and new MD4 results
+  // RESULTS_DATA: includes MD1, MD2, MD3, MD4 and new MD5 results
   const RESULTS_DATA = [
+    // MD5 results (1 May)
+    { matchText: "Morocco 0 - 3 Belgium (Forfeit win Belgium)", md: 5 },
+    { matchText: "Croatia 0 - 3 England (Forfeit win England)", md: 5 },
+    { matchText: "Italy 1 - 2 Netherlands", md: 5 },
     // MD4 results (30 April)
     { matchText: "Belgium 1 - 2 France", md: 4 },
     { matchText: "England 0 - 3 Portugal (Forfeit win Portugal)", md: 4 },
@@ -817,7 +819,7 @@
   const fixturesContent = document.getElementById("fixturesContent");
   const fixturesToggleIcon = document.getElementById("fixturesToggleIcon");
   if (fixturesHeader && fixturesContent) {
-    let collapsed = true; // start collapsed
+    let collapsed = true;
     fixturesHeader.addEventListener("click", () => {
       collapsed = !collapsed;
       if (collapsed) {
@@ -828,7 +830,6 @@
         if (fixturesToggleIcon) fixturesToggleIcon.innerHTML = "▼";
       }
     });
-    // initial icon state (collapsed)
     if (fixturesToggleIcon) fixturesToggleIcon.innerHTML = "▶";
   }
 
@@ -836,7 +837,7 @@
   const resultsContent = document.getElementById("resultsContent");
   const resultsToggleIcon = document.getElementById("resultsToggleIcon");
   if (resultsHeader && resultsContent) {
-    let collapsed = true; // start collapsed
+    let collapsed = true;
     resultsHeader.addEventListener("click", () => {
       collapsed = !collapsed;
       if (collapsed) {
@@ -870,4 +871,4 @@
   renderResults();
 </script>
 </body>
-                              </html>
+</html>
