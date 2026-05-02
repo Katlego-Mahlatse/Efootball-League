@@ -468,7 +468,19 @@
 </div>
 
 <div class="dashboard">
-  <!-- GROUP TABLES -->
+  <!-- KNOCKOUT STAGE (moved to top) -->
+  <div class="card">
+    <div class="card-header" style="cursor:default;">
+      <div class="card-header-left">
+        <h2>🏆 KNOCKOUT STAGE</h2>
+      </div>
+    </div>
+    <div class="card-content">
+      <div class="knockout-stage" id="knockoutBracket"></div>
+    </div>
+  </div>
+
+  <!-- GROUP STAGE TABLES (moved to bottom, no fixtures tab) -->
   <div class="card">
     <div class="card-header" style="cursor:default;">
       <div class="card-header-left">
@@ -481,26 +493,7 @@
     </div>
   </div>
 
-  <!-- GROUP FIXTURES -->
-  <div class="card">
-    <div class="card-header" id="fixturesHeader">
-      <div class="card-header-left"><h2>GROUP FIXTURES</h2></div>
-      <div class="toggle-icon" id="fixturesToggleIcon">▼</div>
-    </div>
-    <div class="card-content collapsed" id="fixturesContent">
-      <div class="filter-container">
-        <input type="text" id="fixturesSearchInput" class="filter-input" placeholder="🔍 Search team name...">
-      </div>
-      <div class="scrollable-table" style="max-height:450px; overflow-y:auto;">
-        <table class="inner-table" id="fixturesTable">
-          <thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead>
-          <tbody id="fixturesTableBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- RESULTS CARD -->
+  <!-- RESULTS CARD (kept as is) -->
   <div class="card">
     <div class="card-header" id="resultsHeader">
       <div class="card-header-left"><h2>RESULTS</h2></div>
@@ -513,18 +506,6 @@
           <tbody id="resultsTableBody"></tbody>
         </table>
       </div>
-    </div>
-  </div>
-
-  <!-- KNOCKOUT STAGE -->
-  <div class="card">
-    <div class="card-header" style="cursor:default;">
-      <div class="card-header-left">
-        <h2>🏆 KNOCKOUT STAGE</h2>
-      </div>
-    </div>
-    <div class="card-content">
-      <div class="knockout-stage" id="knockoutBracket"></div>
     </div>
   </div>
 </div>
@@ -569,7 +550,7 @@
     D: { name: "Group D", teams: nations.filter(n => n.group === "D") }
   };
 
-  // ---------- UPDATED STATS AFTER MD5 (Brazil vs Argentina No Contest) ----------
+  // ---------- FINAL STATS AFTER ALL MD6 RESULTS ----------
   const stats = {
     "France": { p: 4, gd: 1, pts: 10 },
     "Belgium": { p: 4, gd: -1, pts: 7 },
@@ -578,11 +559,11 @@
     "England": { p: 4, gd: -5, pts: 3 },
     "Croatia": { p: 4, gd: -2, pts: 4 },
     "Netherlands": { p: 4, gd: 5, pts: 7 },
-    "Italy": { p: 3, gd: 2, pts: 4 },
-    "Germany": { p: 3, gd: -8, pts: 0 },
-    "Argentina": { p: 4, gd: 8, pts: 9 },
-    "Brazil": { p: 3, gd: -3, pts: 3 },
-    "Spain": { p: 3, gd: -11, pts: 0 }
+    "Italy": { p: 4, gd: 2, pts: 5 },      // +1 draw
+    "Germany": { p: 4, gd: -8, pts: 1 },    // +1 draw
+    "Argentina": { p: 5, gd: 8, pts: 12 },  // +3 forfeit win vs Spain
+    "Brazil": { p: 4, gd: -3, pts: 3 },
+    "Spain": { p: 4, gd: -14, pts: 0 }      // -3 GD from forfeit loss
   };
 
   let groupViewMode = { A: false, B: false, C: false, D: false };
@@ -620,7 +601,7 @@
         <td class="pts-cell">${team.stats.pts}</td>
       </tr>`;
     });
-    html += `</tbody></tr>`;
+    html += `</tbody></table>`;
     container.innerHTML = html;
     const legendDiv = container.parentNode.querySelector(".group-legend") || document.createElement("div");
     legendDiv.className = "group-legend";
@@ -682,96 +663,24 @@
     });
   }
 
-  // Generate all possible group fixtures (MD1 to MD6)
-  function generateGroupFixtures() {
-    const fixtures = [];
-    const groupsKeys = ['A', 'B', 'C', 'D'];
-    for (let g of groupsKeys) {
-      const teams = groups[g].teams.map(t => t.name);
-      if (teams.length !== 3) continue;
-      const [A, B, C] = teams;
-      const groupMatches = [
-        { md: 1, home: A, away: B },
-        { md: 2, home: B, away: C },
-        { md: 3, home: C, away: A },
-        { md: 4, home: B, away: A },
-        { md: 5, home: C, away: B },
-        { md: 6, home: A, away: C }
-      ];
-      fixtures.push(...groupMatches.map(m => ({ ...m, group: g })));
-    }
-    return fixtures;
-  }
-
-  const allFixtures = generateGroupFixtures();
-
-  function getDateForMatchday(md) {
-    const startDate = new Date(2026, 3, 27);
-    startDate.setDate(startDate.getDate() + (md - 1));
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${months[startDate.getMonth()]} ${startDate.getDate()}`;
-  }
-
-  // Keep only the two remaining MD6 fixtures: Italy vs Germany (Group C) and Brazil vs Spain (Group D)
-  let groupFixtures = allFixtures.filter(f => 
-    f.md === 6 && (
-      (f.home === "Italy" && f.away === "Germany") ||
-      (f.home === "Brazil" && f.away === "Spain")
-    )
-  ).map(f => ({
-    md: f.md,
-    date: getDateForMatchday(f.md),
-    home: f.home,
-    away: f.away,
-    group: f.group
-  }));
-  groupFixtures.sort((a, b) => a.md - b.md);
-
   function getNationEmoji(nationName) {
     const found = nations.find(n => n.name === nationName);
     return found ? found.emoji : "🏳️";
   }
 
-  function renderFixtures(filterText = "") {
-    const tbody = document.getElementById("fixturesTableBody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-    const lowerFilter = filterText.toLowerCase();
-    groupFixtures.forEach(f => {
-      const matchesSearch = !lowerFilter ||
-        f.home.toLowerCase().includes(lowerFilter) ||
-        f.away.toLowerCase().includes(lowerFilter);
-      if (!matchesSearch) return;
-      const row = tbody.insertRow();
-      row.insertCell(0).innerHTML = `<span class="date-badge">${f.date}</span>`;
-      const homeEmoji = getNationEmoji(f.home);
-      const awayEmoji = getNationEmoji(f.away);
-      row.insertCell(1).innerHTML = `<div class="fixture-icons">
-        <span class="inline-emoji">${homeEmoji}</span> ${f.home} 
-        <span style="margin:0 8px;">vs</span> 
-        <span class="inline-emoji">${awayEmoji}</span> ${f.away}
-      </div>`;
-      row.insertCell(2).innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px;">MD ${f.md}</span>`;
-    });
-    if (tbody.rows.length === 0) {
-      const row = tbody.insertRow();
-      row.insertCell(0).colSpan = 3;
-      row.cells[0].className = "empty-message";
-      row.cells[0].innerText = "No upcoming fixtures at the moment.";
-    }
-  }
-
-  // RESULTS_DATA: includes all results with Brazil vs Argentina No Contest added
+  // RESULTS_DATA: includes all results including final MD6 matches
   const RESULTS_DATA = [
-    // MD6 results (partial, pending)
+    // MD6 results (final)
+    { matchText: "Italy 2 - 2 Germany", md: 6 },
+    { matchText: "Spain 0 - 3 Argentina (Forfeit win Argentina)", md: 6 },
     { matchText: "France 3 - 0 Morocco (Forfeit win France)", md: 6 },
     { matchText: "Portugal 1 - 2 Croatia", md: 6 },
-    // MD5 results (including Brazil vs Argentina No Contest)
+    // MD5 results
     { matchText: "Brazil F - F Argentina (No Contest)", md: 5 },
     { matchText: "Morocco 0 - 3 Belgium (Forfeit win Belgium)", md: 5 },
     { matchText: "Croatia F - F England (No Contest)", md: 5 },
     { matchText: "Italy 1 - 2 Netherlands", md: 5 },
-    // MD4 results (30 April)
+    // MD4 results
     { matchText: "Belgium 1 - 2 France", md: 4 },
     { matchText: "England 0 - 3 Portugal (Forfeit win Portugal)", md: 4 },
     { matchText: "Netherlands F - F Germany (No Contest)", md: 4 },
@@ -816,7 +725,6 @@
   function renderKnockout() {
     const container = document.getElementById("knockoutBracket");
     if (!container) return;
-    // Emoji mapping for countries
     const flagMap = {
       "France": "🇫🇷",
       "Croatia": "🇭🇷",
@@ -859,25 +767,7 @@
     `;
   }
 
-  // Collapsible fixtures and results - start collapsed
-  const fixturesHeader = document.getElementById("fixturesHeader");
-  const fixturesContent = document.getElementById("fixturesContent");
-  const fixturesToggleIcon = document.getElementById("fixturesToggleIcon");
-  if (fixturesHeader && fixturesContent) {
-    let collapsed = true;
-    fixturesHeader.addEventListener("click", () => {
-      collapsed = !collapsed;
-      if (collapsed) {
-        fixturesContent.classList.add("collapsed");
-        if (fixturesToggleIcon) fixturesToggleIcon.innerHTML = "▶";
-      } else {
-        fixturesContent.classList.remove("collapsed");
-        if (fixturesToggleIcon) fixturesToggleIcon.innerHTML = "▼";
-      }
-    });
-    if (fixturesToggleIcon) fixturesToggleIcon.innerHTML = "▶";
-  }
-
+  // Collapsible results (fixtures tab removed)
   const resultsHeader = document.getElementById("resultsHeader");
   const resultsContent = document.getElementById("resultsContent");
   const resultsToggleIcon = document.getElementById("resultsToggleIcon");
@@ -896,11 +786,6 @@
     if (resultsToggleIcon) resultsToggleIcon.innerHTML = "▶";
   }
 
-  const searchInput = document.getElementById("fixturesSearchInput");
-  if (searchInput) {
-    searchInput.addEventListener("input", () => renderFixtures(searchInput.value));
-  }
-
   const hamburger = document.getElementById("hamburgerBtn");
   const modalOverlay = document.getElementById("modalOverlay");
   const closeModalBtn = document.getElementById("closeModalBtn");
@@ -912,7 +797,6 @@
 
   buildGroupCards();
   renderKnockout();
-  renderFixtures();
   renderResults();
 </script>
 </body>
