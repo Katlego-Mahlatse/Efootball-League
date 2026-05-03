@@ -534,7 +534,7 @@
     D: { name: "Group D", teams: nations.filter(n => n.group === "D") }
   };
 
-  // ---------- FINAL STATS AFTER ALL MD6 RESULTS ----------
+  // ---------- CORRECTED STATS (Argentina p=4, pts=9) ----------
   const stats = {
     "France": { p: 4, gd: 1, pts: 10 },
     "Belgium": { p: 4, gd: -1, pts: 7 },
@@ -545,17 +545,23 @@
     "Netherlands": { p: 4, gd: 5, pts: 7 },
     "Italy": { p: 4, gd: 2, pts: 5 },
     "Germany": { p: 4, gd: -8, pts: 1 },
-    "Argentina": { p: 5, gd: 8, pts: 12 },
+    "Argentina": { p: 4, gd: 8, pts: 9 },
     "Brazil": { p: 4, gd: -3, pts: 3 },
     "Spain": { p: 4, gd: -14, pts: 0 }
   };
 
   let groupViewMode = { A: false, B: false, C: false, D: false };
 
-  function getDisplayName(teamName, usePlayerView) {
-    if (!usePlayerView) return teamName;
-    const player = playerMap[teamName];
-    return player ? player : "No Player yet";
+  function getDisplayName(teamName, usePlayerView, isEliminated = false) {
+    let name = teamName;
+    if (usePlayerView) {
+      const player = playerMap[teamName];
+      name = player ? player : "No Player yet";
+    }
+    if (isEliminated) {
+      return `<s>${name}</s>`;
+    }
+    return name;
   }
 
   function renderGroupTable(groupKey, group, usePlayerView) {
@@ -576,7 +582,8 @@
       let barClass = "";
       if (position === 1 || position === 2) barClass = "green-bar-vertical";
       else if (position === 3) barClass = "red-bar-vertical";
-      const displayName = getDisplayName(team.name, usePlayerView);
+      const isEliminated = (position === 3); // third place is eliminated
+      const displayName = getDisplayName(team.name, usePlayerView, isEliminated);
       html += `<tr>
         <td class="rank-cell"><div class="pos-with-bar">${barClass ? `<span class="vertical-bar ${barClass}"></span>` : ""}${position}</div></td>
         <td><div class="team-name"><span class="country-emoji">${team.emoji}</span> ${displayName}</div></td>
@@ -709,13 +716,13 @@
   function renderKnockout() {
     const container = document.getElementById("knockoutBracket");
     if (!container) return;
-    // Updated knockout display as requested
+    // Updated knockout display as requested (Belgium flag left of name, striker through name)
     container.innerHTML = `
       <div class="knockout-title">🏆 QUARTER-FINALS (3-4 May) 🏆</div>
       <div class="bracket">
         <div class="round"><h4>3 May</h4>
           <div class="match">QF1: France 🇫🇷 vs 🇭🇷 Croatia</div>
-          <div class="match">QF2: Portugal 🇵🇹 2-1 <s>Belgium</s> 🇧🇪</div>
+          <div class="match">QF2: Portugal 🇵🇹 2-1 🇧🇪 <s>Belgium</s></div>
         </div>
         <div class="round"><h4>4 May</h4>
           <div class="match">QF3: Netherlands 🇳🇱 vs 🇧🇷 Brazil</div>
