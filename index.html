@@ -572,7 +572,9 @@
     <div class="card-content">
       <div style="overflow-x:auto;">
         <table class="stats-table" id="leagueTable">
-          <thead>匠<th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th> </thead>
+          <thead>
+            <tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th></tr>
+          </thead>
           <tbody id="leagueTableBody"></tbody>
         </table>
       </div>
@@ -635,12 +637,12 @@
   function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
   if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-  // LEAGUE DATA AFTER ALL MD21 RESULTS (including all May 3 matches)
+  // LEAGUE DATA AFTER ALL MD21 RESULTS (including Juventus-Barcelona No Contest)
   const LEAGUE_DATA = [
     { pos: 1, club: "Real Madrid", p: 21, gd: 24, pts: 58 },
     { pos: 2, club: "Liverpool", p: 21, gd: 39, pts: 51 },
     { pos: 3, club: "Dortmund", p: 21, gd: 12, pts: 40 },
-    { pos: 4, club: "Barcelona", p: 20, gd: 0, pts: 37 },
+    { pos: 4, club: "Barcelona", p: 21, gd: 0, pts: 37 },
     { pos: 5, club: "Arsenal", p: 21, gd: 6, pts: 35 },
     { pos: 6, club: "Man City", p: 21, gd: 5, pts: 34 },
     { pos: 7, club: "PSG", p: 21, gd: -16, pts: 29 },
@@ -648,7 +650,7 @@
     { pos: 9, club: "AC Milan", p: 21, gd: -14, pts: 22 },
     { pos: 10, club: "Napoli", p: 21, gd: -19, pts: 14 },
     { pos: 11, club: "Inter Milan", p: 21, gd: -14, pts: 11 },
-    { pos: 12, club: "Juventus", p: 20, gd: -20, pts: 11 },
+    { pos: 12, club: "Juventus", p: 21, gd: -20, pts: 11 },
     { pos: 13, club: "Newcastle", p: 21, gd: -49, pts: 9 },
     { pos: 14, club: "Atletico", p: 21, gd: -29, pts: 7 }
   ];
@@ -704,12 +706,12 @@
     return teamName;
   }
 
-  // LAST 5 RESULTS: updated with all MD21 results (May 3)
+  // LAST 5 RESULTS: updated with all MD21 results including No Contest for Juventus & Barcelona
   const last5Exact = {
     "Real Madrid":   ["WF", "WF", "W", "WF", "WF", "L"],
     "Liverpool":     ["W", "W", "W", "WF", "W", "D"],
     "Dortmund":      ["D", "WF", "L", "F", "WF", "W"],
-    "Barcelona":     ["LF", "W", "W", "WF", "LF"],
+    "Barcelona":     ["LF", "W", "W", "WF", "LF", "F"],
     "Arsenal":       ["L", "L", "W", "W", "WF", "WF"],
     "Man City":      ["F", "W", "LF", "WF", "W", "WF"],
     "Chelsea":       ["F", "WF", "W", "L", "LF", "D"],
@@ -717,7 +719,7 @@
     "AC Milan":      ["W", "WF", "LF", "LF", "L", "WF"],
     "Napoli":        ["LF", "LF", "L", "F", "LF", "LF"],
     "Inter Milan":   ["WF", "L", "L", "L", "WF", "L"],
-    "Juventus":      ["D", "LF", "LF", "W", "WF"],
+    "Juventus":      ["D", "LF", "LF", "W", "WF", "F"],
     "Atletico":      ["LF", "L", "L", "LF", "LF", "LF"],
     "Newcastle":     ["L", "LF", "WF", "LF", "L", "LF"]
   };
@@ -756,10 +758,8 @@
     26: "May 8"
   };
 
-  // Fixture list with all MD21 matches removed that have been played (Dortmund-Real Madrid, Newcastle-Arsenal, Man City-Napoli, AC Milan-Atletico)
+  // Fixture list with all MD21 matches removed (all played, including Juventus-Barcelona No Contest)
   const fixtureList = [
-    // MD21 remaining fixtures (only Juventus vs Barcelona not played among original)
-    { md: 21, home: "Juventus", away: "FC Barcelona" },
     // MD22
     { md: 22, home: "Paris Saint-Germain", away: "FC Barcelona" },
     { md: 22, home: "Real Madrid", away: "Juventus" },
@@ -811,8 +811,9 @@
     awayPlayer: playerMap[f.away] || ""
   }));
 
-  // RESULTS_DATA: added all MD21 results (including new May 3 matches)
+  // RESULTS_DATA: added Juventus F - F Barcelona (No Contest) at the top
   const RESULTS_DATA = [
+    { matchText: "Juventus F - F FC Barcelona (No Contest)", md: 21 },
     { matchText: "Borussia Dortmund 5 - 2 Real Madrid", md: 21 },
     { matchText: "Arsenal 3 - 0 Newcastle United (Forfeited - No Reply)", md: 21 },
     { matchText: "Manchester City 3 - 0 Napoli (Forfeited - No Reply)", md: 21 },
@@ -1043,7 +1044,7 @@
         const regex = new RegExp(`\\b${team.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
         processedText = processedText.replace(regex, getTeamIconHtml(team, "inline-team-icon"));
       });
-      processedText = processedText.replace(/\b(United|Madrid|City)\b/g, '');
+      // Removed the line that stripped "United", "Madrid", "City" to fix weird characters
       processedText = processedText.replace(/\s+/g, ' ').trim();
       const isForfeit = r.matchText.includes("Forfeited") || r.matchText.includes("No Contest") || r.matchText.includes("F - F") || r.matchText.includes("on Agreement");
       if (isForfeit) {
