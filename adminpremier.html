@@ -28,19 +28,22 @@
       top: 0;
       z-index: 100;
     }
-    .debug-btn, .hamburger-btn {
+    .hamburger-btn {
       background: #6a3bb5;
       width: 36px;
       height: 36px;
       border-radius: 50%;
       display: flex;
-      align-items: center;
+      flex-direction: column;
       justify-content: center;
+      align-items: center;
+      gap: 4px;
       cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       transition: transform 0.2s, background 0.2s;
       border: 1.5px solid #f5d742;
     }
-    .debug-btn:hover, .hamburger-btn:hover {
+    .hamburger-btn:hover {
       transform: scale(1.05);
       background: #7e4acf;
     }
@@ -50,7 +53,6 @@
       height: 2.5px;
       background-color: #f5d742;
       border-radius: 2px;
-      margin: 2px 0;
     }
     .modal-overlay {
       position: fixed;
@@ -67,7 +69,7 @@
       visibility: visible;
       pointer-events: auto;
     }
-    .modal-content, .debug-modal {
+    .modal-content {
       position: absolute;
       top: 60px;
       right: 20px;
@@ -76,20 +78,40 @@
       border-radius: 1.2rem;
       padding: 1rem;
       width: auto;
-      min-width: 280px;
-      max-width: 400px;
+      min-width: 200px;
+      text-align: center;
       color: #f5e6ff;
     }
-    .debug-modal {
-      left: 20px;
-      right: auto;
+    .modal-content h3 {
+      font-size: 1.1rem;
+      color: #f5d742;
+      margin-bottom: 0.8rem;
     }
-    .debug-modal pre {
-      background: #1a0a2e;
-      padding: 0.5rem;
-      border-radius: 0.5rem;
-      overflow-x: auto;
-      font-size: 0.7rem;
+    .modal-option {
+      background: rgba(106, 59, 181, 0.3);
+      padding: 0.4rem 0.8rem;
+      border-radius: 40px;
+      text-decoration: none;
+      color: #f5d742;
+      font-weight: 700;
+      font-size: 0.8rem;
+      display: block;
+      margin: 0.5rem 0;
+      border: 1px solid #f5d742;
+      cursor: pointer;
+    }
+    .modal-option:hover {
+      background: #f5d742;
+      color: #2d1b4e;
+    }
+    .close-modal {
+      background: #6a3bb5;
+      color: #f5d742;
+      border: none;
+      padding: 0.3rem 0.9rem;
+      border-radius: 30px;
+      cursor: pointer;
+      margin-top: 0.5rem;
     }
     .dashboard {
       max-width: 1400px;
@@ -203,19 +225,7 @@
 <body>
 
 <div class="gold-navbar">
-  <div style="display: flex; gap: 0.5rem;">
-    <div class="debug-btn" id="debugBtn">🐞</div>
-    <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
-  </div>
-</div>
-
-<!-- Debug Modal -->
-<div id="debugModal" class="modal-overlay" style="z-index: 250;">
-  <div class="debug-modal">
-    <h3>🐞 Debug Info</h3>
-    <div id="debugContent">Loading...</div>
-    <button id="closeDebugBtn" class="close-modal" style="margin-top: 1rem;">Close</button>
-  </div>
+  <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
 </div>
 
 <!-- Main Menu Modal -->
@@ -320,7 +330,7 @@
 
 <script type="module">
   import { initializeApp } from "firebase/app";
-  import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query } from "firebase/firestore";
+  import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
   import { getAuth, signOut } from "firebase/auth";
 
   const firebaseConfig = {
@@ -335,27 +345,6 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const auth = getAuth(app);
-
-  let lastError = null;
-  let lastOperation = null;
-  function logError(operation, error) {
-    lastError = { operation, error: error.message || error, timestamp: new Date().toISOString() };
-    console.error(operation, error);
-  }
-  function logSuccess(operation, data) {
-    lastOperation = { operation, data, timestamp: new Date().toISOString() };
-    console.log(operation, data);
-  }
-
-  async function updateDebugModal() {
-    const debugDiv = document.getElementById('debugContent');
-    debugDiv.innerHTML = `
-      <strong>Firestore:</strong> active<br>
-      <strong>Last operation:</strong> ${lastOperation ? JSON.stringify(lastOperation) : 'none'}<br>
-      <strong>Last error:</strong> ${lastError ? JSON.stringify(lastError) : 'none'}<br>
-      <strong>Auth user:</strong> ${auth.currentUser ? auth.currentUser.email : 'none'}
-    `;
-  }
 
   const teamIcons = {
     "Arsenal": "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png",
@@ -392,8 +381,8 @@
     if (excludeCurrent && selectEl.value === excludeCurrent) selectEl.value = '';
   }
 
-  // ------------- STANDINGS (premier_league/standings/teams) -------------
-  const standingsCol = collection(db, "premier_league", "standings", "teams");
+  // ------------- STANDINGS (premier_league_standings) -------------
+  const standingsCol = collection(db, "premier_league_standings");
   let editingTeamKey = null;
   function renderTable(snapshot) {
     const teams = [];
@@ -418,9 +407,8 @@
       delBtn.className = 'delete-btn';
       delBtn.onclick = async () => {
         try {
-          await deleteDoc(doc(db, "premier_league", "standings", "teams", team.id));
-          logSuccess('deleteTeam', team.id);
-        } catch(e) { logError('deleteTeam', e); alert(e.message); }
+          await deleteDoc(doc(db, "premier_league_standings", team.id));
+        } catch(e) { alert(e.message); }
       };
       actions.appendChild(editBtn);
       actions.appendChild(delBtn);
@@ -448,19 +436,17 @@
     const teamData = { name, p, gd, pts };
     try {
       if (editingTeamKey) {
-        await updateDoc(doc(db, "premier_league", "standings", "teams", editingTeamKey), teamData);
-        logSuccess('updateTeam', teamData);
+        await updateDoc(doc(db, "premier_league_standings", editingTeamKey), teamData);
       } else {
         await addDoc(standingsCol, teamData);
-        logSuccess('addTeam', teamData);
       }
       document.getElementById('teamForm').classList.remove('active');
-    } catch(e) { logError('saveTeam', e); alert('Error saving team: ' + e.message); }
+    } catch(e) { alert('Error saving team: ' + e.message); }
   };
   document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamForm').classList.remove('active');
 
-  // ------------- FIXTURES (premier_league/fixtures/list) -------------
-  const fixturesCol = collection(db, "premier_league", "fixtures", "list");
+  // ------------- FIXTURES (premier_league_fixtures) -------------
+  const fixturesCol = collection(db, "premier_league_fixtures");
   let editingFixtureKey = null;
   function renderFixtures(snapshot) {
     const tbody = document.getElementById('fixturesBody');
@@ -479,9 +465,8 @@
       delBtn.innerText = '🗑️'; delBtn.className = 'delete-btn';
       delBtn.onclick = async () => {
         try {
-          await deleteDoc(doc(db, "premier_league", "fixtures", "list", doc.id));
-          logSuccess('deleteFixture', doc.id);
-        } catch(e) { logError('deleteFixture', e); alert(e.message); }
+          await deleteDoc(doc(db, "premier_league_fixtures", doc.id));
+        } catch(e) { alert(e.message); }
       };
       actions.appendChild(editBtn); actions.appendChild(delBtn);
     });
@@ -509,19 +494,17 @@
     const fixData = { date, home, away, md };
     try {
       if (editingFixtureKey) {
-        await updateDoc(doc(db, "premier_league", "fixtures", "list", editingFixtureKey), fixData);
-        logSuccess('updateFixture', fixData);
+        await updateDoc(doc(db, "premier_league_fixtures", editingFixtureKey), fixData);
       } else {
         await addDoc(fixturesCol, fixData);
-        logSuccess('addFixture', fixData);
       }
       document.getElementById('fixtureForm').classList.remove('active');
-    } catch(e) { logError('saveFixture', e); alert('Error saving fixture: ' + e.message); }
+    } catch(e) { alert('Error saving fixture: ' + e.message); }
   };
   document.getElementById('cancelFixtureBtn').onclick = () => document.getElementById('fixtureForm').classList.remove('active');
 
-  // ------------- RESULTS (premier_league/results/list) -------------
-  const resultsCol = collection(db, "premier_league", "results", "list");
+  // ------------- RESULTS (premier_league_results) -------------
+  const resultsCol = collection(db, "premier_league_results");
   let editingResultKey = null;
   function renderResults(snapshot) {
     const tbody = document.getElementById('resultsBody');
@@ -544,9 +527,8 @@
       delBtn.innerText = '🗑️'; delBtn.className = 'delete-btn';
       delBtn.onclick = async () => {
         try {
-          await deleteDoc(doc(db, "premier_league", "results", "list", doc.id));
-          logSuccess('deleteResult', doc.id);
-        } catch(e) { logError('deleteResult', e); alert(e.message); }
+          await deleteDoc(doc(db, "premier_league_results", doc.id));
+        } catch(e) { alert(e.message); }
       };
       actions.appendChild(editBtn); actions.appendChild(delBtn);
     });
@@ -567,24 +549,16 @@
     const resData = { matchText: text, md };
     try {
       if (editingResultKey) {
-        await updateDoc(doc(db, "premier_league", "results", "list", editingResultKey), resData);
-        logSuccess('updateResult', resData);
+        await updateDoc(doc(db, "premier_league_results", editingResultKey), resData);
       } else {
         await addDoc(resultsCol, resData);
-        logSuccess('addResult', resData);
       }
       document.getElementById('resultForm').classList.remove('active');
-    } catch(e) { logError('saveResult', e); alert('Error saving result: ' + e.message); }
+    } catch(e) { alert('Error saving result: ' + e.message); }
   };
   document.getElementById('cancelResultBtn').onclick = () => document.getElementById('resultForm').classList.remove('active');
 
-  // Menus
-  const debugBtn = document.getElementById('debugBtn');
-  const debugModal = document.getElementById('debugModal');
-  const closeDebug = document.getElementById('closeDebugBtn');
-  debugBtn.onclick = async () => { await updateDebugModal(); debugModal.classList.add('active'); };
-  closeDebug.onclick = () => debugModal.classList.remove('active');
-
+  // Menu
   const hamburger = document.getElementById('hamburgerBtn');
   const modalOverlay = document.getElementById('modalOverlay');
   const closeModal = document.getElementById('closeModalBtn');
@@ -593,8 +567,6 @@
   document.getElementById('rulesBtn').onclick = () => window.location.href = 'rules.html';
   document.getElementById('playerTitlesBtn').onclick = () => window.location.href = 'player-titles.html';
   document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href = 'login.html'; };
-
-  setTimeout(updateDebugModal, 1000);
 </script>
 </body>
 </html>
