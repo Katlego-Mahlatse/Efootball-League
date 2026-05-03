@@ -147,6 +147,7 @@
     .stats-table td, .inner-table td {
       padding: 0.6rem 0.8rem;
       border-bottom: 1px solid rgba(245, 215, 66, 0.2);
+      vertical-align: middle;
     }
     .team-icon-sm {
       width: 30px;
@@ -155,11 +156,39 @@
       vertical-align: middle;
       margin-right: 8px;
     }
+    .fixture-icons, .result-icons {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .fixture-icons img, .result-icons img {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+    }
+    .vs-text {
+      font-weight: bold;
+      color: #f5d742;
+      background: rgba(0,0,0,0.4);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+    }
+    .score-text {
+      font-weight: bold;
+      color: #f5d742;
+      background: rgba(0,0,0,0.4);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+    }
     .date-badge {
       background: rgba(0,0,0,0.4);
       padding: 0.2rem 0.6rem;
       border-radius: 20px;
       font-size: 0.7rem;
+      white-space: nowrap;
     }
     .match-highlight {
       background: #3d2a6b;
@@ -184,6 +213,8 @@
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
       .stats-table th, .stats-table td { padding: 0.4rem; font-size: 0.75rem; }
+      .fixture-icons img, .result-icons img { width: 24px; height: 24px; }
+      .vs-text, .score-text { font-size: 0.7rem; padding: 2px 5px; }
     }
   </style>
 </head>
@@ -205,7 +236,7 @@
 </div>
 
 <div class="dashboard">
-  <!-- League Table Card (no Add button) -->
+  <!-- League Table Card -->
   <div class="card">
     <div class="card-header">
       <h2>🏆 PREMIER LEAGUE TABLE</h2>
@@ -218,7 +249,7 @@
     </div>
   </div>
 
-  <!-- Fixtures Card (no Add button, no Actions column) -->
+  <!-- Fixtures Card -->
   <div class="card">
     <div class="card-header">
       <h2>📅 FIXTURES</h2>
@@ -226,13 +257,13 @@
     <div class="filter-container"><input type="text" id="fixtureSearch" class="filter-input" placeholder="🔍 Search team..."></div>
     <div style="overflow-x:auto;">
       <table class="inner-table" id="fixturesTable">
-        <thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead>
+        <thead><tr><th>Date</th><th>Match</th><th>Matchday</th></tr></thead>
         <tbody id="fixturesBody"></tbody>
-      </table>
+      </tr>
     </div>
   </div>
 
-  <!-- Results Card (no Add button, no Actions column) -->
+  <!-- Results Card -->
   <div class="card">
     <div class="card-header">
       <h2>📝 RESULTS</h2>
@@ -274,7 +305,6 @@
   const db = getDatabase(app);
   const auth = getAuth(app);
 
-  // Team icons mapping
   const teamIcons = {
     "Arsenal": "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png",
     "AC Milan": "44e0f58a-e5db-445b-9896-db22ea99b936.png",
@@ -295,11 +325,42 @@
 
   function getTeamIconHtml(team, size = "30px") {
     const src = teamIcons[team];
-    if (src) return `<img class="team-icon-sm" src="${src}" style="width:${size}; height:${size}; object-fit:contain;">`;
+    if (src) return `<img src="${src}" style="width:${size}; height:${size}; object-fit:contain;">`;
     return team;
   }
 
-  // ---------- LEAGUE TABLE ----------
+  function getFixtureHtml(home, away) {
+    return `<div class="fixture-icons">
+      ${getTeamIconHtml(home, "30px")}
+      <span class="vs-text">VS</span>
+      ${getTeamIconHtml(away, "30px")}
+    </div>`;
+  }
+
+  function getResultHtml(matchText) {
+    let homeTeam = "";
+    let awayTeam = "";
+    let score = "";
+    for (const team of teamList) {
+      const regex = new RegExp(`\\b${team}\\b`);
+      if (regex.test(matchText)) {
+        if (!homeTeam) homeTeam = team;
+        else if (!awayTeam) awayTeam = team;
+      }
+    }
+    const scoreMatch = matchText.match(/(\d+\s*[-–]\s*\d+)/);
+    if (scoreMatch) score = scoreMatch[0];
+    if (homeTeam && awayTeam && score) {
+      return `<div class="result-icons">
+        ${getTeamIconHtml(homeTeam, "30px")}
+        <span class="score-text">${score}</span>
+        ${getTeamIconHtml(awayTeam, "30px")}
+      </div>`;
+    }
+    return `<span>${matchText}</span>`;
+  }
+
+  // League Table
   const tableRef = ref(db, 'premier_league/table');
   onValue(tableRef, (snap) => {
     const data = snap.val();
@@ -311,14 +372,14 @@
     teams.forEach((team, idx) => {
       const row = tbody.insertRow();
       row.insertCell(0).innerText = idx+1;
-      row.insertCell(1).innerHTML = `<div>${getTeamIconHtml(team.name)} ${team.name}</div>`;
+      row.insertCell(1).innerHTML = `<div>${getTeamIconHtml(team.name, "30px")} ${team.name}</div>`;
       row.insertCell(2).innerText = team.p || 0;
       row.insertCell(3).innerText = team.gd || 0;
       row.insertCell(4).innerText = team.pts || 0;
     });
   });
 
-  // ---------- FIXTURES ----------
+  // Fixtures
   const fixturesRef = ref(db, 'premier_league/fixtures');
   let fixturesData = [];
   onValue(fixturesRef, (snap) => {
@@ -333,13 +394,13 @@
       if (search && !f.home.toLowerCase().includes(search) && !f.away.toLowerCase().includes(search)) return;
       const row = tbody.insertRow();
       row.insertCell(0).innerHTML = `<span class="date-badge">${f.date || ''}</span>`;
-      row.insertCell(1).innerHTML = `<div>${getTeamIconHtml(f.home)} ${f.home} vs ${getTeamIconHtml(f.away)} ${f.away}</div>`;
+      row.insertCell(1).innerHTML = getFixtureHtml(f.home, f.away);
       row.insertCell(2).innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px;">MD ${f.md}</span>`;
     });
   }
   document.getElementById('fixtureSearch')?.addEventListener('input', renderFixtures);
 
-  // ---------- RESULTS ----------
+  // Results
   const resultsRef = ref(db, 'premier_league/results');
   onValue(resultsRef, (snap) => {
     const data = snap.val();
@@ -347,18 +408,13 @@
     tbody.innerHTML = '';
     if (!data) return;
     Object.values(data).forEach(r => {
-      let processed = r.matchText;
-      teamList.forEach(team => {
-        const regex = new RegExp(`\\b${team}\\b`, 'g');
-        processed = processed.replace(regex, `${getTeamIconHtml(team, '24px')} ${team}`);
-      });
       const row = tbody.insertRow();
-      row.insertCell(0).innerHTML = `<strong>${processed}</strong>`;
+      row.insertCell(0).innerHTML = getResultHtml(r.matchText);
       row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>`;
     });
   });
 
-  // ---------- MENU MODAL ----------
+  // Menu
   const hamburger = document.getElementById('hamburgerBtn');
   const modalOverlay = document.getElementById('modalOverlay');
   const closeModal = document.getElementById('closeModalBtn');
