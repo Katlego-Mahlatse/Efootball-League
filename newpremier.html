@@ -14,7 +14,6 @@
       background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 100%);
       font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
       color: #f5f0ff;
-      padding-bottom: 2rem;
     }
     .gold-navbar {
       background: linear-gradient(135deg, #d4af37, #f5d742);
@@ -39,6 +38,7 @@
       align-items: center;
       gap: 4px;
       cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       transition: transform 0.2s, background 0.2s;
       border: 1.5px solid #f5d742;
     }
@@ -59,7 +59,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0,0,0,0.7);
+      background-color: transparent;
       z-index: 200;
       visibility: hidden;
       pointer-events: none;
@@ -72,39 +72,39 @@
       position: absolute;
       top: 60px;
       right: 20px;
-      background: linear-gradient(135deg, #2d1b4e, #1f0f3a);
-      border: 2px solid #f5d742;
+      background: linear-gradient(135deg, #f5d742, #e6c42c);
       border-radius: 1.2rem;
-      padding: 1rem;
+      padding: 1rem 1.2rem;
       width: auto;
       min-width: 200px;
       text-align: center;
-      color: #f5e6ff;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      border: 1px solid #6a3bb5;
     }
     .modal-content h3 {
       font-size: 1.1rem;
-      color: #f5d742;
+      color: #4a1d8c;
       margin-bottom: 0.8rem;
     }
     .modal-option {
-      background: rgba(106, 59, 181, 0.3);
+      background: rgba(106, 59, 181, 0.15);
       padding: 0.4rem 0.8rem;
       border-radius: 40px;
       text-decoration: none;
-      color: #f5d742;
+      color: #3c1a70;
       font-weight: 700;
       font-size: 0.8rem;
       display: block;
       margin: 0.5rem 0;
-      border: 1px solid #f5d742;
+      border: 1px solid #6a3bb5;
       cursor: pointer;
     }
     .modal-option:hover {
-      background: #f5d742;
-      color: #2d1b4e;
+      background: #6a3bb5;
+      color: #f5d742;
     }
     .close-modal {
-      background: #6a3bb5;
+      background: #4a1d8c;
       color: #f5d742;
       border: none;
       padding: 0.3rem 0.9rem;
@@ -123,16 +123,12 @@
       border-radius: 2rem;
       border: 1px solid rgba(245, 215, 66, 0.4);
       overflow: hidden;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
     .card-header {
       padding: 1rem 1.5rem;
       background: rgba(30, 15, 55, 0.9);
       border-bottom: 2px solid #f5d742;
-    }
-    .card-header h2 {
-      font-size: 1.4rem;
-      color: #f5e6ff;
     }
     .stats-table, .inner-table {
       width: 100%;
@@ -156,11 +152,13 @@
       vertical-align: middle;
       margin-right: 8px;
     }
-    .fixture-icons, .result-icons {
+    /* Added styles for horizontal fixture/result layout */
+    .fixture-row, .result-row {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 12px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
     }
     .fixture-icons img, .result-icons img {
       width: 30px;
@@ -188,7 +186,6 @@
       padding: 0.2rem 0.6rem;
       border-radius: 20px;
       font-size: 0.7rem;
-      white-space: nowrap;
     }
     .match-highlight {
       background: #3d2a6b;
@@ -224,7 +221,6 @@
   <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
 </div>
 
-<!-- Main Menu Modal -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal-content">
     <h3>TOURNAMENTS</h3>
@@ -236,11 +232,9 @@
 </div>
 
 <div class="dashboard">
-  <!-- League Table Card -->
+  <!-- League Table -->
   <div class="card">
-    <div class="card-header">
-      <h2>🏆 PREMIER LEAGUE TABLE</h2>
-    </div>
+    <div class="card-header"><h2>🏆 PREMIER LEAGUE TABLE</h2></div>
     <div style="overflow-x:auto;">
       <table class="stats-table" id="leagueTable">
         <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th></tr></thead>
@@ -249,25 +243,21 @@
     </div>
   </div>
 
-  <!-- Fixtures Card -->
+  <!-- Fixtures -->
   <div class="card">
-    <div class="card-header">
-      <h2>📅 FIXTURES</h2>
-    </div>
+    <div class="card-header"><h2>📅 FIXTURES</h2></div>
     <div class="filter-container"><input type="text" id="fixtureSearch" class="filter-input" placeholder="🔍 Search team..."></div>
     <div style="overflow-x:auto;">
       <table class="inner-table" id="fixturesTable">
         <thead><tr><th>Date</th><th>Match</th><th>Matchday</th></tr></thead>
         <tbody id="fixturesBody"></tbody>
-      </tr>
+      </table>
     </div>
   </div>
 
-  <!-- Results Card -->
+  <!-- Results -->
   <div class="card">
-    <div class="card-header">
-      <h2>📝 RESULTS</h2>
-    </div>
+    <div class="card-header"><h2>📝 RESULTS</h2></div>
     <div style="overflow-x:auto;">
       <table class="inner-table" id="resultsTable">
         <thead><tr><th>Match</th><th>Match Day</th></tr></thead>
@@ -281,7 +271,7 @@
   {
     "imports": {
       "firebase/app": "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js",
-      "firebase/database": "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js",
+      "firebase/firestore": "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js",
       "firebase/auth": "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js"
     }
   }
@@ -289,7 +279,7 @@
 
 <script type="module">
   import { initializeApp } from "firebase/app";
-  import { getDatabase, ref, onValue } from "firebase/database";
+  import { getFirestore, collection, onSnapshot } from "firebase/firestore";
   import { getAuth, signOut } from "firebase/auth";
 
   const firebaseConfig = {
@@ -302,7 +292,7 @@
     appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
   };
   const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+  const db = getFirestore(app);
   const auth = getAuth(app);
 
   const teamIcons = {
@@ -329,15 +319,18 @@
     return team;
   }
 
-  function getFixtureHtml(home, away) {
-    return `<div class="fixture-icons">
+  // Helper: format fixture as horizontal icons only
+  function formatFixture(home, away) {
+    return `<div class="fixture-row" style="display: flex; align-items: center; gap: 12px;">
       ${getTeamIconHtml(home, "30px")}
       <span class="vs-text">VS</span>
       ${getTeamIconHtml(away, "30px")}
     </div>`;
   }
 
-  function getResultHtml(matchText) {
+  // Helper: format result as horizontal icons with score in middle
+  function formatResult(matchText) {
+    // Extract two team names and score from matchText (e.g., "Real Madrid 3 - 2 Arsenal")
     let homeTeam = "";
     let awayTeam = "";
     let score = "";
@@ -351,39 +344,40 @@
     const scoreMatch = matchText.match(/(\d+\s*[-–]\s*\d+)/);
     if (scoreMatch) score = scoreMatch[0];
     if (homeTeam && awayTeam && score) {
-      return `<div class="result-icons">
+      return `<div style="display: flex; align-items: center; gap: 12px;">
         ${getTeamIconHtml(homeTeam, "30px")}
         <span class="score-text">${score}</span>
         ${getTeamIconHtml(awayTeam, "30px")}
       </div>`;
     }
+    // Fallback: show original text
     return `<span>${matchText}</span>`;
   }
 
-  // League Table
-  const tableRef = ref(db, 'premier_league/table');
-  onValue(tableRef, (snap) => {
-    const data = snap.val();
+  // Table – top-level collection "premier_league_standings"
+  const standingsCol = collection(db, "premier_league_standings");
+  onSnapshot(standingsCol, (snapshot) => {
+    const teams = [];
+    snapshot.forEach(doc => teams.push({ id: doc.id, ...doc.data() }));
+    teams.sort((a,b) => b.pts - a.pts || b.gd - a.gd);
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
-    if (!data) return;
-    const teams = Object.values(data);
-    teams.sort((a,b) => b.pts - a.pts || b.gd - a.gd);
     teams.forEach((team, idx) => {
       const row = tbody.insertRow();
       row.insertCell(0).innerText = idx+1;
-      row.insertCell(1).innerHTML = `<div>${getTeamIconHtml(team.name, "30px")} ${team.name}</div>`;
+      row.insertCell(1).innerHTML = `<div>${getTeamIconHtml(team.name)} ${team.name}</div>`;
       row.insertCell(2).innerText = team.p || 0;
       row.insertCell(3).innerText = team.gd || 0;
       row.insertCell(4).innerText = team.pts || 0;
     });
   });
 
-  // Fixtures
-  const fixturesRef = ref(db, 'premier_league/fixtures');
+  // Fixtures – top-level collection "premier_league_fixtures"
+  const fixturesCol = collection(db, "premier_league_fixtures");
   let fixturesData = [];
-  onValue(fixturesRef, (snap) => {
-    fixturesData = snap.val() ? Object.values(snap.val()) : [];
+  onSnapshot(fixturesCol, (snapshot) => {
+    fixturesData = [];
+    snapshot.forEach(doc => fixturesData.push({ id: doc.id, ...doc.data() }));
     renderFixtures();
   });
   function renderFixtures() {
@@ -394,22 +388,24 @@
       if (search && !f.home.toLowerCase().includes(search) && !f.away.toLowerCase().includes(search)) return;
       const row = tbody.insertRow();
       row.insertCell(0).innerHTML = `<span class="date-badge">${f.date || ''}</span>`;
-      row.insertCell(1).innerHTML = getFixtureHtml(f.home, f.away);
+      // Changed: only icons, no team names
+      row.insertCell(1).innerHTML = formatFixture(f.home, f.away);
       row.insertCell(2).innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px;">MD ${f.md}</span>`;
     });
   }
   document.getElementById('fixtureSearch')?.addEventListener('input', renderFixtures);
 
-  // Results
-  const resultsRef = ref(db, 'premier_league/results');
-  onValue(resultsRef, (snap) => {
-    const data = snap.val();
+  // Results – top-level collection "premier_league_results"
+  const resultsCol = collection(db, "premier_league_results");
+  onSnapshot(resultsCol, (snapshot) => {
     const tbody = document.getElementById('resultsBody');
     tbody.innerHTML = '';
-    if (!data) return;
-    Object.values(data).forEach(r => {
+    snapshot.forEach(doc => {
+      const r = doc.data();
+      // Changed: only icons with score, no team names
+      const formatted = formatResult(r.matchText);
       const row = tbody.insertRow();
-      row.insertCell(0).innerHTML = getResultHtml(r.matchText);
+      row.insertCell(0).innerHTML = formatted;
       row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>`;
     });
   });
@@ -422,10 +418,7 @@
   closeModal.onclick = () => modalOverlay.classList.remove('active');
   document.getElementById('rulesBtn').onclick = () => window.location.href = 'rules.html';
   document.getElementById('playerTitlesBtn').onclick = () => window.location.href = 'player-titles.html';
-  document.getElementById('logoutBtn').onclick = async () => {
-    await signOut(auth);
-    window.location.href = 'login.html';
-  };
+  document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href = 'login.html'; };
 </script>
 </body>
 </html>
