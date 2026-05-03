@@ -635,19 +635,19 @@
   function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
   if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-  // LEAGUE DATA AFTER ALL MD20 RESULTS (PSG forfeit win, Inter forfeit win, etc.)
+  // LEAGUE DATA AFTER MD20 RESULTS + MD21 (Liverpool 1-1 Chelsea, PSG 1-0 Inter)
   const LEAGUE_DATA = [
     { pos: 1, club: "Real Madrid", p: 20, gd: 27, pts: 58 },
-    { pos: 2, club: "Liverpool", p: 20, gd: 39, pts: 50 },
+    { pos: 2, club: "Liverpool", p: 21, gd: 39, pts: 51 },
     { pos: 3, club: "Dortmund", p: 20, gd: 9, pts: 37 },
     { pos: 4, club: "Barcelona", p: 20, gd: 0, pts: 37 },
     { pos: 5, club: "Arsenal", p: 20, gd: 6, pts: 32 },
     { pos: 6, club: "Man City", p: 20, gd: 5, pts: 31 },
-    { pos: 7, club: "Chelsea", p: 20, gd: 8, pts: 27 },
-    { pos: 8, club: "PSG", p: 20, gd: -17, pts: 26 },
+    { pos: 7, club: "PSG", p: 21, gd: -16, pts: 29 },
+    { pos: 8, club: "Chelsea", p: 21, gd: 8, pts: 28 },
     { pos: 9, club: "AC Milan", p: 20, gd: -14, pts: 19 },
     { pos: 10, club: "Napoli", p: 20, gd: -16, pts: 14 },
-    { pos: 11, club: "Inter Milan", p: 20, gd: -13, pts: 11 },
+    { pos: 11, club: "Inter Milan", p: 21, gd: -14, pts: 11 },
     { pos: 12, club: "Juventus", p: 20, gd: -20, pts: 11 },
     { pos: 13, club: "Newcastle", p: 20, gd: -46, pts: 9 },
     { pos: 14, club: "Atletico", p: 20, gd: -26, pts: 7 }
@@ -704,21 +704,21 @@
     return teamName;
   }
 
-  // LAST 5 RESULTS: updated with PSG forfeit win (not No Contest)
+  // LAST 5 RESULTS: updated with MD21 results (Liverpool D, Chelsea D, PSG W, Inter L)
   const last5Exact = {
     "Real Madrid":   ["WF", "WF", "W", "WF", "WF"],
-    "Liverpool":     ["W", "W", "W", "WF", "W"],
+    "Liverpool":     ["W", "W", "W", "WF", "W", "D"],
     "Dortmund":      ["D", "WF", "L", "F", "WF"],
     "Barcelona":     ["LF", "W", "W", "WF", "LF"],
     "Arsenal":       ["L", "L", "W", "W", "WF"],
     "Man City":      ["F", "W", "LF", "WF", "W"],
-    "Chelsea":       ["F", "WF", "W", "L", "LF"],
-    "PSG":           ["WF", "L", "WF", "LF", "LF"],   // MD20 forfeit win
+    "Chelsea":       ["F", "WF", "W", "L", "LF", "D"],
+    "PSG":           ["WF", "L", "WF", "LF", "LF", "W"],
     "AC Milan":      ["W", "WF", "LF", "LF", "L"],
     "Napoli":        ["LF", "LF", "L", "F", "LF"],
-    "Inter Milan":   ["WF", "L", "L", "L", "WF"],
+    "Inter Milan":   ["WF", "L", "L", "L", "WF", "L"],
     "Juventus":      ["D", "LF", "LF", "W", "WF"],
-    "Atletico":      ["LF", "L", "L", "LF", "LF"],    // MD20 forfeit loss
+    "Atletico":      ["LF", "L", "L", "LF", "LF"],
     "Newcastle":     ["L", "LF", "WF", "LF", "L"]
   };
 
@@ -740,7 +740,7 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // Hardcoded dates for each matchday (based on MD20 = May 2)
+  // Hardcoded dates for each matchday
   const matchdayDates = {
     15: "Apr 27",
     16: "Apr 28",
@@ -756,16 +756,14 @@
     26: "May 8"
   };
 
-  // Fixture list with all MD20 matches removed (all played)
+  // Fixture list with MD21 matches REMOVED (Liverpool vs Chelsea and PSG vs Inter have been played)
   const fixtureList = [
-    // MD21
+    // MD21 (remaining fixtures except the two played)
     { md: 21, home: "Juventus", away: "FC Barcelona" },
-    { md: 21, home: "Paris Saint-Germain", away: "Inter Milan" },
     { md: 21, home: "Real Madrid", away: "Borussia Dortmund" },
     { md: 21, home: "AC Milan", away: "Atlético Madrid" },
     { md: 21, home: "Manchester City", away: "Napoli" },
     { md: 21, home: "Newcastle United", away: "Arsenal" },
-    { md: 21, home: "Liverpool", away: "Chelsea" },
     // MD22
     { md: 22, home: "Paris Saint-Germain", away: "FC Barcelona" },
     { md: 22, home: "Real Madrid", away: "Juventus" },
@@ -817,8 +815,11 @@
     awayPlayer: playerMap[f.away] || ""
   }));
 
+  // RESULTS_DATA: added MD21 results (Liverpool 1-1 Chelsea, PSG 1-0 Inter) at the top
   const RESULTS_DATA = [
-    // MD20 results (all) - PSG forfeit win (not No Contest)
+    { matchText: "Liverpool 1 - 1 Chelsea", md: 21 },
+    { matchText: "Paris Saint-Germain 1 - 0 Inter Milan", md: 21 },
+    // MD20 results
     { matchText: "Paris Saint-Germain 3 - 0 Atlético Madrid (Forfeit win PSG)", md: 20 },
     { matchText: "Inter Milan 3 - 0 FC Barcelona (Forfeit win Inter Milan)", md: 20 },
     { matchText: "Real Madrid 3 - 0 Napoli (Forfeit win Real Madrid)", md: 20 },
@@ -826,7 +827,7 @@
     { matchText: "Borussia Dortmund 0 - 0 Juventus", md: 20 },
     { matchText: "AC Milan 2 - 1 Arsenal", md: 20 },
     { matchText: "Liverpool 7 - 0 Newcastle United", md: 20 },
-    // MD19 (corrected)
+    // MD19
     { matchText: "Liverpool 2 - 0 AC Milan", md: 19 },
     { matchText: "Juventus 3 - 0 Napoli (Forfeited - No Reply)", md: 19 },
     { matchText: "Manchester City 3 - 2 Newcastle United", md: 19 },
