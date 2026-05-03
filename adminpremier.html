@@ -28,19 +28,21 @@
       top: 0;
       z-index: 100;
     }
-    .debug-btn, .hamburger-btn {
+    .hamburger-btn {
       background: #6a3bb5;
       width: 36px;
       height: 36px;
       border-radius: 50%;
       display: flex;
-      align-items: center;
+      flex-direction: column;
       justify-content: center;
+      align-items: center;
+      gap: 4px;
       cursor: pointer;
       transition: transform 0.2s, background 0.2s;
       border: 1.5px solid #f5d742;
     }
-    .debug-btn:hover, .hamburger-btn:hover {
+    .hamburger-btn:hover {
       transform: scale(1.05);
       background: #7e4acf;
     }
@@ -50,7 +52,6 @@
       height: 2.5px;
       background-color: #f5d742;
       border-radius: 2px;
-      margin: 2px 0;
     }
     .modal-overlay {
       position: fixed;
@@ -67,7 +68,7 @@
       visibility: visible;
       pointer-events: auto;
     }
-    .modal-content, .debug-modal {
+    .modal-content {
       position: absolute;
       top: 60px;
       right: 20px;
@@ -76,20 +77,40 @@
       border-radius: 1.2rem;
       padding: 1rem;
       width: auto;
-      min-width: 280px;
-      max-width: 400px;
+      min-width: 200px;
+      text-align: center;
       color: #f5e6ff;
     }
-    .debug-modal {
-      left: 20px;
-      right: auto;
+    .modal-content h3 {
+      font-size: 1.1rem;
+      color: #f5d742;
+      margin-bottom: 0.8rem;
     }
-    .debug-modal pre {
-      background: #1a0a2e;
-      padding: 0.5rem;
-      border-radius: 0.5rem;
-      overflow-x: auto;
-      font-size: 0.7rem;
+    .modal-option {
+      background: rgba(106, 59, 181, 0.3);
+      padding: 0.4rem 0.8rem;
+      border-radius: 40px;
+      text-decoration: none;
+      color: #f5d742;
+      font-weight: 700;
+      font-size: 0.8rem;
+      display: block;
+      margin: 0.5rem 0;
+      border: 1px solid #f5d742;
+      cursor: pointer;
+    }
+    .modal-option:hover {
+      background: #f5d742;
+      color: #2d1b4e;
+    }
+    .close-modal {
+      background: #6a3bb5;
+      color: #f5d742;
+      border: none;
+      padding: 0.3rem 0.9rem;
+      border-radius: 30px;
+      cursor: pointer;
+      margin-top: 0.5rem;
     }
     .dashboard {
       max-width: 1400px;
@@ -138,6 +159,7 @@
     .stats-table td, .inner-table td {
       padding: 0.6rem 0.8rem;
       border-bottom: 1px solid rgba(245, 215, 66, 0.2);
+      vertical-align: middle;
     }
     .edit-btn, .delete-btn {
       background: none;
@@ -153,6 +175,47 @@
       object-fit: contain;
       vertical-align: middle;
       margin-right: 8px;
+    }
+    .fixture-icons, .result-icons {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .fixture-icons img, .result-icons img {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+    }
+    .vs-text {
+      font-weight: bold;
+      color: #f5d742;
+      background: rgba(0,0,0,0.4);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+    }
+    .score-text {
+      font-weight: bold;
+      color: #f5d742;
+      background: rgba(0,0,0,0.4);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+    }
+    .date-badge {
+      background: rgba(0,0,0,0.4);
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      white-space: nowrap;
+    }
+    .match-highlight {
+      background: #3d2a6b;
+      border-radius: 20px;
+      padding: 0.2rem 0.8rem;
+      display: inline-block;
+      font-size: 0.8rem;
     }
     .form-overlay {
       position: fixed;
@@ -197,25 +260,15 @@
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
       .stats-table th, .stats-table td { padding: 0.4rem; font-size: 0.75rem; }
+      .fixture-icons img, .result-icons img { width: 24px; height: 24px; }
+      .vs-text, .score-text { font-size: 0.7rem; padding: 2px 5px; }
     }
   </style>
 </head>
 <body>
 
 <div class="gold-navbar">
-  <div style="display: flex; gap: 0.5rem;">
-    <div class="debug-btn" id="debugBtn">🐞</div>
-    <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
-  </div>
-</div>
-
-<!-- Debug Modal -->
-<div id="debugModal" class="modal-overlay" style="z-index: 250;">
-  <div class="debug-modal">
-    <h3>🐞 Debug Info</h3>
-    <div id="debugContent">Loading...</div>
-    <button id="closeDebugBtn" class="close-modal" style="margin-top: 1rem;">Close</button>
-  </div>
+  <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
 </div>
 
 <!-- Main Menu Modal -->
@@ -252,7 +305,7 @@
     </div>
     <div style="overflow-x:auto;">
       <table class="inner-table" id="fixturesTable">
-        <thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Date</th><th>Match</th><th>Matchday</th><th>Actions</th></tr></thead>
         <tbody id="fixturesBody"></tbody>
       </table>
     </div>
@@ -320,7 +373,7 @@
 
 <script type="module">
   import { initializeApp } from "firebase/app";
-  import { getDatabase, ref, set, onValue, push, remove, get } from "firebase/database";
+  import { getDatabase, ref, set, onValue, push, remove } from "firebase/database";
   import { getAuth, signOut } from "firebase/auth";
 
   const firebaseConfig = {
@@ -335,35 +388,6 @@
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
   const auth = getAuth(app);
-
-  // Debug logger
-  let lastError = null;
-  let lastOperation = null;
-  function logError(operation, error) {
-    lastError = { operation, error: error.message || error, timestamp: new Date().toISOString() };
-    console.error(operation, error);
-  }
-  function logSuccess(operation, data) {
-    lastOperation = { operation, data, timestamp: new Date().toISOString() };
-    console.log(operation, data);
-  }
-
-  // Debug modal update
-  async function updateDebugModal() {
-    const debugDiv = document.getElementById('debugContent');
-    let dbStatus = "unknown";
-    try {
-      const testRef = ref(db, '.info/connected');
-      const snapshot = await get(testRef);
-      dbStatus = snapshot.exists() ? "connected" : "disconnected";
-    } catch(e) { dbStatus = "error: " + e.message; }
-    debugDiv.innerHTML = `
-      <strong>Firebase DB:</strong> ${dbStatus}<br>
-      <strong>Last operation:</strong> ${lastOperation ? JSON.stringify(lastOperation) : 'none'}<br>
-      <strong>Last error:</strong> ${lastError ? JSON.stringify(lastError) : 'none'}<br>
-      <strong>Auth user:</strong> ${auth.currentUser ? auth.currentUser.email : 'none'}
-    `;
-  }
 
   // Team icons mapping
   const teamIcons = {
@@ -386,11 +410,44 @@
 
   function getTeamIconHtml(team, size = "30px") {
     const src = teamIcons[team];
-    if (src) return `<img class="team-icon-sm" src="${src}" style="width:${size}; height:${size}; object-fit:contain;">`;
+    if (src) return `<img src="${src}" style="width:${size}; height:${size}; object-fit:contain;">`;
     return team;
   }
 
-  function populateSelect(selectEl, excludeCurrent = null) {
+  function getFixtureHtml(home, away) {
+    return `<div class="fixture-icons">
+      ${getTeamIconHtml(home, "30px")}
+      <span class="vs-text">VS</span>
+      ${getTeamIconHtml(away, "30px")}
+    </div>`;
+  }
+
+  function getResultHtml(matchText) {
+    // matchText format example: "Real Madrid 3 - 2 Arsenal"
+    let homeTeam = "";
+    let awayTeam = "";
+    let score = "";
+    for (const team of teamList) {
+      const regex = new RegExp(`\\b${team}\\b`);
+      if (regex.test(matchText)) {
+        if (!homeTeam) homeTeam = team;
+        else if (!awayTeam) awayTeam = team;
+      }
+    }
+    const scoreMatch = matchText.match(/(\d+\s*[-–]\s*\d+)/);
+    if (scoreMatch) score = scoreMatch[0];
+    if (homeTeam && awayTeam && score) {
+      return `<div class="result-icons">
+        ${getTeamIconHtml(homeTeam, "30px")}
+        <span class="score-text">${score}</span>
+        ${getTeamIconHtml(awayTeam, "30px")}
+      </div>`;
+    }
+    // fallback: show original text
+    return `<span>${matchText}</span>`;
+  }
+
+  function populateSelect(selectEl) {
     selectEl.innerHTML = '';
     teamList.forEach(team => {
       const option = document.createElement('option');
@@ -398,7 +455,6 @@
       option.innerHTML = `${getTeamIconHtml(team, '20px')} ${team}`;
       selectEl.appendChild(option);
     });
-    if (excludeCurrent && selectEl.value === excludeCurrent) selectEl.value = '';
   }
 
   // Table CRUD
@@ -411,7 +467,7 @@
     teamArray.forEach((team, idx) => {
       const row = tbody.insertRow();
       row.insertCell(0).innerText = idx+1;
-      row.insertCell(1).innerHTML = `<div>${getTeamIconHtml(team.name)} ${team.name}</div>`;
+      row.insertCell(1).innerHTML = `<div>${getTeamIconHtml(team.name, "30px")} ${team.name}</div>`;
       row.insertCell(2).innerText = team.p || 0;
       row.insertCell(3).innerText = team.gd || 0;
       row.insertCell(4).innerText = team.pts || 0;
@@ -426,8 +482,7 @@
       delBtn.onclick = async () => {
         try {
           await remove(ref(db, `premier_league/table/${team.key}`));
-          logSuccess('deleteTeam', team.key);
-        } catch(e) { logError('deleteTeam', e); }
+        } catch(e) { alert(e.message); }
       };
       actions.appendChild(editBtn);
       actions.appendChild(delBtn);
@@ -456,14 +511,12 @@
     try {
       if (editingTeamKey) {
         await set(ref(db, `premier_league/table/${editingTeamKey}`), teamData);
-        logSuccess('updateTeam', teamData);
       } else {
         const newRef = push(ref(db, 'premier_league/table'));
         await set(newRef, teamData);
-        logSuccess('addTeam', teamData);
       }
       document.getElementById('teamForm').classList.remove('active');
-    } catch(e) { logError('saveTeam', e); alert('Error saving team: ' + e.message); }
+    } catch(e) { alert('Error saving team: ' + e.message); }
   };
   document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamForm').classList.remove('active');
 
@@ -476,7 +529,7 @@
     Object.entries(fixtures).forEach(([key, f]) => {
       const row = tbody.insertRow();
       row.insertCell(0).innerHTML = `<span class="date-badge">${f.date || ''}</span>`;
-      row.insertCell(1).innerHTML = `<div>${getTeamIconHtml(f.home)} ${f.home} vs ${getTeamIconHtml(f.away)} ${f.away}</div>`;
+      row.insertCell(1).innerHTML = getFixtureHtml(f.home, f.away);
       row.insertCell(2).innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px;">MD ${f.md}</span>`;
       const actions = row.insertCell(3);
       const editBtn = document.createElement('button');
@@ -487,8 +540,7 @@
       delBtn.onclick = async () => {
         try {
           await remove(ref(db, `premier_league/fixtures/${key}`));
-          logSuccess('deleteFixture', key);
-        } catch(e) { logError('deleteFixture', e); }
+        } catch(e) { alert(e.message); }
       };
       actions.appendChild(editBtn); actions.appendChild(delBtn);
     });
@@ -517,14 +569,12 @@
     try {
       if (editingFixtureKey) {
         await set(ref(db, `premier_league/fixtures/${editingFixtureKey}`), fixData);
-        logSuccess('updateFixture', fixData);
       } else {
         const newRef = push(ref(db, 'premier_league/fixtures'));
         await set(newRef, fixData);
-        logSuccess('addFixture', fixData);
       }
       document.getElementById('fixtureForm').classList.remove('active');
-    } catch(e) { logError('saveFixture', e); alert('Error saving fixture: ' + e.message); }
+    } catch(e) { alert('Error saving fixture: ' + e.message); }
   };
   document.getElementById('cancelFixtureBtn').onclick = () => document.getElementById('fixtureForm').classList.remove('active');
 
@@ -536,12 +586,7 @@
     if (!results) return;
     Object.entries(results).forEach(([key, r]) => {
       const row = tbody.insertRow();
-      let processed = r.matchText;
-      teamList.forEach(team => {
-        const regex = new RegExp(`\\b${team}\\b`, 'g');
-        processed = processed.replace(regex, `${getTeamIconHtml(team, '24px')} ${team}`);
-      });
-      row.insertCell(0).innerHTML = `<strong>${processed}</strong>`;
+      row.insertCell(0).innerHTML = getResultHtml(r.matchText);
       row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>`;
       const actions = row.insertCell(2);
       const editBtn = document.createElement('button');
@@ -552,8 +597,7 @@
       delBtn.onclick = async () => {
         try {
           await remove(ref(db, `premier_league/results/${key}`));
-          logSuccess('deleteResult', key);
-        } catch(e) { logError('deleteResult', e); }
+        } catch(e) { alert(e.message); }
       };
       actions.appendChild(editBtn); actions.appendChild(delBtn);
     });
@@ -575,24 +619,16 @@
     try {
       if (editingResultKey) {
         await set(ref(db, `premier_league/results/${editingResultKey}`), resData);
-        logSuccess('updateResult', resData);
       } else {
         const newRef = push(ref(db, 'premier_league/results'));
         await set(newRef, resData);
-        logSuccess('addResult', resData);
       }
       document.getElementById('resultForm').classList.remove('active');
-    } catch(e) { logError('saveResult', e); alert('Error saving result: ' + e.message); }
+    } catch(e) { alert('Error saving result: ' + e.message); }
   };
   document.getElementById('cancelResultBtn').onclick = () => document.getElementById('resultForm').classList.remove('active');
 
-  // Menus
-  const debugBtn = document.getElementById('debugBtn');
-  const debugModal = document.getElementById('debugModal');
-  const closeDebug = document.getElementById('closeDebugBtn');
-  debugBtn.onclick = async () => { await updateDebugModal(); debugModal.classList.add('active'); };
-  closeDebug.onclick = () => debugModal.classList.remove('active');
-
+  // Menu
   const hamburger = document.getElementById('hamburgerBtn');
   const modalOverlay = document.getElementById('modalOverlay');
   const closeModal = document.getElementById('closeModalBtn');
@@ -604,11 +640,6 @@
     await signOut(auth);
     window.location.href = 'login.html';
   };
-
-  // Initial debug update
-  setTimeout(updateDebugModal, 1000);
 </script>
 </body>
 </html>
-
-
