@@ -239,7 +239,7 @@
   {
     "imports": {
       "firebase/app": "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js",
-      "firebase/database": "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js",
+      "firebase/firestore": "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js",
       "firebase/auth": "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js"
     }
   }
@@ -247,7 +247,7 @@
 
 <script type="module">
   import { initializeApp } from "firebase/app";
-  import { getDatabase, ref, onValue } from "firebase/database";
+  import { getFirestore, collection, onSnapshot, query, orderBy } from "firebase/firestore";
   import { getAuth, signOut } from "firebase/auth";
 
   const firebaseConfig = {
@@ -260,7 +260,7 @@
     appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
   };
   const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+  const db = getFirestore(app);
   const auth = getAuth(app);
 
   const teamIcons = {
@@ -287,15 +287,14 @@
     return team;
   }
 
-  // Table
-  const tableRef = ref(db, 'premier_league/table');
-  onValue(tableRef, (snap) => {
-    const data = snap.val();
+  // Table – collection "premier_league/standings"
+  const standingsCol = collection(db, "premier_league", "standings", "teams");
+  onSnapshot(standingsCol, (snapshot) => {
+    const teams = [];
+    snapshot.forEach(doc => teams.push({ id: doc.id, ...doc.data() }));
+    teams.sort((a,b) => b.pts - a.pts || b.gd - a.gd);
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
-    if (!data) return;
-    const teams = Object.values(data);
-    teams.sort((a,b) => b.pts - a.pts || b.gd - a.gd);
     teams.forEach((team, idx) => {
       const row = tbody.insertRow();
       row.insertCell(0).innerText = idx+1;
@@ -307,10 +306,11 @@
   });
 
   // Fixtures
-  const fixturesRef = ref(db, 'premier_league/fixtures');
+  const fixturesCol = collection(db, "premier_league", "fixtures", "list");
   let fixturesData = [];
-  onValue(fixturesRef, (snap) => {
-    fixturesData = snap.val() ? Object.values(snap.val()) : [];
+  onSnapshot(fixturesCol, (snapshot) => {
+    fixturesData = [];
+    snapshot.forEach(doc => fixturesData.push({ id: doc.id, ...doc.data() }));
     renderFixtures();
   });
   function renderFixtures() {
@@ -328,13 +328,12 @@
   document.getElementById('fixtureSearch')?.addEventListener('input', renderFixtures);
 
   // Results
-  const resultsRef = ref(db, 'premier_league/results');
-  onValue(resultsRef, (snap) => {
-    const data = snap.val();
+  const resultsCol = collection(db, "premier_league", "results", "list");
+  onSnapshot(resultsCol, (snapshot) => {
     const tbody = document.getElementById('resultsBody');
     tbody.innerHTML = '';
-    if (!data) return;
-    Object.values(data).forEach(r => {
+    snapshot.forEach(doc => {
+      const r = doc.data();
       let processed = r.matchText;
       teamList.forEach(team => {
         const regex = new RegExp(`\\b${team}\\b`, 'g');
