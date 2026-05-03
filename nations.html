@@ -415,21 +415,7 @@
       border-radius: 8px;
       font-size: 0.8rem;
       text-align: center;
-    }
-    .team-flag-above {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .team-flag-above .flag {
-      font-size: 1.8rem;
-      line-height: 1;
-      margin-bottom: 4px;
-    }
-    .team-flag-above .name {
-      font-size: 0.8rem;
-      font-weight: normal;
+      line-height: 1.4;
     }
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
@@ -438,8 +424,6 @@
       .inline-emoji { font-size: 1rem; }
       .nations-header-image { height: 35px; }
       .card-header-left h2 { font-size: 1.2rem; }
-      .team-flag-above .flag { font-size: 1.4rem; }
-      .team-flag-above .name { font-size: 0.7rem; }
     }
   </style>
 </head>
@@ -559,11 +543,11 @@
     "England": { p: 4, gd: -5, pts: 3 },
     "Croatia": { p: 4, gd: -2, pts: 4 },
     "Netherlands": { p: 4, gd: 5, pts: 7 },
-    "Italy": { p: 4, gd: 2, pts: 5 },      // +1 draw
-    "Germany": { p: 4, gd: -8, pts: 1 },    // +1 draw
-    "Argentina": { p: 5, gd: 8, pts: 12 },  // +3 forfeit win vs Spain
+    "Italy": { p: 4, gd: 2, pts: 5 },
+    "Germany": { p: 4, gd: -8, pts: 1 },
+    "Argentina": { p: 5, gd: 8, pts: 12 },
     "Brazil": { p: 4, gd: -3, pts: 3 },
-    "Spain": { p: 4, gd: -14, pts: 0 }      // -3 GD from forfeit loss
+    "Spain": { p: 4, gd: -14, pts: 0 }
   };
 
   let groupViewMode = { A: false, B: false, C: false, D: false };
@@ -725,35 +709,25 @@
   function renderKnockout() {
     const container = document.getElementById("knockoutBracket");
     if (!container) return;
-    const flagMap = {
-      "France": "🇫🇷",
-      "Croatia": "🇭🇷",
-      "Portugal": "🇵🇹",
-      "Belgium": "🇧🇪",
-      "Netherlands": "🇳🇱",
-      "Brazil": "🇧🇷",
-      "Argentina": "🇦🇷",
-      "Italy": "🇮🇹"
-    };
-    const makeTeamHtml = (team) => {
-      const flag = flagMap[team] || "🏳️";
-      return `<div class="team-flag-above"><span class="flag">${flag}</span><span class="name">${team}</span></div>`;
-    };
+    // Updated knockout display as requested
     container.innerHTML = `
       <div class="knockout-title">🏆 QUARTER-FINALS (3-4 May) 🏆</div>
       <div class="bracket">
         <div class="round"><h4>3 May</h4>
-          <div class="match">QF1: ${makeTeamHtml("France")} vs ${makeTeamHtml("Croatia")}</div>
-          <div class="match">QF2: ${makeTeamHtml("Portugal")} vs ${makeTeamHtml("Belgium")}</div>
+          <div class="match">QF1: France 🇫🇷 vs 🇭🇷 Croatia</div>
+          <div class="match">QF2: Portugal 🇵🇹 2-1 <s>Belgium</s> 🇧🇪</div>
         </div>
         <div class="round"><h4>4 May</h4>
-          <div class="match">QF3: ${makeTeamHtml("Netherlands")} vs ${makeTeamHtml("Brazil")}</div>
-          <div class="match">QF4: ${makeTeamHtml("Argentina")} vs ${makeTeamHtml("Italy")}</div>
+          <div class="match">QF3: Netherlands 🇳🇱 vs 🇧🇷 Brazil</div>
+          <div class="match">QF4: Argentina 🇦🇷 vs 🇮🇹 Italy</div>
         </div>
       </div>
       <div class="knockout-title" style="margin-top:1rem;">🏆 SEMI-FINALS (5 May) 🏆</div>
       <div class="bracket">
-        <div class="round"><h4>5 May</h4><div class="match">SF1: Winner QF1 vs Winner QF2</div><div class="match">SF2: Winner QF3 vs Winner QF4</div></div>
+        <div class="round"><h4>5 May</h4>
+          <div class="match">SF1: Winner QF1 vs Portugal 🇵🇹</div>
+          <div class="match">SF2: Winner QF3 vs Winner QF4</div>
+        </div>
       </div>
       <div class="knockout-title" style="margin-top:1rem;">🏆 THIRD PLACE PLAY-OFF (6 May) 🏆</div>
       <div class="bracket">
