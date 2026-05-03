@@ -28,22 +28,19 @@
       top: 0;
       z-index: 100;
     }
-    .hamburger-btn {
+    .debug-btn, .hamburger-btn {
       background: #6a3bb5;
       width: 36px;
       height: 36px;
       border-radius: 50%;
       display: flex;
-      flex-direction: column;
-      justify-content: center;
       align-items: center;
-      gap: 4px;
+      justify-content: center;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       transition: transform 0.2s, background 0.2s;
       border: 1.5px solid #f5d742;
     }
-    .hamburger-btn:hover {
+    .debug-btn:hover, .hamburger-btn:hover {
       transform: scale(1.05);
       background: #7e4acf;
     }
@@ -53,6 +50,7 @@
       height: 2.5px;
       background-color: #f5d742;
       border-radius: 2px;
+      margin: 2px 0;
     }
     .modal-overlay {
       position: fixed;
@@ -69,7 +67,7 @@
       visibility: visible;
       pointer-events: auto;
     }
-    .modal-content {
+    .modal-content, .debug-modal {
       position: absolute;
       top: 60px;
       right: 20px;
@@ -78,40 +76,20 @@
       border-radius: 1.2rem;
       padding: 1rem;
       width: auto;
-      min-width: 200px;
-      text-align: center;
+      min-width: 280px;
+      max-width: 400px;
       color: #f5e6ff;
     }
-    .modal-content h3 {
-      font-size: 1.1rem;
-      color: #f5d742;
-      margin-bottom: 0.8rem;
+    .debug-modal {
+      left: 20px;
+      right: auto;
     }
-    .modal-option {
-      background: rgba(106, 59, 181, 0.3);
-      padding: 0.4rem 0.8rem;
-      border-radius: 40px;
-      text-decoration: none;
-      color: #f5d742;
-      font-weight: 700;
-      font-size: 0.8rem;
-      display: block;
-      margin: 0.5rem 0;
-      border: 1px solid #f5d742;
-      cursor: pointer;
-    }
-    .modal-option:hover {
-      background: #f5d742;
-      color: #2d1b4e;
-    }
-    .close-modal {
-      background: #6a3bb5;
-      color: #f5d742;
-      border: none;
-      padding: 0.3rem 0.9rem;
-      border-radius: 30px;
-      cursor: pointer;
-      margin-top: 0.5rem;
+    .debug-modal pre {
+      background: #1a0a2e;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+      font-size: 0.7rem;
     }
     .dashboard {
       max-width: 1400px;
@@ -225,7 +203,19 @@
 <body>
 
 <div class="gold-navbar">
-  <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
+  <div style="display: flex; gap: 0.5rem;">
+    <div class="debug-btn" id="debugBtn">🐞</div>
+    <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
+<!-- Debug Modal -->
+<div id="debugModal" class="modal-overlay" style="z-index: 250;">
+  <div class="debug-modal">
+    <h3>🐞 Debug Info</h3>
+    <div id="debugContent">Loading...</div>
+    <button id="closeDebugBtn" class="close-modal" style="margin-top: 1rem;">Close</button>
+  </div>
 </div>
 
 <!-- Main Menu Modal -->
@@ -322,7 +312,7 @@
   {
     "imports": {
       "firebase/app": "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js",
-      "firebase/firestore": "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js",
+      "firebase/database": "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js",
       "firebase/auth": "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js"
     }
   }
@@ -330,7 +320,7 @@
 
 <script type="module">
   import { initializeApp } from "firebase/app";
-  import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
+  import { getDatabase, ref, set, onValue, push, remove, get } from "firebase/database";
   import { getAuth, signOut } from "firebase/auth";
 
   const firebaseConfig = {
@@ -343,9 +333,39 @@
     appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
   };
   const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  const db = getDatabase(app);
   const auth = getAuth(app);
 
+  // Debug logger
+  let lastError = null;
+  let lastOperation = null;
+  function logError(operation, error) {
+    lastError = { operation, error: error.message || error, timestamp: new Date().toISOString() };
+    console.error(operation, error);
+  }
+  function logSuccess(operation, data) {
+    lastOperation = { operation, data, timestamp: new Date().toISOString() };
+    console.log(operation, data);
+  }
+
+  // Debug modal update
+  async function updateDebugModal() {
+    const debugDiv = document.getElementById('debugContent');
+    let dbStatus = "unknown";
+    try {
+      const testRef = ref(db, '.info/connected');
+      const snapshot = await get(testRef);
+      dbStatus = snapshot.exists() ? "connected" : "disconnected";
+    } catch(e) { dbStatus = "error: " + e.message; }
+    debugDiv.innerHTML = `
+      <strong>Firebase DB:</strong> ${dbStatus}<br>
+      <strong>Last operation:</strong> ${lastOperation ? JSON.stringify(lastOperation) : 'none'}<br>
+      <strong>Last error:</strong> ${lastError ? JSON.stringify(lastError) : 'none'}<br>
+      <strong>Auth user:</strong> ${auth.currentUser ? auth.currentUser.email : 'none'}
+    `;
+  }
+
+  // Team icons mapping
   const teamIcons = {
     "Arsenal": "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png",
     "AC Milan": "44e0f58a-e5db-445b-9896-db22ea99b936.png",
@@ -381,16 +401,14 @@
     if (excludeCurrent && selectEl.value === excludeCurrent) selectEl.value = '';
   }
 
-  // ------------- STANDINGS (premier_league_standings) -------------
-  const standingsCol = collection(db, "premier_league_standings");
+  // Table CRUD
   let editingTeamKey = null;
-  function renderTable(snapshot) {
-    const teams = [];
-    snapshot.forEach(doc => teams.push({ id: doc.id, ...doc.data() }));
-    teams.sort((a,b) => b.pts - a.pts || b.gd - a.gd);
+  function renderTable(teams) {
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
-    teams.forEach((team, idx) => {
+    const teamArray = teams ? Object.entries(teams).map(([key, val]) => ({ key, ...val })) : [];
+    teamArray.sort((a,b) => b.pts - a.pts || b.gd - a.gd);
+    teamArray.forEach((team, idx) => {
       const row = tbody.insertRow();
       row.insertCell(0).innerText = idx+1;
       row.insertCell(1).innerHTML = `<div>${getTeamIconHtml(team.name)} ${team.name}</div>`;
@@ -401,20 +419,21 @@
       const editBtn = document.createElement('button');
       editBtn.innerText = '✏️';
       editBtn.className = 'edit-btn';
-      editBtn.onclick = () => openTeamForm(team.id, team);
+      editBtn.onclick = () => openTeamForm(team.key, team);
       const delBtn = document.createElement('button');
       delBtn.innerText = '🗑️';
       delBtn.className = 'delete-btn';
       delBtn.onclick = async () => {
         try {
-          await deleteDoc(doc(db, "premier_league_standings", team.id));
-        } catch(e) { alert(e.message); }
+          await remove(ref(db, `premier_league/table/${team.key}`));
+          logSuccess('deleteTeam', team.key);
+        } catch(e) { logError('deleteTeam', e); }
       };
       actions.appendChild(editBtn);
       actions.appendChild(delBtn);
     });
   }
-  onSnapshot(standingsCol, (snap) => renderTable(snap));
+  onValue(ref(db, 'premier_league/table'), (snap) => renderTable(snap.val()));
 
   function openTeamForm(key, data = null) {
     editingTeamKey = key;
@@ -436,23 +455,25 @@
     const teamData = { name, p, gd, pts };
     try {
       if (editingTeamKey) {
-        await updateDoc(doc(db, "premier_league_standings", editingTeamKey), teamData);
+        await set(ref(db, `premier_league/table/${editingTeamKey}`), teamData);
+        logSuccess('updateTeam', teamData);
       } else {
-        await addDoc(standingsCol, teamData);
+        const newRef = push(ref(db, 'premier_league/table'));
+        await set(newRef, teamData);
+        logSuccess('addTeam', teamData);
       }
       document.getElementById('teamForm').classList.remove('active');
-    } catch(e) { alert('Error saving team: ' + e.message); }
+    } catch(e) { logError('saveTeam', e); alert('Error saving team: ' + e.message); }
   };
   document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamForm').classList.remove('active');
 
-  // ------------- FIXTURES (premier_league_fixtures) -------------
-  const fixturesCol = collection(db, "premier_league_fixtures");
+  // Fixtures CRUD
   let editingFixtureKey = null;
-  function renderFixtures(snapshot) {
+  function renderFixtures(fixtures) {
     const tbody = document.getElementById('fixturesBody');
     tbody.innerHTML = '';
-    snapshot.forEach(doc => {
-      const f = doc.data();
+    if (!fixtures) return;
+    Object.entries(fixtures).forEach(([key, f]) => {
       const row = tbody.insertRow();
       row.insertCell(0).innerHTML = `<span class="date-badge">${f.date || ''}</span>`;
       row.insertCell(1).innerHTML = `<div>${getTeamIconHtml(f.home)} ${f.home} vs ${getTeamIconHtml(f.away)} ${f.away}</div>`;
@@ -460,18 +481,19 @@
       const actions = row.insertCell(3);
       const editBtn = document.createElement('button');
       editBtn.innerText = '✏️'; editBtn.className = 'edit-btn';
-      editBtn.onclick = () => openFixtureForm(doc.id, f);
+      editBtn.onclick = () => openFixtureForm(key, f);
       const delBtn = document.createElement('button');
       delBtn.innerText = '🗑️'; delBtn.className = 'delete-btn';
       delBtn.onclick = async () => {
         try {
-          await deleteDoc(doc(db, "premier_league_fixtures", doc.id));
-        } catch(e) { alert(e.message); }
+          await remove(ref(db, `premier_league/fixtures/${key}`));
+          logSuccess('deleteFixture', key);
+        } catch(e) { logError('deleteFixture', e); }
       };
       actions.appendChild(editBtn); actions.appendChild(delBtn);
     });
   }
-  onSnapshot(fixturesCol, (snap) => renderFixtures(snap));
+  onValue(ref(db, 'premier_league/fixtures'), (snap) => renderFixtures(snap.val()));
 
   function openFixtureForm(key, data = null) {
     editingFixtureKey = key;
@@ -494,46 +516,49 @@
     const fixData = { date, home, away, md };
     try {
       if (editingFixtureKey) {
-        await updateDoc(doc(db, "premier_league_fixtures", editingFixtureKey), fixData);
+        await set(ref(db, `premier_league/fixtures/${editingFixtureKey}`), fixData);
+        logSuccess('updateFixture', fixData);
       } else {
-        await addDoc(fixturesCol, fixData);
+        const newRef = push(ref(db, 'premier_league/fixtures'));
+        await set(newRef, fixData);
+        logSuccess('addFixture', fixData);
       }
       document.getElementById('fixtureForm').classList.remove('active');
-    } catch(e) { alert('Error saving fixture: ' + e.message); }
+    } catch(e) { logError('saveFixture', e); alert('Error saving fixture: ' + e.message); }
   };
   document.getElementById('cancelFixtureBtn').onclick = () => document.getElementById('fixtureForm').classList.remove('active');
 
-  // ------------- RESULTS (premier_league_results) -------------
-  const resultsCol = collection(db, "premier_league_results");
+  // Results CRUD
   let editingResultKey = null;
-  function renderResults(snapshot) {
+  function renderResults(results) {
     const tbody = document.getElementById('resultsBody');
     tbody.innerHTML = '';
-    snapshot.forEach(doc => {
-      const r = doc.data();
+    if (!results) return;
+    Object.entries(results).forEach(([key, r]) => {
+      const row = tbody.insertRow();
       let processed = r.matchText;
       teamList.forEach(team => {
         const regex = new RegExp(`\\b${team}\\b`, 'g');
         processed = processed.replace(regex, `${getTeamIconHtml(team, '24px')} ${team}`);
       });
-      const row = tbody.insertRow();
       row.insertCell(0).innerHTML = `<strong>${processed}</strong>`;
       row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>`;
       const actions = row.insertCell(2);
       const editBtn = document.createElement('button');
       editBtn.innerText = '✏️'; editBtn.className = 'edit-btn';
-      editBtn.onclick = () => openResultForm(doc.id, r);
+      editBtn.onclick = () => openResultForm(key, r);
       const delBtn = document.createElement('button');
       delBtn.innerText = '🗑️'; delBtn.className = 'delete-btn';
       delBtn.onclick = async () => {
         try {
-          await deleteDoc(doc(db, "premier_league_results", doc.id));
-        } catch(e) { alert(e.message); }
+          await remove(ref(db, `premier_league/results/${key}`));
+          logSuccess('deleteResult', key);
+        } catch(e) { logError('deleteResult', e); }
       };
       actions.appendChild(editBtn); actions.appendChild(delBtn);
     });
   }
-  onSnapshot(resultsCol, (snap) => renderResults(snap));
+  onValue(ref(db, 'premier_league/results'), (snap) => renderResults(snap.val()));
 
   function openResultForm(key, data = null) {
     editingResultKey = key;
@@ -549,16 +574,25 @@
     const resData = { matchText: text, md };
     try {
       if (editingResultKey) {
-        await updateDoc(doc(db, "premier_league_results", editingResultKey), resData);
+        await set(ref(db, `premier_league/results/${editingResultKey}`), resData);
+        logSuccess('updateResult', resData);
       } else {
-        await addDoc(resultsCol, resData);
+        const newRef = push(ref(db, 'premier_league/results'));
+        await set(newRef, resData);
+        logSuccess('addResult', resData);
       }
       document.getElementById('resultForm').classList.remove('active');
-    } catch(e) { alert('Error saving result: ' + e.message); }
+    } catch(e) { logError('saveResult', e); alert('Error saving result: ' + e.message); }
   };
   document.getElementById('cancelResultBtn').onclick = () => document.getElementById('resultForm').classList.remove('active');
 
-  // Menu
+  // Menus
+  const debugBtn = document.getElementById('debugBtn');
+  const debugModal = document.getElementById('debugModal');
+  const closeDebug = document.getElementById('closeDebugBtn');
+  debugBtn.onclick = async () => { await updateDebugModal(); debugModal.classList.add('active'); };
+  closeDebug.onclick = () => debugModal.classList.remove('active');
+
   const hamburger = document.getElementById('hamburgerBtn');
   const modalOverlay = document.getElementById('modalOverlay');
   const closeModal = document.getElementById('closeModalBtn');
@@ -566,7 +600,15 @@
   closeModal.onclick = () => modalOverlay.classList.remove('active');
   document.getElementById('rulesBtn').onclick = () => window.location.href = 'rules.html';
   document.getElementById('playerTitlesBtn').onclick = () => window.location.href = 'player-titles.html';
-  document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href = 'login.html'; };
+  document.getElementById('logoutBtn').onclick = async () => {
+    await signOut(auth);
+    window.location.href = 'login.html';
+  };
+
+  // Initial debug update
+  setTimeout(updateDebugModal, 1000);
 </script>
 </body>
 </html>
+
+
