@@ -572,7 +572,7 @@
     <div class="card-content">
       <div style="overflow-x:auto;">
         <table class="stats-table" id="leagueTable">
-          <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th></tr></thead>
+          <thead>匠<th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th> </thead>
           <tbody id="leagueTableBody"></tbody>
         </table>
       </div>
@@ -595,7 +595,7 @@
         <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
       </div>
       <div class="scrollable-table">
-        <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table>
+        <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th> </thead><tbody id="fixturesTableBody"></tbody></table>
       </div>
     </div>
   </div>
@@ -604,7 +604,7 @@
     <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
     <div class="card-content collapsed" id="resultsContent">
       <div class="scrollable-table">
-        <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></table>
+        <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th> </thead><tbody id="resultsTableBody"></tbody></table>
       </div>
     </div>
   </div>
@@ -635,22 +635,22 @@
   function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
   if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-  // LEAGUE DATA AFTER MD20 RESULTS + MD21 (Liverpool 1-1 Chelsea, PSG 1-0 Inter)
+  // LEAGUE DATA AFTER ALL MD21 RESULTS (including all May 3 matches)
   const LEAGUE_DATA = [
-    { pos: 1, club: "Real Madrid", p: 20, gd: 27, pts: 58 },
+    { pos: 1, club: "Real Madrid", p: 21, gd: 24, pts: 58 },
     { pos: 2, club: "Liverpool", p: 21, gd: 39, pts: 51 },
-    { pos: 3, club: "Dortmund", p: 20, gd: 9, pts: 37 },
+    { pos: 3, club: "Dortmund", p: 21, gd: 12, pts: 40 },
     { pos: 4, club: "Barcelona", p: 20, gd: 0, pts: 37 },
-    { pos: 5, club: "Arsenal", p: 20, gd: 6, pts: 32 },
-    { pos: 6, club: "Man City", p: 20, gd: 5, pts: 31 },
+    { pos: 5, club: "Arsenal", p: 21, gd: 6, pts: 35 },
+    { pos: 6, club: "Man City", p: 21, gd: 5, pts: 34 },
     { pos: 7, club: "PSG", p: 21, gd: -16, pts: 29 },
     { pos: 8, club: "Chelsea", p: 21, gd: 8, pts: 28 },
-    { pos: 9, club: "AC Milan", p: 20, gd: -14, pts: 19 },
-    { pos: 10, club: "Napoli", p: 20, gd: -16, pts: 14 },
+    { pos: 9, club: "AC Milan", p: 21, gd: -14, pts: 22 },
+    { pos: 10, club: "Napoli", p: 21, gd: -19, pts: 14 },
     { pos: 11, club: "Inter Milan", p: 21, gd: -14, pts: 11 },
     { pos: 12, club: "Juventus", p: 20, gd: -20, pts: 11 },
-    { pos: 13, club: "Newcastle", p: 20, gd: -46, pts: 9 },
-    { pos: 14, club: "Atletico", p: 20, gd: -26, pts: 7 }
+    { pos: 13, club: "Newcastle", p: 21, gd: -49, pts: 9 },
+    { pos: 14, club: "Atletico", p: 21, gd: -29, pts: 7 }
   ];
 
   const playerMap = {
@@ -704,22 +704,22 @@
     return teamName;
   }
 
-  // LAST 5 RESULTS: updated with MD21 results (Liverpool D, Chelsea D, PSG W, Inter L)
+  // LAST 5 RESULTS: updated with all MD21 results (May 3)
   const last5Exact = {
-    "Real Madrid":   ["WF", "WF", "W", "WF", "WF"],
+    "Real Madrid":   ["WF", "WF", "W", "WF", "WF", "L"],
     "Liverpool":     ["W", "W", "W", "WF", "W", "D"],
-    "Dortmund":      ["D", "WF", "L", "F", "WF"],
+    "Dortmund":      ["D", "WF", "L", "F", "WF", "W"],
     "Barcelona":     ["LF", "W", "W", "WF", "LF"],
-    "Arsenal":       ["L", "L", "W", "W", "WF"],
-    "Man City":      ["F", "W", "LF", "WF", "W"],
+    "Arsenal":       ["L", "L", "W", "W", "WF", "WF"],
+    "Man City":      ["F", "W", "LF", "WF", "W", "WF"],
     "Chelsea":       ["F", "WF", "W", "L", "LF", "D"],
     "PSG":           ["WF", "L", "WF", "LF", "LF", "W"],
-    "AC Milan":      ["W", "WF", "LF", "LF", "L"],
-    "Napoli":        ["LF", "LF", "L", "F", "LF"],
+    "AC Milan":      ["W", "WF", "LF", "LF", "L", "WF"],
+    "Napoli":        ["LF", "LF", "L", "F", "LF", "LF"],
     "Inter Milan":   ["WF", "L", "L", "L", "WF", "L"],
     "Juventus":      ["D", "LF", "LF", "W", "WF"],
-    "Atletico":      ["LF", "L", "L", "LF", "LF"],
-    "Newcastle":     ["L", "LF", "WF", "LF", "L"]
+    "Atletico":      ["LF", "L", "L", "LF", "LF", "LF"],
+    "Newcastle":     ["L", "LF", "WF", "LF", "L", "LF"]
   };
 
   const teamResults = {};
@@ -756,14 +756,10 @@
     26: "May 8"
   };
 
-  // Fixture list with MD21 matches REMOVED (Liverpool vs Chelsea and PSG vs Inter have been played)
+  // Fixture list with all MD21 matches removed that have been played (Dortmund-Real Madrid, Newcastle-Arsenal, Man City-Napoli, AC Milan-Atletico)
   const fixtureList = [
-    // MD21 (remaining fixtures except the two played)
+    // MD21 remaining fixtures (only Juventus vs Barcelona not played among original)
     { md: 21, home: "Juventus", away: "FC Barcelona" },
-    { md: 21, home: "Real Madrid", away: "Borussia Dortmund" },
-    { md: 21, home: "AC Milan", away: "Atlético Madrid" },
-    { md: 21, home: "Manchester City", away: "Napoli" },
-    { md: 21, home: "Newcastle United", away: "Arsenal" },
     // MD22
     { md: 22, home: "Paris Saint-Germain", away: "FC Barcelona" },
     { md: 22, home: "Real Madrid", away: "Juventus" },
@@ -815,8 +811,12 @@
     awayPlayer: playerMap[f.away] || ""
   }));
 
-  // RESULTS_DATA: added MD21 results (Liverpool 1-1 Chelsea, PSG 1-0 Inter) at the top
+  // RESULTS_DATA: added all MD21 results (including new May 3 matches)
   const RESULTS_DATA = [
+    { matchText: "Borussia Dortmund 5 - 2 Real Madrid", md: 21 },
+    { matchText: "Arsenal 3 - 0 Newcastle United (Forfeited - No Reply)", md: 21 },
+    { matchText: "Manchester City 3 - 0 Napoli (Forfeited - No Reply)", md: 21 },
+    { matchText: "AC Milan 3 - 0 Atlético Madrid (Forfeited - No Reply)", md: 21 },
     { matchText: "Liverpool 1 - 1 Chelsea", md: 21 },
     { matchText: "Paris Saint-Germain 1 - 0 Inter Milan", md: 21 },
     // MD20 results
