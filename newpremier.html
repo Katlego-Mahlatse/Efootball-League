@@ -14,6 +14,7 @@
       background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 100%);
       font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
       color: #f5f0ff;
+      padding-bottom: 2rem;
     }
     .gold-navbar {
       background: linear-gradient(135deg, #d4af37, #f5d742);
@@ -38,7 +39,6 @@
       align-items: center;
       gap: 4px;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       transition: transform 0.2s, background 0.2s;
       border: 1.5px solid #f5d742;
     }
@@ -59,7 +59,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: transparent;
+      background-color: rgba(0,0,0,0.7);
       z-index: 200;
       visibility: hidden;
       pointer-events: none;
@@ -72,39 +72,39 @@
       position: absolute;
       top: 60px;
       right: 20px;
-      background: linear-gradient(135deg, #f5d742, #e6c42c);
+      background: linear-gradient(135deg, #2d1b4e, #1f0f3a);
+      border: 2px solid #f5d742;
       border-radius: 1.2rem;
-      padding: 1rem 1.2rem;
+      padding: 1rem;
       width: auto;
       min-width: 200px;
       text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-      border: 1px solid #6a3bb5;
+      color: #f5e6ff;
     }
     .modal-content h3 {
       font-size: 1.1rem;
-      color: #4a1d8c;
+      color: #f5d742;
       margin-bottom: 0.8rem;
     }
     .modal-option {
-      background: rgba(106, 59, 181, 0.15);
+      background: rgba(106, 59, 181, 0.3);
       padding: 0.4rem 0.8rem;
       border-radius: 40px;
       text-decoration: none;
-      color: #3c1a70;
+      color: #f5d742;
       font-weight: 700;
       font-size: 0.8rem;
       display: block;
       margin: 0.5rem 0;
-      border: 1px solid #6a3bb5;
+      border: 1px solid #f5d742;
       cursor: pointer;
     }
     .modal-option:hover {
-      background: #6a3bb5;
-      color: #f5d742;
+      background: #f5d742;
+      color: #2d1b4e;
     }
     .close-modal {
-      background: #4a1d8c;
+      background: #6a3bb5;
       color: #f5d742;
       border: none;
       padding: 0.3rem 0.9rem;
@@ -123,12 +123,16 @@
       border-radius: 2rem;
       border: 1px solid rgba(245, 215, 66, 0.4);
       overflow: hidden;
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
     }
     .card-header {
       padding: 1rem 1.5rem;
       background: rgba(30, 15, 55, 0.9);
       border-bottom: 2px solid #f5d742;
+    }
+    .card-header h2 {
+      font-size: 1.4rem;
+      color: #f5e6ff;
     }
     .stats-table, .inner-table {
       width: 100%;
@@ -189,6 +193,7 @@
   <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
 </div>
 
+<!-- Main Menu Modal -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal-content">
     <h3>TOURNAMENTS</h3>
@@ -200,9 +205,11 @@
 </div>
 
 <div class="dashboard">
-  <!-- League Table -->
+  <!-- League Table Card (no Add button) -->
   <div class="card">
-    <div class="card-header"><h2>🏆 PREMIER LEAGUE TABLE</h2></div>
+    <div class="card-header">
+      <h2>🏆 PREMIER LEAGUE TABLE</h2>
+    </div>
     <div style="overflow-x:auto;">
       <table class="stats-table" id="leagueTable">
         <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th></tr></thead>
@@ -211,9 +218,11 @@
     </div>
   </div>
 
-  <!-- Fixtures -->
+  <!-- Fixtures Card (no Add button, no Actions column) -->
   <div class="card">
-    <div class="card-header"><h2>📅 FIXTURES</h2></div>
+    <div class="card-header">
+      <h2>📅 FIXTURES</h2>
+    </div>
     <div class="filter-container"><input type="text" id="fixtureSearch" class="filter-input" placeholder="🔍 Search team..."></div>
     <div style="overflow-x:auto;">
       <table class="inner-table" id="fixturesTable">
@@ -223,9 +232,11 @@
     </div>
   </div>
 
-  <!-- Results -->
+  <!-- Results Card (no Add button, no Actions column) -->
   <div class="card">
-    <div class="card-header"><h2>📝 RESULTS</h2></div>
+    <div class="card-header">
+      <h2>📝 RESULTS</h2>
+    </div>
     <div style="overflow-x:auto;">
       <table class="inner-table" id="resultsTable">
         <thead><tr><th>Match</th><th>Match Day</th></tr></thead>
@@ -239,7 +250,7 @@
   {
     "imports": {
       "firebase/app": "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js",
-      "firebase/firestore": "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js",
+      "firebase/database": "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js",
       "firebase/auth": "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js"
     }
   }
@@ -247,7 +258,7 @@
 
 <script type="module">
   import { initializeApp } from "firebase/app";
-  import { getFirestore, collection, onSnapshot } from "firebase/firestore";
+  import { getDatabase, ref, onValue } from "firebase/database";
   import { getAuth, signOut } from "firebase/auth";
 
   const firebaseConfig = {
@@ -260,9 +271,10 @@
     appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
   };
   const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  const db = getDatabase(app);
   const auth = getAuth(app);
 
+  // Team icons mapping
   const teamIcons = {
     "Arsenal": "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png",
     "AC Milan": "44e0f58a-e5db-445b-9896-db22ea99b936.png",
@@ -287,14 +299,15 @@
     return team;
   }
 
-  // Table – top-level collection "premier_league_standings"
-  const standingsCol = collection(db, "premier_league_standings");
-  onSnapshot(standingsCol, (snapshot) => {
-    const teams = [];
-    snapshot.forEach(doc => teams.push({ id: doc.id, ...doc.data() }));
-    teams.sort((a,b) => b.pts - a.pts || b.gd - a.gd);
+  // ---------- LEAGUE TABLE ----------
+  const tableRef = ref(db, 'premier_league/table');
+  onValue(tableRef, (snap) => {
+    const data = snap.val();
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
+    if (!data) return;
+    const teams = Object.values(data);
+    teams.sort((a,b) => b.pts - a.pts || b.gd - a.gd);
     teams.forEach((team, idx) => {
       const row = tbody.insertRow();
       row.insertCell(0).innerText = idx+1;
@@ -305,12 +318,11 @@
     });
   });
 
-  // Fixtures – top-level collection "premier_league_fixtures"
-  const fixturesCol = collection(db, "premier_league_fixtures");
+  // ---------- FIXTURES ----------
+  const fixturesRef = ref(db, 'premier_league/fixtures');
   let fixturesData = [];
-  onSnapshot(fixturesCol, (snapshot) => {
-    fixturesData = [];
-    snapshot.forEach(doc => fixturesData.push({ id: doc.id, ...doc.data() }));
+  onValue(fixturesRef, (snap) => {
+    fixturesData = snap.val() ? Object.values(snap.val()) : [];
     renderFixtures();
   });
   function renderFixtures() {
@@ -327,13 +339,14 @@
   }
   document.getElementById('fixtureSearch')?.addEventListener('input', renderFixtures);
 
-  // Results – top-level collection "premier_league_results"
-  const resultsCol = collection(db, "premier_league_results");
-  onSnapshot(resultsCol, (snapshot) => {
+  // ---------- RESULTS ----------
+  const resultsRef = ref(db, 'premier_league/results');
+  onValue(resultsRef, (snap) => {
+    const data = snap.val();
     const tbody = document.getElementById('resultsBody');
     tbody.innerHTML = '';
-    snapshot.forEach(doc => {
-      const r = doc.data();
+    if (!data) return;
+    Object.values(data).forEach(r => {
       let processed = r.matchText;
       teamList.forEach(team => {
         const regex = new RegExp(`\\b${team}\\b`, 'g');
@@ -345,7 +358,7 @@
     });
   });
 
-  // Menu
+  // ---------- MENU MODAL ----------
   const hamburger = document.getElementById('hamburgerBtn');
   const modalOverlay = document.getElementById('modalOverlay');
   const closeModal = document.getElementById('closeModalBtn');
@@ -353,7 +366,10 @@
   closeModal.onclick = () => modalOverlay.classList.remove('active');
   document.getElementById('rulesBtn').onclick = () => window.location.href = 'rules.html';
   document.getElementById('playerTitlesBtn').onclick = () => window.location.href = 'player-titles.html';
-  document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href = 'login.html'; };
+  document.getElementById('logoutBtn').onclick = async () => {
+    await signOut(auth);
+    window.location.href = 'login.html';
+  };
 </script>
 </body>
 </html>
