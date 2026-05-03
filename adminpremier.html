@@ -312,7 +312,7 @@
   {
     "imports": {
       "firebase/app": "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js",
-      "firebase/database": "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js",
+      "firebase/firestore": "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js",
       "firebase/auth": "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js"
     }
   }
@@ -320,7 +320,7 @@
 
 <script type="module">
   import { initializeApp } from "firebase/app";
-  import { getDatabase, ref, set, onValue, push, remove, get } from "firebase/database";
+  import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query } from "firebase/firestore";
   import { getAuth, signOut } from "firebase/auth";
 
   const firebaseConfig = {
@@ -333,10 +333,9 @@
     appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
   };
   const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+  const db = getFirestore(app);
   const auth = getAuth(app);
 
-  // Debug logger
   let lastError = null;
   let lastOperation = null;
   function logError(operation, error) {
@@ -348,24 +347,16 @@
     console.log(operation, data);
   }
 
-  // Debug modal update
   async function updateDebugModal() {
     const debugDiv = document.getElementById('debugContent');
-    let dbStatus = "unknown";
-    try {
-      const testRef = ref(db, '.info/connected');
-      const snapshot = await get(testRef);
-      dbStatus = snapshot.exists() ? "connected" : "disconnected";
-    } catch(e) { dbStatus = "error: " + e.message; }
     debugDiv.innerHTML = `
-      <strong>Firebase DB:</strong> ${dbStatus}<br>
+      <strong>Firestore:</strong> active<br>
       <strong>Last operation:</strong> ${lastOperation ? JSON.stringify(lastOperation) : 'none'}<br>
       <strong>Last error:</strong> ${lastError ? JSON.stringify(lastError) : 'none'}<br>
       <strong>Auth user:</strong> ${auth.currentUser ? auth.currentUser.email : 'none'}
     `;
   }
 
-  // Team icons mapping
   const teamIcons = {
     "Arsenal": "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png",
     "AC Milan": "44e0f58a-e5db-445b-9896-db22ea99b936.png",
@@ -401,14 +392,16 @@
     if (excludeCurrent && selectEl.value === excludeCurrent) selectEl.value = '';
   }
 
-  // Table CRUD
+  // ------------- STANDINGS (premier_league/standings/teams) -------------
+  const standingsCol = collection(db, "premier_league", "standings", "teams");
   let editingTeamKey = null;
-  function renderTable(teams) {
+  function renderTable(snapshot) {
+    const teams = [];
+    snapshot.forEach(doc => teams.push({ id: doc.id, ...doc.data() }));
+    teams.sort((a,b) => b.pts - a.pts || b.gd - a.gd);
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
-    const teamArray = teams ? Object.entries(teams).map(([key, val]) => ({ key, ...val })) : [];
-    teamArray.sort((a,b) => b.pts - a.pts || b.gd - a.gd);
-    teamArray.forEach((team, idx) => {
+    teams.forEach((team, idx) => {
       const row = tbody.insertRow();
       row.insertCell(0).innerText = idx+1;
       row.insertCell(1).innerHTML = `<div>${getTeamIconHtml(team.name)} ${team.name}</div>`;
@@ -419,21 +412,21 @@
       const editBtn = document.createElement('button');
       editBtn.innerText = '✏️';
       editBtn.className = 'edit-btn';
-      editBtn.onclick = () => openTeamForm(team.key, team);
+      editBtn.onclick = () => openTeamForm(team.id, team);
       const delBtn = document.createElement('button');
       delBtn.innerText = '🗑️';
       delBtn.className = 'delete-btn';
       delBtn.onclick = async () => {
         try {
-          await remove(ref(db, `premier_league/table/${team.key}`));
-          logSuccess('deleteTeam', team.key);
-        } catch(e) { logError('deleteTeam', e); }
+          await deleteDoc(doc(db, "premier_league", "standings", "teams", team.id));
+          logSuccess('deleteTeam', team.id);
+        } catch(e) { logError('deleteTeam', e); alert(e.message); }
       };
       actions.appendChild(editBtn);
       actions.appendChild(delBtn);
     });
   }
-  onValue(ref(db, 'premier_league/table'), (snap) => renderTable(snap.val()));
+  onSnapshot(standingsCol, (snap) => renderTable(snap));
 
   function openTeamForm(key, data = null) {
     editingTeamKey = key;
@@ -455,11 +448,10 @@
     const teamData = { name, p, gd, pts };
     try {
       if (editingTeamKey) {
-        await set(ref(db, `premier_league/table/${editingTeamKey}`), teamData);
+        await updateDoc(doc(db, "premier_league", "standings", "teams", editingTeamKey), teamData);
         logSuccess('updateTeam', teamData);
       } else {
-        const newRef = push(ref(db, 'premier_league/table'));
-        await set(newRef, teamData);
+        await addDoc(standingsCol, teamData);
         logSuccess('addTeam', teamData);
       }
       document.getElementById('teamForm').classList.remove('active');
@@ -467,13 +459,14 @@
   };
   document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamForm').classList.remove('active');
 
-  // Fixtures CRUD
+  // ------------- FIXTURES (premier_league/fixtures/list) -------------
+  const fixturesCol = collection(db, "premier_league", "fixtures", "list");
   let editingFixtureKey = null;
-  function renderFixtures(fixtures) {
+  function renderFixtures(snapshot) {
     const tbody = document.getElementById('fixturesBody');
     tbody.innerHTML = '';
-    if (!fixtures) return;
-    Object.entries(fixtures).forEach(([key, f]) => {
+    snapshot.forEach(doc => {
+      const f = doc.data();
       const row = tbody.insertRow();
       row.insertCell(0).innerHTML = `<span class="date-badge">${f.date || ''}</span>`;
       row.insertCell(1).innerHTML = `<div>${getTeamIconHtml(f.home)} ${f.home} vs ${getTeamIconHtml(f.away)} ${f.away}</div>`;
@@ -481,19 +474,19 @@
       const actions = row.insertCell(3);
       const editBtn = document.createElement('button');
       editBtn.innerText = '✏️'; editBtn.className = 'edit-btn';
-      editBtn.onclick = () => openFixtureForm(key, f);
+      editBtn.onclick = () => openFixtureForm(doc.id, f);
       const delBtn = document.createElement('button');
       delBtn.innerText = '🗑️'; delBtn.className = 'delete-btn';
       delBtn.onclick = async () => {
         try {
-          await remove(ref(db, `premier_league/fixtures/${key}`));
-          logSuccess('deleteFixture', key);
-        } catch(e) { logError('deleteFixture', e); }
+          await deleteDoc(doc(db, "premier_league", "fixtures", "list", doc.id));
+          logSuccess('deleteFixture', doc.id);
+        } catch(e) { logError('deleteFixture', e); alert(e.message); }
       };
       actions.appendChild(editBtn); actions.appendChild(delBtn);
     });
   }
-  onValue(ref(db, 'premier_league/fixtures'), (snap) => renderFixtures(snap.val()));
+  onSnapshot(fixturesCol, (snap) => renderFixtures(snap));
 
   function openFixtureForm(key, data = null) {
     editingFixtureKey = key;
@@ -516,11 +509,10 @@
     const fixData = { date, home, away, md };
     try {
       if (editingFixtureKey) {
-        await set(ref(db, `premier_league/fixtures/${editingFixtureKey}`), fixData);
+        await updateDoc(doc(db, "premier_league", "fixtures", "list", editingFixtureKey), fixData);
         logSuccess('updateFixture', fixData);
       } else {
-        const newRef = push(ref(db, 'premier_league/fixtures'));
-        await set(newRef, fixData);
+        await addDoc(fixturesCol, fixData);
         logSuccess('addFixture', fixData);
       }
       document.getElementById('fixtureForm').classList.remove('active');
@@ -528,37 +520,38 @@
   };
   document.getElementById('cancelFixtureBtn').onclick = () => document.getElementById('fixtureForm').classList.remove('active');
 
-  // Results CRUD
+  // ------------- RESULTS (premier_league/results/list) -------------
+  const resultsCol = collection(db, "premier_league", "results", "list");
   let editingResultKey = null;
-  function renderResults(results) {
+  function renderResults(snapshot) {
     const tbody = document.getElementById('resultsBody');
     tbody.innerHTML = '';
-    if (!results) return;
-    Object.entries(results).forEach(([key, r]) => {
-      const row = tbody.insertRow();
+    snapshot.forEach(doc => {
+      const r = doc.data();
       let processed = r.matchText;
       teamList.forEach(team => {
         const regex = new RegExp(`\\b${team}\\b`, 'g');
         processed = processed.replace(regex, `${getTeamIconHtml(team, '24px')} ${team}`);
       });
+      const row = tbody.insertRow();
       row.insertCell(0).innerHTML = `<strong>${processed}</strong>`;
       row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>`;
       const actions = row.insertCell(2);
       const editBtn = document.createElement('button');
       editBtn.innerText = '✏️'; editBtn.className = 'edit-btn';
-      editBtn.onclick = () => openResultForm(key, r);
+      editBtn.onclick = () => openResultForm(doc.id, r);
       const delBtn = document.createElement('button');
       delBtn.innerText = '🗑️'; delBtn.className = 'delete-btn';
       delBtn.onclick = async () => {
         try {
-          await remove(ref(db, `premier_league/results/${key}`));
-          logSuccess('deleteResult', key);
-        } catch(e) { logError('deleteResult', e); }
+          await deleteDoc(doc(db, "premier_league", "results", "list", doc.id));
+          logSuccess('deleteResult', doc.id);
+        } catch(e) { logError('deleteResult', e); alert(e.message); }
       };
       actions.appendChild(editBtn); actions.appendChild(delBtn);
     });
   }
-  onValue(ref(db, 'premier_league/results'), (snap) => renderResults(snap.val()));
+  onSnapshot(resultsCol, (snap) => renderResults(snap));
 
   function openResultForm(key, data = null) {
     editingResultKey = key;
@@ -574,11 +567,10 @@
     const resData = { matchText: text, md };
     try {
       if (editingResultKey) {
-        await set(ref(db, `premier_league/results/${editingResultKey}`), resData);
+        await updateDoc(doc(db, "premier_league", "results", "list", editingResultKey), resData);
         logSuccess('updateResult', resData);
       } else {
-        const newRef = push(ref(db, 'premier_league/results'));
-        await set(newRef, resData);
+        await addDoc(resultsCol, resData);
         logSuccess('addResult', resData);
       }
       document.getElementById('resultForm').classList.remove('active');
@@ -600,12 +592,8 @@
   closeModal.onclick = () => modalOverlay.classList.remove('active');
   document.getElementById('rulesBtn').onclick = () => window.location.href = 'rules.html';
   document.getElementById('playerTitlesBtn').onclick = () => window.location.href = 'player-titles.html';
-  document.getElementById('logoutBtn').onclick = async () => {
-    await signOut(auth);
-    window.location.href = 'login.html';
-  };
+  document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href = 'login.html'; };
 
-  // Initial debug update
   setTimeout(updateDebugModal, 1000);
 </script>
 </body>
