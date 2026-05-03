@@ -635,7 +635,7 @@
   function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
   if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-  // LEAGUE DATA AFTER ALL MD20 RESULTS (Inter Milan forfeit win, not No Contest)
+  // LEAGUE DATA AFTER ALL MD20 RESULTS (PSG forfeit win, Inter forfeit win, etc.)
   const LEAGUE_DATA = [
     { pos: 1, club: "Real Madrid", p: 20, gd: 27, pts: 58 },
     { pos: 2, club: "Liverpool", p: 20, gd: 39, pts: 50 },
@@ -644,13 +644,13 @@
     { pos: 5, club: "Arsenal", p: 20, gd: 6, pts: 32 },
     { pos: 6, club: "Man City", p: 20, gd: 5, pts: 31 },
     { pos: 7, club: "Chelsea", p: 20, gd: 8, pts: 27 },
-    { pos: 8, club: "PSG", p: 20, gd: -17, pts: 23 },
+    { pos: 8, club: "PSG", p: 20, gd: -17, pts: 26 },
     { pos: 9, club: "AC Milan", p: 20, gd: -14, pts: 19 },
     { pos: 10, club: "Napoli", p: 20, gd: -16, pts: 14 },
     { pos: 11, club: "Inter Milan", p: 20, gd: -13, pts: 11 },
     { pos: 12, club: "Juventus", p: 20, gd: -20, pts: 11 },
     { pos: 13, club: "Newcastle", p: 20, gd: -46, pts: 9 },
-    { pos: 14, club: "Atletico", p: 20, gd: -23, pts: 7 }
+    { pos: 14, club: "Atletico", p: 20, gd: -26, pts: 7 }
   ];
 
   const playerMap = {
@@ -704,8 +704,7 @@
     return teamName;
   }
 
-  // LAST 5 RESULTS: updated with all MD20 results (newest on left)
-  // Inter Milan MD20 = WF (forfeit win), Barcelona MD20 = LF (forfeit loss)
+  // LAST 5 RESULTS: updated with PSG forfeit win (not No Contest)
   const last5Exact = {
     "Real Madrid":   ["WF", "WF", "W", "WF", "WF"],
     "Liverpool":     ["W", "W", "W", "WF", "W"],
@@ -714,12 +713,12 @@
     "Arsenal":       ["L", "L", "W", "W", "WF"],
     "Man City":      ["F", "W", "LF", "WF", "W"],
     "Chelsea":       ["F", "WF", "W", "L", "LF"],
-    "PSG":           ["F", "L", "WF", "LF", "LF"],
+    "PSG":           ["WF", "L", "WF", "LF", "LF"],   // MD20 forfeit win
     "AC Milan":      ["W", "WF", "LF", "LF", "L"],
     "Napoli":        ["LF", "LF", "L", "F", "LF"],
     "Inter Milan":   ["WF", "L", "L", "L", "WF"],
     "Juventus":      ["D", "LF", "LF", "W", "WF"],
-    "Atletico":      ["F", "L", "L", "LF", "LF"],
+    "Atletico":      ["LF", "L", "L", "LF", "LF"],    // MD20 forfeit loss
     "Newcastle":     ["L", "LF", "WF", "LF", "L"]
   };
 
@@ -819,11 +818,11 @@
   }));
 
   const RESULTS_DATA = [
-    // MD20 results (all) - Inter Milan forfeit win (not No Contest)
+    // MD20 results (all) - PSG forfeit win (not No Contest)
+    { matchText: "Paris Saint-Germain 3 - 0 Atlético Madrid (Forfeit win PSG)", md: 20 },
     { matchText: "Inter Milan 3 - 0 FC Barcelona (Forfeit win Inter Milan)", md: 20 },
     { matchText: "Real Madrid 3 - 0 Napoli (Forfeit win Real Madrid)", md: 20 },
     { matchText: "Manchester City F - F Chelsea (No Contest)", md: 20 },
-    { matchText: "Paris Saint-Germain F - F Atlético Madrid (No Contest)", md: 20 },
     { matchText: "Borussia Dortmund 0 - 0 Juventus", md: 20 },
     { matchText: "AC Milan 2 - 1 Arsenal", md: 20 },
     { matchText: "Liverpool 7 - 0 Newcastle United", md: 20 },
