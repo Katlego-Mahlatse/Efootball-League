@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>Premier League · eFootball 412</title>
   <style>
-    /* Same CSS as admin but without .edit-btn, .delete-btn, .add-btn, and action column styles */
+    /* exactly the same CSS as admin but without .edit-btn, .delete-btn, .add-btn, and action column */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 100%); font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif; color: #f5f0ff; padding-bottom: 2rem; }
     .gold-navbar { background: linear-gradient(135deg, #d4af37, #f5d742); padding: 0.4rem 1.2rem; display: flex; justify-content: flex-end; align-items: center; gap: 0.8rem; position: sticky; top: 0; z-index: 100; }
@@ -36,7 +36,7 @@
     .stats-table th, .inner-table th { text-align: left; padding: 0.8rem; background: rgba(55,35,95,0.7); border-bottom: 1px solid #f5d742; }
     .stats-table td, .inner-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(245,215,66,0.2); }
     .team-icon-sm { width: 30px; height: 30px; object-fit: contain; vertical-align: middle; margin-right: 8px; }
-    .team-icon { width: 40px; height: 40px; object-fit: contain; vertical-align: middle; margin-right: 8px; }
+    .team-icon { width: 40px; height: 40px; object-fit: contain; vertical-align: middle; margin-right: 8px; display: inline-block; }
     .rank-cell { font-weight: 700; width: 60px; }
     .pos-with-bar { display: flex; align-items: center; gap: 6px; }
     .vertical-bar { width: 4px; height: 18px; border-radius: 2px; }
@@ -126,10 +126,18 @@
 
   const teamIcons = { "Arsenal":"b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png","AC Milan":"44e0f58a-e5db-445b-9896-db22ea99b936.png","PSG":"4dea795d-a516-46ae-bd34-07a784693d80.png","Barcelona":"IMG_20260421_085117.jpg","Inter Milan":"IMG_20260421_092951.png","Atletico":"IMG_20260421_093024.png","Newcastle":"IMG_20260421_093046.png","Napoli":"IMG_20260421_100318.jpg","Chelsea":"IMG_20260421_100354.jpg","Dortmund":"01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg","Real Madrid":"21259ea4-042f-48ff-902f-1e776d27fe58.jpeg","Man City":"9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg","Liverpool":"269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg","Juventus":"IMG_20260421_151224.jpg" };
   const teamList = Object.keys(teamIcons);
-  function getTeamIconHtml(team, cls="team-icon-sm") { const src=teamIcons[team]; return src ? `<img class="${cls}" src="${src}">` : team; }
+  function getTeamIconHtml(team, cls="team-icon-sm") { const src = teamIcons[team]; return src ? `<img class="${cls}" src="${src}">` : team; }
 
-  let allResultsCache = [];
-  onValue(ref(db, 'premier_league/results'), (snap) => { allResultsCache = snap.val() ? Object.values(snap.val()) : []; renderLeagueTable(); });
+  const playerMap = { "Barcelona":"~Rea🫡","Inter Milan":"Mali","Dortmund":"~Qhawe 🤍","Juventus":"Izu","Atletico":"~Stalker.","PSG":"~MJ","Napoli":"~PrettyBoy Tendancies. 👅","Real Madrid":"~Karabo","Arsenal":"Kath","AC Milan":"Tapz","Chelsea":"~Zazo","Man City":"gry","Liverpool":"🅿️","Newcastle":"~Oratile" };
+
+  let currentView = "team";
+  let showFormArrows = true;
+  let showLast5 = true;
+
+  let teamsData = [];
+  let fixturesData = [];
+  let resultsData = [];
+
   function getResultStatusForTeam(team, resultText) {
     const lower = resultText.toLowerCase();
     if (lower.includes("no contest") || lower.includes("f - f")) return "F";
@@ -149,14 +157,16 @@
     }
     return null;
   }
+
   function getTeamLast5(team) {
-    const teamResults = allResultsCache.filter(r => r.matchText.includes(team)).sort((a,b) => (b.md||0) - (a.md||0));
+    const teamResults = resultsData.filter(r => r.matchText.includes(team)).sort((a,b) => (b.md||0) - (a.md||0));
     const last5Status = teamResults.slice(0,5).map(r => getResultStatusForTeam(team, r.matchText)).filter(s => s);
     while(last5Status.length < 5) last5Status.push(null);
     return last5Status.reverse();
   }
+
   function getLatestArrow(team) {
-    const teamResults = allResultsCache.filter(r => r.matchText.includes(team)).sort((a,b) => (b.md||0) - (a.md||0));
+    const teamResults = resultsData.filter(r => r.matchText.includes(team)).sort((a,b) => (b.md||0) - (a.md||0));
     if(teamResults.length === 0) return null;
     const status = getResultStatusForTeam(team, teamResults[0].matchText);
     if(status === "W" || status === "WF") return "↑";
@@ -166,7 +176,6 @@
     return null;
   }
 
-  let teamsData = [];
   function renderLeagueTable() {
     const tbody = document.getElementById('tableBody'); if(!tbody) return;
     tbody.innerHTML = '';
@@ -185,79 +194,184 @@
       posCell.className = "rank-cell";
       if(barClass) posCell.innerHTML = `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${pos}</div>`;
       else posCell.innerText = pos;
-      const arrowSpan = document.getElementById('showFormArrows')?.checked ? `<span class="arrow-${getLatestArrow(team.name) === '↑' ? 'up' : (getLatestArrow(team.name) === '↓' ? 'down' : (getLatestArrow(team.name) === '→' ? 'side' : ''))}">${getLatestArrow(team.name) || '—'}</span> ` : '';
-      const displayName = document.getElementById('showPlayerNames')?.checked ? (playerMap[team.name] || team.name) : team.name;
-      row.insertCell(1).innerHTML = `<div class="team-name">${arrowSpan}${getTeamIconHtml(team.name, "team-icon")} ${displayName}</div>`;
+
+      let arrowHtml = "";
+      if(showFormArrows) {
+        const arrow = getLatestArrow(team.name);
+        if(arrow === "↑") arrowHtml = '<span class="arrow-up">↑</span> ';
+        else if(arrow === "↓") arrowHtml = '<span class="arrow-down">↓</span> ';
+        else if(arrow === "→") arrowHtml = '<span class="arrow-side">→</span> ';
+        else if(arrow === "⚪") arrowHtml = '<span style="opacity:0.5;">⚪</span> ';
+        else arrowHtml = '<span style="opacity:0.3;">—</span> ';
+      }
+      const displayName = (currentView === "player" && playerMap[team.name]) ? playerMap[team.name] : team.name;
+      const iconHtml = getTeamIconHtml(team.name, "team-icon");
+      row.insertCell(1).innerHTML = `<div class="team-name">${arrowHtml}${iconHtml} ${displayName}</div>`;
       row.insertCell(2).innerText = team.p || 0;
-      row.insertCell(3).innerText = team.gd || 0;
-      row.insertCell(4).innerHTML = `<span class="pts-cell">${team.pts || 0}</span>`;
+      const gdValue = team.gd || 0;
+      row.insertCell(3).innerText = gdValue > 0 ? `+${gdValue}` : `${gdValue}`;
+      const ptsCell = row.insertCell(4);
+      ptsCell.className = "pts-cell";
+      ptsCell.innerText = team.pts || 0;
+
       const last5Cell = row.insertCell(5);
-      if(document.getElementById('showLast5')?.checked) {
+      if(showLast5) {
         const last5 = getTeamLast5(team.name);
-        const container = document.createElement("div"); container.className = "form-circles";
-        last5.forEach(res => { const circle=document.createElement("span"); circle.className="circle-result";
-          if(res==="W" || res==="WF") circle.classList.add(res==="WF"?"circle-forfeit-win":"circle-win");
-          else if(res==="L"||res==="LF") circle.classList.add(res==="LF"?"circle-forfeit-loss":"circle-loss");
-          else if(res==="D") circle.classList.add("circle-draw");
-          else if(res==="F") circle.classList.add("circle-forfeit-grey");
-          else circle.classList.add("circle-blank");
-          circle.innerHTML = (res==="WF"||res==="LF"||res==="F")?"F":(res==="W"?"✓":(res==="L"?"✗":(res==="D"?"–":"")));
+        const container = document.createElement("div");
+        container.className = "form-circles";
+        last5.forEach(res => {
+          const circle = document.createElement("span");
+          circle.className = "circle-result";
+          if(res === "W") { circle.classList.add("circle-win"); circle.innerHTML = "✓"; }
+          else if(res === "L") { circle.classList.add("circle-loss"); circle.innerHTML = "✗"; }
+          else if(res === "D") { circle.classList.add("circle-draw"); circle.innerHTML = "–"; }
+          else if(res === "F") { circle.classList.add("circle-forfeit-grey"); circle.innerHTML = "F"; }
+          else if(res === "WF") { circle.classList.add("circle-forfeit-win"); circle.innerHTML = "F"; }
+          else if(res === "LF") { circle.classList.add("circle-forfeit-loss"); circle.innerHTML = "F"; }
+          else { circle.classList.add("circle-blank"); circle.innerHTML = ""; }
           container.appendChild(circle);
         });
         last5Cell.appendChild(container);
       }
     });
   }
-  onValue(ref(db,'premier_league/table'), (snap) => { teamsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderLeagueTable(); });
 
-  // Fixtures (read-only)
-  let fixturesData = [];
-  function renderFixtures(){ const search=document.getElementById('fixtureSearch')?.value.toLowerCase()||''; const tbody=document.getElementById('fixturesBody'); tbody.innerHTML=''; fixturesData.forEach(f=>{ if(search && !f.home.toLowerCase().includes(search) && !f.away.toLowerCase().includes(search)) return; const row=tbody.insertRow(); row.insertCell(0).innerHTML=`<span class="date-badge">${f.date||''}</span>`; row.insertCell(1).innerHTML=`<div>${getTeamIconHtml(f.home)} ${f.home} vs ${getTeamIconHtml(f.away)} ${f.away}</div>`; row.insertCell(2).innerHTML=`<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px;">MD ${f.md}</span>`; }); }
+  onValue(ref(db,'premier_league/table'), (snap) => { teamsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderLeagueTable(); });
+  onValue(ref(db,'premier_league/results'), (snap) => { resultsData = snap.val() ? Object.values(snap.val()) : []; renderResults(); renderLeagueTable(); });
+
+  function renderFixtures() {
+    const search = document.getElementById('fixtureSearch')?.value.toLowerCase() || '';
+    const tbody = document.getElementById('fixturesBody');
+    if(!tbody) return;
+    tbody.innerHTML = '';
+    fixturesData.forEach(f => {
+      if(search && !f.home.toLowerCase().includes(search) && !f.away.toLowerCase().includes(search)) return;
+      const row = tbody.insertRow();
+      row.insertCell(0).innerHTML = `<span class="date-badge">${f.date || ''}</span>`;
+      const homeIcon = getTeamIconHtml(f.home, "inline-team-icon");
+      const awayIcon = getTeamIconHtml(f.away, "inline-team-icon");
+      row.insertCell(1).innerHTML = `<div class="fixture-icons">${homeIcon} ${f.home} vs ${awayIcon} ${f.away}</div>`;
+      row.insertCell(2).innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px;">MD ${f.md}</span>`;
+    });
+    if(tbody.rows.length === 0) { const r=tbody.insertRow(); r.insertCell(0).colSpan=3; r.cells[0].className="empty-message"; r.cells[0].innerText="No fixtures match."; }
+  }
   onValue(ref(db,'premier_league/fixtures'), (snap)=>{ fixturesData = snap.val() ? Object.values(snap.val()) : []; renderFixtures(); });
   document.getElementById('fixtureSearch')?.addEventListener('input', renderFixtures);
 
-  // Results (read-only)
-  let resultsData = [];
-  function renderResults(){ const tbody=document.getElementById('resultsBody'); tbody.innerHTML=''; resultsData.forEach(r=>{ let processed=r.matchText; teamList.forEach(team=>{ const regex=new RegExp(`\\b${team}\\b`,'g'); processed=processed.replace(regex,`${getTeamIconHtml(team,'inline-team-icon')} ${team}`); }); const row=tbody.insertRow(); const isForfeit = r.matchText.includes("Forfeit")||r.matchText.includes("No Contest")||r.matchText.includes("F - F"); if(isForfeit){ let forfeitText="Forfeit"; if(r.matchText.includes("No Contest")) forfeitText="No Contest"; row.insertCell(0).innerHTML=`<div><strong>${processed}</strong><div class="forfeit-text">${forfeitText}</div></div>`; } else row.insertCell(0).innerHTML=`<strong>${processed}</strong>`; row.insertCell(1).innerHTML=`<span class="match-highlight">MD${r.md}</span>`; }); }
-  onValue(ref(db,'premier_league/results'), (snap)=>{ resultsData = snap.val() ? Object.values(snap.val()) : []; renderResults(); });
+  function renderResults() {
+    const tbody = document.getElementById('resultsBody');
+    if(!tbody) return;
+    tbody.innerHTML = '';
+    resultsData.forEach(r => {
+      let processed = r.matchText;
+      teamList.forEach(team => {
+        const regex = new RegExp(`\\b${team}\\b`, 'g');
+        processed = processed.replace(regex, `${getTeamIconHtml(team, "inline-team-icon")} ${team}`);
+      });
+      const row = tbody.insertRow();
+      const isForfeit = r.matchText.includes("Forfeit") || r.matchText.includes("No Contest") || r.matchText.includes("F - F");
+      if(isForfeit) {
+        let forfeitText = "Forfeit";
+        if(r.matchText.includes("No Contest")) forfeitText = "No Contest";
+        else if(r.matchText.includes("Forfeited - No Reply")) forfeitText = "Forfeited - No Reply";
+        else if(r.matchText.includes("Forfeited on Agreement")) forfeitText = "Forfeited on Agreement";
+        else if(r.matchText.includes("F - F")) forfeitText = "No Contest";
+        row.insertCell(0).innerHTML = `<div class="result-with-forfeit"><strong>${processed}</strong><div class="forfeit-text">${forfeitText}</div></div>`;
+      } else {
+        row.insertCell(0).innerHTML = `<strong>${processed}</strong>`;
+      }
+      row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>`;
+    });
+  }
 
-  // Three-dot menu toggles (no CRUD)
-  let popup=null; const threeDot=document.getElementById('threeDotBtn'); function closePopup(){ if(popup){ popup.remove(); popup=null; } }
-  threeDot.addEventListener('click',(e)=>{ e.stopPropagation(); if(popup){ closePopup(); return; } const rect=threeDot.getBoundingClientRect(); popup=document.createElement('div'); popup.className='popup-menu'; popup.style.position='absolute'; popup.style.top=(rect.bottom+window.scrollY+5)+'px'; popup.style.left=(rect.left+window.scrollX-60)+'px'; popup.style.background='linear-gradient(135deg,#2d1b4e,#1f0f3a)'; popup.style.border='1px solid #f5d742'; popup.style.borderRadius='1rem'; popup.style.padding='0.5rem 0'; popup.style.zIndex='150';
-    const playersOpt=document.createElement('div'); playersOpt.innerText='Manager names'; playersOpt.style.padding='0.5rem 1rem'; playersOpt.style.cursor='pointer'; playersOpt.onclick=()=>{ const checkbox=document.getElementById('showPlayerNames'); if(checkbox) checkbox.checked=!checkbox.checked; renderLeagueTable(); closePopup(); };
-    const formOpt=document.createElement('div'); formOpt.innerText='Show Form arrows'; formOpt.style.padding='0.5rem 1rem'; formOpt.onclick=()=>{ const cb=document.getElementById('showFormArrows'); if(cb) cb.checked=!cb.checked; renderLeagueTable(); closePopup(); };
-    const last5Opt=document.createElement('div'); last5Opt.innerText='Show Last 5'; last5Opt.style.padding='0.5rem 1rem'; last5Opt.onclick=()=>{ const cb=document.getElementById('showLast5'); if(cb) cb.checked=!cb.checked; renderLeagueTable(); closePopup(); };
-    const calendarOpt=document.createElement('div'); calendarOpt.innerText='Calendar'; calendarOpt.style.padding='0.5rem 1rem'; calendarOpt.onclick=()=>{ window.location.href='calendar.html'; closePopup(); };
-    const rulesOpt=document.createElement('div'); rulesOpt.innerText='Rules'; rulesOpt.style.padding='0.5rem 1rem'; rulesOpt.onclick=()=>{ window.location.href='rules.html'; closePopup(); };
+  // Three-dot menu (same as admin but no CRUD options)
+  let popup = null;
+  const threeDot = document.getElementById('threeDotBtn');
+  function closePopup() { if(popup) { popup.remove(); popup = null; } }
+  function updateMenuOptions() {
+    if(!popup) return;
+    popup.children[0].innerText = (currentView === "team") ? "Manager names" : "Team View";
+    popup.children[1].innerText = showFormArrows ? "Hide Form arrows" : "Show Form arrows";
+    popup.children[2].innerText = showLast5 ? "Hide Last 5" : "Show Last 5";
+  }
+  threeDot.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if(popup) { closePopup(); return; }
+    const rect = threeDot.getBoundingClientRect();
+    popup = document.createElement('div');
+    popup.className = 'popup-menu';
+    popup.style.position = 'absolute';
+    popup.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+    popup.style.left = (rect.left + window.scrollX - 60) + 'px';
+    popup.style.background = 'linear-gradient(135deg, #2d1b4e, #1f0f3a)';
+    popup.style.border = '1px solid #f5d742';
+    popup.style.borderRadius = '1rem';
+    popup.style.padding = '0.5rem 0';
+    popup.style.zIndex = '150';
+
+    const playersOpt = document.createElement('div'); playersOpt.style.padding = '0.5rem 1rem'; playersOpt.style.cursor = 'pointer';
+    playersOpt.innerText = (currentView === "team") ? "Manager names" : "Team View";
+    playersOpt.onclick = () => { currentView = (currentView === "team") ? "player" : "team"; renderLeagueTable(); updateMenuOptions(); };
+    const formOpt = document.createElement('div'); formOpt.style.padding = '0.5rem 1rem'; formOpt.style.cursor = 'pointer';
+    formOpt.innerText = showFormArrows ? "Hide Form arrows" : "Show Form arrows";
+    formOpt.onclick = () => { showFormArrows = !showFormArrows; renderLeagueTable(); updateMenuOptions(); };
+    const last5Opt = document.createElement('div'); last5Opt.style.padding = '0.5rem 1rem'; last5Opt.style.cursor = 'pointer';
+    last5Opt.innerText = showLast5 ? "Hide Last 5" : "Show Last 5";
+    last5Opt.onclick = () => { showLast5 = !showLast5; renderLeagueTable(); updateMenuOptions(); };
+    const calendarOpt = document.createElement('div'); calendarOpt.innerText = 'Calendar'; calendarOpt.style.padding = '0.5rem 1rem'; calendarOpt.onclick = () => { window.location.href = 'calendar.html'; closePopup(); };
+    const rulesOpt = document.createElement('div'); rulesOpt.innerText = 'Rules'; rulesOpt.style.padding = '0.5rem 1rem'; rulesOpt.onclick = () => { window.location.href = 'rules.html'; closePopup(); };
     popup.appendChild(playersOpt); popup.appendChild(formOpt); popup.appendChild(last5Opt); popup.appendChild(calendarOpt); popup.appendChild(rulesOpt);
     document.body.appendChild(popup);
   });
-  document.addEventListener('click',(e)=>{ if(popup && !popup.contains(e.target) && e.target!==threeDot) closePopup(); });
-  const hiddenDiv = document.createElement('div'); hiddenDiv.style.display='none'; hiddenDiv.innerHTML=`<input type="checkbox" id="showPlayerNames" checked><input type="checkbox" id="showFormArrows" checked><input type="checkbox" id="showLast5" checked>`; document.body.appendChild(hiddenDiv);
-  document.getElementById('showPlayerNames')?.addEventListener('change',()=>renderLeagueTable());
-  document.getElementById('showFormArrows')?.addEventListener('change',()=>renderLeagueTable());
-  document.getElementById('showLast5')?.addEventListener('change',()=>renderLeagueTable());
+  document.addEventListener('click', (e) => { if(popup && !popup.contains(e.target) && e.target !== threeDot) closePopup(); });
 
-  // Collapsible cards
-  function setupCollapse(headerId, contentId, iconId){ const h=document.getElementById(headerId), c=document.getElementById(contentId), ic=document.getElementById(iconId); if(!h||!c) return; let collapsed=c.classList.contains('collapsed'); h.addEventListener('click',()=>{ collapsed=!collapsed; if(collapsed){ c.classList.add('collapsed'); if(ic) ic.innerHTML='▶'; }else{ c.classList.remove('collapsed'); if(ic) ic.innerHTML='▼'; } }); }
-  setupCollapse('fixturesHeader','fixturesContent','fixturesToggleIcon');
-  setupCollapse('resultsHeader','resultsContent','resultsToggleIcon');
+  function setupCollapse(headerId, contentId, iconId) {
+    const h = document.getElementById(headerId);
+    const c = document.getElementById(contentId);
+    const ic = document.getElementById(iconId);
+    if(!h || !c) return;
+    let collapsed = c.classList.contains('collapsed');
+    h.addEventListener('click', () => {
+      collapsed = !collapsed;
+      if(collapsed) { c.classList.add('collapsed'); if(ic) ic.innerHTML = '▶'; }
+      else { c.classList.remove('collapsed'); if(ic) ic.innerHTML = '▼'; }
+    });
+  }
+  setupCollapse('fixturesHeader', 'fixturesContent', 'fixturesToggleIcon');
+  setupCollapse('resultsHeader', 'resultsContent', 'resultsToggleIcon');
   document.getElementById('fixturesContent')?.classList.add('collapsed');
   document.getElementById('resultsContent')?.classList.add('collapsed');
-  document.getElementById('fixturesToggleIcon').innerHTML='▶';
-  document.getElementById('resultsToggleIcon').innerHTML='▶';
+  if(document.getElementById('fixturesToggleIcon')) document.getElementById('fixturesToggleIcon').innerHTML = '▶';
+  if(document.getElementById('resultsToggleIcon')) document.getElementById('resultsToggleIcon').innerHTML = '▶';
 
   // Slideshow
-  const images = ["images - 2026-04-19T121231.816.jpeg","images - 2026-04-19T155746.715.jpeg","37686bb3-06ce-401b-a022-026933c165e7.jpeg","12871.jpg","1f157df7-2054-4a9d-aa14-b9941ef4a743.jpeg"];
-  let idx=0; const imgEl=document.getElementById('slideshow-img'); const dots=document.getElementById('dotsContainer'); function createDots(){ dots.innerHTML=''; images.forEach((_,i)=>{ const dot=document.createElement('span'); dot.classList.add('dot'); if(i===idx) dot.classList.add('active'); dot.addEventListener('click',()=>{ idx=i; imgEl.src=images[idx]; updateDots(); }); dots.appendChild(dot); }); } function updateDots(){ document.querySelectorAll('.dot').forEach((d,i)=>{ if(i===idx) d.classList.add('active'); else d.classList.remove('active'); }); } if(imgEl){ createDots(); setInterval(()=>{ idx=(idx+1)%images.length; imgEl.src=images[idx]; updateDots(); },2000); }
+  const images = ["images - 2026-04-19T121231.816.jpeg", "images - 2026-04-19T155746.715.jpeg", "37686bb3-06ce-401b-a022-026933c165e7.jpeg", "12871.jpg", "1f157df7-2054-4a9d-aa14-b9941ef4a743.jpeg"];
+  let idx = 0;
+  const slideshowImg = document.getElementById('slideshow-img');
+  const dotsContainer = document.getElementById('dotsContainer');
+  function createDots() {
+    if(!dotsContainer) return;
+    dotsContainer.innerHTML = '';
+    images.forEach((_, i) => {
+      const dot = document.createElement('span');
+      dot.classList.add('dot');
+      if(i === idx) dot.classList.add('active');
+      dot.addEventListener('click', () => { idx = i; slideshowImg.src = images[idx]; updateDots(); });
+      dotsContainer.appendChild(dot);
+    });
+  }
+  function updateDots() { document.querySelectorAll('.dot').forEach((dot, i) => { if(i === idx) dot.classList.add('active'); else dot.classList.remove('active'); }); }
+  if(slideshowImg) { createDots(); setInterval(() => { idx = (idx+1) % images.length; slideshowImg.src = images[idx]; updateDots(); }, 2000); }
 
-  // Menu modal
-  const hamburger=document.getElementById('hamburgerBtn'), modalOverlay=document.getElementById('modalOverlay'), closeModal=document.getElementById('closeModalBtn');
-  hamburger.onclick=()=>modalOverlay.classList.add('active'); closeModal.onclick=()=>modalOverlay.classList.remove('active');
-  document.getElementById('rulesBtn').onclick=()=>window.location.href='rules.html';
-  document.getElementById('playerTitlesBtn').onclick=()=>window.location.href='player-titles.html';
-  document.getElementById('logoutBtn').onclick=async()=>{ await signOut(auth); window.location.href='login.html'; };
-  const playerMap = { "Barcelona":"~Rea🫡","Inter Milan":"Mali","Dortmund":"~Qhawe 🤍","Juventus":"Izu","Atletico":"~Stalker.","PSG":"~MJ","Napoli":"~PrettyBoy Tendancies. 👅","Real Madrid":"~Karabo","Arsenal":"Kath","AC Milan":"Tapz","Chelsea":"~Zazo","Man City":"gry","Liverpool":"🅿️","Newcastle":"~Oratile" };
+  // Modal menu
+  const hamburger = document.getElementById('hamburgerBtn');
+  const modalOverlay = document.getElementById('modalOverlay');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  hamburger.onclick = () => modalOverlay.classList.add('active');
+  closeModalBtn.onclick = () => modalOverlay.classList.remove('active');
+  document.getElementById('rulesBtn').onclick = () => window.location.href = 'rules.html';
+  document.getElementById('playerTitlesBtn').onclick = () => window.location.href = 'player-titles.html';
+  document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href = 'login.html'; };
 </script>
 </body>
 </html>
