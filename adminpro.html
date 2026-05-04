@@ -4,239 +4,342 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>Admin Profile · eFootball 412</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* Same as before – includes user list and team assignment */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --gold: #f5d742;
+      --gold-dark: #d4af37;
+      --purple-deep: #1a0a2e;
+      --purple-mid: #2d1b4e;
+      --purple-card: rgba(45, 25, 75, 0.85);
+      --purple-input: rgba(20, 8, 40, 0.9);
+      --purple-accent: #6a3bb5;
+      --purple-light: #7e4acf;
+      --border-gold: rgba(245, 215, 66, 0.35);
+      --text-main: #f5f0ff;
+      --text-soft: #c4b0ff;
     }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 100%);
-      font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
-      color: #f5f0ff;
+      background: linear-gradient(145deg, var(--purple-deep) 0%, var(--purple-mid) 100%);
+      font-family: 'Nunito', system-ui, sans-serif;
+      color: var(--text-main);
       min-height: 100vh;
-      padding-bottom: 2rem;
+      padding-bottom: 3rem;
     }
+
+    /* ── Navbar ── */
     .gold-navbar {
-      background: linear-gradient(135deg, #d4af37, #f5d742);
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
       padding: 0.4rem 1.2rem;
       display: flex;
       justify-content: flex-end;
       align-items: center;
       gap: 0.8rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
       position: sticky;
       top: 0;
       z-index: 100;
     }
     .hamburger-btn {
-      background: #6a3bb5;
-      width: 36px;
-      height: 36px;
+      background: var(--purple-accent);
+      width: 36px; height: 36px;
       border-radius: 50%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 4px;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      gap: 4px; cursor: pointer;
+      border: 1.5px solid var(--gold);
       transition: transform 0.2s, background 0.2s;
-      border: 1.5px solid #f5d742;
     }
-    .hamburger-btn:hover {
-      transform: scale(1.05);
-      background: #7e4acf;
-    }
-    .hamburger-btn span {
-      display: block;
-      width: 18px;
-      height: 2.5px;
-      background-color: #f5d742;
-      border-radius: 2px;
-    }
+    .hamburger-btn:hover { transform: scale(1.05); background: var(--purple-light); }
+    .hamburger-btn span { display: block; width: 18px; height: 2.5px; background: var(--gold); border-radius: 2px; }
+
+    /* ── Modal ── */
     .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.7);
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
       z-index: 200;
-      visibility: hidden;
-      pointer-events: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      visibility: hidden; pointer-events: none;
+      display: flex; align-items: center; justify-content: center;
     }
-    .modal-overlay.active {
-      visibility: visible;
-      pointer-events: auto;
-    }
+    .modal-overlay.active { visibility: visible; pointer-events: auto; }
     .modal-content {
-      background: linear-gradient(135deg, #2d1b4e, #1f0f3a);
-      border: 2px solid #f5d742;
+      background: linear-gradient(135deg, var(--purple-mid), #1f0f3a);
+      border: 2px solid var(--gold);
       border-radius: 2rem;
       padding: 1.5rem;
-      max-width: 350px;
-      width: 90%;
+      max-width: 320px; width: 90%;
       text-align: center;
+      animation: popIn 0.2s ease;
     }
-    .modal-content h3 {
-      color: #f5d742;
+    @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-content h3 { color: var(--gold); margin-bottom: 1rem; font-family: 'Rajdhani', sans-serif; font-size: 1.3rem; letter-spacing: 2px; }
+    .modal-option {
+      background: rgba(106,59,181,0.2);
+      padding: 0.5rem 0.8rem; border-radius: 40px;
+      color: var(--text-main); font-weight: 700; font-size: 0.8rem;
+      border: 1px solid var(--gold); display: block;
+      margin: 0.5rem 0; cursor: pointer; transition: all 0.2s;
+      text-decoration: none;
+    }
+    .modal-option:hover { background: var(--purple-accent); color: var(--gold); transform: translateX(3px); }
+    .close-modal {
+      background: var(--purple-accent); color: var(--gold);
+      border: none; padding: 0.4rem 1.2rem;
+      border-radius: 30px; cursor: pointer; margin-top: 0.8rem;
+      font-weight: 700; font-size: 0.8rem;
+    }
+
+    /* ── Layout ── */
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+
+    /* ── Avatar section ── */
+    .avatar-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1rem 1.5rem;
+      background: rgba(30, 15, 55, 0.6);
+      border-bottom: 1px solid var(--border-gold);
+    }
+    .avatar-wrapper {
+      position: relative;
+      width: 110px; height: 110px;
       margin-bottom: 1rem;
     }
-    .modal-option {
-      background: rgba(106, 59, 181, 0.15);
-      padding: 0.4rem 0.8rem;
-      border-radius: 40px;
-      text-decoration: none;
-      color: #f5e6ff;
-      font-weight: 700;
-      font-size: 0.8rem;
-      transition: all 0.2s;
-      border: 1px solid #f5d742;
+    .avatar-circle {
+      width: 110px; height: 110px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--gold);
+      background: linear-gradient(135deg, #3a1f6e, #1a0a2e);
       display: block;
-      margin: 0.5rem 0;
-      cursor: pointer;
+      box-shadow: 0 0 0 4px rgba(245,215,66,0.15), 0 8px 24px rgba(0,0,0,0.4);
     }
-    .modal-option:hover {
-      background: #6a3bb5;
-      color: #f5d742;
+    .avatar-placeholder {
+      width: 110px; height: 110px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3a1f6e, #1a0a2e);
+      border: 3px solid var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.8rem;
+      box-shadow: 0 0 0 4px rgba(245,215,66,0.15), 0 8px 24px rgba(0,0,0,0.4);
     }
-    .close-modal {
-      background: #4a1d8c;
-      color: #f5d742;
-      border: none;
-      padding: 0.3rem 0.9rem;
-      border-radius: 30px;
-      cursor: pointer;
-      margin-top: 0.5rem;
+    .avatar-edit-btn {
+      position: absolute;
+      bottom: 2px; right: 2px;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: var(--gold);
+      border: 2px solid var(--purple-deep);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 0.85rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      transition: transform 0.2s;
     }
-    .container {
-      max-width: 1000px;
-      margin: 2rem auto;
-      padding: 0 1rem;
+    .avatar-edit-btn:hover { transform: scale(1.1); }
+    #profilePicture { display: none; }
+
+    .avatar-username {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.6rem; font-weight: 700;
+      color: var(--gold); letter-spacing: 1px;
+      margin-bottom: 0.3rem;
     }
+    .admin-badge {
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      color: var(--purple-deep);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700; font-size: 0.75rem;
+      letter-spacing: 2px;
+      padding: 0.2rem 0.9rem;
+      border-radius: 20px;
+    }
+    .upload-status {
+      font-size: 0.75rem; color: var(--text-soft);
+      margin-top: 0.5rem; min-height: 1rem; text-align: center;
+    }
+    .upload-status.success { color: #22c55e; }
+    .upload-status.error { color: #ef4444; }
+    .upload-status.loading { color: var(--gold); }
+
+    /* ── Card ── */
     .card {
-      background: rgba(45, 25, 75, 0.85);
+      background: var(--purple-card);
       backdrop-filter: blur(10px);
       border-radius: 2rem;
-      border: 1px solid rgba(245, 215, 66, 0.4);
+      border: 1px solid var(--border-gold);
       overflow: hidden;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.2rem;
     }
     .card-header {
       padding: 1rem 1.5rem;
       background: rgba(30, 15, 55, 0.9);
-      border-bottom: 2px solid #f5d742;
+      border-bottom: 2px solid var(--gold);
+      display: flex; align-items: center; gap: 0.6rem;
     }
     .card-header h2 {
-      font-size: 1.4rem;
-      color: #f5e6ff;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.2rem; font-weight: 700;
+      color: var(--gold); letter-spacing: 1px;
     }
-    .form-group {
-      padding: 1rem 1.5rem;
+
+    /* ── Form ── */
+    .form-body { padding: 1.2rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+    .field-group { display: flex; flex-direction: column; gap: 0.35rem; }
+    .field-label {
+      font-size: 0.75rem; font-weight: 700;
+      color: var(--text-soft); letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
-    .form-group label {
-      display: block;
-      margin-bottom: 0.4rem;
-      color: #f5e6ff;
-      font-size: 0.9rem;
-    }
-    .form-group input {
+    .field-input {
       width: 100%;
-      padding: 0.6rem 1rem;
-      background: rgba(30, 15, 55, 0.9);
-      border: 1px solid #f5d742;
-      border-radius: 2rem;
-      color: white;
+      padding: 0.65rem 1.1rem;
+      background: var(--purple-input);
+      border: 1px solid rgba(245,215,66,0.3);
+      border-radius: 1.5rem;
+      color: var(--text-main);
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.9rem;
       outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .btn-primary {
-      background: #6a3bb5;
-      border: none;
-      border-radius: 2rem;
-      padding: 0.6rem 1.2rem;
-      color: #f5d742;
-      font-weight: bold;
+    .field-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(245,215,66,0.1); }
+    .field-input::placeholder { color: rgba(196,176,255,0.5); }
+    textarea.field-input { border-radius: 1.2rem; resize: vertical; min-height: 90px; line-height: 1.5; }
+
+    .btn-save {
+      width: 100%;
+      padding: 0.75rem;
+      background: linear-gradient(135deg, var(--purple-accent), var(--purple-light));
+      border: none; border-radius: 2rem;
+      color: var(--gold);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.1rem; font-weight: 700; letter-spacing: 1px;
       cursor: pointer;
-      margin: 0.5rem 1.5rem 1.5rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 14px rgba(106,59,181,0.4);
+      margin-top: 0.3rem;
     }
-    .btn-primary:hover {
-      background: #7e4acf;
-    }
-    .user-list {
-      padding: 0 1.5rem 1.5rem;
-    }
+    .btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(106,59,181,0.5); }
+    .btn-save:active { transform: translateY(0); }
+    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* ── User list ── */
+    .user-list { padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.8rem; }
+
     .user-item {
-      background: rgba(55, 35, 95, 0.6);
-      border-radius: 1rem;
-      padding: 0.8rem 1rem;
-      margin-bottom: 0.8rem;
+      background: rgba(55, 35, 95, 0.5);
+      border: 1px solid var(--border-gold);
+      border-radius: 1.2rem;
+      padding: 1rem 1.2rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-    .user-info {
-      display: flex;
-      align-items: center;
       gap: 0.8rem;
-      flex-wrap: wrap;
+      transition: background 0.2s;
     }
-    .user-avatar {
-      width: 32px;
-      height: 32px;
-      background: #f5d742;
+    .user-item:hover { background: rgba(55, 35, 95, 0.7); }
+
+    .user-info { display: flex; align-items: center; gap: 0.8rem; flex: 1; min-width: 0; }
+
+    .user-avatar-circle {
+      width: 40px; height: 40px;
       border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: #2d1b4e;
-      font-weight: bold;
+      background: linear-gradient(135deg, var(--purple-accent), var(--purple-light));
+      border: 2px solid var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.1rem; font-weight: 700;
+      color: var(--gold);
+      flex-shrink: 0;
+      overflow: hidden;
     }
-    .team-select {
-      background: rgba(30,15,55,0.8);
-      border: 1px solid #f5d742;
+    .user-avatar-circle img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+    .user-details { min-width: 0; }
+    .user-name {
+      font-weight: 700; font-size: 0.9rem;
+      color: var(--text-main);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .user-email { font-size: 0.72rem; color: var(--text-soft); margin-top: 1px; }
+    .user-teams-display {
+      display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.4rem;
+    }
+    .team-chip {
+      background: rgba(106,59,181,0.35);
+      border: 1px solid var(--border-gold);
+      padding: 0.15rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      color: var(--text-soft);
+    }
+    .team-chip.none { opacity: 0.4; }
+
+    .user-assign { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+    .team-text-input {
+      background: var(--purple-input);
+      border: 1px solid rgba(245,215,66,0.3);
+      border-radius: 1.5rem;
+      padding: 0.45rem 1rem;
+      color: var(--text-main);
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.82rem;
+      outline: none;
+      width: 220px;
+      transition: border-color 0.2s;
+    }
+    .team-text-input:focus { border-color: var(--gold); }
+    .team-text-input::placeholder { color: rgba(196,176,255,0.4); }
+
+    .btn-assign {
+      background: linear-gradient(135deg, var(--purple-accent), var(--purple-light));
+      border: none; border-radius: 2rem;
+      padding: 0.45rem 1rem;
+      color: var(--gold);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700; font-size: 0.85rem;
+      cursor: pointer; white-space: nowrap;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 2px 8px rgba(106,59,181,0.3);
+    }
+    .btn-assign:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(106,59,181,0.4); }
+    .btn-assign:active { transform: translateY(0); }
+    .btn-assign:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: linear-gradient(135deg, #1f0f3a, #2d1b4e);
+      border: 1px solid var(--gold);
       border-radius: 2rem;
-      padding: 0.3rem 0.8rem;
-      color: white;
-      width: 200px;
+      padding: 0.7rem 1.5rem;
+      font-size: 0.85rem; font-weight: 700;
+      color: var(--text-main);
+      z-index: 999;
+      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      white-space: nowrap;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
     }
-    .assign-btn {
-      background: #6a3bb5;
-      border: none;
-      border-radius: 2rem;
-      padding: 0.3rem 0.8rem;
-      color: #f5d742;
-      cursor: pointer;
-      margin-left: 0.5rem;
-    }
-    .assign-btn:hover {
-      background: #7e4acf;
-    }
-    .team-badge {
-      background: rgba(106, 59, 181, 0.5);
-      display: inline-block;
-      padding: 0.2rem 0.8rem;
-      border-radius: 2rem;
-      font-size: 0.8rem;
-      margin-top: 0.3rem;
-    }
-    .avatar-preview {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #6a3bb5;
-      margin-top: 0.5rem;
-    }
-    @media (max-width: 680px) {
-      .user-item { flex-direction: column; align-items: flex-start; }
-      .team-select { width: 100%; margin-bottom: 0.5rem; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: #22c55e; color: #22c55e; }
+    .toast.error { border-color: #ef4444; color: #ef4444; }
+
+    .loading-text { text-align: center; padding: 2rem; color: var(--text-soft); font-style: italic; }
+
+    @media (max-width: 600px) {
+      .form-body { padding: 1rem; }
+      .user-list { padding: 0.8rem; }
+      .team-text-input { width: 100%; }
+      .user-assign { width: 100%; }
+      .btn-assign { width: 100%; justify-content: center; }
     }
   </style>
 </head>
@@ -252,44 +355,64 @@
     <div class="modal-option" id="rulesModalBtn">RULES</div>
     <div class="modal-option" id="calendarModalBtn">CALENDAR</div>
     <div class="modal-option" id="playerTitlesModalBtn">PLAYER TITLES</div>
-    <div class="modal-option" id="logoutModalBtn" style="background:#ef4444; color:white;">LOGOUT</div>
+    <div class="modal-option" id="logoutModalBtn" style="background:rgba(239,68,68,0.2); border-color:#ef4444; color:#ef4444;">LOGOUT</div>
     <button class="close-modal" id="closeModalBtn">CLOSE</button>
   </div>
 </div>
 
 <div class="container">
+
+  <!-- Admin profile card -->
   <div class="card">
-    <div class="card-header"><h2>👑 Admin Profile</h2></div>
-    <div class="form-group">
-      <label>Profile Picture</label>
-      <input type="file" id="profilePicture" accept="image/*">
-      <div id="picturePreview"><img id="avatarImg" class="avatar-preview" src="" alt="Avatar" style="display:none;"></div>
-      <button id="uploadPictureBtn" class="btn-primary" style="margin:0.5rem 0 0;">Upload Picture</button>
+    <div class="avatar-section">
+      <div class="avatar-wrapper">
+        <div class="avatar-placeholder" id="avatarPlaceholder">👑</div>
+        <img id="avatarImg" class="avatar-circle" src="" alt="Admin" style="display:none; position:absolute; top:0; left:0;">
+        <div class="avatar-edit-btn" id="avatarEditBtn" title="Change photo">✏️</div>
+        <input type="file" id="profilePicture" accept="image/*">
+      </div>
+      <div class="avatar-username" id="displayUsername">Admin</div>
+      <div class="admin-badge">👑 ADMIN</div>
+      <div class="upload-status" id="uploadStatus"></div>
     </div>
-    <div class="form-group">
-      <label>Username</label>
-      <input type="text" id="username" placeholder="Username">
+
+    <div class="card-header"><h2>⚙️ ADMIN PROFILE</h2></div>
+    <div class="form-body">
+      <div class="field-group">
+        <label class="field-label">Username</label>
+        <input type="text" id="username" class="field-input" placeholder="Your username">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Email</label>
+        <input type="email" id="email" class="field-input" placeholder="Your email">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Phone (optional)</label>
+        <input type="tel" id="phone" class="field-input" placeholder="Your phone number">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Bio</label>
+        <textarea id="bio" class="field-input" placeholder="Admin notes or bio..."></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label">New Password <span style="opacity:0.5;">(leave blank to keep current)</span></label>
+        <input type="password" id="newPassword" class="field-input" placeholder="New password">
+      </div>
+      <button id="saveProfileBtn" class="btn-save">SAVE CHANGES</button>
     </div>
-    <div class="form-group">
-      <label>Email</label>
-      <input type="email" id="email" placeholder="Email">
-    </div>
-    <div class="form-group">
-      <label>Phone Number (optional)</label>
-      <input type="tel" id="phone" placeholder="Phone number">
-    </div>
-    <div class="form-group">
-      <label>New Password (leave blank to keep current)</label>
-      <input type="password" id="newPassword" placeholder="New password">
-    </div>
-    <button id="saveProfileBtn" class="btn-primary">Save Changes</button>
   </div>
 
+  <!-- Users & team assignment card -->
   <div class="card">
-    <div class="card-header"><h2>👥 Manage Users & Teams</h2></div>
-    <div id="usersList" class="user-list">Loading users...</div>
+    <div class="card-header"><h2>👥 MANAGE USERS & TEAMS</h2></div>
+    <div id="usersList" class="user-list">
+      <div class="loading-text">Loading users...</div>
+    </div>
   </div>
+
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script type="importmap">
   {
@@ -303,8 +426,8 @@
 
 <script type="module">
   import { initializeApp } from "firebase/app";
-  import { getAuth, updateProfile, updateEmail, updatePassword, onAuthStateChanged } from "firebase/auth";
-  import { getDatabase, ref, get, set, update } from "firebase/database";
+  import { getAuth, updateProfile, updateEmail, updatePassword, onAuthStateChanged, signOut } from "firebase/auth";
+  import { getDatabase, ref, get, update } from "firebase/database";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
@@ -315,176 +438,247 @@
     messagingSenderId: "596548424249",
     appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
   };
+
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getDatabase(app);
-
   const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
   let currentUser = null;
 
-  const usernameInput = document.getElementById('username');
-  const emailInput = document.getElementById('email');
-  const phoneInput = document.getElementById('phone');
-  const newPasswordInput = document.getElementById('newPassword');
-  const saveBtn = document.getElementById('saveProfileBtn');
-  const avatarImg = document.getElementById('avatarImg');
-  const pictureInput = document.getElementById('profilePicture');
-  const uploadPictureBtn = document.getElementById('uploadPictureBtn');
+  // ── Toast ────────────────────────────────────────────────────────────────
+  function showToast(msg, type = "success") {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = `toast ${type} show`;
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
 
-  async function loadAdminProfile(uid) {
-    const userRef = ref(db, `users/${uid}`);
-    const snapshot = await get(userRef);
-    const data = snapshot.val() || {};
-    usernameInput.value = data.username || '';
-    emailInput.value = data.email || '';
-    phoneInput.value = data.phone || '';
-    if (data.photoURL) {
-      avatarImg.src = data.photoURL;
-      avatarImg.style.display = 'block';
+  // ── Avatar helpers ────────────────────────────────────────────────────────
+  function setAvatar(url) {
+    const img = document.getElementById('avatarImg');
+    const placeholder = document.getElementById('avatarPlaceholder');
+    if (url) {
+      img.src = url;
+      img.style.display = 'block';
+      placeholder.style.display = 'none';
     } else {
-      avatarImg.style.display = 'none';
+      img.style.display = 'none';
+      placeholder.style.display = 'flex';
     }
   }
 
+  // ── Load admin profile ────────────────────────────────────────────────────
+  async function loadAdminProfile(uid) {
+    const snapshot = await get(ref(db, `users/${uid}`));
+    const data = snapshot.val() || {};
+    document.getElementById('username').value = data.username || '';
+    document.getElementById('email').value = data.email || currentUser.email || '';
+    document.getElementById('phone').value = data.phone || '';
+    document.getElementById('bio').value = data.bio || '';
+    document.getElementById('displayUsername').textContent = data.username || 'Admin';
+    const photoURL = data.photoURL || currentUser.photoURL || '';
+    setAvatar(photoURL);
+  }
+
+  // ── Load all users ────────────────────────────────────────────────────────
   async function loadAllUsers() {
-    const usersRef = ref(db, 'users');
-    const snapshot = await get(usersRef);
+    const snapshot = await get(ref(db, 'users'));
     const users = snapshot.val() || {};
-    const userListDiv = document.getElementById('usersList');
-    userListDiv.innerHTML = '';
-    for (const [uid, userData] of Object.entries(users)) {
-      const div = document.createElement('div');
-      div.className = 'user-item';
+    const listEl = document.getElementById('usersList');
+    listEl.innerHTML = '';
+
+    const entries = Object.entries(users);
+    if (!entries.length) {
+      listEl.innerHTML = '<div class="loading-text">No users found.</div>';
+      return;
+    }
+
+    entries.forEach(([uid, userData]) => {
       const displayName = userData.username || userData.email || 'Anonymous';
       const firstChar = displayName.charAt(0).toUpperCase();
       let currentTeams = userData.teams || [];
       if (typeof currentTeams === 'string') currentTeams = currentTeams ? [currentTeams] : [];
       const teamsStr = currentTeams.join(', ');
-      div.innerHTML = `
+      const photoURL = userData.photoURL || '';
+
+      const avatarHtml = photoURL
+        ? `<img src="${photoURL}" alt="${escapeHtml(displayName)}">`
+        : firstChar;
+
+      const teamsChipsHtml = currentTeams.length
+        ? currentTeams.map(t => `<span class="team-chip">⚽ ${escapeHtml(t)}</span>`).join('')
+        : '<span class="team-chip none">No teams assigned</span>';
+
+      const item = document.createElement('div');
+      item.className = 'user-item';
+      item.innerHTML = `
         <div class="user-info">
-          <div class="user-avatar">${firstChar}</div>
-          <div><strong>${escapeHtml(displayName)}</strong><br><span class="team-badge">Teams: ${escapeHtml(teamsStr || 'None')}</span></div>
+          <div class="user-avatar-circle">${avatarHtml}</div>
+          <div class="user-details">
+            <div class="user-name">${escapeHtml(displayName)}</div>
+            <div class="user-email">${escapeHtml(userData.email || '')}</div>
+            <div class="user-teams-display" id="chips-${uid}">${teamsChipsHtml}</div>
+          </div>
         </div>
-        <div>
-          <input type="text" id="teamInput-${uid}" class="team-select" placeholder="Team names (comma separated)" value="${escapeHtml(teamsStr)}">
-          <button class="assign-btn" data-uid="${uid}">+ Assign Teams</button>
+        <div class="user-assign">
+          <input
+            type="text"
+            class="team-text-input"
+            id="teamInput-${uid}"
+            placeholder="e.g. Arsenal, Liverpool"
+            value="${escapeHtml(teamsStr)}"
+          >
+          <button class="btn-assign" data-uid="${uid}">Assign</button>
         </div>
       `;
-      userListDiv.appendChild(div);
-    }
-    document.querySelectorAll('.assign-btn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        const targetUid = btn.getAttribute('data-uid');
-        const teamInput = document.getElementById(`teamInput-${targetUid}`);
-        const teamsRaw = teamInput.value.trim();
-        let teamsArray = teamsRaw ? teamsRaw.split(',').map(t => t.trim()).filter(t => t) : [];
+      listEl.appendChild(item);
+    });
+
+    // Bind assign buttons
+    listEl.querySelectorAll('.btn-assign').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const uid = btn.getAttribute('data-uid');
+        const input = document.getElementById(`teamInput-${uid}`);
+        const teamsArray = input.value
+          .split(',')
+          .map(t => t.trim())
+          .filter(t => t.length > 0);
+
+        btn.disabled = true;
+        btn.textContent = '...';
+
         try {
-          await set(ref(db, `users/${targetUid}/teams`), teamsArray);
-          alert(`Teams assigned: ${teamsArray.join(', ') || 'none'}`);
-          loadAllUsers();
-        } catch (error) {
-          alert('Error: ' + error.message);
+          // Use update() so only teams field is changed, nothing else overwritten
+          await update(ref(db, `users/${uid}`), { teams: teamsArray });
+
+          // Update chips in-place without full reload
+          const chipsEl = document.getElementById(`chips-${uid}`);
+          chipsEl.innerHTML = teamsArray.length
+            ? teamsArray.map(t => `<span class="team-chip">⚽ ${escapeHtml(t)}</span>`).join('')
+            : '<span class="team-chip none">No teams assigned</span>';
+
+          showToast(`Teams updated for ${uid.slice(0, 6)}... ✓`, 'success');
+        } catch (err) {
+          console.error(err);
+          showToast('Error: ' + err.message, 'error');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Assign';
         }
       });
     });
   }
 
   function escapeHtml(str) {
-    return str.replace(/[&<>]/g, function(m) {
-      if (m === '&') return '&amp;';
-      if (m === '<') return '&lt;';
-      if (m === '>') return '&gt;';
-      return m;
-    });
+    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   }
 
+  // ── Auth state ────────────────────────────────────────────────────────────
   onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      window.location.href = 'login.html';
-      return;
-    }
+    if (!user) { window.location.href = 'login.html'; return; }
     currentUser = user;
-    const userRef = ref(db, `users/${user.uid}`);
-    const snapshot = await get(userRef);
+    const snapshot = await get(ref(db, `users/${user.uid}`));
     const userData = snapshot.val();
     if (!userData || userData.role !== 'admin') {
-      window.location.href = 'dashboard.html';
-      return;
+      window.location.href = 'dashboard.html'; return;
     }
     await loadAdminProfile(user.uid);
     await loadAllUsers();
   });
 
-  saveBtn.addEventListener('click', async () => {
-    const newUsername = usernameInput.value.trim();
-    const newEmail = emailInput.value.trim();
-    const newPhone = phoneInput.value.trim();
-    const newPassword = newPasswordInput.value.trim();
-    if (!newUsername || !newEmail) {
-      alert('Username and email are required.');
-      return;
-    }
-    try {
-      await updateProfile(currentUser, { displayName: newUsername });
-      if (newEmail !== currentUser.email) {
-        await updateEmail(currentUser, newEmail);
-      }
-      if (newPassword) {
-        await updatePassword(currentUser, newPassword);
-      }
-      await update(ref(db, `users/${currentUser.uid}`), {
-        username: newUsername,
-        email: newEmail,
-        phone: newPhone
-      });
-      alert('Admin profile updated!');
-    } catch (error) {
-      alert('Error: ' + error.message);
-    }
+  // ── Avatar edit ───────────────────────────────────────────────────────────
+  document.getElementById('avatarEditBtn').addEventListener('click', () => {
+    document.getElementById('profilePicture').click();
   });
 
-  uploadPictureBtn.addEventListener('click', async () => {
-    const file = pictureInput.files[0];
-    if (!file) {
-      alert('Please select an image first.');
-      return;
-    }
-    const formData = new FormData();
-    formData.append('image', file);
+  document.getElementById('profilePicture').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Instant local preview
+    const reader = new FileReader();
+    reader.onload = (ev) => setAvatar(ev.target.result);
+    reader.readAsDataURL(file);
+
+    const statusEl = document.getElementById('uploadStatus');
+    statusEl.textContent = 'Uploading picture...';
+    statusEl.className = 'upload-status loading';
+
     try {
+      const formData = new FormData();
+      formData.append('image', file);
       const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-        method: 'POST',
-        body: formData
+        method: 'POST', body: formData
       });
       const result = await response.json();
       if (!result.success) throw new Error(result.error?.message || 'Upload failed');
+
       const imageUrl = result.data.url;
       await updateProfile(currentUser, { photoURL: imageUrl });
-      await set(ref(db, `users/${currentUser.uid}/photoURL`), imageUrl);
-      avatarImg.src = imageUrl;
-      avatarImg.style.display = 'block';
-      alert('Profile picture updated!');
-    } catch (error) {
-      alert('Upload failed: ' + error.message);
+      // Use update() not set() so we don't overwrite other fields
+      await update(ref(db, `users/${currentUser.uid}`), { photoURL: imageUrl });
+
+      setAvatar(imageUrl);
+      statusEl.textContent = '✓ Picture saved';
+      statusEl.className = 'upload-status success';
+      setTimeout(() => { statusEl.textContent = ''; }, 3000);
+      showToast('Profile picture updated!', 'success');
+    } catch (err) {
+      console.error(err);
+      statusEl.textContent = '✗ ' + err.message;
+      statusEl.className = 'upload-status error';
+      showToast('Upload failed: ' + err.message, 'error');
     }
   });
 
-  // Modal menu
-  const hamburgerBtn = document.getElementById("hamburgerBtn");
-  const modalOverlay = document.getElementById("modalOverlay");
-  const closeModalBtn = document.getElementById("closeModalBtn");
-  function openModal() { modalOverlay.classList.add("active"); }
-  function closeModalFunc() { modalOverlay.classList.remove("active"); }
-  hamburgerBtn.addEventListener("click", openModal);
-  closeModalBtn.addEventListener("click", closeModalFunc);
-  modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModalFunc(); });
+  // ── Save admin profile ────────────────────────────────────────────────────
+  document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('saveProfileBtn');
+    const newUsername = document.getElementById('username').value.trim();
+    const newEmail = document.getElementById('email').value.trim();
+    const newPhone = document.getElementById('phone').value.trim();
+    const newBio = document.getElementById('bio').value.trim();
+    const newPassword = document.getElementById('newPassword').value;
+
+    if (!newUsername || !newEmail) {
+      showToast('Username and email are required.', 'error'); return;
+    }
+
+    btn.disabled = true; btn.textContent = 'SAVING...';
+
+    try {
+      await updateProfile(currentUser, { displayName: newUsername });
+      if (newEmail !== currentUser.email) await updateEmail(currentUser, newEmail);
+      if (newPassword) await updatePassword(currentUser, newPassword);
+
+      // update() merges — never overwrites photoURL or teams
+      await update(ref(db, `users/${currentUser.uid}`), {
+        username: newUsername,
+        email: newEmail,
+        phone: newPhone,
+        bio: newBio
+      });
+
+      document.getElementById('displayUsername').textContent = newUsername;
+      document.getElementById('newPassword').value = '';
+      showToast('Profile saved! ✓', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Error: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'SAVE CHANGES';
+    }
+  });
+
+  // ── Modal ─────────────────────────────────────────────────────────────────
+  const modalOverlay = document.getElementById('modalOverlay');
+  document.getElementById('hamburgerBtn').onclick = () => modalOverlay.classList.add('active');
+  document.getElementById('closeModalBtn').onclick = () => modalOverlay.classList.remove('active');
+  modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) modalOverlay.classList.remove('active'); });
   document.getElementById('rulesModalBtn').onclick = () => window.location.href = 'rules.html';
   document.getElementById('calendarModalBtn').onclick = () => window.location.href = 'calendar.html';
   document.getElementById('playerTitlesModalBtn').onclick = () => window.location.href = 'player-titles.html';
-  document.getElementById('logoutModalBtn').onclick = async () => {
-    await auth.signOut();
-    window.location.href = 'login.html';
-  };
+  document.getElementById('logoutModalBtn').onclick = async () => { await signOut(auth); window.location.href = 'login.html'; };
 </script>
 </body>
 </html>
