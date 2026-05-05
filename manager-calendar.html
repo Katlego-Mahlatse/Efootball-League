@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>eFootball 412 · Manager Calendar</title>
+<title>eFootball 412 · Calendar</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -41,7 +41,6 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 .navbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.35),transparent);}
 .nav-brand{display:flex;align-items:center;gap:0.7rem;font-family:'Orbitron',monospace;font-weight:900;font-size:0.95rem;color:var(--purple-deep);letter-spacing:0.06em;}
 .nav-icon-wrap{width:32px;height:32px;background:var(--purple-deep);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.95rem;}
-.manager-pill{background:var(--purple-deep);color:var(--gold);font-size:0.52rem;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.12em;font-family:'Rajdhani',sans-serif;}
 .nav-actions{display:flex;gap:0.5rem;}
 .nav-btn{width:37px;height:37px;border-radius:50%;background:var(--purple-deep);border:1.5px solid rgba(245,215,66,0.6);color:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;transition:all 0.25s;box-shadow:0 2px 8px rgba(0,0,0,0.35);}
 .nav-btn:hover{background:var(--purple-light);transform:scale(1.1);}
@@ -70,57 +69,100 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 .day-cell::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(245,215,66,0.05),transparent);opacity:0;transition:opacity 0.25s;}
 .day-cell:hover{background:rgba(91,50,168,0.42);border-color:rgba(245,215,66,0.22);}
 .day-cell:hover::after{opacity:1;}
+.day-cell:active{transform:scale(0.97);}
 .day-cell.has-event{background:rgba(46,29,110,0.58);}
 .day-cell.has-event:hover{background:rgba(91,50,168,0.58);}
 .day-cell.empty-day{background:rgba(8,4,18,0.55);cursor:default;pointer-events:none;}
+.day-cell.no-event{cursor:default;}
+.day-cell.no-event:hover{background:rgba(22,13,52,0.45);border-color:rgba(245,215,66,0.07);}
+.day-cell.no-event:hover::after{opacity:0;}
+.day-cell.no-event:active{transform:none;}
 .day-number{font-family:'Orbitron',monospace;font-size:0.68rem;font-weight:700;color:var(--text-dim);align-self:flex-start;margin-bottom:5px;letter-spacing:0.03em;}
 .day-cell.has-event .day-number{color:var(--gold);}
 .event-icon{width:48px;height:48px;object-fit:contain;border-radius:8px;margin-top:2px;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.5));transition:transform 0.25s;}
-.day-cell:hover .event-icon{transform:scale(1.05);}
+.day-cell:hover .event-icon{transform:scale(1.1);}
 .event-label{font-family:'Rajdhani',sans-serif;font-size:0.57rem;font-weight:700;color:var(--gold);letter-spacing:0.07em;text-transform:uppercase;margin-top:3px;text-align:center;line-height:1.2;}
 .event-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;background:var(--gold);border-radius:50%;box-shadow:0 0 6px var(--gold);animation:dotPulse 2.2s ease-in-out infinite;}
 @keyframes dotPulse{0%,100%{opacity:1;box-shadow:0 0 6px var(--gold);}50%{opacity:0.4;box-shadow:0 0 14px var(--gold);}}
-.no-event-hint{font-size:0.58rem;color:rgba(245,215,66,0.18);font-style:italic;margin-top:auto;padding-top:4px;}
 
-/* OVERLAY (read-only modal) */
+/* OVERLAY */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.82);backdrop-filter:blur(7px);z-index:500;display:flex;align-items:center;justify-content:center;padding:1rem;visibility:hidden;opacity:0;transition:opacity 0.3s,visibility 0.3s;}
 .overlay.active{visibility:visible;opacity:1;}
 .overlay.active .modal{transform:translateY(0) scale(1);}
-.modal{background:linear-gradient(158deg,#1e1448,#0c0620);border:1.5px solid var(--gold-border);border-radius:1.8rem;padding:1.8rem;width:100%;max-width:580px;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 30px 90px rgba(0,0,0,0.75),0 0 40px rgba(245,215,66,0.08);transform:translateY(22px) scale(0.97);transition:transform 0.38s cubic-bezier(0.22,1,0.36,1);}
+.modal{background:linear-gradient(158deg,#1e1448,#0c0620);border:1.5px solid var(--gold-border);border-radius:1.8rem;padding:2rem;width:100%;max-width:580px;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 30px 90px rgba(0,0,0,0.75),0 0 40px rgba(245,215,66,0.08);transform:translateY(22px) scale(0.97);transition:transform 0.38s cubic-bezier(0.22,1,0.36,1);}
 .modal::-webkit-scrollbar{width:4px;}
 .modal::-webkit-scrollbar-thumb{background:var(--gold-border);border-radius:2px;}
 .modal-close{position:absolute;top:14px;right:16px;background:rgba(91,50,168,0.4);border:1px solid var(--gold-border);color:var(--gold);width:32px;height:32px;border-radius:50%;font-size:1.15rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.25s;line-height:1;}
 .modal-close:hover{background:var(--red);border-color:var(--red);color:#fff;transform:rotate(90deg);}
-.modal-title{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;color:var(--gold);margin-bottom:1.2rem;padding-right:2rem;letter-spacing:0.05em;}
+.modal-title{font-family:'Orbitron',monospace;font-size:1.05rem;font-weight:700;color:var(--gold);margin-bottom:0.5rem;padding-right:2.5rem;letter-spacing:0.05em;text-shadow:0 0 25px rgba(245,215,66,0.3);}
+.modal-event-title{font-family:'Rajdhani',sans-serif;font-size:0.8rem;font-weight:600;color:var(--text-dim);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:1.4rem;}
 
-/* read-only tournament card */
-.tournament-card-rd{background:rgba(5,2,12,0.72);border:1px solid rgba(245,215,66,0.14);border-radius:1.1rem;padding:0.9rem 1rem;margin-bottom:0.8rem;}
-.tc-header{display:flex;align-items:center;gap:0.7rem;margin-bottom:0.6rem;}
-.tc-icon{width:36px;height:36px;object-fit:contain;border-radius:6px;}
-.tc-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;color:var(--text-primary);}
-.fixture-row{display:flex;align-items:center;gap:0.5rem;padding:0.45rem 0;border-bottom:1px solid rgba(245,215,66,0.06);}
-.fixture-row:last-of-type{border-bottom:none;}
-.team-icon-sm{width:26px;height:26px;object-fit:contain;border-radius:4px;}
-.fixture-team{font-size:0.78rem;font-weight:600;color:var(--text-primary);}
-.fixture-vs{font-size:0.63rem;color:var(--gold);font-family:'Orbitron',monospace;font-weight:700;margin:0 4px;}
-.no-fixtures{color:var(--text-dim);font-size:0.75rem;text-align:center;padding:0.5rem 0;}
-.section-label{font-family:'Orbitron',monospace;font-size:0.6rem;font-weight:700;color:var(--gold);letter-spacing:0.15em;margin:1rem 0 0.5rem;display:flex;align-items:center;gap:0.5rem;}
+/* SECTION LABEL */
+.section-label{font-family:'Orbitron',monospace;font-size:0.6rem;font-weight:700;color:var(--gold);letter-spacing:0.15em;margin:1.4rem 0 0.8rem;display:flex;align-items:center;gap:0.5rem;}
+.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--gold-border),transparent);}
 
-/* BUTTONS (only for closing modals) */
+/* TOURNAMENT CARD (view-only) */
+.tournament-card{background:rgba(5,2,12,0.72);border:1px solid rgba(245,215,66,0.14);border-radius:1.1rem;padding:0.9rem 1rem;margin-bottom:0.8rem;transition:border-color 0.2s;}
+.tournament-card:hover{border-color:rgba(245,215,66,0.28);}
+.tc-header{display:flex;align-items:center;gap:0.7rem;}
+.tc-icon{width:38px;height:38px;object-fit:contain;border-radius:6px;flex-shrink:0;}
+.tc-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;color:var(--text-primary);flex:1;}
+.tc-count{font-family:'Orbitron',monospace;font-size:0.6rem;color:var(--text-dim);background:rgba(245,215,66,0.08);border:1px solid rgba(245,215,66,0.15);padding:2px 8px;border-radius:1rem;}
+
+/* FIXTURE TOGGLE */
+.fix-toggle{background:none;border:1px solid rgba(245,215,66,0.18);color:var(--text-dim);padding:0.25rem 0.65rem;border-radius:1.5rem;font-size:0.67rem;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:0.06em;cursor:pointer;margin-top:0.6rem;transition:all 0.2s;display:flex;align-items:center;gap:0.4rem;}
+.fix-toggle:hover{border-color:var(--gold-border);color:var(--gold);}
+.fix-toggle-arrow{transition:transform 0.25s;display:inline-block;}
+.fix-toggle.open .fix-toggle-arrow{transform:rotate(180deg);}
+
+/* FIXTURE PANEL */
+.fix-panel{display:none;margin-top:0.7rem;background:rgba(3,1,8,0.65);border-radius:0.8rem;border:1px solid rgba(245,215,66,0.07);padding:0.7rem;animation:panelOpen 0.25s cubic-bezier(0.22,1,0.36,1);}
+@keyframes panelOpen{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.fix-panel.open{display:block;}
+
+/* FIXTURE ROW */
+.fix-row{display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.3rem;border-bottom:1px solid rgba(245,215,66,0.06);flex-wrap:wrap;transition:background 0.15s;border-radius:0.4rem;}
+.fix-row:last-child{border-bottom:none;}
+.fix-row:hover{background:rgba(91,50,168,0.15);}
+.fix-team-icon{width:28px;height:28px;object-fit:contain;border-radius:5px;flex-shrink:0;}
+.fix-team-name{font-size:0.82rem;font-weight:600;color:var(--text-primary);flex:1;}
+.fix-vs{font-size:0.63rem;color:var(--gold);font-family:'Orbitron',monospace;font-weight:700;padding:0 0.2rem;}
+.fix-away-side{display:flex;align-items:center;gap:0.4rem;flex:1;justify-content:flex-end;}
+.fix-away-name{font-size:0.82rem;font-weight:600;color:var(--text-primary);text-align:right;}
+.no-fixtures{text-align:center;color:var(--text-dim);font-size:0.82rem;padding:0.8rem;font-style:italic;}
+
+/* BUTTONS */
 .btn{padding:0.55rem 1.3rem;border-radius:2rem;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.06em;cursor:pointer;transition:all 0.25s;border:none;display:inline-flex;align-items:center;gap:0.3rem;}
 .btn-purple{background:rgba(91,50,168,0.45);border:1px solid var(--gold-border);color:var(--gold);}
 .btn-purple:hover{background:var(--purple-hover);}
-.btn-row{display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:1rem;justify-content:flex-end;}
+.btn-red{background:rgba(239,68,68,0.8);color:#fff;}
+.btn-red:hover{background:var(--red);}
+.btn-sm{padding:0.3rem 0.75rem;font-size:0.7rem;border-radius:1.5rem;}
+.btn-row{display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:1.2rem;}
+
+/* MENU */
+.menu-list{display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem;}
+.menu-link{display:block;text-align:center;padding:0.65rem 1rem;background:rgba(91,50,168,0.18);border:1px solid var(--gold-border);border-radius:2rem;color:var(--text-primary);text-decoration:none;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.9rem;letter-spacing:0.06em;transition:all 0.2s;}
+.menu-link:hover{background:var(--purple-btn);color:var(--gold);transform:translateX(4px);}
 
 /* FILTER TEAM GRID */
 .team-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;}
 .team-opt{background:rgba(91,50,168,0.18);border:1px solid var(--gold-border);border-radius:2rem;padding:0.5rem 0.8rem;cursor:pointer;text-align:center;font-size:0.8rem;font-weight:600;color:var(--text-primary);transition:all 0.2s;font-family:'Rajdhani',sans-serif;}
 .team-opt:hover,.team-opt.active{background:var(--purple-btn);border-color:var(--gold);color:var(--gold);}
 
-/* MENU */
-.menu-list{display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem;}
-.menu-link{display:block;text-align:center;padding:0.65rem 1rem;background:rgba(91,50,168,0.18);border:1px solid var(--gold-border);border-radius:2rem;color:var(--text-primary);text-decoration:none;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.9rem;letter-spacing:0.06em;transition:all 0.2s;}
-.menu-link:hover{background:var(--purple-btn);color:var(--gold);transform:translateX(4px);}
+/* FILTER INDICATOR */
+.filter-badge{background:var(--gold);color:var(--purple-deep);font-size:0.55rem;font-weight:700;font-family:'Rajdhani',sans-serif;letter-spacing:0.08em;padding:2px 7px;border-radius:1rem;margin-left:0.4rem;display:none;}
+.filter-badge.show{display:inline-block;}
+
+/* TOAST */
+.toast{position:fixed;bottom:2rem;right:2rem;background:linear-gradient(135deg,var(--purple-card),var(--purple-mid));border-radius:1.1rem;padding:0.9rem 1.3rem;font-size:0.84rem;color:var(--text-primary);z-index:9998;box-shadow:0 10px 35px rgba(0,0,0,0.55);transform:translateY(80px);opacity:0;transition:all 0.38s cubic-bezier(0.22,1,0.36,1);border:1px solid var(--gold-border);max-width:300px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{border-color:var(--green);}
+.toast.error{border-color:var(--red);}
+
+/* LIVE INDICATOR */
+.live-dot{display:inline-flex;align-items:center;gap:0.4rem;font-family:'Rajdhani',sans-serif;font-size:0.7rem;font-weight:700;color:var(--green);letter-spacing:0.08em;}
+.live-dot::before{content:'';width:7px;height:7px;background:var(--green);border-radius:50%;box-shadow:0 0 6px var(--green);animation:dotPulse 1.8s ease-in-out infinite;}
 
 @media(max-width:680px){
   .wrapper{padding:1rem 0.75rem 3rem;}
@@ -129,6 +171,7 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
   .day-number{font-size:0.6rem;}
   .weekday{font-size:0.58rem;padding:0.5rem 0.2rem;}
   .modal{padding:1.4rem;}
+  .fix-away-name{text-align:left;}
 }
 </style>
 </head>
@@ -137,35 +180,47 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 <div class="bg-layer"><div class="bg-orb"></div><div class="bg-orb"></div><div class="bg-orb"></div></div>
 <div class="bg-grid"></div>
 
+<!-- LOADER -->
 <div class="loader" id="loader">
   <div class="loader-logo">eFOOTBALL 412</div>
   <div class="loader-ring"></div>
-  <div class="loader-text">MANAGER CALENDAR · LOADING</div>
+  <div class="loader-text">Loading Calendar...</div>
 </div>
 
+<!-- NAVBAR -->
 <nav class="navbar">
   <div class="nav-brand">
     <div class="nav-icon-wrap">⚽</div>
     eFOOTBALL 412
-    <span class="manager-pill">MANAGER</span>
   </div>
   <div class="nav-actions">
     <button class="nav-btn" id="filterBtn" title="Filter by team">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 6H20M6 12H18M10 18H14" stroke="#F5D742" stroke-width="2.2" stroke-linecap="round"/><circle cx="6" cy="6" r="2" stroke="#F5D742" stroke-width="1.8"/><circle cx="18" cy="12" r="2" stroke="#F5D742" stroke-width="1.8"/><circle cx="14" cy="18" r="2" stroke="#F5D742" stroke-width="1.8"/></svg>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+        <path d="M4 6H20M6 12H18M10 18H14" stroke="#F5D742" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="6" cy="6" r="2" stroke="#F5D742" stroke-width="1.8"/>
+        <circle cx="18" cy="12" r="2" stroke="#F5D742" stroke-width="1.8"/>
+        <circle cx="14" cy="18" r="2" stroke="#F5D742" stroke-width="1.8"/>
+      </svg>
     </button>
     <button class="nav-btn" id="menuBtn" title="Menu" style="font-size:1.15rem;">☰</button>
   </div>
 </nav>
 
+<!-- MAIN -->
 <div class="wrapper">
   <div class="page-header">
-    <div class="page-title">MANAGER CALENDAR</div>
-    <div class="page-sub">Read‑only schedule · All events and fixtures are managed by the administration</div>
+    <div class="page-title">MATCH CALENDAR</div>
+    <div class="page-sub">
+      Click any highlighted date to view fixtures &nbsp;·&nbsp;
+      <span class="live-dot">LIVE</span>
+    </div>
   </div>
   <div id="calendarRoot"></div>
 </div>
 
-<!-- MENU OVERLAY -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══ MENU ═══ -->
 <div class="overlay" id="menuOverlay">
   <div class="modal" style="max-width:300px;">
     <button class="modal-close" data-close="menuOverlay">✕</button>
@@ -175,45 +230,59 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
       <a href="index.html" class="menu-link">🏠 MAIN MENU</a>
       <a href="login.html" class="menu-link">🔑 LOGIN</a>
       <a href="player-titles.html" class="menu-link">🏆 MANAGER TITLES</a>
-      <a href="user-calendar.html" class="menu-link">👁 USER VIEW</a>
     </div>
     <button class="btn btn-purple" style="width:100%;" data-close="menuOverlay">CLOSE</button>
   </div>
 </div>
 
-<!-- FILTER OVERLAY (client-side only) -->
+<!-- ═══ FILTER ═══ -->
 <div class="overlay" id="filterOverlay">
   <div class="modal" style="max-width:380px;">
     <button class="modal-close" data-close="filterOverlay">✕</button>
-    <div class="modal-title">FILTER BY TEAM</div>
+    <div class="modal-title">
+      FILTER BY TEAM
+      <span class="filter-badge" id="filterBadge">ACTIVE</span>
+    </div>
     <div class="team-grid" id="teamGrid"></div>
     <div class="btn-row">
-      <button class="btn btn-purple btn-sm" id="clearFilterBtn">CLEAR FILTER</button>
+      <button class="btn btn-red btn-sm" id="clearFilterBtn">CLEAR FILTER</button>
       <button class="btn btn-purple btn-sm" data-close="filterOverlay">CLOSE</button>
     </div>
   </div>
 </div>
 
-<!-- READ-ONLY EVENT DETAIL OVERLAY -->
-<div class="overlay" id="infoOverlay">
-  <div class="modal">
-    <button class="modal-close" data-close="infoOverlay">✕</button>
-    <div class="modal-title" id="infoTitle">Event Details</div>
-    <div id="infoContent"></div>
-    <div class="btn-row">
-      <button class="btn btn-purple" data-close="infoOverlay">CLOSE</button>
+<!-- ═══ DAY POPUP ═══ -->
+<div class="overlay" id="dayOverlay">
+  <div class="modal" style="max-width:580px;">
+    <button class="modal-close" data-close="dayOverlay">✕</button>
+    <div class="modal-title" id="dayTitle">DATE</div>
+    <div class="modal-event-title" id="dayEventTitle"></div>
+
+    <div class="section-label">TOURNAMENTS</div>
+    <div id="tournamentsContainer"></div>
+
+    <div class="btn-row" style="margin-top:1.2rem;">
+      <button class="btn btn-purple" data-close="dayOverlay">CLOSE</button>
     </div>
   </div>
 </div>
 
+<!-- ═══ FIREBASE + LOGIC ═══ -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
 import { getFirestore, doc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-// Firebase config (exactly same as admin)
-const FB = { apiKey:"AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4", authDomain:"efootball-412.firebaseapp.com", projectId:"efootball-412", storageBucket:"efootball-412.firebasestorage.app", messagingSenderId:"596548424249", appId:"1:596548424249:web:4349f6e87a40a1590bf3e8", measurementId:"G-KHY86ZMPZH" };
+const FB = {
+  apiKey:"AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
+  authDomain:"efootball-412.firebaseapp.com",
+  projectId:"efootball-412",
+  storageBucket:"efootball-412.firebasestorage.app",
+  messagingSenderId:"596548424249",
+  appId:"1:596548424249:web:4349f6e87a40a1590bf3e8",
+  measurementId:"G-KHY86ZMPZH"
+};
 const app = initializeApp(FB);
-const db = getFirestore(app);
+const db  = getFirestore(app);
 const YEAR = 2026;
 
 const ALL_MONTHS = [
@@ -223,216 +292,315 @@ const ALL_MONTHS = [
 ];
 const ALL_TEAMS = ["Real Madrid","Liverpool","Dortmund","Man City","Barcelona","Arsenal","PSG","AC Milan","Chelsea","Napoli","Atletico","Juventus","Newcastle","Inter Milan"];
 
-let calData = {};
-let activeMonths = [];
-let selectedTeam = null;
+let calData = {}, activeMonths = [], selectedTeam = null;
 
-// --- Read Firestore (same as admin) ---
-onSnapshot(doc(db, "settings", "calendar"), (snap) => {
+/* ── Toast ── */
+function toast(msg, type="") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (type ? " "+type : "");
+  setTimeout(() => t.className = "toast", 3200);
+}
+
+/* ── Overlays ── */
+const openOv  = id => document.getElementById(id).classList.add("active");
+const closeOv = id => document.getElementById(id).classList.remove("active");
+document.querySelectorAll("[data-close]").forEach(el =>
+  el.addEventListener("click", () => closeOv(el.dataset.close))
+);
+document.querySelectorAll(".overlay").forEach(ov =>
+  ov.addEventListener("click", e => { if (e.target === ov) closeOv(ov.id); })
+);
+
+/* ── Firebase listeners ── */
+onSnapshot(doc(db, "settings", "calendar"), snap => {
   activeMonths = snap.exists() ? (snap.data().activeMonths || [3,4,5,6]) : [3,4,5,6];
   renderCalendar();
 });
 
-onSnapshot(collection(db, "calendarEvents"), (snap) => {
+onSnapshot(collection(db, "calendarEvents"), snap => {
   calData = {};
-  snap.forEach(d => { calData[d.id] = d.data(); });
+  snap.forEach(d => calData[d.id] = d.data());
   renderCalendar();
   document.getElementById("loader").classList.add("hidden");
 });
 
-// --- Helper: check if event contains a team ---
-function eventContainsTeam(ev, team) {
-  if (!ev?.tournaments) return false;
-  return ev.tournaments.some(t => (t.fixtures || []).some(f => 
-    (f.home || "").toLowerCase().includes(team.toLowerCase()) || 
-    (f.away || "").toLowerCase().includes(team.toLowerCase())
-  ));
+/* ── Helpers ── */
+function fmtYMD(y, m, d) {
+  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 }
 
-function getOpponentIcon(ev, team) {
-  const teamLow = team.toLowerCase();
-  for (const t of ev?.tournaments || []) {
-    for (const f of t.fixtures || []) {
-      if ((f.home || "").toLowerCase().includes(teamLow)) return f.awayIcon || null;
-      if ((f.away || "").toLowerCase().includes(teamLow)) return f.homeIcon || null;
+function evHasTeam(ev, team) {
+  if (!ev?.tournaments) return false;
+  const tl = team.toLowerCase();
+  return ev.tournaments.some(t =>
+    (t.fixtures || []).some(f =>
+      (f.home || "").toLowerCase().includes(tl) ||
+      (f.away || "").toLowerCase().includes(tl)
+    )
+  );
+}
+
+function oppIcon(ev, team) {
+  if (!ev?.tournaments) return null;
+  const tl = team.toLowerCase();
+  for (const t of ev.tournaments) {
+    for (const f of (t.fixtures || [])) {
+      if ((f.home || "").toLowerCase().includes(tl)) return f.awayIcon || null;
+      if ((f.away || "").toLowerCase().includes(tl)) return f.homeIcon || null;
     }
   }
   return null;
 }
 
-// --- Render calendar grid (read-only, click shows info) ---
+/* ── Calendar Render ── */
 function renderCalendar() {
   const root = document.getElementById("calendarRoot");
-  if (!root) return;
   root.innerHTML = "";
-  const weekdays = ["S", "M", "T", "W", "T", "F", "S"];
+  const WD = ["S","M","T","W","T","F","S"];
 
-  [...activeMonths].sort((a,b) => a-b).forEach((monthNum, idx) => {
-    const monthInfo = ALL_MONTHS.find(m => m.month === monthNum);
-    if (!monthInfo) return;
-
-    const firstDay = new Date(YEAR, monthNum, 1);
-    const daysInMonth = new Date(YEAR, monthNum + 1, 0).getDate();
-    const startWeekday = firstDay.getDay();
+  [...activeMonths].sort((a, b) => a - b).forEach((m, mi) => {
+    const info = ALL_MONTHS.find(x => x.month === m);
+    if (!info) return;
+    const first = new Date(YEAR, m, 1);
+    const dim   = new Date(YEAR, m+1, 0).getDate();
+    const swd   = first.getDay();
 
     const card = document.createElement("div");
     card.className = "month-card";
-    card.style.animationDelay = (idx * 0.07) + "s";
-    card.innerHTML = `<div class="month-header"><h2>${monthInfo.label}</h2></div>`;
+    card.style.animationDelay = (mi * 0.07) + "s";
+    card.innerHTML = `<div class="month-header"><h2>${info.label}</h2></div>`;
 
     const wdRow = document.createElement("div");
     wdRow.className = "weekdays";
-    weekdays.forEach(d => { const el = document.createElement("div"); el.className = "weekday"; el.textContent = d; wdRow.appendChild(el); });
+    WD.forEach(l => {
+      const d = document.createElement("div");
+      d.className = "weekday";
+      d.textContent = l;
+      wdRow.appendChild(d);
+    });
     card.appendChild(wdRow);
 
     const grid = document.createElement("div");
     grid.className = "days-grid";
 
-    for (let i = 0; i < startWeekday; i++) {
-      const empty = document.createElement("div");
-      empty.className = "day-cell empty-day";
-      grid.appendChild(empty);
+    // Empty cells
+    for (let i = 0; i < swd; i++) {
+      const e = document.createElement("div");
+      e.className = "day-cell empty-day";
+      grid.appendChild(e);
     }
 
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateStr = `${YEAR}-${String(monthNum+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const ev = calData[dateStr];
+    for (let d = 1; d <= dim; d++) {
+      const ds = fmtYMD(YEAR, m, d);
+      const ev = calData[ds];
       const cell = document.createElement("div");
-      cell.className = "day-cell" + (ev ? " has-event" : "");
-      
-      const dayNum = document.createElement("div");
-      dayNum.className = "day-number";
-      dayNum.textContent = d;
-      cell.appendChild(dayNum);
+
+      const dn = document.createElement("div");
+      dn.className = "day-number";
+      dn.textContent = d;
+      cell.appendChild(dn);
 
       if (ev) {
-        let showEvent = true;
-        let opponentIcon = null;
-        if (selectedTeam && !eventContainsTeam(ev, selectedTeam)) {
-          showEvent = false;
-          cell.classList.remove("has-event");
-        } else if (selectedTeam) {
-          opponentIcon = getOpponentIcon(ev, selectedTeam);
-        }
-
-        if (showEvent) {
-          if (selectedTeam && opponentIcon) {
-            const img = document.createElement("img");
-            img.className = "event-icon";
-            img.src = opponentIcon;
-            cell.appendChild(img);
-          } else if (ev.iconUrl) {
+        // Filter logic
+        if (selectedTeam) {
+          if (evHasTeam(ev, selectedTeam)) {
+            cell.className = "day-cell has-event";
+            const oi = oppIcon(ev, selectedTeam);
+            if (oi) {
+              const img = document.createElement("img");
+              img.className = "event-icon";
+              img.src = oi;
+              img.alt = "opponent";
+              cell.appendChild(img);
+            }
+            const dot = document.createElement("div");
+            dot.className = "event-dot";
+            cell.appendChild(dot);
+            cell.addEventListener("click", () => openDayModal(ds, d, info.label));
+          } else {
+            cell.className = "day-cell no-event";
+          }
+        } else {
+          cell.className = "day-cell has-event";
+          if (ev.iconUrl) {
             const img = document.createElement("img");
             img.className = "event-icon";
             img.src = ev.iconUrl;
             img.alt = ev.title || "";
             cell.appendChild(img);
-            if (ev.title) {
-              const label = document.createElement("div");
-              label.className = "event-label";
-              label.textContent = ev.title;
-              cell.appendChild(label);
-            }
+          }
+          if (ev.title) {
+            const lbl = document.createElement("div");
+            lbl.className = "event-label";
+            lbl.textContent = ev.title;
+            cell.appendChild(lbl);
           }
           const dot = document.createElement("div");
           dot.className = "event-dot";
           cell.appendChild(dot);
+          cell.addEventListener("click", () => openDayModal(ds, d, info.label));
         }
-        // Click to view details (read-only)
-        cell.addEventListener("click", (e) => {
-          e.stopPropagation();
-          showEventInfo(dateStr, ev);
-        });
       } else {
-        const hint = document.createElement("div");
-        hint.className = "no-event-hint";
-        hint.textContent = "— no event —";
-        cell.appendChild(hint);
-        cell.style.cursor = "default";
+        cell.className = "day-cell no-event";
       }
+
       grid.appendChild(cell);
     }
+
     card.appendChild(grid);
     root.appendChild(card);
   });
 }
 
-// --- Read-only event details modal ---
-function showEventInfo(dateStr, eventData) {
-  const modalTitle = document.getElementById("infoTitle");
-  const contentDiv = document.getElementById("infoContent");
-  modalTitle.innerText = `📅 ${dateStr} · ${eventData.title || "Event"}`;
-  
-  let html = `<div style="margin-bottom:1rem;"><img src="${eventData.iconUrl || ''}" style="max-width:60px; border-radius:10px; margin-bottom:8px;" onerror="this.style.display='none'"><div><strong style="color:var(--gold);">${eventData.title || "No title"}</strong></div></div>`;
-  
-  if (eventData.tournaments && eventData.tournaments.length) {
-    html += `<div class="section-label">🏆 TOURNAMENTS & FIXTURES</div>`;
-    eventData.tournaments.forEach((tourn, idx) => {
-      html += `<div class="tournament-card-rd">
-        <div class="tc-header">
-          ${tourn.iconUrl ? `<img class="tc-icon" src="${tourn.iconUrl}" onerror="this.style.display='none'">` : ""}
-          <span class="tc-name">${tourn.name || "Tournament"}</span>
-        </div>`;
-      const fixtures = tourn.fixtures || [];
-      if (fixtures.length === 0) {
-        html += `<div class="no-fixtures">No fixtures scheduled</div>`;
+/* ── Day Modal ── */
+function openDayModal(ds, day, monthLabel) {
+  const ev = calData[ds];
+  if (!ev) return;
+
+  document.getElementById("dayTitle").textContent = `${day} ${monthLabel}`;
+  document.getElementById("dayEventTitle").textContent = ev.title ? `📅 ${ev.title}` : "";
+
+  const container = document.getElementById("tournamentsContainer");
+  container.innerHTML = "";
+
+  const tournaments = ev.tournaments || [];
+  if (!tournaments.length) {
+    container.innerHTML = `<div class="no-fixtures">No tournaments scheduled for this date.</div>`;
+  } else {
+    tournaments.forEach(t => {
+      const card = document.createElement("div");
+      card.className = "tournament-card";
+
+      // Header
+      const hdr = document.createElement("div");
+      hdr.className = "tc-header";
+
+      if (t.iconUrl) {
+        const img = document.createElement("img");
+        img.className = "tc-icon";
+        img.src = t.iconUrl;
+        img.alt = t.name || "";
+        hdr.appendChild(img);
+      }
+
+      const nm = document.createElement("div");
+      nm.className = "tc-name";
+      nm.textContent = t.name || "Untitled Tournament";
+      hdr.appendChild(nm);
+
+      const count = document.createElement("div");
+      count.className = "tc-count";
+      count.textContent = `${(t.fixtures || []).length} fixtures`;
+      hdr.appendChild(count);
+
+      card.appendChild(hdr);
+
+      // Toggle button
+      const tog = document.createElement("button");
+      tog.className = "fix-toggle";
+      tog.innerHTML = `⚽ VIEW FIXTURES <span class="fix-toggle-arrow">▾</span>`;
+      card.appendChild(tog);
+
+      // Fixtures panel
+      const panel = document.createElement("div");
+      panel.className = "fix-panel";
+
+      const fixtures = t.fixtures || [];
+      if (!fixtures.length) {
+        const none = document.createElement("div");
+        none.className = "no-fixtures";
+        none.textContent = "No fixtures added yet.";
+        panel.appendChild(none);
       } else {
         fixtures.forEach(f => {
-          html += `<div class="fixture-row">
-            ${f.homeIcon ? `<img class="team-icon-sm" src="${f.homeIcon}" onerror="this.style.display='none'">` : `<span style="width:26px;"></span>`}
-            <span class="fixture-team">${f.home || "?"}</span>
-            <span class="fixture-vs">VS</span>
-            ${f.awayIcon ? `<img class="team-icon-sm" src="${f.awayIcon}" onerror="this.style.display='none'">` : `<span style="width:26px;"></span>`}
-            <span class="fixture-team">${f.away || "?"}</span>
-          </div>`;
+          const row = document.createElement("div");
+          row.className = "fix-row";
+
+          // Home side
+          if (f.homeIcon) {
+            const img = document.createElement("img");
+            img.className = "fix-team-icon";
+            img.src = f.homeIcon;
+            img.alt = f.home || "";
+            row.appendChild(img);
+          }
+          const hn = document.createElement("span");
+          hn.className = "fix-team-name";
+          hn.textContent = f.home || "TBD";
+          row.appendChild(hn);
+
+          // VS
+          const vs = document.createElement("span");
+          vs.className = "fix-vs";
+          vs.textContent = "vs";
+          row.appendChild(vs);
+
+          // Away side
+          const awaySide = document.createElement("div");
+          awaySide.className = "fix-away-side";
+
+          const an = document.createElement("span");
+          an.className = "fix-away-name";
+          an.textContent = f.away || "TBD";
+          awaySide.appendChild(an);
+
+          if (f.awayIcon) {
+            const img = document.createElement("img");
+            img.className = "fix-team-icon";
+            img.src = f.awayIcon;
+            img.alt = f.away || "";
+            awaySide.appendChild(img);
+          }
+
+          row.appendChild(awaySide);
+          panel.appendChild(row);
         });
       }
-      html += `</div>`;
+
+      // Toggle behaviour
+      tog.addEventListener("click", () => {
+        const isOpen = panel.classList.toggle("open");
+        tog.classList.toggle("open", isOpen);
+      });
+
+      card.appendChild(panel);
+      container.appendChild(card);
     });
-  } else {
-    html += `<div class="no-fixtures" style="padding:1rem;">No additional tournaments or fixtures.</div>`;
   }
-  contentDiv.innerHTML = html;
-  document.getElementById("infoOverlay").classList.add("active");
+
+  openOv("dayOverlay");
 }
 
-// --- Filter UI (client-side only) ---
+/* ── Filter ── */
 const teamGrid = document.getElementById("teamGrid");
-if (teamGrid) {
-  ALL_TEAMS.forEach(team => {
-    const el = document.createElement("div");
-    el.className = "team-opt";
-    el.textContent = team;
-    el.onclick = () => {
-      selectedTeam = team;
-      document.querySelectorAll("#teamGrid .team-opt").forEach(x => x.classList.remove("active"));
-      el.classList.add("active");
-      document.getElementById("filterOverlay").classList.remove("active");
-      renderCalendar();
-    };
-    teamGrid.appendChild(el);
+ALL_TEAMS.forEach(team => {
+  const el = document.createElement("div");
+  el.className = "team-opt";
+  el.textContent = team;
+  el.addEventListener("click", () => {
+    selectedTeam = team;
+    teamGrid.querySelectorAll(".team-opt").forEach(x => x.classList.remove("active"));
+    el.classList.add("active");
+    document.getElementById("filterBadge").classList.add("show");
+    closeOv("filterOverlay");
+    renderCalendar();
+    toast(`Filtering: ${team}`, "success");
   });
-}
+  teamGrid.appendChild(el);
+});
 
-document.getElementById("clearFilterBtn")?.addEventListener("click", () => {
+document.getElementById("clearFilterBtn").addEventListener("click", () => {
   selectedTeam = null;
-  document.querySelectorAll("#teamGrid .team-opt").forEach(x => x.classList.remove("active"));
-  document.getElementById("filterOverlay").classList.remove("active");
+  teamGrid.querySelectorAll(".team-opt").forEach(x => x.classList.remove("active"));
+  document.getElementById("filterBadge").classList.remove("show");
+  closeOv("filterOverlay");
   renderCalendar();
+  toast("Filter cleared", "success");
 });
 
-// --- Overlay helpers ---
-function closeOverlay(id) { document.getElementById(id)?.classList.remove("active"); }
-document.querySelectorAll("[data-close]").forEach(btn => {
-  btn.addEventListener("click", () => closeOverlay(btn.dataset.close));
-});
-document.querySelectorAll(".overlay").forEach(ov => {
-  ov.addEventListener("click", (e) => { if (e.target === ov) closeOverlay(ov.id); });
-});
-
-// --- Nav buttons ---
-document.getElementById("filterBtn")?.addEventListener("click", () => document.getElementById("filterOverlay").classList.add("active"));
-document.getElementById("menuBtn")?.addEventListener("click", () => document.getElementById("menuOverlay").classList.add("active"));
+document.getElementById("filterBtn").addEventListener("click", () => openOv("filterOverlay"));
+document.getElementById("menuBtn").addEventListener("click", () => openOv("menuOverlay"));
 </script>
 </body>
-</html>
+  </html>
