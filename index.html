@@ -637,10 +637,10 @@
   function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
   if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-  // LEAGUE DATA AFTER MD22 (with only Liverpool-Napoli remaining)
+  // LEAGUE DATA AFTER adding Liverpool-Napoli draw (MD22) and Newcastle-Inter win (MD23)
   const LEAGUE_DATA = [
     { pos: 1, club: "Real Madrid", p: 22, gd: 24, pts: 61 },
-    { pos: 2, club: "Liverpool", p: 21, gd: 39, pts: 51 },
+    { pos: 2, club: "Liverpool", p: 22, gd: 39, pts: 52 },
     { pos: 3, club: "Dortmund", p: 22, gd: 12, pts: 43 },
     { pos: 4, club: "Barcelona", p: 22, gd: 1, pts: 40 },
     { pos: 5, club: "Arsenal", p: 22, gd: 6, pts: 38 },
@@ -648,10 +648,10 @@
     { pos: 7, club: "PSG", p: 22, gd: -17, pts: 29 },
     { pos: 8, club: "Chelsea", p: 22, gd: 5, pts: 28 },
     { pos: 9, club: "AC Milan", p: 22, gd: -12, pts: 25 },
-    { pos: 10, club: "Napoli", p: 21, gd: -19, pts: 14 },
-    { pos: 11, club: "Inter Milan", p: 22, gd: -16, pts: 11 },
+    { pos: 10, club: "Inter Milan", p: 23, gd: -15, pts: 14 },
+    { pos: 11, club: "Napoli", p: 22, gd: -19, pts: 15 },
     { pos: 12, club: "Juventus", p: 22, gd: -23, pts: 11 },
-    { pos: 13, club: "Newcastle", p: 22, gd: -49, pts: 9 },
+    { pos: 13, club: "Newcastle", p: 23, gd: -50, pts: 9 },
     { pos: 14, club: "Atletico", p: 22, gd: -29, pts: 7 }
   ];
 
@@ -706,10 +706,10 @@
     return teamName;
   }
 
-  // LAST 5 RESULTS: updated with all MD22 results (Liverpool/Napoli not played yet)
+  // LAST 5 RESULTS: updated with Liverpool draw, Napoli draw, Inter win, Newcastle loss
   const last5Exact = {
     "Real Madrid":   ["WF", "WF", "W", "WF", "WF", "L", "WF"],
-    "Liverpool":     ["W", "W", "W", "WF", "W", "D"],
+    "Liverpool":     ["W", "W", "W", "WF", "W", "D", "D"],
     "Dortmund":      ["D", "WF", "L", "F", "WF", "W", "WF"],
     "Barcelona":     ["LF", "W", "W", "WF", "LF", "F", "W"],
     "Arsenal":       ["L", "L", "W", "W", "WF", "WF", "WF"],
@@ -717,11 +717,11 @@
     "Chelsea":       ["F", "WF", "W", "L", "LF", "D", "LF"],
     "PSG":           ["WF", "L", "WF", "LF", "LF", "W", "L"],
     "AC Milan":      ["W", "WF", "LF", "LF", "L", "WF", "W"],
-    "Napoli":        ["LF", "LF", "L", "F", "LF", "LF"],
-    "Inter Milan":   ["WF", "L", "L", "L", "WF", "L", "L"],
+    "Napoli":        ["LF", "LF", "L", "F", "LF", "LF", "D"],
+    "Inter Milan":   ["WF", "L", "L", "L", "WF", "L", "W"],
     "Juventus":      ["D", "LF", "LF", "W", "WF", "F", "LF"],
     "Atletico":      ["LF", "L", "L", "LF", "LF", "LF", "F"],
-    "Newcastle":     ["L", "LF", "WF", "LF", "L", "LF", "F"]
+    "Newcastle":     ["L", "LF", "WF", "LF", "L", "LF", "L"]
   };
 
   const teamResults = {};
@@ -758,15 +758,12 @@
     26: "May 8"
   };
 
-  // Fixture list for MD22 and beyond (only Liverpool vs Napoli remains for MD22, all others removed)
+  // Fixture list: removed Liverpool vs Napoli (MD22) and Newcastle vs Inter (MD23)
   const fixtureList = [
-    // MD22 remaining
-    { md: 22, home: "Liverpool", away: "Napoli" },
-    // MD23
+    // MD23 remaining fixtures (all except Newcastle vs Inter)
     { md: 23, home: "Real Madrid", away: "FC Barcelona" },
     { md: 23, home: "AC Milan", away: "Paris Saint-Germain" },
     { md: 23, home: "Manchester City", away: "Juventus" },
-    { md: 23, home: "Newcastle United", away: "Inter Milan" },
     { md: 23, home: "Liverpool", away: "Borussia Dortmund" },
     { md: 23, home: "Chelsea", away: "Atlético Madrid" },
     { md: 23, home: "Arsenal", away: "Napoli" },
@@ -805,8 +802,11 @@
     awayPlayer: playerMap[f.away] || ""
   }));
 
-  // RESULTS_DATA: added MD22 results (newest first)
+  // RESULTS_DATA: added Newcastle vs Inter (MD23) and Liverpool vs Napoli (MD22) as newest
   const RESULTS_DATA = [
+    { matchText: "Inter Milan 2 - 1 Newcastle United", md: 23 },
+    { matchText: "Liverpool 1 - 1 Napoli", md: 22 },
+    // Previous MD22 results (already in file)
     { matchText: "FC Barcelona 2 - 1 Paris Saint-Germain", md: 22 },
     { matchText: "Real Madrid 3 - 0 Juventus (Forfeited - No Reply)", md: 22 },
     { matchText: "Borussia Dortmund 3 - 0 Manchester City (Forfeited - No Reply)", md: 22 },
