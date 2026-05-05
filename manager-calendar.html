@@ -82,11 +82,11 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 @keyframes dotPulse{0%,100%{opacity:1;box-shadow:0 0 6px var(--gold);}50%{opacity:0.4;box-shadow:0 0 14px var(--gold);}}
 .no-event-hint{font-size:0.58rem;color:rgba(245,215,66,0.18);font-style:italic;margin-top:auto;padding-top:4px;}
 
-/* OVERLAY (modals) */
+/* OVERLAY (read-only modal) */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.82);backdrop-filter:blur(7px);z-index:500;display:flex;align-items:center;justify-content:center;padding:1rem;visibility:hidden;opacity:0;transition:opacity 0.3s,visibility 0.3s;}
 .overlay.active{visibility:visible;opacity:1;}
 .overlay.active .modal{transform:translateY(0) scale(1);}
-.modal{background:linear-gradient(158deg,#1e1448,#0c0620);border:1.5px solid var(--gold-border);border-radius:1.8rem;padding:1.8rem;width:100%;max-width:550px;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 30px 90px rgba(0,0,0,0.75),0 0 40px rgba(245,215,66,0.08);transform:translateY(22px) scale(0.97);transition:transform 0.38s cubic-bezier(0.22,1,0.36,1);}
+.modal{background:linear-gradient(158deg,#1e1448,#0c0620);border:1.5px solid var(--gold-border);border-radius:1.8rem;padding:1.8rem;width:100%;max-width:580px;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 30px 90px rgba(0,0,0,0.75),0 0 40px rgba(245,215,66,0.08);transform:translateY(22px) scale(0.97);transition:transform 0.38s cubic-bezier(0.22,1,0.36,1);}
 .modal::-webkit-scrollbar{width:4px;}
 .modal::-webkit-scrollbar-thumb{background:var(--gold-border);border-radius:2px;}
 .modal-close{position:absolute;top:14px;right:16px;background:rgba(91,50,168,0.4);border:1px solid var(--gold-border);color:var(--gold);width:32px;height:32px;border-radius:50%;font-size:1.15rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.25s;line-height:1;}
@@ -104,8 +104,9 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 .fixture-team{font-size:0.78rem;font-weight:600;color:var(--text-primary);}
 .fixture-vs{font-size:0.63rem;color:var(--gold);font-family:'Orbitron',monospace;font-weight:700;margin:0 4px;}
 .no-fixtures{color:var(--text-dim);font-size:0.75rem;text-align:center;padding:0.5rem 0;}
+.section-label{font-family:'Orbitron',monospace;font-size:0.6rem;font-weight:700;color:var(--gold);letter-spacing:0.15em;margin:1rem 0 0.5rem;display:flex;align-items:center;gap:0.5rem;}
 
-/* BUTTONS (only for closing modals, no writes) */
+/* BUTTONS (only for closing modals) */
 .btn{padding:0.55rem 1.3rem;border-radius:2rem;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.06em;cursor:pointer;transition:all 0.25s;border:none;display:inline-flex;align-items:center;gap:0.3rem;}
 .btn-purple{background:rgba(91,50,168,0.45);border:1px solid var(--gold-border);color:var(--gold);}
 .btn-purple:hover{background:var(--purple-hover);}
@@ -195,7 +196,7 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 
 <!-- READ-ONLY EVENT DETAIL OVERLAY -->
 <div class="overlay" id="infoOverlay">
-  <div class="modal" style="max-width:580px;">
+  <div class="modal">
     <button class="modal-close" data-close="infoOverlay">✕</button>
     <div class="modal-title" id="infoTitle">Event Details</div>
     <div id="infoContent"></div>
@@ -209,7 +210,7 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
 import { getFirestore, doc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-// Firebase config (read-only)
+// Firebase config (exactly same as admin)
 const FB = { apiKey:"AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4", authDomain:"efootball-412.firebaseapp.com", projectId:"efootball-412", storageBucket:"efootball-412.firebasestorage.app", messagingSenderId:"596548424249", appId:"1:596548424249:web:4349f6e87a40a1590bf3e8", measurementId:"G-KHY86ZMPZH" };
 const app = initializeApp(FB);
 const db = getFirestore(app);
@@ -226,7 +227,7 @@ let calData = {};
 let activeMonths = [];
 let selectedTeam = null;
 
-// --- LOADERS (read-only) ---
+// --- Read Firestore (same as admin) ---
 onSnapshot(doc(db, "settings", "calendar"), (snap) => {
   activeMonths = snap.exists() ? (snap.data().activeMonths || [3,4,5,6]) : [3,4,5,6];
   renderCalendar();
@@ -239,7 +240,7 @@ onSnapshot(collection(db, "calendarEvents"), (snap) => {
   document.getElementById("loader").classList.add("hidden");
 });
 
-// --- Helper: check if event contains a team (fixture search) ---
+// --- Helper: check if event contains a team ---
 function eventContainsTeam(ev, team) {
   if (!ev?.tournaments) return false;
   return ev.tournaments.some(t => (t.fixtures || []).some(f => 
@@ -259,9 +260,10 @@ function getOpponentIcon(ev, team) {
   return null;
 }
 
-// --- Render calendar grid (read-only, clickable for info) ---
+// --- Render calendar grid (read-only, click shows info) ---
 function renderCalendar() {
   const root = document.getElementById("calendarRoot");
+  if (!root) return;
   root.innerHTML = "";
   const weekdays = ["S", "M", "T", "W", "T", "F", "S"];
 
@@ -286,7 +288,6 @@ function renderCalendar() {
     const grid = document.createElement("div");
     grid.className = "days-grid";
 
-    // empty cells before month start
     for (let i = 0; i < startWeekday; i++) {
       const empty = document.createElement("div");
       empty.className = "day-cell empty-day";
@@ -305,7 +306,6 @@ function renderCalendar() {
       cell.appendChild(dayNum);
 
       if (ev) {
-        // apply team filter if active
         let showEvent = true;
         let opponentIcon = null;
         if (selectedTeam && !eventContainsTeam(ev, selectedTeam)) {
@@ -334,12 +334,11 @@ function renderCalendar() {
               cell.appendChild(label);
             }
           }
-          // add dot indicator
           const dot = document.createElement("div");
           dot.className = "event-dot";
           cell.appendChild(dot);
         }
-        // make cell clickable to view details (read-only)
+        // Click to view details (read-only)
         cell.addEventListener("click", (e) => {
           e.stopPropagation();
           showEventInfo(dateStr, ev);
@@ -350,7 +349,6 @@ function renderCalendar() {
         hint.textContent = "— no event —";
         cell.appendChild(hint);
         cell.style.cursor = "default";
-        cell.addEventListener("click", () => {}); // no action
       }
       grid.appendChild(cell);
     }
@@ -368,7 +366,7 @@ function showEventInfo(dateStr, eventData) {
   let html = `<div style="margin-bottom:1rem;"><img src="${eventData.iconUrl || ''}" style="max-width:60px; border-radius:10px; margin-bottom:8px;" onerror="this.style.display='none'"><div><strong style="color:var(--gold);">${eventData.title || "No title"}</strong></div></div>`;
   
   if (eventData.tournaments && eventData.tournaments.length) {
-    html += `<div class="section-label" style="margin-top:0.5rem;">🏆 TOURNAMENTS & FIXTURES</div>`;
+    html += `<div class="section-label">🏆 TOURNAMENTS & FIXTURES</div>`;
     eventData.tournaments.forEach((tourn, idx) => {
       html += `<div class="tournament-card-rd">
         <div class="tc-header">
@@ -398,31 +396,33 @@ function showEventInfo(dateStr, eventData) {
   document.getElementById("infoOverlay").classList.add("active");
 }
 
-// --- Filter UI (client-side read only) ---
+// --- Filter UI (client-side only) ---
 const teamGrid = document.getElementById("teamGrid");
-ALL_TEAMS.forEach(team => {
-  const el = document.createElement("div");
-  el.className = "team-opt";
-  el.textContent = team;
-  el.onclick = () => {
-    selectedTeam = team;
-    document.querySelectorAll("#teamGrid .team-opt").forEach(x => x.classList.remove("active"));
-    el.classList.add("active");
-    document.getElementById("filterOverlay").classList.remove("active");
-    renderCalendar();
-  };
-  teamGrid.appendChild(el);
-});
+if (teamGrid) {
+  ALL_TEAMS.forEach(team => {
+    const el = document.createElement("div");
+    el.className = "team-opt";
+    el.textContent = team;
+    el.onclick = () => {
+      selectedTeam = team;
+      document.querySelectorAll("#teamGrid .team-opt").forEach(x => x.classList.remove("active"));
+      el.classList.add("active");
+      document.getElementById("filterOverlay").classList.remove("active");
+      renderCalendar();
+    };
+    teamGrid.appendChild(el);
+  });
+}
 
-document.getElementById("clearFilterBtn").onclick = () => {
+document.getElementById("clearFilterBtn")?.addEventListener("click", () => {
   selectedTeam = null;
   document.querySelectorAll("#teamGrid .team-opt").forEach(x => x.classList.remove("active"));
   document.getElementById("filterOverlay").classList.remove("active");
   renderCalendar();
-};
+});
 
 // --- Overlay helpers ---
-function closeOverlay(id) { document.getElementById(id).classList.remove("active"); }
+function closeOverlay(id) { document.getElementById(id)?.classList.remove("active"); }
 document.querySelectorAll("[data-close]").forEach(btn => {
   btn.addEventListener("click", () => closeOverlay(btn.dataset.close));
 });
@@ -431,10 +431,8 @@ document.querySelectorAll(".overlay").forEach(ov => {
 });
 
 // --- Nav buttons ---
-document.getElementById("filterBtn").onclick = () => document.getElementById("filterOverlay").classList.add("active");
-document.getElementById("menuBtn").onclick = () => document.getElementById("menuOverlay").classList.add("active");
-
-// No seed or write operations – purely read‑only
+document.getElementById("filterBtn")?.addEventListener("click", () => document.getElementById("filterOverlay").classList.add("active"));
+document.getElementById("menuBtn")?.addEventListener("click", () => document.getElementById("menuOverlay").classList.add("active"));
 </script>
 </body>
 </html>
