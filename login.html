@@ -19,50 +19,17 @@
       color: #f5f0ff;
     }
 
-    /* gold navbar – no logo text */
+    /* gold navbar – no logo, only hamburger */
     .gold-navbar {
       background: linear-gradient(135deg, #d4af37, #f5d742);
       padding: 0.5rem 1.2rem;
       display: flex;
       justify-content: flex-end;
       align-items: center;
-      gap: 0.8rem;
       box-shadow: 0 2px 12px rgba(0,0,0,0.4);
       position: sticky;
       top: 0;
       z-index: 100;
-    }
-
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-    }
-
-    .nav-icon-btn {
-      background: #000;
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      transition: transform 0.2s, background 0.2s;
-      border: 1.5px solid #f5d742;
-      text-decoration: none;
-    }
-
-    .nav-icon-btn:hover {
-      transform: scale(1.05);
-      background: #222;
-    }
-
-    .chat-svg {
-      width: 22px;
-      height: 22px;
-      display: block;
     }
 
     .hamburger-btn {
@@ -358,17 +325,7 @@
 <body>
 
 <div class="gold-navbar">
-  <div class="nav-right">
-    <a href="chat.html" class="nav-icon-btn" id="chatBtn">
-      <svg class="chat-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z" fill="#F5D742" stroke="#F5D742" stroke-width="1.5"/>
-        <circle cx="8" cy="10" r="1.5" fill="#000"/>
-        <circle cx="12" cy="10" r="1.5" fill="#000"/>
-        <circle cx="16" cy="10" r="1.5" fill="#000"/>
-      </svg>
-    </a>
-    <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
-  </div>
+  <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
 </div>
 
 <div class="auth-container">
@@ -379,7 +336,7 @@
     <div id="accountsPanel" style="display: none;"></div>
     <div id="loginPanel" style="display: none;">
       <div class="role-selector">
-        <div id="playerRoleBtn" class="role-btn active">👤 Player</div>
+        <div id="managerRoleBtn" class="role-btn active">👤 Manager</div>
         <div id="adminRoleBtn" class="role-btn">👑 Admin</div>
       </div>
       <h2 style="color: #f5d742; text-align: center; margin-bottom: 1rem;">LOGIN</h2>
@@ -430,13 +387,13 @@
   const db = getDatabase(app);
 
   const ADMIN_KEY = "@admin#123!";
-  let selectedRole = "player";
+  let selectedRole = "manager"; // 'manager' or 'admin'
 
   // DOM elements
   const loadingDiv = document.getElementById("loadingAccounts");
   const accountsPanel = document.getElementById("accountsPanel");
   const loginPanel = document.getElementById("loginPanel");
-  const playerRoleBtn = document.getElementById("playerRoleBtn");
+  const managerRoleBtn = document.getElementById("managerRoleBtn");
   const adminRoleBtn = document.getElementById("adminRoleBtn");
   const adminKeyGroup = document.getElementById("adminKeyGroup");
   const loginForm = document.getElementById("loginForm");
@@ -490,35 +447,31 @@
     return accounts;
   }
 
-  // Core login function (with optional auto-admin-key handling)
-  async function performLogin(email, password, roleOverride = null, autoAdmin = false) {
+  // Core login function (used by both manual and auto)
+  async function performLogin(email, password, isAuto = false) {
     const submitBtn = document.getElementById("loginSubmitBtn");
-    if (submitBtn) {
+    if (submitBtn && !isAuto) {
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<div class="loading-spinner" style="width:20px;height:20px;"></div> Logging in...';
     }
     try {
-      // If autoAdmin is true, we already know the role; else we determine from DB after signIn
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
       const userData = await fetchUserData(uid);
       const isAdminFromDb = userData && userData.role === 'admin';
 
-      let finalRole = roleOverride;
-      if (!finalRole) {
-        finalRole = isAdminFromDb ? "admin" : "player";
-      }
-
-      // Validate role matching (if user manually selected a role in UI, we respect that; for auto we use DB role)
-      if (selectedRole === "admin" && !isAdminFromDb) {
-        loginError.textContent = "This account is not an admin account.";
-        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Login"; }
-        return false;
-      }
-      if (selectedRole === "player" && isAdminFromDb) {
-        loginError.textContent = "This account is an admin account. Please use admin login.";
-        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Login"; }
-        return false;
+      // Role validation: for manual login, respect selectedRole; for auto, we use DB role directly
+      if (!isAuto) {
+        if (selectedRole === "admin" && !isAdminFromDb) {
+          loginError.textContent = "This account is not an admin account.";
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Login"; }
+          return false;
+        }
+        if (selectedRole === "manager" && isAdminFromDb) {
+          loginError.textContent = "This account is an admin account. Please use admin login.";
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Login"; }
+          return false;
+        }
       }
 
       // Store/update account with fresh data
@@ -538,48 +491,40 @@
       } else {
         loginError.textContent = error.message;
       }
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Login"; }
+      if (submitBtn && !isAuto) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Login";
+      }
       return false;
     }
   }
 
-  // Auto-login from account card: fetch role and then login with correct role, no admin key prompt
-  async function autoLoginFromAccount(email, password, uid) {
-    const userData = await fetchUserData(uid);
-    const isAdmin = userData && userData.role === 'admin';
-    // Temporarily set selectedRole to match DB role to pass validation
-    const originalRole = selectedRole;
-    if (isAdmin) {
-      selectedRole = "admin";
-    } else {
-      selectedRole = "player";
-    }
-    // Call performLogin, it will use current selectedRole (which matches DB)
-    await performLogin(email, password, isAdmin ? "admin" : "player", true);
-    // Restore original UI role selection (optional)
-    selectedRole = originalRole;
+  // Auto-login from saved account card: no admin key, just sign in and redirect
+  async function autoLoginFromAccount(email, password) {
+    // Show loading on card is handled by caller, but we can show global spinner maybe
+    await performLogin(email, password, true);
   }
 
   // Render account cards with larger avatars, no "Continue" badge
   async function renderAccountsList() {
     loadingDiv.style.display = "none";
     let accounts = getStoredAccounts();
-    // For each account, try to fetch latest photoURL from DB (to ensure fresh images)
+    // Refresh photoURL from DB for each account
     for (let i = 0; i < accounts.length; i++) {
       const acc = accounts[i];
       if (acc.uid) {
         const userData = await fetchUserData(acc.uid);
         if (userData.photoURL && userData.photoURL !== acc.photoURL) {
           acc.photoURL = userData.photoURL;
-          // update stored
           let all = getStoredAccounts();
           const idx = all.findIndex(a => a.email === acc.email);
           if (idx !== -1) all[idx].photoURL = userData.photoURL;
           saveAccounts(all);
-          accounts = getStoredAccounts(); // refresh
+          accounts = getStoredAccounts();
         }
       }
     }
+
     if (accounts.length === 0) {
       accountsPanel.style.display = "none";
       loginPanel.style.display = "block";
@@ -620,16 +565,15 @@
       card.addEventListener("click", async () => {
         card.style.opacity = "0.6";
         card.style.pointerEvents = "none";
-        if (!acc.uid) {
-          loginError.textContent = "Missing user ID. Please login manually.";
+        if (!acc.email || !acc.password) {
+          loginError.textContent = "Missing credentials. Please login manually.";
           showLoginFormWithEmail(acc.email);
           card.style.opacity = "1";
           card.style.pointerEvents = "auto";
           return;
         }
-        await autoLoginFromAccount(acc.email, acc.password, acc.uid);
-        card.style.opacity = "1";
-        card.style.pointerEvents = "auto";
+        await autoLoginFromAccount(acc.email, acc.password);
+        // No need to reset card opacity because page will redirect
       });
       container.appendChild(card);
     });
@@ -663,22 +607,22 @@
   }
 
   // Role switcher (manual login)
-  if (playerRoleBtn && adminRoleBtn) {
-    playerRoleBtn.addEventListener("click", () => {
-      selectedRole = "player";
-      playerRoleBtn.classList.add("active");
+  if (managerRoleBtn && adminRoleBtn) {
+    managerRoleBtn.addEventListener("click", () => {
+      selectedRole = "manager";
+      managerRoleBtn.classList.add("active");
       adminRoleBtn.classList.remove("active");
       adminKeyGroup.style.display = "none";
     });
     adminRoleBtn.addEventListener("click", () => {
       selectedRole = "admin";
       adminRoleBtn.classList.add("active");
-      playerRoleBtn.classList.remove("active");
+      managerRoleBtn.classList.remove("active");
       adminKeyGroup.style.display = "block";
     });
   }
 
-  // Manual login form handler (with admin key check)
+  // Manual login form handler (with admin key check only for new admin)
   loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = loginEmail.value.trim();
@@ -694,7 +638,7 @@
       loginError.textContent = "Invalid admin key.";
       return;
     }
-    await performLogin(email, password, selectedRole, false);
+    await performLogin(email, password, false);
   });
 
   // Initial load: show spinner then render accounts list
@@ -715,13 +659,9 @@
     }
   };
 
-  // Hamburger and chat button (simple navigation)
+  // Hamburger menu (simple navigation)
   document.getElementById("hamburgerBtn")?.addEventListener("click", () => {
     window.location.href = "menu.html";
-  });
-  document.getElementById("chatBtn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    window.location.href = "chat.html";
   });
 </script>
 </body>
