@@ -1,1 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Records · eFootball 412</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #0a0a0a;
+      background: linear-gradient(145deg, #0a0a0a 0%, #1a1a1a 100%);
+      font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
+      padding: 0;
+      color: #f5f0ff;
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+    .gold-navbar {
+      background: linear-gradient(135deg, #d4af37, #f5d742);
+      padding: 0.4rem 1.2rem;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .hamburger-btn {
+      background: #000;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background 0.2s;
+      border: 1.5px solid #f5d742;
+    }
+    .hamburger-btn:hover {
+      transform: scale(1.05);
+      background: #222;
+    }
+    .hamburger-btn span {
+      display: block;
+      width: 18px;
+      height: 2.5px;
+      background-color: #f5d742;
+      border-radius: 2px;
+    }
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.85);
+      z-index: 200;
+      visibility: hidden;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active {
+      visibility: visible;
+      pointer-events: auto;
+    }
+    .modal-content {
+      background: #111;
+      border: 2px solid #f5d742;
+      border-radius: 2rem;
+      padding: 1.5rem;
+      max-width: 350px;
+      width: 90%;
+      text-align: center;
+    }
+    .modal-content h3 {
+      color: #f5d742;
+      margin-bottom: 1rem;
+    }
+    .modal-option {
+      background: rgba(0,0,0,0.7);
+      padding: 0.4rem 0.8rem;
+      border-radius: 40px;
+      text-decoration: none;
+      color: #f5e6ff;
+      font-weight: 700;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+      border: 1px solid #f5d742;
+      display: block;
+      margin: 0.5rem 0;
+      cursor: pointer;
+    }
+    .modal-option:hover {
+      background: #f5d742;
+      color: #000;
+    }
+    .close-modal {
+      background: #222;
+      color: #f5d742;
+      border: none;
+      padding: 0.3rem 0.9rem;
+      border-radius: 30px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+    .dashboard-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+    /* Records grid – gold cards */
+    .records-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+    .record-card {
+      background: linear-gradient(135deg, #f5d742, #d4af37);
+      border-radius: 1.5rem;
+      border: 1px solid rgba(0,0,0,0.2);
+      padding: 1rem;
+      transition: transform 0.2s, filter 0.2s;
+      color: #000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      position: relative;
+    }
+    .record-card:hover {
+      transform: translateY(-3px);
+      filter: brightness(0.97);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.8rem;
+    }
+    .player-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #000;
+      background: #222;
+    }
+    .player-name {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #000;
+    }
+    .teams-managed {
+      font-size: 0.7rem;
+      background: rgba(0,0,0,0.6);
+      color: #f5d742;
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 20px;
+      margin-top: 4px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      margin: 0.8rem 0;
+      text-align: center;
+    }
+    .stat-item {
+      background: rgba(0,0,0,0.2);
+      border-radius: 1rem;
+      padding: 0.3rem;
+    }
+    .stat-value {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #000;
+    }
+    .stat-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .edit-icon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #000;
+      color: #f5d742;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s;
+      border: 1px solid #f5d742;
+    }
+    .edit-icon:hover {
+      transform: scale(1.1);
+    }
+    /* admin edit panel (inline) */
+    .edit-panel {
+      margin-top: 0.8rem;
+      background: rgba(0,0,0,0.7);
+      border-radius: 1rem;
+      padding: 0.6rem;
+      display: none;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .edit-panel.show {
+      display: flex;
+    }
+    .edit-btn {
+      background: #000;
+      border: 1px solid #f5d742;
+      color: #f5d742;
+      border-radius: 2rem;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.7rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .edit-btn:hover {
+      background: #f5d742;
+      color: #000;
+    }
+    .bottom-navbar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #d4af37, #f5d742);
+      padding: 0.5rem 1.5rem;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 150;
+      border-top: 1px solid rgba(255,255,255,0.2);
+    }
+    .bottom-nav-icon {
+      background: #000;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.2s;
+      border: 1.5px solid white;
+      text-decoration: none;
+    }
+    .bottom-nav-icon:hover {
+      transform: scale(1.05);
+      background: #222;
+    }
+    .bottom-nav-icon svg {
+      width: 28px;
+      height: 28px;
+      display: block;
+    }
+    .bottom-nav-icon.active {
+      background: #f5d742;
+      border-color: #000;
+    }
+    .bottom-nav-icon.active svg {
+      stroke: #000;
+      fill: #000;
+    }
+    .loading-text {
+      text-align: center;
+      padding: 2rem;
+      color: #f5d742;
+    }
+    .error-msg {
+      color: #ef4444;
+      text-align: center;
+      margin-top: 1rem;
+    }
+    @media (max-width: 680px) {
+      .records-grid {
+        grid-template-columns: 1fr;
+      }
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .bottom-nav-icon {
+        width: 45px;
+        height: 45px;
+      }
+      .bottom-nav-icon svg {
+        width: 24px;
+        height: 24px;
+      }
+      .player-avatar {
+        width: 50px;
+        height: 50px;
+      }
+      .player-name {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
 
+<div class="gold-navbar">
+  <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
+</div>
+
+<div id="modalOverlay" class="modal-overlay">
+  <div class="modal-content">
+    <h3>MENU</h3>
+    <div class="modal-option" id="rulesModalBtn">RULES</div>
+    <div class="modal-option" id="calendarModalBtn">CALENDAR</div>
+    <div class="modal-option" id="mainMenuModalBtn">MAIN MENU</div>
+    <div class="modal-option" id="adminEditorModalBtn">ADMIN EDITOR</div>
+    <div class="modal-option" id="logoutModalBtn" style="background:#ef4444; color:white;">LOGOUT</div>
+    <button class="close-modal" id="closeModalBtn">CLOSE</button>
+  </div>
+</div>
+
+<div class="dashboard-container">
+  <div style="margin-bottom: 1rem;">
+    <h1 style="color: #f5d742; font-size: 1.8rem;">🏆 RECORDS</h1>
+    <p style="color: #ccc;">Player rankings based on trophies, medals, wins, draws, and losses</p>
+  </div>
+  <div id="recordsGrid" class="records-grid">
+    <div class="loading-text">Loading player records...</div>
+  </div>
+</div>
+
+<div class="bottom-navbar">
+  <a href="profile.html" class="bottom-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></svg></a>
+  <a href="chat.html" class="bottom-nav-icon"><svg viewBox="0 0 24 24" fill="white"><path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z"/><circle cx="8" cy="10" r="1.5" fill="#000"/><circle cx="12" cy="10" r="1.5" fill="#000"/><circle cx="16" cy="10" r="1.5" fill="#000"/></svg></a>
+  <a href="calendar.html" class="bottom-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="9" x2="21" y2="9"/><circle cx="12" cy="14" r="1.5" fill="white"/><circle cx="16" cy="14" r="1.5" fill="white"/><circle cx="8" cy="14" r="1.5" fill="white"/><circle cx="12" cy="18" r="1.5" fill="white"/><circle cx="16" cy="18" r="1.5" fill="white"/><circle cx="8" cy="18" r="1.5" fill="white"/></svg></a>
+  <a href="records.html" class="bottom-nav-icon active"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 2L15 9H22L16 14L19 21L12 16.5L5 21L8 14L2 9H9L12 2Z" stroke="white" fill="white"/></svg></a>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
+    authDomain: "efootball-412.firebaseapp.com",
+    databaseURL: "https://efootball-412-default-rtdb.firebaseio.com",
+    projectId: "efootball-412",
+    storageBucket: "efootball-412.firebasestorage.app",
+    messagingSenderId: "596548424249",
+    appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+
+  const ADMIN_KEY = "@admin#123!";
+  let isAdminMode = false;
+  let allPlayers = [];
+
+  // Fetch all users from /users (excluding admins? include all but we show only players? we'll show all non-admin? for records show all)
+  async function fetchAllUsers() {
+    const usersRef = ref(db, "users");
+    const snapshot = await get(usersRef);
+    if (!snapshot.exists()) return [];
+    const users = [];
+    snapshot.forEach(child => {
+      const data = child.val();
+      // Only include users with role 'player' or undefined (default player), skip 'admin'
+      if (data.role !== 'admin') {
+        users.push({
+          uid: child.key,
+          username: data.username || data.email?.split('@')[0] || "Player",
+          photoURL: data.photoURL || null,
+          teams: data.teams || [],
+          trophies: data.trophies || 0,
+          gold: data.gold || 0,
+          silver: data.silver || 0,
+          bronze: data.bronze || 0,
+          wins: data.wins || 0,
+          draws: data.draws || 0,
+          losses: data.losses || 0
+        });
+      }
+    });
+    return users;
+  }
+
+  // Ranking comparator: trophies desc, then gold desc, silver desc, bronze desc, wins desc, draws desc, losses asc
+  function sortPlayers(players) {
+    return players.sort((a, b) => {
+      if (a.trophies !== b.trophies) return b.trophies - a.trophies;
+      if (a.gold !== b.gold) return b.gold - a.gold;
+      if (a.silver !== b.silver) return b.silver - a.silver;
+      if (a.bronze !== b.bronze) return b.bronze - a.bronze;
+      if (a.wins !== b.wins) return b.wins - a.wins;
+      if (a.draws !== b.draws) return b.draws - a.draws;
+      return a.losses - b.losses;
+    });
+  }
+
+  async function renderRecords() {
+    const grid = document.getElementById("recordsGrid");
+    if (!grid) return;
+    grid.innerHTML = '<div class="loading-text">Loading...</div>';
+    try {
+      let players = await fetchAllUsers();
+      players = sortPlayers(players);
+      allPlayers = players;
+      if (players.length === 0) {
+        grid.innerHTML = '<div class="loading-text">No player records found.</div>';
+        return;
+      }
+      grid.innerHTML = "";
+      players.forEach((player, index) => {
+        const card = document.createElement("div");
+        card.className = "record-card";
+        card.dataset.uid = player.uid;
+
+        // Header
+        const header = document.createElement("div");
+        header.className = "card-header";
+        const avatar = document.createElement("img");
+        avatar.className = "player-avatar";
+        avatar.src = player.photoURL || "";
+        avatar.onerror = () => { avatar.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E"; };
+        const nameDiv = document.createElement("div");
+        nameDiv.className = "player-name";
+        nameDiv.textContent = `${index+1}. ${player.username}`;
+        const teamsSpan = document.createElement("div");
+        teamsSpan.className = "teams-managed";
+        let teamsList = player.teams || [];
+        if (typeof teamsList === 'string') teamsList = teamsList ? [teamsList] : [];
+        teamsSpan.textContent = teamsList.length ? "⚽ " + teamsList.join(", ") : "No team";
+        nameDiv.appendChild(document.createElement("br"));
+        nameDiv.appendChild(teamsSpan);
+        header.appendChild(avatar);
+        header.appendChild(nameDiv);
+
+        // Stats grid
+        const statsGrid = document.createElement("div");
+        statsGrid.className = "stats-grid";
+        statsGrid.innerHTML = `
+          <div class="stat-item"><div class="stat-value">${player.trophies}</div><div class="stat-label">🏆 TROPHIES</div></div>
+          <div class="stat-item"><div class="stat-value">${player.gold}</div><div class="stat-label">🥇 GOLD</div></div>
+          <div class="stat-item"><div class="stat-value">${player.silver}</div><div class="stat-label">🥈 SILVER</div></div>
+          <div class="stat-item"><div class="stat-value">${player.bronze}</div><div class="stat-label">🥉 BRONZE</div></div>
+          <div class="stat-item"><div class="stat-value">${player.wins}</div><div class="stat-label">WINS</div></div>
+          <div class="stat-item"><div class="stat-value">${player.draws}</div><div class="stat-label">DRAWS</div></div>
+          <div class="stat-item"><div class="stat-value">${player.losses}</div><div class="stat-label">LOSSES</div></div>
+        `;
+        card.appendChild(header);
+        card.appendChild(statsGrid);
+
+        // Edit panel (admin only)
+        if (isAdminMode) {
+          const editPanel = document.createElement("div");
+          editPanel.className = "edit-panel show"; // always show edit buttons in admin mode
+          editPanel.innerHTML = `
+            <button class="edit-btn" data-stat="trophies" data-op="inc">🏆 +1</button>
+            <button class="edit-btn" data-stat="trophies" data-op="dec">🏆 -1</button>
+            <button class="edit-btn" data-stat="gold" data-op="inc">🥇 +1</button>
+            <button class="edit-btn" data-stat="gold" data-op="dec">🥇 -1</button>
+            <button class="edit-btn" data-stat="silver" data-op="inc">🥈 +1</button>
+            <button class="edit-btn" data-stat="silver" data-op="dec">🥈 -1</button>
+            <button class="edit-btn" data-stat="bronze" data-op="inc">🥉 +1</button>
+            <button class="edit-btn" data-stat="bronze" data-op="dec">🥉 -1</button>
+            <button class="edit-btn" data-stat="wins" data-op="inc">WIN +1</button>
+            <button class="edit-btn" data-stat="wins" data-op="dec">WIN -1</button>
+            <button class="edit-btn" data-stat="draws" data-op="inc">DRAW +1</button>
+            <button class="edit-btn" data-stat="draws" data-op="dec">DRAW -1</button>
+            <button class="edit-btn" data-stat="losses" data-op="inc">LOSS +1</button>
+            <button class="edit-btn" data-stat="losses" data-op="dec">LOSS -1</button>
+          `;
+          card.appendChild(editPanel);
+
+          // Attach event listeners
+          editPanel.querySelectorAll(".edit-btn").forEach(btn => {
+            btn.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              const stat = btn.dataset.stat;
+              const op = btn.dataset.op;
+              let currentVal = player[stat];
+              let newVal = op === "inc" ? currentVal + 1 : Math.max(0, currentVal - 1);
+              if (newVal < 0) newVal = 0;
+              // Update locally and in Firebase
+              const updates = {};
+              updates[`users/${player.uid}/${stat}`] = newVal;
+              try {
+                await update(ref(db), updates);
+                // Update local player object
+                player[stat] = newVal;
+                // Re-render all records to reflect new sorted order
+                await renderRecords();
+              } catch (err) {
+                console.error(err);
+                alert("Failed to update: " + err.message);
+              }
+            });
+          });
+        }
+        grid.appendChild(card);
+      });
+    } catch (err) {
+      console.error(err);
+      grid.innerHTML = `<div class="error-msg">Error loading records: ${err.message}</div>`;
+    }
+  }
+
+  // Admin mode toggle
+  function enableAdminMode() {
+    const key = prompt("Enter Admin Key:");
+    if (key === ADMIN_KEY) {
+      isAdminMode = true;
+      alert("Admin Editor enabled. You can now edit player stats.");
+      renderRecords(); // re-render with edit buttons
+    } else if (key !== null) {
+      alert("Invalid admin key.");
+    }
+  }
+
+  // Auth check: only logged-in users can view records
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+    renderRecords();
+  });
+
+  // Hamburger menu logic
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  const modalOverlay = document.getElementById("modalOverlay");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  function openModal() { modalOverlay.classList.add("active"); }
+  function closeModalFunc() { modalOverlay.classList.remove("active"); }
+  hamburgerBtn.addEventListener("click", openModal);
+  closeModalBtn.addEventListener("click", closeModalFunc);
+  modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModalFunc(); });
+  document.getElementById("rulesModalBtn").onclick = () => window.location.href = "rules.html";
+  document.getElementById("calendarModalBtn").onclick = () => window.location.href = "calendar.html";
+  document.getElementById("mainMenuModalBtn").onclick = () => window.location.href = "index.html";
+  document.getElementById("adminEditorModalBtn").onclick = () => enableAdminMode();
+  document.getElementById("logoutModalBtn").onclick = async () => {
+    await signOut(auth);
+    localStorage.removeItem("lastLoginEmail");
+    localStorage.removeItem("lastLoginPassword");
+    window.location.href = "login.html";
+  };
+</script>
+</body>
+</html>
