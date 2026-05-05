@@ -1,9 +1,10 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>eFootball 412 · Calendar</title>
+<title>eFootball 412 · Admin Calendar (View Only)</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -41,6 +42,7 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 .navbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.35),transparent);}
 .nav-brand{display:flex;align-items:center;gap:0.7rem;font-family:'Orbitron',monospace;font-weight:900;font-size:0.95rem;color:var(--purple-deep);letter-spacing:0.06em;}
 .nav-icon-wrap{width:32px;height:32px;background:var(--purple-deep);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.95rem;}
+.admin-pill{background:var(--purple-deep);color:var(--gold);font-size:0.52rem;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.12em;font-family:'Rajdhani',sans-serif;}
 .nav-actions{display:flex;gap:0.5rem;}
 .nav-btn{width:37px;height:37px;border-radius:50%;background:var(--purple-deep);border:1.5px solid rgba(245,215,66,0.6);color:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;transition:all 0.25s;box-shadow:0 2px 8px rgba(0,0,0,0.35);}
 .nav-btn:hover{background:var(--purple-light);transform:scale(1.1);}
@@ -54,7 +56,7 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 .page-title{font-family:'Orbitron',monospace;font-size:clamp(1.6rem,4vw,2.5rem);font-weight:900;color:var(--gold);letter-spacing:0.05em;line-height:1.1;margin-bottom:0.4rem;text-shadow:0 0 50px rgba(245,215,66,0.35);}
 .page-sub{font-size:0.85rem;color:var(--text-dim);font-style:italic;}
 
-/* MONTH CARD */
+/* MONTH CARD (no month manager) */
 .month-card{background:linear-gradient(160deg,rgba(30,20,72,0.82),rgba(10,5,22,0.92));border:1px solid var(--gold-border);border-radius:1.8rem;overflow:hidden;margin-bottom:2.5rem;box-shadow:var(--shadow-deep),var(--shadow-gold);animation:cardIn 0.65s cubic-bezier(0.22,1,0.36,1) both;}
 @keyframes cardIn{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:translateY(0);}}
 .month-header{padding:1rem 1.6rem;background:linear-gradient(135deg,rgba(8,4,20,0.98),rgba(18,10,45,0.98));border-bottom:2px solid var(--gold);display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;}
@@ -73,15 +75,13 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 .day-cell.has-event{background:rgba(46,29,110,0.58);}
 .day-cell.has-event:hover{background:rgba(91,50,168,0.58);}
 .day-cell.empty-day{background:rgba(8,4,18,0.55);cursor:default;pointer-events:none;}
-.day-cell.no-event{cursor:default;}
-.day-cell.no-event:hover{background:rgba(22,13,52,0.45);border-color:rgba(245,215,66,0.07);}
-.day-cell.no-event:hover::after{opacity:0;}
-.day-cell.no-event:active{transform:none;}
 .day-number{font-family:'Orbitron',monospace;font-size:0.68rem;font-weight:700;color:var(--text-dim);align-self:flex-start;margin-bottom:5px;letter-spacing:0.03em;}
 .day-cell.has-event .day-number{color:var(--gold);}
 .event-icon{width:48px;height:48px;object-fit:contain;border-radius:8px;margin-top:2px;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.5));transition:transform 0.25s;}
 .day-cell:hover .event-icon{transform:scale(1.1);}
 .event-label{font-family:'Rajdhani',sans-serif;font-size:0.57rem;font-weight:700;color:var(--gold);letter-spacing:0.07em;text-transform:uppercase;margin-top:3px;text-align:center;line-height:1.2;}
+.add-hint{font-size:0.58rem;color:rgba(245,215,66,0.22);font-style:italic;margin-top:auto;padding-top:4px;transition:color 0.2s;}
+.day-cell:hover .add-hint{color:rgba(245,215,66,0.55);}
 .event-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;background:var(--gold);border-radius:50%;box-shadow:0 0 6px var(--gold);animation:dotPulse 2.2s ease-in-out infinite;}
 @keyframes dotPulse{0%,100%{opacity:1;box-shadow:0 0 6px var(--gold);}50%{opacity:0.4;box-shadow:0 0 14px var(--gold);}}
 
@@ -94,65 +94,54 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 .modal::-webkit-scrollbar-thumb{background:var(--gold-border);border-radius:2px;}
 .modal-close{position:absolute;top:14px;right:16px;background:rgba(91,50,168,0.4);border:1px solid var(--gold-border);color:var(--gold);width:32px;height:32px;border-radius:50%;font-size:1.15rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.25s;line-height:1;}
 .modal-close:hover{background:var(--red);border-color:var(--red);color:#fff;transform:rotate(90deg);}
-.modal-title{font-family:'Orbitron',monospace;font-size:1.05rem;font-weight:700;color:var(--gold);margin-bottom:0.5rem;padding-right:2.5rem;letter-spacing:0.05em;text-shadow:0 0 25px rgba(245,215,66,0.3);}
-.modal-event-title{font-family:'Rajdhani',sans-serif;font-size:0.8rem;font-weight:600;color:var(--text-dim);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:1.4rem;}
+.modal-title{font-family:'Orbitron',monospace;font-size:1.05rem;font-weight:700;color:var(--gold);margin-bottom:1.5rem;padding-right:2.5rem;letter-spacing:0.05em;text-shadow:0 0 25px rgba(245,215,66,0.3);}
 
 /* SECTION LABEL */
 .section-label{font-family:'Orbitron',monospace;font-size:0.6rem;font-weight:700;color:var(--gold);letter-spacing:0.15em;margin:1.4rem 0 0.8rem;display:flex;align-items:center;gap:0.5rem;}
 .section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--gold-border),transparent);}
 
-/* TOURNAMENT CARD (view-only) */
-.tournament-card{background:rgba(5,2,12,0.72);border:1px solid rgba(245,215,66,0.14);border-radius:1.1rem;padding:0.9rem 1rem;margin-bottom:0.8rem;transition:border-color 0.2s;}
+/* FORM (readonly fields) */
+.form-group{margin-bottom:1rem;}
+.form-label{display:block;font-family:'Rajdhani',sans-serif;font-size:0.7rem;font-weight:700;color:var(--text-dim);margin-bottom:0.4rem;letter-spacing:0.1em;text-transform:uppercase;}
+.form-input{width:100%;background:rgba(5,2,12,0.85);border:1px solid var(--gold-border);border-radius:0.7rem;color:var(--text-primary);padding:0.65rem 0.9rem;font-size:0.9rem;font-family:'Exo 2',sans-serif;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+.form-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,215,66,0.1);}
+.form-input::placeholder{color:var(--text-dim);opacity:0.4;}
+.form-input[readonly]{opacity:0.7;background:rgba(5,2,12,0.6);cursor:default;}
+
+/* TOURNAMENT CARD (view only) */
+.tournament-card{background:rgba(5,2,12,0.72);border:1px solid rgba(245,215,66,0.14);border-radius:1.1rem;padding:0.9rem 1rem;margin-bottom:0.8rem;animation:cardIn 0.3s ease both;transition:border-color 0.2s;}
 .tournament-card:hover{border-color:rgba(245,215,66,0.28);}
 .tc-header{display:flex;align-items:center;gap:0.7rem;}
 .tc-icon{width:38px;height:38px;object-fit:contain;border-radius:6px;flex-shrink:0;}
 .tc-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;color:var(--text-primary);flex:1;}
-.tc-count{font-family:'Orbitron',monospace;font-size:0.6rem;color:var(--text-dim);background:rgba(245,215,66,0.08);border:1px solid rgba(245,215,66,0.15);padding:2px 8px;border-radius:1rem;}
-
-/* FIXTURE TOGGLE */
-.fix-toggle{background:none;border:1px solid rgba(245,215,66,0.18);color:var(--text-dim);padding:0.25rem 0.65rem;border-radius:1.5rem;font-size:0.67rem;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:0.06em;cursor:pointer;margin-top:0.6rem;transition:all 0.2s;display:flex;align-items:center;gap:0.4rem;}
+.fix-toggle{background:none;border:1px solid rgba(245,215,66,0.18);color:var(--text-dim);padding:0.25rem 0.65rem;border-radius:1.5rem;font-size:0.67rem;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:0.06em;cursor:pointer;margin-top:0.6rem;transition:all 0.2s;}
 .fix-toggle:hover{border-color:var(--gold-border);color:var(--gold);}
-.fix-toggle-arrow{transition:transform 0.25s;display:inline-block;}
-.fix-toggle.open .fix-toggle-arrow{transform:rotate(180deg);}
-
-/* FIXTURE PANEL */
-.fix-panel{display:none;margin-top:0.7rem;background:rgba(3,1,8,0.65);border-radius:0.8rem;border:1px solid rgba(245,215,66,0.07);padding:0.7rem;animation:panelOpen 0.25s cubic-bezier(0.22,1,0.36,1);}
-@keyframes panelOpen{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.fix-panel{display:none;margin-top:0.7rem;background:rgba(3,1,8,0.65);border-radius:0.8rem;border:1px solid rgba(245,215,66,0.07);padding:0.7rem;animation:fadeIn 0.2s ease;}
 .fix-panel.open{display:block;}
+.fix-row{display:flex;align-items:center;gap:0.5rem;padding:0.45rem 0;border-bottom:1px solid rgba(245,215,66,0.06);flex-wrap:wrap;}
+.fix-row:last-of-type{border-bottom:none;}
+.fix-team-icon{width:26px;height:26px;object-fit:contain;border-radius:4px;flex-shrink:0;}
+.fix-team-name{font-size:0.78rem;font-weight:600;color:var(--text-primary);}
+.fix-vs{font-size:0.63rem;color:var(--gold);font-family:'Orbitron',monospace;font-weight:700;}
 
-/* FIXTURE ROW */
-.fix-row{display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.3rem;border-bottom:1px solid rgba(245,215,66,0.06);flex-wrap:wrap;transition:background 0.15s;border-radius:0.4rem;}
-.fix-row:last-child{border-bottom:none;}
-.fix-row:hover{background:rgba(91,50,168,0.15);}
-.fix-team-icon{width:28px;height:28px;object-fit:contain;border-radius:5px;flex-shrink:0;}
-.fix-team-name{font-size:0.82rem;font-weight:600;color:var(--text-primary);flex:1;}
-.fix-vs{font-size:0.63rem;color:var(--gold);font-family:'Orbitron',monospace;font-weight:700;padding:0 0.2rem;}
-.fix-away-side{display:flex;align-items:center;gap:0.4rem;flex:1;justify-content:flex-end;}
-.fix-away-name{font-size:0.82rem;font-weight:600;color:var(--text-primary);text-align:right;}
-.no-fixtures{text-align:center;color:var(--text-dim);font-size:0.82rem;padding:0.8rem;font-style:italic;}
-
-/* BUTTONS */
+/* BUTTONS (only view, no edit) */
 .btn{padding:0.55rem 1.3rem;border-radius:2rem;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.06em;cursor:pointer;transition:all 0.25s;border:none;display:inline-flex;align-items:center;gap:0.3rem;}
 .btn-purple{background:rgba(91,50,168,0.45);border:1px solid var(--gold-border);color:var(--gold);}
 .btn-purple:hover{background:var(--purple-hover);}
-.btn-red{background:rgba(239,68,68,0.8);color:#fff;}
-.btn-red:hover{background:var(--red);}
 .btn-sm{padding:0.3rem 0.75rem;font-size:0.7rem;border-radius:1.5rem;}
-.btn-row{display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:1.2rem;}
-
-/* MENU */
-.menu-list{display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem;}
-.menu-link{display:block;text-align:center;padding:0.65rem 1rem;background:rgba(91,50,168,0.18);border:1px solid var(--gold-border);border-radius:2rem;color:var(--text-primary);text-decoration:none;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.9rem;letter-spacing:0.06em;transition:all 0.2s;}
-.menu-link:hover{background:var(--purple-btn);color:var(--gold);transform:translateX(4px);}
 
 /* FILTER TEAM GRID */
 .team-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;}
 .team-opt{background:rgba(91,50,168,0.18);border:1px solid var(--gold-border);border-radius:2rem;padding:0.5rem 0.8rem;cursor:pointer;text-align:center;font-size:0.8rem;font-weight:600;color:var(--text-primary);transition:all 0.2s;font-family:'Rajdhani',sans-serif;}
 .team-opt:hover,.team-opt.active{background:var(--purple-btn);border-color:var(--gold);color:var(--gold);}
 
-/* FILTER INDICATOR */
-.filter-badge{background:var(--gold);color:var(--purple-deep);font-size:0.55rem;font-weight:700;font-family:'Rajdhani',sans-serif;letter-spacing:0.08em;padding:2px 7px;border-radius:1rem;margin-left:0.4rem;display:none;}
-.filter-badge.show{display:inline-block;}
+/* FIXTURES VIEW */
+.fv-row{display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0;border-bottom:1px solid rgba(245,215,66,0.07);}
+.fv-row:last-child{border-bottom:none;}
+.fv-icon{width:30px;height:30px;object-fit:contain;border-radius:5px;flex-shrink:0;}
+.fv-name{font-size:0.85rem;font-weight:600;color:var(--text-primary);}
+.fv-vs{font-family:'Orbitron',monospace;font-size:0.63rem;color:var(--gold);}
+.no-data{text-align:center;color:var(--text-dim);font-size:0.85rem;padding:1rem;}
 
 /* TOAST */
 .toast{position:fixed;bottom:2rem;right:2rem;background:linear-gradient(135deg,var(--purple-card),var(--purple-mid));border-radius:1.1rem;padding:0.9rem 1.3rem;font-size:0.84rem;color:var(--text-primary);z-index:9998;box-shadow:0 10px 35px rgba(0,0,0,0.55);transform:translateY(80px);opacity:0;transition:all 0.38s cubic-bezier(0.22,1,0.36,1);border:1px solid var(--gold-border);max-width:300px;}
@@ -160,18 +149,12 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 .toast.success{border-color:var(--green);}
 .toast.error{border-color:var(--red);}
 
-/* LIVE INDICATOR */
-.live-dot{display:inline-flex;align-items:center;gap:0.4rem;font-family:'Rajdhani',sans-serif;font-size:0.7rem;font-weight:700;color:var(--green);letter-spacing:0.08em;}
-.live-dot::before{content:'';width:7px;height:7px;background:var(--green);border-radius:50%;box-shadow:0 0 6px var(--green);animation:dotPulse 1.8s ease-in-out infinite;}
-
 @media(max-width:680px){
   .wrapper{padding:1rem 0.75rem 3rem;}
   .event-icon{width:36px;height:36px;}
   .day-cell{min-height:80px;padding:5px 3px;}
   .day-number{font-size:0.6rem;}
   .weekday{font-size:0.58rem;padding:0.5rem 0.2rem;}
-  .modal{padding:1.4rem;}
-  .fix-away-name{text-align:left;}
 }
 </style>
 </head>
@@ -180,47 +163,37 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 <div class="bg-layer"><div class="bg-orb"></div><div class="bg-orb"></div><div class="bg-orb"></div></div>
 <div class="bg-grid"></div>
 
-<!-- LOADER -->
 <div class="loader" id="loader">
   <div class="loader-logo">eFOOTBALL 412</div>
   <div class="loader-ring"></div>
-  <div class="loader-text">Loading Calendar...</div>
+  <div class="loader-text">Loading Admin Panel...</div>
 </div>
 
-<!-- NAVBAR -->
 <nav class="navbar">
   <div class="nav-brand">
     <div class="nav-icon-wrap">⚽</div>
     eFOOTBALL 412
+    <span class="admin-pill">VIEW ONLY</span>
   </div>
   <div class="nav-actions">
     <button class="nav-btn" id="filterBtn" title="Filter by team">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-        <path d="M4 6H20M6 12H18M10 18H14" stroke="#F5D742" stroke-width="2.2" stroke-linecap="round"/>
-        <circle cx="6" cy="6" r="2" stroke="#F5D742" stroke-width="1.8"/>
-        <circle cx="18" cy="12" r="2" stroke="#F5D742" stroke-width="1.8"/>
-        <circle cx="14" cy="18" r="2" stroke="#F5D742" stroke-width="1.8"/>
-      </svg>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 6H20M6 12H18M10 18H14" stroke="#F5D742" stroke-width="2.2" stroke-linecap="round"/><circle cx="6" cy="6" r="2" stroke="#F5D742" stroke-width="1.8"/><circle cx="18" cy="12" r="2" stroke="#F5D742" stroke-width="1.8"/><circle cx="14" cy="18" r="2" stroke="#F5D742" stroke-width="1.8"/></svg>
     </button>
     <button class="nav-btn" id="menuBtn" title="Menu" style="font-size:1.15rem;">☰</button>
   </div>
 </nav>
 
-<!-- MAIN -->
 <div class="wrapper">
   <div class="page-header">
-    <div class="page-title">MATCH CALENDAR</div>
-    <div class="page-sub">
-      Click any highlighted date to view fixtures &nbsp;·&nbsp;
-      <span class="live-dot">LIVE</span>
-    </div>
+    <div class="page-title">ADMIN CALENDAR</div>
+    <div class="page-sub">Click any date to view events · Read‑only display</div>
   </div>
   <div id="calendarRoot"></div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<!-- ═══ MENU ═══ -->
+<!-- MENU -->
 <div class="overlay" id="menuOverlay">
   <div class="modal" style="max-width:300px;">
     <button class="modal-close" data-close="menuOverlay">✕</button>
@@ -230,57 +203,65 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
       <a href="index.html" class="menu-link">🏠 MAIN MENU</a>
       <a href="login.html" class="menu-link">🔑 LOGIN</a>
       <a href="player-titles.html" class="menu-link">🏆 MANAGER TITLES</a>
+      <a href="user-calendar.html" class="menu-link">👁 USER VIEW</a>
     </div>
     <button class="btn btn-purple" style="width:100%;" data-close="menuOverlay">CLOSE</button>
   </div>
 </div>
 
-<!-- ═══ FILTER ═══ -->
+<!-- FILTER -->
 <div class="overlay" id="filterOverlay">
   <div class="modal" style="max-width:380px;">
     <button class="modal-close" data-close="filterOverlay">✕</button>
-    <div class="modal-title">
-      FILTER BY TEAM
-      <span class="filter-badge" id="filterBadge">ACTIVE</span>
-    </div>
+    <div class="modal-title">FILTER BY TEAM</div>
     <div class="team-grid" id="teamGrid"></div>
     <div class="btn-row">
-      <button class="btn btn-red btn-sm" id="clearFilterBtn">CLEAR FILTER</button>
       <button class="btn btn-purple btn-sm" data-close="filterOverlay">CLOSE</button>
     </div>
   </div>
 </div>
 
-<!-- ═══ DAY POPUP ═══ -->
+<!-- DAY / EVENT VIEWER (read-only) -->
 <div class="overlay" id="dayOverlay">
-  <div class="modal" style="max-width:580px;">
+  <div class="modal" style="max-width:600px;">
     <button class="modal-close" data-close="dayOverlay">✕</button>
     <div class="modal-title" id="dayTitle">DATE</div>
-    <div class="modal-event-title" id="dayEventTitle"></div>
-
+    <div class="section-label">EVENT DETAILS</div>
+    <div class="form-group">
+      <label class="form-label">Event Title</label>
+      <input class="form-input" id="evTitle" type="text" readonly placeholder="Event title">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Event Icon</label>
+      <div class="img-upload-row">
+        <img class="img-preview" id="evIconPrev" src="" alt="" style="display:inline-block;">
+      </div>
+    </div>
     <div class="section-label">TOURNAMENTS</div>
     <div id="tournamentsContainer"></div>
-
-    <div class="btn-row" style="margin-top:1.2rem;">
+    <div class="btn-row">
       <button class="btn btn-purple" data-close="dayOverlay">CLOSE</button>
     </div>
   </div>
 </div>
 
-<!-- ═══ FIREBASE + LOGIC ═══ -->
+<!-- FIXTURES VIEW POPUP (read-only, no edit) -->
+<div class="overlay" id="fvOverlay">
+  <div class="modal" style="max-width:460px;">
+    <button class="modal-close" data-close="fvOverlay">✕</button>
+    <div class="modal-title" id="fvTitle">FIXTURES</div>
+    <div id="fvList"></div>
+    <div class="btn-row" style="margin-top:1rem;">
+      <button class="btn btn-purple" data-close="fvOverlay">CLOSE</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-const FB = {
-  apiKey:"AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
-  authDomain:"efootball-412.firebaseapp.com",
-  projectId:"efootball-412",
-  storageBucket:"efootball-412.firebasestorage.app",
-  messagingSenderId:"596548424249",
-  appId:"1:596548424249:web:4349f6e87a40a1590bf3e8",
-  measurementId:"G-KHY86ZMPZH"
-};
+const FB = { apiKey:"AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4", authDomain:"efootball-412.firebaseapp.com", projectId:"efootball-412", storageBucket:"efootball-412.firebasestorage.app", messagingSenderId:"596548424249", appId:"1:596548424249:web:4349f6e87a40a1590bf3e8", measurementId:"G-KHY86ZMPZH" };
 const app = initializeApp(FB);
 const db  = getFirestore(app);
 const YEAR = 2026;
@@ -292,315 +273,220 @@ const ALL_MONTHS = [
 ];
 const ALL_TEAMS = ["Real Madrid","Liverpool","Dortmund","Man City","Barcelona","Arsenal","PSG","AC Milan","Chelsea","Napoli","Atletico","Juventus","Newcastle","Inter Milan"];
 
-let calData = {}, activeMonths = [], selectedTeam = null;
+let calData={}, activeMonths=[], selectedTeam=null, currentDate=null;
 
 /* ── Toast ── */
-function toast(msg, type="") {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.className = "toast show" + (type ? " "+type : "");
-  setTimeout(() => t.className = "toast", 3200);
+function toast(msg,type="") {
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.className="toast show"+(type?" "+type:"");
+  setTimeout(()=>t.className="toast",3200);
 }
 
 /* ── Overlays ── */
-const openOv  = id => document.getElementById(id).classList.add("active");
-const closeOv = id => document.getElementById(id).classList.remove("active");
-document.querySelectorAll("[data-close]").forEach(el =>
-  el.addEventListener("click", () => closeOv(el.dataset.close))
-);
-document.querySelectorAll(".overlay").forEach(ov =>
-  ov.addEventListener("click", e => { if (e.target === ov) closeOv(ov.id); })
-);
+const openOv=id=>document.getElementById(id).classList.add("active");
+const closeOv=id=>document.getElementById(id).classList.remove("active");
+document.querySelectorAll("[data-close]").forEach(el=>el.addEventListener("click",()=>closeOv(el.dataset.close)));
+document.querySelectorAll(".overlay").forEach(ov=>ov.addEventListener("click",e=>{if(e.target===ov)closeOv(ov.id);}));
 
-/* ── Firebase listeners ── */
-onSnapshot(doc(db, "settings", "calendar"), snap => {
-  activeMonths = snap.exists() ? (snap.data().activeMonths || [3,4,5,6]) : [3,4,5,6];
+/* ── Firebase read only ── */
+onSnapshot(doc(db,"settings","calendar"),snap=>{
+  activeMonths=snap.exists()?(snap.data().activeMonths||[3,4,5,6]):[3,4,5,6];
   renderCalendar();
 });
-
-onSnapshot(collection(db, "calendarEvents"), snap => {
-  calData = {};
-  snap.forEach(d => calData[d.id] = d.data());
+onSnapshot(collection(db,"calendarEvents"),snap=>{
+  calData={};
+  snap.forEach(d=>calData[d.id]=d.data());
   renderCalendar();
   document.getElementById("loader").classList.add("hidden");
 });
 
-/* ── Helpers ── */
-function fmtYMD(y, m, d) {
-  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-}
+/* ── Calendar rendering (unchanged logic) ── */
+function fmtYMD(y,m,d){ return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+function evHasTeam(ev,team){ return ev?.tournaments?.some(t=>(t.fixtures||[]).some(f=>(f.home||"").toLowerCase().includes(team.toLowerCase())||(f.away||"").toLowerCase().includes(team.toLowerCase())))||false; }
+function oppIcon(ev,team){ const tl=team.toLowerCase(); for(const t of ev?.tournaments||[]){for(const f of t.fixtures||[]){if((f.home||"").toLowerCase().includes(tl))return f.awayIcon||null;if((f.away||"").toLowerCase().includes(tl))return f.homeIcon||null;}}return null; }
 
-function evHasTeam(ev, team) {
-  if (!ev?.tournaments) return false;
-  const tl = team.toLowerCase();
-  return ev.tournaments.some(t =>
-    (t.fixtures || []).some(f =>
-      (f.home || "").toLowerCase().includes(tl) ||
-      (f.away || "").toLowerCase().includes(tl)
-    )
-  );
-}
-
-function oppIcon(ev, team) {
-  if (!ev?.tournaments) return null;
-  const tl = team.toLowerCase();
-  for (const t of ev.tournaments) {
-    for (const f of (t.fixtures || [])) {
-      if ((f.home || "").toLowerCase().includes(tl)) return f.awayIcon || null;
-      if ((f.away || "").toLowerCase().includes(tl)) return f.homeIcon || null;
-    }
-  }
-  return null;
-}
-
-/* ── Calendar Render ── */
 function renderCalendar() {
-  const root = document.getElementById("calendarRoot");
-  root.innerHTML = "";
-  const WD = ["S","M","T","W","T","F","S"];
-
-  [...activeMonths].sort((a, b) => a - b).forEach((m, mi) => {
-    const info = ALL_MONTHS.find(x => x.month === m);
-    if (!info) return;
-    const first = new Date(YEAR, m, 1);
-    const dim   = new Date(YEAR, m+1, 0).getDate();
-    const swd   = first.getDay();
-
-    const card = document.createElement("div");
-    card.className = "month-card";
-    card.style.animationDelay = (mi * 0.07) + "s";
-    card.innerHTML = `<div class="month-header"><h2>${info.label}</h2></div>`;
-
-    const wdRow = document.createElement("div");
-    wdRow.className = "weekdays";
-    WD.forEach(l => {
-      const d = document.createElement("div");
-      d.className = "weekday";
-      d.textContent = l;
-      wdRow.appendChild(d);
-    });
+  const root=document.getElementById("calendarRoot"); root.innerHTML="";
+  const WD=["S","M","T","W","T","F","S"];
+  [...activeMonths].sort((a,b)=>a-b).forEach((m,mi)=>{
+    const info=ALL_MONTHS.find(x=>x.month===m); if(!info) return;
+    const first=new Date(YEAR,m,1), dim=new Date(YEAR,m+1,0).getDate(), swd=first.getDay();
+    const card=document.createElement("div"); card.className="month-card"; card.style.animationDelay=(mi*0.07)+"s";
+    card.innerHTML=`<div class="month-header"><h2>${info.label}</h2></div>`;
+    const wdRow=document.createElement("div"); wdRow.className="weekdays";
+    WD.forEach(l=>{const d=document.createElement("div");d.className="weekday";d.textContent=l;wdRow.appendChild(d);});
     card.appendChild(wdRow);
-
-    const grid = document.createElement("div");
-    grid.className = "days-grid";
-
-    // Empty cells
-    for (let i = 0; i < swd; i++) {
-      const e = document.createElement("div");
-      e.className = "day-cell empty-day";
-      grid.appendChild(e);
-    }
-
-    for (let d = 1; d <= dim; d++) {
-      const ds = fmtYMD(YEAR, m, d);
-      const ev = calData[ds];
-      const cell = document.createElement("div");
-
-      const dn = document.createElement("div");
-      dn.className = "day-number";
-      dn.textContent = d;
-      cell.appendChild(dn);
-
-      if (ev) {
-        // Filter logic
-        if (selectedTeam) {
-          if (evHasTeam(ev, selectedTeam)) {
-            cell.className = "day-cell has-event";
-            const oi = oppIcon(ev, selectedTeam);
-            if (oi) {
-              const img = document.createElement("img");
-              img.className = "event-icon";
-              img.src = oi;
-              img.alt = "opponent";
-              cell.appendChild(img);
-            }
-            const dot = document.createElement("div");
-            dot.className = "event-dot";
-            cell.appendChild(dot);
-            cell.addEventListener("click", () => openDayModal(ds, d, info.label));
-          } else {
-            cell.className = "day-cell no-event";
-          }
+    const grid=document.createElement("div"); grid.className="days-grid";
+    for(let i=0;i<swd;i++){const e=document.createElement("div");e.className="day-cell empty-day";grid.appendChild(e);}
+    for(let d=1;d<=dim;d++){
+      const ds=fmtYMD(YEAR,m,d), ev=calData[ds];
+      const cell=document.createElement("div"); cell.className="day-cell"+(ev?" has-event":"");
+      const dn=document.createElement("div"); dn.className="day-number"; dn.textContent=d; cell.appendChild(dn);
+      if(ev){
+        if(selectedTeam){
+          if(evHasTeam(ev,selectedTeam)){const oi=oppIcon(ev,selectedTeam);if(oi){const img=document.createElement("img");img.className="event-icon";img.src=oi;cell.appendChild(img);}}
+          else{cell.classList.remove("has-event");}
         } else {
-          cell.className = "day-cell has-event";
-          if (ev.iconUrl) {
-            const img = document.createElement("img");
-            img.className = "event-icon";
-            img.src = ev.iconUrl;
-            img.alt = ev.title || "";
-            cell.appendChild(img);
-          }
-          if (ev.title) {
-            const lbl = document.createElement("div");
-            lbl.className = "event-label";
-            lbl.textContent = ev.title;
-            cell.appendChild(lbl);
-          }
-          const dot = document.createElement("div");
-          dot.className = "event-dot";
-          cell.appendChild(dot);
-          cell.addEventListener("click", () => openDayModal(ds, d, info.label));
+          if(ev.iconUrl){const img=document.createElement("img");img.className="event-icon";img.src=ev.iconUrl;img.alt=ev.title||"";cell.appendChild(img);}
+          if(ev.title){const lbl=document.createElement("div");lbl.className="event-label";lbl.textContent=ev.title;cell.appendChild(lbl);}
         }
+        const dot=document.createElement("div");dot.className="event-dot";cell.appendChild(dot);
       } else {
-        cell.className = "day-cell no-event";
+        const hint=document.createElement("div");hint.className="add-hint";hint.textContent="No event";cell.appendChild(hint);
       }
-
+      cell.addEventListener("click",()=>openDayModal(ds,d,info.label));
       grid.appendChild(cell);
     }
-
-    card.appendChild(grid);
-    root.appendChild(card);
+    card.appendChild(grid); root.appendChild(card);
   });
 }
 
-/* ── Day Modal ── */
-function openDayModal(ds, day, monthLabel) {
-  const ev = calData[ds];
-  if (!ev) return;
-
-  document.getElementById("dayTitle").textContent = `${day} ${monthLabel}`;
-  document.getElementById("dayEventTitle").textContent = ev.title ? `📅 ${ev.title}` : "";
-
-  const container = document.getElementById("tournamentsContainer");
-  container.innerHTML = "";
-
-  const tournaments = ev.tournaments || [];
-  if (!tournaments.length) {
-    container.innerHTML = `<div class="no-fixtures">No tournaments scheduled for this date.</div>`;
-  } else {
-    tournaments.forEach(t => {
-      const card = document.createElement("div");
-      card.className = "tournament-card";
-
-      // Header
-      const hdr = document.createElement("div");
-      hdr.className = "tc-header";
-
-      if (t.iconUrl) {
-        const img = document.createElement("img");
-        img.className = "tc-icon";
-        img.src = t.iconUrl;
-        img.alt = t.name || "";
-        hdr.appendChild(img);
-      }
-
-      const nm = document.createElement("div");
-      nm.className = "tc-name";
-      nm.textContent = t.name || "Untitled Tournament";
-      hdr.appendChild(nm);
-
-      const count = document.createElement("div");
-      count.className = "tc-count";
-      count.textContent = `${(t.fixtures || []).length} fixtures`;
-      hdr.appendChild(count);
-
-      card.appendChild(hdr);
-
-      // Toggle button
-      const tog = document.createElement("button");
-      tog.className = "fix-toggle";
-      tog.innerHTML = `⚽ VIEW FIXTURES <span class="fix-toggle-arrow">▾</span>`;
-      card.appendChild(tog);
-
-      // Fixtures panel
-      const panel = document.createElement("div");
-      panel.className = "fix-panel";
-
-      const fixtures = t.fixtures || [];
-      if (!fixtures.length) {
-        const none = document.createElement("div");
-        none.className = "no-fixtures";
-        none.textContent = "No fixtures added yet.";
-        panel.appendChild(none);
-      } else {
-        fixtures.forEach(f => {
-          const row = document.createElement("div");
-          row.className = "fix-row";
-
-          // Home side
-          if (f.homeIcon) {
-            const img = document.createElement("img");
-            img.className = "fix-team-icon";
-            img.src = f.homeIcon;
-            img.alt = f.home || "";
-            row.appendChild(img);
-          }
-          const hn = document.createElement("span");
-          hn.className = "fix-team-name";
-          hn.textContent = f.home || "TBD";
-          row.appendChild(hn);
-
-          // VS
-          const vs = document.createElement("span");
-          vs.className = "fix-vs";
-          vs.textContent = "vs";
-          row.appendChild(vs);
-
-          // Away side
-          const awaySide = document.createElement("div");
-          awaySide.className = "fix-away-side";
-
-          const an = document.createElement("span");
-          an.className = "fix-away-name";
-          an.textContent = f.away || "TBD";
-          awaySide.appendChild(an);
-
-          if (f.awayIcon) {
-            const img = document.createElement("img");
-            img.className = "fix-team-icon";
-            img.src = f.awayIcon;
-            img.alt = f.away || "";
-            awaySide.appendChild(img);
-          }
-
-          row.appendChild(awaySide);
-          panel.appendChild(row);
-        });
-      }
-
-      // Toggle behaviour
-      tog.addEventListener("click", () => {
-        const isOpen = panel.classList.toggle("open");
-        tog.classList.toggle("open", isOpen);
-      });
-
-      card.appendChild(panel);
-      container.appendChild(card);
-    });
-  }
-
+/* ── Day Modal (read-only) ── */
+function openDayModal(ds,day,monthLabel){
+  currentDate=ds; const ev=calData[ds];
+  document.getElementById("dayTitle").textContent=`${day} ${monthLabel}`;
+  document.getElementById("evTitle").value=ev?.title||"";
+  const prev=document.getElementById("evIconPrev");
+  if(ev?.iconUrl){prev.src=ev.iconUrl;prev.classList.add("show");}else{prev.src="";prev.classList.remove("show");}
+  renderTournamentsReadonly(ev?.tournaments||[]);
   openOv("dayOverlay");
 }
 
-/* ── Filter ── */
-const teamGrid = document.getElementById("teamGrid");
-ALL_TEAMS.forEach(team => {
-  const el = document.createElement("div");
-  el.className = "team-opt";
-  el.textContent = team;
-  el.addEventListener("click", () => {
-    selectedTeam = team;
-    teamGrid.querySelectorAll(".team-opt").forEach(x => x.classList.remove("active"));
-    el.classList.add("active");
-    document.getElementById("filterBadge").classList.add("show");
-    closeOv("filterOverlay");
-    renderCalendar();
-    toast(`Filtering: ${team}`, "success");
+function renderTournamentsReadonly(tournaments){
+  const c=document.getElementById("tournamentsContainer"); c.innerHTML="";
+  if(!tournaments.length){c.innerHTML='<div class="no-data">No tournaments for this date.</div>';return;}
+  tournaments.forEach((t,ti)=>{
+    const card=document.createElement("div"); card.className="tournament-card";
+    const hdr=document.createElement("div"); hdr.className="tc-header";
+    if(t.iconUrl){const img=document.createElement("img");img.className="tc-icon";img.src=t.iconUrl;hdr.appendChild(img);}
+    const nm=document.createElement("div"); nm.className="tc-name"; nm.textContent=t.name||"Untitled"; hdr.appendChild(nm);
+    card.appendChild(hdr);
+
+    const tog=document.createElement("button"); tog.className="fix-toggle";
+    const fixtureCount = (t.fixtures||[]).length;
+    tog.textContent=`⚽ FIXTURES (${fixtureCount})`;
+    card.appendChild(tog);
+    const panel=document.createElement("div"); panel.className="fix-panel";
+
+    (t.fixtures||[]).forEach((f,fi)=>{
+      const row=document.createElement("div"); row.className="fix-row";
+      if(f.homeIcon){const img=document.createElement("img");img.className="fix-team-icon";img.src=f.homeIcon;row.appendChild(img);}
+      const hn=document.createElement("span");hn.className="fix-team-name";hn.textContent=f.home||"";row.appendChild(hn);
+      const vs=document.createElement("span");vs.className="fix-vs";vs.textContent="vs";row.appendChild(vs);
+      if(f.awayIcon){const img=document.createElement("img");img.className="fix-team-icon";img.src=f.awayIcon;row.appendChild(img);}
+      const an=document.createElement("span");an.className="fix-team-name";an.textContent=f.away||"";row.appendChild(an);
+      panel.appendChild(row);
+    });
+    if(fixtureCount===0){
+      const nofix=document.createElement("div");nofix.className="no-data";nofix.textContent="No fixtures added.";panel.appendChild(nofix);
+    }
+    tog.onclick=()=>panel.classList.toggle("open");
+    card.appendChild(panel); c.appendChild(card);
   });
+}
+
+/* ── Filter ── */
+const teamGrid=document.getElementById("teamGrid");
+ALL_TEAMS.forEach(team=>{
+  const el=document.createElement("div");el.className="team-opt";el.textContent=team;
+  el.onclick=()=>{selectedTeam=team;teamGrid.querySelectorAll(".team-opt").forEach(x=>x.classList.remove("active"));el.classList.add("active");closeOv("filterOverlay");renderCalendar();toast(`Filtering: ${team}`,"success");};
   teamGrid.appendChild(el);
 });
+document.getElementById("filterBtn").onclick=()=>openOv("filterOverlay");
+document.getElementById("menuBtn").onclick=()=>openOv("menuOverlay");
 
-document.getElementById("clearFilterBtn").addEventListener("click", () => {
-  selectedTeam = null;
-  teamGrid.querySelectorAll(".team-opt").forEach(x => x.classList.remove("active"));
-  document.getElementById("filterBadge").classList.remove("show");
-  closeOv("filterOverlay");
-  renderCalendar();
-  toast("Filter cleared", "success");
-});
+/* ── SEED (unchanged, keeps initial data) ── */
+async function seedIfEmpty(){
+  const snap=await getDocs(collection(db,"calendarEvents"));
+  if(!snap.empty) return;
+  toast("Setting up initial calendar data...","");
+  const batch=writeBatch(db);
+  batch.set(doc(db,"settings","calendar"),{activeMonths:[3,4,5,6,7,8,9,10,11]});
 
-document.getElementById("filterBtn").addEventListener("click", () => openOv("filterOverlay"));
-document.getElementById("menuBtn").addEventListener("click", () => openOv("menuOverlay"));
+  const plData=[
+    {md:10,date:[2026,3,22],fx:[["FC Barcelona","Real Madrid"],["Paris Saint-Germain","AC Milan"],["Juventus","Manchester City"],["Inter Milan","Newcastle United"],["Borussia Dortmund","Liverpool"],["Atlético Madrid","Chelsea"],["Napoli","Arsenal"]]},
+    {md:11,date:[2026,3,23],fx:[["FC Barcelona","AC Milan"],["Real Madrid","Manchester City"],["Paris Saint-Germain","Newcastle United"],["Juventus","Liverpool"],["Inter Milan","Chelsea"],["Borussia Dortmund","Arsenal"],["Atlético Madrid","Napoli"]]},
+    {md:12,date:[2026,3,24],fx:[["FC Barcelona","Manchester City"],["AC Milan","Newcastle United"],["Real Madrid","Liverpool"],["Paris Saint-Germain","Chelsea"],["Juventus","Arsenal"],["Inter Milan","Napoli"],["Borussia Dortmund","Atlético Madrid"]]},
+    {md:13,date:[2026,3,25],fx:[["FC Barcelona","Newcastle United"],["Manchester City","Liverpool"],["AC Milan","Chelsea"],["Real Madrid","Arsenal"],["Paris Saint-Germain","Napoli"],["Juventus","Atlético Madrid"],["Inter Milan","Borussia Dortmund"]]},
+    {md:14,date:[2026,3,26],fx:[["Liverpool","FC Barcelona"],["Chelsea","Newcastle United"],["Arsenal","Manchester City"],["Napoli","AC Milan"],["Atlético Madrid","Real Madrid"],["Borussia Dortmund","Paris Saint-Germain"],["Inter Milan","Juventus"]]},
+    {md:15,date:[2026,3,27],fx:[["Chelsea","FC Barcelona"],["Arsenal","Liverpool"],["Napoli","Newcastle United"],["Atlético Madrid","Manchester City"],["Borussia Dortmund","AC Milan"],["Inter Milan","Real Madrid"],["Juventus","Paris Saint-Germain"]]},
+    {md:16,date:[2026,3,28],fx:[["Arsenal","FC Barcelona"],["Napoli","Chelsea"],["Atlético Madrid","Liverpool"],["Borussia Dortmund","Newcastle United"],["Inter Milan","Manchester City"],["Juventus","AC Milan"],["Paris Saint-Germain","Real Madrid"]]},
+    {md:17,date:[2026,3,29],fx:[["Napoli","FC Barcelona"],["Atlético Madrid","Arsenal"],["Borussia Dortmund","Chelsea"],["Inter Milan","Liverpool"],["Juventus","Newcastle United"],["Paris Saint-Germain","Manchester City"],["Real Madrid","AC Milan"]]},
+    {md:18,date:[2026,3,30],fx:[["Atlético Madrid","FC Barcelona"],["Borussia Dortmund","Napoli"],["Inter Milan","Arsenal"],["Juventus","Chelsea"],["Paris Saint-Germain","Liverpool"],["Real Madrid","Newcastle United"],["AC Milan","Manchester City"]]},
+    {md:19,date:[2026,4,1],fx:[["Borussia Dortmund","FC Barcelona"],["Inter Milan","Atlético Madrid"],["Juventus","Napoli"],["Paris Saint-Germain","Arsenal"],["Real Madrid","Chelsea"],["AC Milan","Liverpool"],["Manchester City","Newcastle United"]]},
+    {md:20,date:[2026,4,2],fx:[["Inter Milan","FC Barcelona"],["Juventus","Borussia Dortmund"],["Paris Saint-Germain","Atlético Madrid"],["Real Madrid","Napoli"],["AC Milan","Arsenal"],["Manchester City","Chelsea"],["Newcastle United","Liverpool"]]},
+    {md:21,date:[2026,4,3],fx:[["Juventus","FC Barcelona"],["Paris Saint-Germain","Inter Milan"],["Real Madrid","Borussia Dortmund"],["AC Milan","Atlético Madrid"],["Manchester City","Napoli"],["Newcastle United","Arsenal"],["Liverpool","Chelsea"]]},
+    {md:22,date:[2026,4,4],fx:[["Paris Saint-Germain","FC Barcelona"],["Real Madrid","Juventus"],["AC Milan","Inter Milan"],["Manchester City","Borussia Dortmund"],["Newcastle United","Atlético Madrid"],["Liverpool","Napoli"],["Chelsea","Arsenal"]]},
+    {md:23,date:[2026,4,5],fx:[["Real Madrid","FC Barcelona"],["AC Milan","Paris Saint-Germain"],["Manchester City","Juventus"],["Newcastle United","Inter Milan"],["Liverpool","Borussia Dortmund"],["Chelsea","Atlético Madrid"],["Arsenal","Napoli"]]},
+    {md:24,date:[2026,4,6],fx:[["AC Milan","FC Barcelona"],["Manchester City","Real Madrid"],["Newcastle United","Paris Saint-Germain"],["Liverpool","Juventus"],["Chelsea","Inter Milan"],["Arsenal","Borussia Dortmund"],["Napoli","Atlético Madrid"]]},
+    {md:25,date:[2026,4,7],fx:[["Manchester City","FC Barcelona"],["Newcastle United","AC Milan"],["Liverpool","Real Madrid"],["Chelsea","Paris Saint-Germain"],["Arsenal","Juventus"],["Napoli","Inter Milan"],["Atlético Madrid","Borussia Dortmund"]]},
+    {md:26,date:[2026,4,8],fx:[["Newcastle United","FC Barcelona"],["Liverpool","Manchester City"],["Chelsea","AC Milan"],["Arsenal","Real Madrid"],["Napoli","Paris Saint-Germain"],["Atlético Madrid","Juventus"],["Borussia Dortmund","Inter Milan"]]}
+  ];
+  const PLI="images (14).png";
+  for(const md of plData){
+    const ds=fmtYMD(md.date[0],md.date[1],md.date[2]);
+    const fixtures=md.fx.map(([h,a])=>({home:h,homeIcon:"",away:a,awayIcon:""}));
+    batch.set(doc(db,"calendarEvents",ds),{title:"Premier League",iconUrl:PLI,tournaments:[{name:`Premier League MD${md.md}`,iconUrl:PLI,fixtures}]});
+  }
+
+  const sched=[
+    {d:"2026-05-17",t:"UEFA",i:"aavgzoshm.webp",ts:[{n:"Champions League SF 1st Leg",i:"images (15).png"},{n:"Europa League SF 1st Leg",i:"uefa-europa-league-logo-on-transparent-background-free-vector.jpg"},{n:"Conference League SF 1st Leg",i:"images (16).png"},{n:"Nations League MD1",i:"IMG-20260425-WA4698.jpg"}]},
+    {d:"2026-05-18",t:"World Cup",i:"fifa-vector-flag-official-colors-aspect-ratio-white-logo-blue-background-fifa-vector-flag-436952842.jpg",ts:[{n:"World Cup QF 1st Leg",i:"fifa-vector-flag-official-colors-aspect-ratio-white-logo-blue-background-fifa-vector-flag-436952842.jpg"}]},
+    {d:"2026-05-19",t:"Club World Cup",i:"images - 2026-04-21T172601.589.jpeg",ts:[{n:"Club World Cup QF 1st Leg",i:"images - 2026-04-21T172601.589.jpeg"}]},
+    {d:"2026-05-20",t:"Domestic",i:PLI,ts:[{n:"FA Cup R1",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD1",i:PLI},{n:"Community Shield Leg 1",i:"images - 2026-05-01T144809.144.jpeg"}]},
+    {d:"2026-05-21",t:"Domestic",i:PLI,ts:[{n:"FA Cup R2",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD2",i:PLI}]},
+    {d:"2026-05-22",t:"Domestic",i:PLI,ts:[{n:"FA Cup R3",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD3",i:PLI}]},
+    {d:"2026-05-23",t:"Domestic",i:PLI,ts:[{n:"FA Cup R4",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD4",i:PLI}]},
+    {d:"2026-05-24",t:"World Cup",i:"fifa-vector-flag-official-colors-aspect-ratio-white-logo-blue-background-fifa-vector-flag-436952842.jpg",ts:[{n:"World Cup QF 2nd Leg",i:"fifa-vector-flag-official-colors-aspect-ratio-white-logo-blue-background-fifa-vector-flag-436952842.jpg"}]},
+    {d:"2026-05-25",t:"Club World Cup",i:"images - 2026-04-21T172601.589.jpeg",ts:[{n:"Club World Cup QF 2nd Leg",i:"images - 2026-04-21T172601.589.jpeg"}]},
+    {d:"2026-05-26",t:"UEFA",i:"aavgzoshm.webp",ts:[{n:"Champions League SF 2nd Leg",i:"images (15).png"},{n:"Europa League SF 2nd Leg",i:"uefa-europa-league-logo-on-transparent-background-free-vector.jpg"},{n:"Conference League SF 2nd Leg",i:"images (16).png"},{n:"Nations League MD2",i:"IMG-20260425-WA4698.jpg"}]},
+    {d:"2026-05-27",t:"World Cup",i:"fifa-vector-flag-official-colors-aspect-ratio-white-logo-blue-background-fifa-vector-flag-436952842.jpg",ts:[{n:"World Cup SF 1st Leg",i:"fifa-vector-flag-official-colors-aspect-ratio-white-logo-blue-background-fifa-vector-flag-436952842.jpg"}]},
+    {d:"2026-05-28",t:"Club World Cup",i:"images - 2026-04-21T172601.589.jpeg",ts:[{n:"Club World Cup SF 1st Leg",i:"images - 2026-04-21T172601.589.jpeg"}]},
+    {d:"2026-05-29",t:"Domestic",i:PLI,ts:[{n:"FA Cup R5",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD5",i:PLI}]},
+    {d:"2026-05-30",t:"Domestic",i:PLI,ts:[{n:"FA Cup R6",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD6",i:PLI}]},
+    {d:"2026-05-31",t:"Domestic",i:PLI,ts:[{n:"FA Cup R7",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD7",i:PLI},{n:"Community Shield Leg 2",i:"images - 2026-05-01T144809.144.jpeg"}]},
+    {d:"2026-06-01",t:"Domestic",i:PLI,ts:[{n:"FA Cup R8",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD8",i:PLI}]},
+    {d:"2026-06-02",t:"World Cup",i:"fifa-vector-flag-official-colors-aspect-ratio-white-logo-blue-background-fifa-vector-flag-436952842.jpg",ts:[{n:"World Cup SF 2nd Leg",i:"fifa-vector-flag-official-colors-aspect-ratio-white-logo-blue-background-fifa-vector-flag-436952842.jpg"}]},
+    {d:"2026-06-03",t:"Club World Cup",i:"images - 2026-04-21T172601.589.jpeg",ts:[{n:"Club World Cup SF 2nd Leg",i:"images - 2026-04-21T172601.589.jpeg"}]},
+    {d:"2026-06-04",t:"UEFA",i:"aavgzoshm.webp",ts:[{n:"Champions League Final",i:"images (15).png"},{n:"Europa League Final",i:"uefa-europa-league-logo-on-transparent-background-free-vector.jpg"},{n:"Conference League Final",i:"images (16).png"},{n:"Nations League MD3",i:"IMG-20260425-WA4698.jpg"}]},
+    {d:"2026-06-05",t:"World Cup",i:"fifa-vector-flag-official-colors-aspect-ratio-white-logo-blue-background-fifa-vector-flag-436952842.jpg",ts:[{n:"World Cup Final",i:"fifa-vector-flag-official-colors-aspect-ratio-white-logo-blue-background-fifa-vector-flag-436952842.jpg"}]},
+    {d:"2026-06-06",t:"Club World Cup",i:"images - 2026-04-21T172601.589.jpeg",ts:[{n:"Club World Cup Final",i:"images - 2026-04-21T172601.589.jpeg"}]},
+    {d:"2026-06-07",t:"Domestic",i:PLI,ts:[{n:"FA Cup R9",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD9",i:PLI}]},
+    {d:"2026-06-08",t:"Domestic",i:PLI,ts:[{n:"FA Cup R10",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD10",i:PLI}]},
+    {d:"2026-06-09",t:"Domestic",i:PLI,ts:[{n:"FA Cup R11",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD11",i:PLI},{n:"Community Shield Leg 3",i:"images - 2026-05-01T144809.144.jpeg"}]},
+    {d:"2026-06-10",t:"Domestic",i:PLI,ts:[{n:"FA Cup R12",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD12",i:PLI}]},
+    {d:"2026-06-11",t:"UEFA",i:"aavgzoshm.webp",ts:[{n:"Nations League MD4",i:"IMG-20260425-WA4698.jpg"},{n:"UEFA Super Cup Final",i:"images - 2026-04-21T172656.176.jpeg"}]},
+    {d:"2026-06-12",t:"Domestic",i:PLI,ts:[{n:"FA Cup R13",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD13",i:PLI}]},
+    {d:"2026-06-13",t:"Domestic",i:PLI,ts:[{n:"FA Cup R14",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD14",i:PLI}]},
+    {d:"2026-06-14",t:"Domestic",i:PLI,ts:[{n:"FA Cup R15",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD15",i:PLI}]},
+    {d:"2026-06-15",t:"Domestic",i:PLI,ts:[{n:"FA Cup R16",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD16",i:PLI}]},
+    {d:"2026-06-16",t:"UEFA",i:"aavgzoshm.webp",ts:[{n:"Nations League MD5",i:"IMG-20260425-WA4698.jpg"}]},
+    {d:"2026-06-17",t:"Domestic",i:PLI,ts:[{n:"FA Cup R17",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD17",i:PLI}]},
+    {d:"2026-06-18",t:"Domestic",i:PLI,ts:[{n:"FA Cup R18",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD18",i:PLI},{n:"Community Shield Leg 4",i:"images - 2026-05-01T144809.144.jpeg"}]},
+    {d:"2026-06-19",t:"Domestic",i:PLI,ts:[{n:"FA Cup R19",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD19",i:PLI}]},
+    {d:"2026-06-20",t:"Domestic",i:PLI,ts:[{n:"FA Cup R20",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD20",i:PLI}]},
+    {d:"2026-06-21",t:"UEFA",i:"aavgzoshm.webp",ts:[{n:"Nations League MD6",i:"IMG-20260425-WA4698.jpg"}]},
+    {d:"2026-06-22",t:"UEFA",i:"aavgzoshm.webp",ts:[{n:"Nations League QF 1st Leg",i:"IMG-20260425-WA4698.jpg"}]},
+    {d:"2026-06-23",t:"UEFA",i:"aavgzoshm.webp",ts:[{n:"Nations League QF 2nd Leg",i:"IMG-20260425-WA4698.jpg"}]},
+    {d:"2026-06-24",t:"UEFA",i:"aavgzoshm.webp",ts:[{n:"Nations League SF 1st Leg",i:"IMG-20260425-WA4698.jpg"}]},
+    {d:"2026-06-25",t:"UEFA",i:"aavgzoshm.webp",ts:[{n:"Nations League SF 2nd Leg",i:"IMG-20260425-WA4698.jpg"}]},
+    {d:"2026-06-26",t:"UEFA",i:"aavgzoshm.webp",ts:[{n:"Nations League 3rd Place",i:"IMG-20260425-WA4698.jpg"}]},
+    {d:"2026-06-27",t:"UEFA",i:"aavgzoshm.webp",ts:[{n:"Nations League Final",i:"IMG-20260425-WA4698.jpg"}]},
+    {d:"2026-06-28",t:"Super League",i:"images - 2026-05-01T151142.585.jpeg",ts:[{n:"UEFA Super League Final",i:"images - 2026-05-01T151142.585.jpeg"}]},
+    {d:"2026-06-29",t:"Domestic",i:PLI,ts:[{n:"FA Cup R21",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD21",i:PLI}]},
+    {d:"2026-06-30",t:"Domestic",i:PLI,ts:[{n:"FA Cup R22",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD22",i:PLI}]},
+    {d:"2026-07-01",t:"Domestic",i:PLI,ts:[{n:"FA Cup R23",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD23",i:PLI},{n:"Community Shield Leg 5",i:"images - 2026-05-01T144809.144.jpeg"}]},
+    {d:"2026-07-02",t:"Domestic",i:PLI,ts:[{n:"FA Cup R24",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD24",i:PLI}]},
+    {d:"2026-07-03",t:"Domestic",i:PLI,ts:[{n:"FA Cup R25",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD25",i:PLI}]},
+    {d:"2026-07-04",t:"Domestic",i:PLI,ts:[{n:"FA Cup R26 (Final)",i:"images - 2026-05-01T145542.658.jpeg"},{n:"Premier League MD26",i:PLI}]}
+  ];
+  for(const s of sched){
+    batch.set(doc(db,"calendarEvents",s.d),{title:s.t,iconUrl:s.i,tournaments:s.ts.map(t=>({name:t.n,iconUrl:t.i,fixtures:[]}))});
+  }
+  await batch.commit();
+  toast("Initial data seeded ✓","success");
+}
+seedIfEmpty();
 </script>
 </body>
-  </html>
+</html>
