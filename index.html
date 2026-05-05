@@ -543,14 +543,7 @@
     <h3>TOURNAMENTS</h3>
     <div class="modal-options">
       <a href="nations.html" class="modal-option">UEFA NATIONS LEAGUE</a>
-      <a href="fifa-club-world-cup.html" class="modal-option">FIFA CLUB WORLD CUP</a>
-      <a href="uefa-champions-league.html" class="modal-option">UEFA CHAMPIONS LEAGUE</a>
-      <a href="uefa-europa-league.html" class="modal-option">UEFA EUROPA LEAGUE</a>
-      <a href="uefa-super-league.html" class="modal-option">UEFA SUPER LEAGUE</a>
-      <a href="uefa-conference-league.html" class="modal-option">UEFA CONFERENCE LEAGUE</a>
-      <a href="player-titles.html" class="modal-option">PLAYER TITLES</a>
       <a href="rules.html" class="modal-option">RULES</a>
-      <a href="calendar.html" class="modal-option">CALENDAR</a>
     </div>
     <button class="close-modal" id="closeModalBtn">CLOSE</button>
   </div>
@@ -597,7 +590,7 @@
         <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
       </div>
       <div class="scrollable-table">
-        <table class="inner-table" id="fixturesTable"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th> </thead><tbody id="fixturesTableBody"></tbody></table>
+        <table class="inner-table" id="fixturesTable"><thead></tr><th>Date</th><th>Home vs Away</th><th>Matchday</th> </thead><tbody id="fixturesTableBody"></tbody></table>
       </div>
     </div>
   </div>
@@ -637,12 +630,12 @@
   function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
   if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
 
-  // LEAGUE DATA AFTER adding Liverpool-Napoli draw (MD22) and Newcastle-Inter win (MD23)
+  // LEAGUE DATA AFTER adding Real Madrid 2-2 Barcelona (MD23)
   const LEAGUE_DATA = [
-    { pos: 1, club: "Real Madrid", p: 22, gd: 24, pts: 61 },
+    { pos: 1, club: "Real Madrid", p: 23, gd: 24, pts: 62 },
     { pos: 2, club: "Liverpool", p: 22, gd: 39, pts: 52 },
     { pos: 3, club: "Dortmund", p: 22, gd: 12, pts: 43 },
-    { pos: 4, club: "Barcelona", p: 22, gd: 1, pts: 40 },
+    { pos: 4, club: "Barcelona", p: 23, gd: 1, pts: 41 },
     { pos: 5, club: "Arsenal", p: 22, gd: 6, pts: 38 },
     { pos: 6, club: "Man City", p: 22, gd: 2, pts: 34 },
     { pos: 7, club: "PSG", p: 22, gd: -17, pts: 29 },
@@ -706,12 +699,12 @@
     return teamName;
   }
 
-  // LAST 5 RESULTS: updated with Liverpool draw, Napoli draw, Inter win, Newcastle loss
+  // LAST 5 RESULTS: added D for Real Madrid and Barcelona (MD23)
   const last5Exact = {
-    "Real Madrid":   ["WF", "WF", "W", "WF", "WF", "L", "WF"],
+    "Real Madrid":   ["WF", "WF", "W", "WF", "WF", "L", "WF", "D"],
     "Liverpool":     ["W", "W", "W", "WF", "W", "D", "D"],
     "Dortmund":      ["D", "WF", "L", "F", "WF", "W", "WF"],
-    "Barcelona":     ["LF", "W", "W", "WF", "LF", "F", "W"],
+    "Barcelona":     ["LF", "W", "W", "WF", "LF", "F", "W", "D"],
     "Arsenal":       ["L", "L", "W", "W", "WF", "WF", "WF"],
     "Man City":      ["F", "W", "LF", "WF", "W", "WF", "LF"],
     "Chelsea":       ["F", "WF", "W", "L", "LF", "D", "LF"],
@@ -758,10 +751,9 @@
     26: "May 8"
   };
 
-  // Fixture list: removed Liverpool vs Napoli (MD22) and Newcastle vs Inter (MD23)
+  // Fixture list: removed Real Madrid vs Barcelona (MD23)
   const fixtureList = [
-    // MD23 remaining fixtures (all except Newcastle vs Inter)
-    { md: 23, home: "Real Madrid", away: "FC Barcelona" },
+    // MD23 remaining fixtures (all except Real Madrid-Barcelona and Newcastle-Inter already removed)
     { md: 23, home: "AC Milan", away: "Paris Saint-Germain" },
     { md: 23, home: "Manchester City", away: "Juventus" },
     { md: 23, home: "Liverpool", away: "Borussia Dortmund" },
@@ -802,11 +794,12 @@
     awayPlayer: playerMap[f.away] || ""
   }));
 
-  // RESULTS_DATA: added Newcastle vs Inter (MD23) and Liverpool vs Napoli (MD22) as newest
+  // RESULTS_DATA: added Real Madrid 2-2 Barcelona as newest
   const RESULTS_DATA = [
+    { matchText: "Real Madrid 2 - 2 FC Barcelona", md: 23 },
     { matchText: "Inter Milan 2 - 1 Newcastle United", md: 23 },
     { matchText: "Liverpool 1 - 1 Napoli", md: 22 },
-    // Previous MD22 results (already in file)
+    // Previous MD22 results
     { matchText: "FC Barcelona 2 - 1 Paris Saint-Germain", md: 22 },
     { matchText: "Real Madrid 3 - 0 Juventus (Forfeited - No Reply)", md: 22 },
     { matchText: "Borussia Dortmund 3 - 0 Manchester City (Forfeited - No Reply)", md: 22 },
