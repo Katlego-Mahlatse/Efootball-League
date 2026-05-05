@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eFootball 412 · Manager Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&family=Exo+2:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:#f5d742; --gold2:#ffe985; --gold-dim:rgba(245,215,66,0.12);
+  --gold-border:rgba(245,215,66,0.3); --purple-deep:#07030f; --purple-dark:#0f0820;
+  --purple-mid:#18103a; --purple-card:#1e1448; --purple-light:#2e1d6e;
+  --purple-btn:#5b32a8; --purple-hover:#7045cc; --text-primary:#f0e8ff;
+  --text-dim:#9b8ab8; --red:#ef4444; --green:#22c55e;
+  --shadow-gold:0 0 30px rgba(245,215,66,0.12); --shadow-deep:0 20px 60px rgba(0,0,0,0.6);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--text-primary);min-height:100vh;overflow-x:hidden;}
+
+/* BG */
+.bg-layer{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.bg-orb{position:absolute;border-radius:50%;filter:blur(90px);animation:orbFloat 14s ease-in-out infinite;}
+.bg-orb:nth-child(1){width:700px;height:700px;background:radial-gradient(circle,rgba(106,31,208,0.22),transparent);top:-20%;left:-15%;animation-delay:0s;}
+.bg-orb:nth-child(2){width:450px;height:450px;background:radial-gradient(circle,rgba(245,215,66,0.08),transparent);top:50%;right:-10%;animation-delay:-5s;}
+.bg-orb:nth-child(3){width:550px;height:550px;background:radial-gradient(circle,rgba(59,13,138,0.2),transparent);bottom:-15%;left:35%;animation-delay:-9s;}
+@keyframes orbFloat{0%,100%{transform:translate(0,0);}33%{transform:translate(25px,-18px);}66%{transform:translate(-18px,14px);}}
+.bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(245,215,66,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(245,215,66,0.025) 1px,transparent 1px);background-size:55px 55px;z-index:0;pointer-events:none;}
+
+/* LOADER */
+.loader{position:fixed;inset:0;background:var(--purple-deep);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;transition:opacity 0.6s,visibility 0.6s;}
+.loader.hidden{opacity:0;visibility:hidden;}
+.loader-logo{font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:var(--gold);letter-spacing:0.1em;animation:glowPulse 1.8s ease-in-out infinite;}
+@keyframes glowPulse{0%,100%{text-shadow:0 0 20px rgba(245,215,66,0.5);}50%{text-shadow:0 0 40px rgba(245,215,66,0.9),0 0 80px rgba(245,215,66,0.3);}}
+.loader-ring{width:56px;height:56px;border:3px solid rgba(245,215,66,0.15);border-top-color:var(--gold);border-radius:50%;animation:spin 0.85s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loader-text{font-family:'Rajdhani',sans-serif;font-size:0.8rem;color:var(--text-dim);letter-spacing:0.22em;text-transform:uppercase;}
+
+/* NAVBAR */
+.navbar{position:sticky;top:0;z-index:200;background:linear-gradient(135deg,#a87e0a,#f5d742 40%,#e0c020 100%);padding:0 1.5rem;height:58px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 28px rgba(0,0,0,0.55);}
+.navbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.35),transparent);}
+.nav-brand{display:flex;align-items:center;gap:0.7rem;font-family:'Orbitron',monospace;font-weight:900;font-size:0.95rem;color:var(--purple-deep);letter-spacing:0.06em;}
+.nav-icon-wrap{width:32px;height:32px;background:var(--purple-deep);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.95rem;}
+.manager-pill{background:var(--purple-deep);color:var(--gold);font-size:0.52rem;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.12em;font-family:'Rajdhani',sans-serif;}
+.nav-actions{display:flex;gap:0.5rem;}
+.nav-btn{width:37px;height:37px;border-radius:50%;background:var(--purple-deep);border:1.5px solid rgba(245,215,66,0.6);color:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;transition:all 0.25s;box-shadow:0 2px 8px rgba(0,0,0,0.35);}
+.nav-btn:hover{background:var(--purple-light);transform:scale(1.1);}
+
+/* WRAPPER */
+.wrapper{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:2rem 1.5rem 5rem;}
+
+/* PAGE HEADER */
+.page-header{margin-bottom:2.5rem;animation:slideDown 0.7s cubic-bezier(0.22,1,0.36,1) both;}
+@keyframes slideDown{from{opacity:0;transform:translateY(-22px);}to{opacity:1;transform:translateY(0);}}
+.page-title{font-family:'Orbitron',monospace;font-size:clamp(1.6rem,4vw,2.5rem);font-weight:900;color:var(--gold);letter-spacing:0.05em;line-height:1.1;margin-bottom:0.4rem;text-shadow:0 0 50px rgba(245,215,66,0.35);}
+.page-sub{font-size:0.85rem;color:var(--text-dim);font-style:italic;}
+
+/* MONTH CARD */
+.month-card{background:linear-gradient(160deg,rgba(30,20,72,0.82),rgba(10,5,22,0.92));border:1px solid var(--gold-border);border-radius:1.8rem;overflow:hidden;margin-bottom:2.5rem;box-shadow:var(--shadow-deep),var(--shadow-gold);animation:cardIn 0.65s cubic-bezier(0.22,1,0.36,1) both;}
+@keyframes cardIn{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:translateY(0);}}
+.month-header{padding:1rem 1.6rem;background:linear-gradient(135deg,rgba(8,4,20,0.98),rgba(18,10,45,0.98));border-bottom:2px solid var(--gold);display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;}
+.month-header::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--gold),rgba(245,215,66,0.2));}
+.month-header h2{font-family:'Orbitron',monospace;font-size:1.25rem;font-weight:700;color:var(--text-primary);letter-spacing:0.04em;}
+.weekdays{display:grid;grid-template-columns:repeat(7,1fr);background:rgba(46,29,110,0.3);border-bottom:1px solid var(--gold-border);}
+.weekday{padding:0.65rem 0.3rem;text-align:center;font-family:'Orbitron',monospace;font-weight:700;font-size:0.65rem;color:var(--gold);letter-spacing:0.08em;}
+.days-grid{display:grid;grid-template-columns:repeat(7,1fr);}
+
+/* DAY CELL */
+.day-cell{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;border:1px solid rgba(245,215,66,0.07);background:rgba(22,13,52,0.45);min-height:115px;padding:8px 5px 6px;cursor:pointer;position:relative;transition:background 0.2s,border-color 0.25s;overflow:hidden;}
+.day-cell::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(245,215,66,0.05),transparent);opacity:0;transition:opacity 0.25s;}
+.day-cell:hover{background:rgba(91,50,168,0.42);border-color:rgba(245,215,66,0.22);}
+.day-cell:hover::after{opacity:1;}
+.day-cell.has-event{background:rgba(46,29,110,0.58);}
+.day-cell.has-event:hover{background:rgba(91,50,168,0.58);}
+.day-cell.empty-day{background:rgba(8,4,18,0.55);cursor:default;pointer-events:none;}
+.day-number{font-family:'Orbitron',monospace;font-size:0.68rem;font-weight:700;color:var(--text-dim);align-self:flex-start;margin-bottom:5px;letter-spacing:0.03em;}
+.day-cell.has-event .day-number{color:var(--gold);}
+.event-icon{width:48px;height:48px;object-fit:contain;border-radius:8px;margin-top:2px;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.5));transition:transform 0.25s;}
+.day-cell:hover .event-icon{transform:scale(1.05);}
+.event-label{font-family:'Rajdhani',sans-serif;font-size:0.57rem;font-weight:700;color:var(--gold);letter-spacing:0.07em;text-transform:uppercase;margin-top:3px;text-align:center;line-height:1.2;}
+.event-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;background:var(--gold);border-radius:50%;box-shadow:0 0 6px var(--gold);animation:dotPulse 2.2s ease-in-out infinite;}
+@keyframes dotPulse{0%,100%{opacity:1;box-shadow:0 0 6px var(--gold);}50%{opacity:0.4;box-shadow:0 0 14px var(--gold);}}
+.no-event-hint{font-size:0.58rem;color:rgba(245,215,66,0.18);font-style:italic;margin-top:auto;padding-top:4px;}
+
+/* OVERLAY (modals) */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.82);backdrop-filter:blur(7px);z-index:500;display:flex;align-items:center;justify-content:center;padding:1rem;visibility:hidden;opacity:0;transition:opacity 0.3s,visibility 0.3s;}
+.overlay.active{visibility:visible;opacity:1;}
+.overlay.active .modal{transform:translateY(0) scale(1);}
+.modal{background:linear-gradient(158deg,#1e1448,#0c0620);border:1.5px solid var(--gold-border);border-radius:1.8rem;padding:1.8rem;width:100%;max-width:550px;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 30px 90px rgba(0,0,0,0.75),0 0 40px rgba(245,215,66,0.08);transform:translateY(22px) scale(0.97);transition:transform 0.38s cubic-bezier(0.22,1,0.36,1);}
+.modal::-webkit-scrollbar{width:4px;}
+.modal::-webkit-scrollbar-thumb{background:var(--gold-border);border-radius:2px;}
+.modal-close{position:absolute;top:14px;right:16px;background:rgba(91,50,168,0.4);border:1px solid var(--gold-border);color:var(--gold);width:32px;height:32px;border-radius:50%;font-size:1.15rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.25s;line-height:1;}
+.modal-close:hover{background:var(--red);border-color:var(--red);color:#fff;transform:rotate(90deg);}
+.modal-title{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;color:var(--gold);margin-bottom:1.2rem;padding-right:2rem;letter-spacing:0.05em;}
+
+/* read-only tournament card */
+.tournament-card-rd{background:rgba(5,2,12,0.72);border:1px solid rgba(245,215,66,0.14);border-radius:1.1rem;padding:0.9rem 1rem;margin-bottom:0.8rem;}
+.tc-header{display:flex;align-items:center;gap:0.7rem;margin-bottom:0.6rem;}
+.tc-icon{width:36px;height:36px;object-fit:contain;border-radius:6px;}
+.tc-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;color:var(--text-primary);}
+.fixture-row{display:flex;align-items:center;gap:0.5rem;padding:0.45rem 0;border-bottom:1px solid rgba(245,215,66,0.06);}
+.fixture-row:last-of-type{border-bottom:none;}
+.team-icon-sm{width:26px;height:26px;object-fit:contain;border-radius:4px;}
+.fixture-team{font-size:0.78rem;font-weight:600;color:var(--text-primary);}
+.fixture-vs{font-size:0.63rem;color:var(--gold);font-family:'Orbitron',monospace;font-weight:700;margin:0 4px;}
+.no-fixtures{color:var(--text-dim);font-size:0.75rem;text-align:center;padding:0.5rem 0;}
+
+/* BUTTONS (only for closing modals, no writes) */
+.btn{padding:0.55rem 1.3rem;border-radius:2rem;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.06em;cursor:pointer;transition:all 0.25s;border:none;display:inline-flex;align-items:center;gap:0.3rem;}
+.btn-purple{background:rgba(91,50,168,0.45);border:1px solid var(--gold-border);color:var(--gold);}
+.btn-purple:hover{background:var(--purple-hover);}
+.btn-row{display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:1rem;justify-content:flex-end;}
+
+/* FILTER TEAM GRID */
+.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;}
+.team-opt{background:rgba(91,50,168,0.18);border:1px solid var(--gold-border);border-radius:2rem;padding:0.5rem 0.8rem;cursor:pointer;text-align:center;font-size:0.8rem;font-weight:600;color:var(--text-primary);transition:all 0.2s;font-family:'Rajdhani',sans-serif;}
+.team-opt:hover,.team-opt.active{background:var(--purple-btn);border-color:var(--gold);color:var(--gold);}
+
+/* MENU */
+.menu-list{display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem;}
+.menu-link{display:block;text-align:center;padding:0.65rem 1rem;background:rgba(91,50,168,0.18);border:1px solid var(--gold-border);border-radius:2rem;color:var(--text-primary);text-decoration:none;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.9rem;letter-spacing:0.06em;transition:all 0.2s;}
+.menu-link:hover{background:var(--purple-btn);color:var(--gold);transform:translateX(4px);}
+
+@media(max-width:680px){
+  .wrapper{padding:1rem 0.75rem 3rem;}
+  .event-icon{width:36px;height:36px;}
+  .day-cell{min-height:80px;padding:5px 3px;}
+  .day-number{font-size:0.6rem;}
+  .weekday{font-size:0.58rem;padding:0.5rem 0.2rem;}
+  .modal{padding:1.4rem;}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-layer"><div class="bg-orb"></div><div class="bg-orb"></div><div class="bg-orb"></div></div>
+<div class="bg-grid"></div>
+
+<div class="loader" id="loader">
+  <div class="loader-logo">eFOOTBALL 412</div>
+  <div class="loader-ring"></div>
+  <div class="loader-text">MANAGER CALENDAR · LOADING</div>
+</div>
+
+<nav class="navbar">
+  <div class="nav-brand">
+    <div class="nav-icon-wrap">⚽</div>
+    eFOOTBALL 412
+    <span class="manager-pill">MANAGER</span>
+  </div>
+  <div class="nav-actions">
+    <button class="nav-btn" id="filterBtn" title="Filter by team">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 6H20M6 12H18M10 18H14" stroke="#F5D742" stroke-width="2.2" stroke-linecap="round"/><circle cx="6" cy="6" r="2" stroke="#F5D742" stroke-width="1.8"/><circle cx="18" cy="12" r="2" stroke="#F5D742" stroke-width="1.8"/><circle cx="14" cy="18" r="2" stroke="#F5D742" stroke-width="1.8"/></svg>
+    </button>
+    <button class="nav-btn" id="menuBtn" title="Menu" style="font-size:1.15rem;">☰</button>
+  </div>
+</nav>
+
+<div class="wrapper">
+  <div class="page-header">
+    <div class="page-title">MANAGER CALENDAR</div>
+    <div class="page-sub">Read‑only schedule · All events and fixtures are managed by the administration</div>
+  </div>
+  <div id="calendarRoot"></div>
+</div>
+
+<!-- MENU OVERLAY -->
+<div class="overlay" id="menuOverlay">
+  <div class="modal" style="max-width:300px;">
+    <button class="modal-close" data-close="menuOverlay">✕</button>
+    <div class="modal-title">MENU</div>
+    <div class="menu-list">
+      <a href="rules.html" class="menu-link">📋 RULES</a>
+      <a href="index.html" class="menu-link">🏠 MAIN MENU</a>
+      <a href="login.html" class="menu-link">🔑 LOGIN</a>
+      <a href="player-titles.html" class="menu-link">🏆 MANAGER TITLES</a>
+      <a href="user-calendar.html" class="menu-link">👁 USER VIEW</a>
+    </div>
+    <button class="btn btn-purple" style="width:100%;" data-close="menuOverlay">CLOSE</button>
+  </div>
+</div>
+
+<!-- FILTER OVERLAY (client-side only) -->
+<div class="overlay" id="filterOverlay">
+  <div class="modal" style="max-width:380px;">
+    <button class="modal-close" data-close="filterOverlay">✕</button>
+    <div class="modal-title">FILTER BY TEAM</div>
+    <div class="team-grid" id="teamGrid"></div>
+    <div class="btn-row">
+      <button class="btn btn-purple btn-sm" id="clearFilterBtn">CLEAR FILTER</button>
+      <button class="btn btn-purple btn-sm" data-close="filterOverlay">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<!-- READ-ONLY EVENT DETAIL OVERLAY -->
+<div class="overlay" id="infoOverlay">
+  <div class="modal" style="max-width:580px;">
+    <button class="modal-close" data-close="infoOverlay">✕</button>
+    <div class="modal-title" id="infoTitle">Event Details</div>
+    <div id="infoContent"></div>
+    <div class="btn-row">
+      <button class="btn btn-purple" data-close="infoOverlay">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+
+// Firebase config (read-only)
+const FB = { apiKey:"AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4", authDomain:"efootball-412.firebaseapp.com", projectId:"efootball-412", storageBucket:"efootball-412.firebasestorage.app", messagingSenderId:"596548424249", appId:"1:596548424249:web:4349f6e87a40a1590bf3e8", measurementId:"G-KHY86ZMPZH" };
+const app = initializeApp(FB);
+const db = getFirestore(app);
+const YEAR = 2026;
+
+const ALL_MONTHS = [
+  {month:3,label:"April 2026"},{month:4,label:"May 2026"},{month:5,label:"June 2026"},
+  {month:6,label:"July 2026"},{month:7,label:"August 2026"},{month:8,label:"September 2026"},
+  {month:9,label:"October 2026"},{month:10,label:"November 2026"},{month:11,label:"December 2026"}
+];
+const ALL_TEAMS = ["Real Madrid","Liverpool","Dortmund","Man City","Barcelona","Arsenal","PSG","AC Milan","Chelsea","Napoli","Atletico","Juventus","Newcastle","Inter Milan"];
+
+let calData = {};
+let activeMonths = [];
+let selectedTeam = null;
+
+// --- LOADERS (read-only) ---
+onSnapshot(doc(db, "settings", "calendar"), (snap) => {
+  activeMonths = snap.exists() ? (snap.data().activeMonths || [3,4,5,6]) : [3,4,5,6];
+  renderCalendar();
+});
+
+onSnapshot(collection(db, "calendarEvents"), (snap) => {
+  calData = {};
+  snap.forEach(d => { calData[d.id] = d.data(); });
+  renderCalendar();
+  document.getElementById("loader").classList.add("hidden");
+});
+
+// --- Helper: check if event contains a team (fixture search) ---
+function eventContainsTeam(ev, team) {
+  if (!ev?.tournaments) return false;
+  return ev.tournaments.some(t => (t.fixtures || []).some(f => 
+    (f.home || "").toLowerCase().includes(team.toLowerCase()) || 
+    (f.away || "").toLowerCase().includes(team.toLowerCase())
+  ));
+}
+
+function getOpponentIcon(ev, team) {
+  const teamLow = team.toLowerCase();
+  for (const t of ev?.tournaments || []) {
+    for (const f of t.fixtures || []) {
+      if ((f.home || "").toLowerCase().includes(teamLow)) return f.awayIcon || null;
+      if ((f.away || "").toLowerCase().includes(teamLow)) return f.homeIcon || null;
+    }
+  }
+  return null;
+}
+
+// --- Render calendar grid (read-only, clickable for info) ---
+function renderCalendar() {
+  const root = document.getElementById("calendarRoot");
+  root.innerHTML = "";
+  const weekdays = ["S", "M", "T", "W", "T", "F", "S"];
+
+  [...activeMonths].sort((a,b) => a-b).forEach((monthNum, idx) => {
+    const monthInfo = ALL_MONTHS.find(m => m.month === monthNum);
+    if (!monthInfo) return;
+
+    const firstDay = new Date(YEAR, monthNum, 1);
+    const daysInMonth = new Date(YEAR, monthNum + 1, 0).getDate();
+    const startWeekday = firstDay.getDay();
+
+    const card = document.createElement("div");
+    card.className = "month-card";
+    card.style.animationDelay = (idx * 0.07) + "s";
+    card.innerHTML = `<div class="month-header"><h2>${monthInfo.label}</h2></div>`;
+
+    const wdRow = document.createElement("div");
+    wdRow.className = "weekdays";
+    weekdays.forEach(d => { const el = document.createElement("div"); el.className = "weekday"; el.textContent = d; wdRow.appendChild(el); });
+    card.appendChild(wdRow);
+
+    const grid = document.createElement("div");
+    grid.className = "days-grid";
+
+    // empty cells before month start
+    for (let i = 0; i < startWeekday; i++) {
+      const empty = document.createElement("div");
+      empty.className = "day-cell empty-day";
+      grid.appendChild(empty);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${YEAR}-${String(monthNum+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const ev = calData[dateStr];
+      const cell = document.createElement("div");
+      cell.className = "day-cell" + (ev ? " has-event" : "");
+      
+      const dayNum = document.createElement("div");
+      dayNum.className = "day-number";
+      dayNum.textContent = d;
+      cell.appendChild(dayNum);
+
+      if (ev) {
+        // apply team filter if active
+        let showEvent = true;
+        let opponentIcon = null;
+        if (selectedTeam && !eventContainsTeam(ev, selectedTeam)) {
+          showEvent = false;
+          cell.classList.remove("has-event");
+        } else if (selectedTeam) {
+          opponentIcon = getOpponentIcon(ev, selectedTeam);
+        }
+
+        if (showEvent) {
+          if (selectedTeam && opponentIcon) {
+            const img = document.createElement("img");
+            img.className = "event-icon";
+            img.src = opponentIcon;
+            cell.appendChild(img);
+          } else if (ev.iconUrl) {
+            const img = document.createElement("img");
+            img.className = "event-icon";
+            img.src = ev.iconUrl;
+            img.alt = ev.title || "";
+            cell.appendChild(img);
+            if (ev.title) {
+              const label = document.createElement("div");
+              label.className = "event-label";
+              label.textContent = ev.title;
+              cell.appendChild(label);
+            }
+          }
+          // add dot indicator
+          const dot = document.createElement("div");
+          dot.className = "event-dot";
+          cell.appendChild(dot);
+        }
+        // make cell clickable to view details (read-only)
+        cell.addEventListener("click", (e) => {
+          e.stopPropagation();
+          showEventInfo(dateStr, ev);
+        });
+      } else {
+        const hint = document.createElement("div");
+        hint.className = "no-event-hint";
+        hint.textContent = "— no event —";
+        cell.appendChild(hint);
+        cell.style.cursor = "default";
+        cell.addEventListener("click", () => {}); // no action
+      }
+      grid.appendChild(cell);
+    }
+    card.appendChild(grid);
+    root.appendChild(card);
+  });
+}
+
+// --- Read-only event details modal ---
+function showEventInfo(dateStr, eventData) {
+  const modalTitle = document.getElementById("infoTitle");
+  const contentDiv = document.getElementById("infoContent");
+  modalTitle.innerText = `📅 ${dateStr} · ${eventData.title || "Event"}`;
+  
+  let html = `<div style="margin-bottom:1rem;"><img src="${eventData.iconUrl || ''}" style="max-width:60px; border-radius:10px; margin-bottom:8px;" onerror="this.style.display='none'"><div><strong style="color:var(--gold);">${eventData.title || "No title"}</strong></div></div>`;
+  
+  if (eventData.tournaments && eventData.tournaments.length) {
+    html += `<div class="section-label" style="margin-top:0.5rem;">🏆 TOURNAMENTS & FIXTURES</div>`;
+    eventData.tournaments.forEach((tourn, idx) => {
+      html += `<div class="tournament-card-rd">
+        <div class="tc-header">
+          ${tourn.iconUrl ? `<img class="tc-icon" src="${tourn.iconUrl}" onerror="this.style.display='none'">` : ""}
+          <span class="tc-name">${tourn.name || "Tournament"}</span>
+        </div>`;
+      const fixtures = tourn.fixtures || [];
+      if (fixtures.length === 0) {
+        html += `<div class="no-fixtures">No fixtures scheduled</div>`;
+      } else {
+        fixtures.forEach(f => {
+          html += `<div class="fixture-row">
+            ${f.homeIcon ? `<img class="team-icon-sm" src="${f.homeIcon}" onerror="this.style.display='none'">` : `<span style="width:26px;"></span>`}
+            <span class="fixture-team">${f.home || "?"}</span>
+            <span class="fixture-vs">VS</span>
+            ${f.awayIcon ? `<img class="team-icon-sm" src="${f.awayIcon}" onerror="this.style.display='none'">` : `<span style="width:26px;"></span>`}
+            <span class="fixture-team">${f.away || "?"}</span>
+          </div>`;
+        });
+      }
+      html += `</div>`;
+    });
+  } else {
+    html += `<div class="no-fixtures" style="padding:1rem;">No additional tournaments or fixtures.</div>`;
+  }
+  contentDiv.innerHTML = html;
+  document.getElementById("infoOverlay").classList.add("active");
+}
+
+// --- Filter UI (client-side read only) ---
+const teamGrid = document.getElementById("teamGrid");
+ALL_TEAMS.forEach(team => {
+  const el = document.createElement("div");
+  el.className = "team-opt";
+  el.textContent = team;
+  el.onclick = () => {
+    selectedTeam = team;
+    document.querySelectorAll("#teamGrid .team-opt").forEach(x => x.classList.remove("active"));
+    el.classList.add("active");
+    document.getElementById("filterOverlay").classList.remove("active");
+    renderCalendar();
+  };
+  teamGrid.appendChild(el);
+});
+
+document.getElementById("clearFilterBtn").onclick = () => {
+  selectedTeam = null;
+  document.querySelectorAll("#teamGrid .team-opt").forEach(x => x.classList.remove("active"));
+  document.getElementById("filterOverlay").classList.remove("active");
+  renderCalendar();
+};
+
+// --- Overlay helpers ---
+function closeOverlay(id) { document.getElementById(id).classList.remove("active"); }
+document.querySelectorAll("[data-close]").forEach(btn => {
+  btn.addEventListener("click", () => closeOverlay(btn.dataset.close));
+});
+document.querySelectorAll(".overlay").forEach(ov => {
+  ov.addEventListener("click", (e) => { if (e.target === ov) closeOverlay(ov.id); });
+});
+
+// --- Nav buttons ---
+document.getElementById("filterBtn").onclick = () => document.getElementById("filterOverlay").classList.add("active");
+document.getElementById("menuBtn").onclick = () => document.getElementById("menuOverlay").classList.add("active");
+
+// No seed or write operations – purely read‑only
+</script>
+</body>
+</html>
