@@ -343,6 +343,9 @@
       color: #1a1a1a;
       vertical-align: middle;
     }
+    .team-name {
+      font-weight: 700;
+    }
 
     .pos-with-bar {
       display: flex;
@@ -358,9 +361,8 @@
     .blue-bar-vertical { background-color: #3b82f6; }
     .orange-bar-vertical { background-color: #f97316; }
     .green-bar-vertical { background-color: #22c55e; }
-    .dashed-separator-gold { border-bottom: 2px dashed #1a1a1a !important; }
-    .dashed-separator-white { border-bottom: 2px dashed #ffffff !important; }
-    .dashed-separator-red { border-bottom: 2px dashed #ef4444 !important; }
+    /* Removed red and black dashed lines */
+    .dashed-separator-black { border-bottom: 2px dashed #1a1a1a; }
 
     .rank-cell { font-weight: 700; width: 60px; color: #1a1a1a; }
     .pts-cell { font-weight: 800; color: #1a1a1a; text-align: center; }
@@ -369,6 +371,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      font-weight: 700;
     }
     .team-icon {
       width: 44px;
@@ -435,7 +438,7 @@
     .legend-blue { background-color: #3b82f6; }
     .legend-orange { background-color: #f97316; }
     .legend-green { background-color: #22c55e; }
-    .legend-dashed-white { display: inline-block; width: 20px; height: 2px; border-bottom: 2px dashed #ffffff; vertical-align: middle; }
+    .legend-dashed-black { display: inline-block; width: 20px; height: 2px; border-bottom: 2px dashed #1a1a1a; vertical-align: middle; }
     .legend-text { color: #1a1a1a; }
 
     .inner-table {
@@ -489,17 +492,17 @@
       margin-top: 4px;
     }
 
-    /* Upload modal */
-    .upload-modal {
+    .upload-modal, .slideshow-modal {
       background: #f5d742;
       border: 2px solid #1a1a1a;
       border-radius: 1.5rem;
       padding: 1.5rem;
-      min-width: 300px;
+      min-width: 320px;
       text-align: center;
       color: #1a1a1a;
     }
-    .upload-modal select, .upload-modal input {
+    .upload-modal select, .upload-modal input,
+    .slideshow-modal select, .slideshow-modal input {
       width: 100%;
       margin: 0.5rem 0;
       padding: 0.5rem;
@@ -508,7 +511,7 @@
       color: #f5d742;
       border-radius: 30px;
     }
-    .upload-modal button {
+    .upload-modal button, .slideshow-modal button {
       background: #1a1a1a;
       color: #f5d742;
       border: 1px solid #f5d742;
@@ -517,12 +520,11 @@
       cursor: pointer;
       margin-top: 0.5rem;
     }
-    .upload-modal button:hover {
+    .upload-modal button:hover, .slideshow-modal button:hover {
       background: #0a0a0a;
       transform: scale(1.02);
     }
 
-    /* Debug panel */
     .debug-panel {
       background: #1a1a1a;
       color: #f5d742;
@@ -566,6 +568,41 @@
       font-weight: bold;
     }
 
+    .slide-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 1rem 0;
+      justify-content: center;
+    }
+    .slide-preview-item {
+      position: relative;
+      width: 80px;
+      height: 60px;
+      border: 1px solid #1a1a1a;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .slide-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .slide-preview-item button {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 10px;
+      cursor: pointer;
+      padding: 0;
+    }
+
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
       .stats-table th, .stats-table td { padding: 0.6rem 0.5rem; font-size: 0.75rem; }
@@ -588,11 +625,10 @@
 
 <div class="dashboard">
   <div class="slideshow-container">
-    <img id="slideshow-img" class="slideshow-img" src="images - 2026-04-19T121231.816.jpeg" alt="Slideshow">
+    <img id="slideshow-img" class="slideshow-img" src="" alt="Slideshow">
     <div class="dots-container" id="dotsContainer"></div>
   </div>
 
-  <!-- Premier League Table Card -->
   <div class="card" style="margin-bottom:2rem">
     <div class="card-header" style="cursor:default;">
       <div class="card-header-left">
@@ -612,13 +648,12 @@
           <span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span class="legend-text">UEFA Champions League</span></span>
           <span class="legend-item"><span class="legend-vertical-bar legend-orange"></span><span class="legend-text">Europa League</span></span>
           <span class="legend-item"><span class="legend-vertical-bar legend-green"></span><span class="legend-text">UEFA Conference League</span></span>
-          <span class="legend-item"><span class="legend-dashed-white"></span><span class="legend-text">FIFA Club World Cup</span></span>
+          <span class="legend-item"><span class="legend-dashed-black"></span><span class="legend-text">FIFA Club World Cup</span></span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Fixtures Card -->
   <div class="card">
     <div class="card-header" id="fixturesHeader"><div class="card-header-left"><h2>FIXTURES</h2></div><div class="toggle-icon" id="fixturesToggleIcon">▼</div></div>
     <div class="card-content collapsed" id="fixturesContent">
@@ -632,7 +667,6 @@
     </div>
   </div>
 
-  <!-- Results Card -->
   <div class="card">
     <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
     <div class="card-content collapsed" id="resultsContent">
@@ -642,7 +676,6 @@
     </div>
   </div>
 
-  <!-- Debug Information Card (at the bottom) -->
   <div class="card debug-panel">
     <div class="card-header" id="debugHeader" style="background:#0a0a0a;">
       <div class="card-header-left">
@@ -660,7 +693,7 @@
 </div>
 
 <script>
-  // Firebase config (Realtime Database)
+  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
     authDomain: "efootball-412.firebaseapp.com",
@@ -672,34 +705,28 @@
   };
   firebase.initializeApp(firebaseConfig);
   const database = firebase.database();
-
   const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
 
-  // ---------- Debug Logger ----------
+  // Debug logger
   function addDebugLog(message, type = "info") {
     const container = document.getElementById("debugLogContainer");
     if (!container) return;
     const timestamp = new Date().toLocaleTimeString();
     const logDiv = document.createElement("div");
     logDiv.className = `debug-log ${type}`;
-    let prefix = "";
-    if (type === "success") prefix = "✅ ";
-    else if (type === "error") prefix = "❌ ";
-    else prefix = "ℹ️ ";
+    let prefix = type === "success" ? "✅ " : (type === "error" ? "❌ " : "ℹ️ ");
     logDiv.innerText = `${prefix}[${timestamp}] ${message}`;
     container.appendChild(logDiv);
     container.scrollTop = container.scrollHeight;
-    // keep last 50 logs
     while (container.children.length > 50) container.removeChild(container.firstChild);
   }
-
   document.getElementById("clearDebugBtn")?.addEventListener("click", () => {
     const container = document.getElementById("debugLogContainer");
     if (container) container.innerHTML = '<div class="debug-log info">ℹ️ [Init] Debug panel cleared</div>';
     addDebugLog("Debug logs cleared", "info");
   });
 
-  // ---------- League Data (after MD23 + Dortmund 4-2 Arsenal MD24) ----------
+  // ---------- LEAGUE DATA (after MD23 + Dortmund 4-2 Arsenal MD24) ----------
   const LEAGUE_DATA = [
     { pos: 1, club: "Real Madrid", p: 23, gd: 24, pts: 62 },
     { pos: 2, club: "Liverpool", p: 23, gd: 42, pts: 55 },
@@ -759,11 +786,11 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // Fixtures (MD24 after Dortmund-Arsenal removed, plus MD25, MD26)
+  // Fixtures (dates now in DD/MM format)
   const matchdayDates = {
-    15: "Apr 27", 16: "Apr 28", 17: "Apr 29", 18: "Apr 30",
-    19: "May 1", 20: "May 2", 21: "May 3", 22: "May 4",
-    23: "May 5", 24: "May 6", 25: "May 7", 26: "May 8"
+    15: "27/04", 16: "28/04", 17: "29/04", 18: "30/04",
+    19: "01/05", 20: "02/05", 21: "03/05", 22: "04/05",
+    23: "05/05", 24: "06/05", 25: "07/05", 26: "08/05"
   };
   let fixtureList = [
     { md: 24, home: "AC Milan", away: "FC Barcelona" },
@@ -792,7 +819,7 @@
     homePlayer: playerMap[f.home] || "", awayPlayer: playerMap[f.away] || ""
   }));
 
-  // Results (including Dortmund 4-2 Arsenal at top)
+  // Results (including Dortmund 4-2 Arsenal)
   const RESULTS_DATA = [
     { matchText: "Borussia Dortmund 4 - 2 Arsenal", md: 24 },
     { matchText: "Paris Saint-Germain 2 - 1 AC Milan", md: 23 },
@@ -816,7 +843,7 @@
     { matchText: "AC Milan 3 - 0 Atlético Madrid (Forfeited - No Reply)", md: 21 },
     { matchText: "Liverpool 1 - 1 Chelsea", md: 21 },
     { matchText: "Paris Saint-Germain 1 - 0 Inter Milan", md: 21 },
-    // MD20 to MD15 (same as before, truncated for brevity but fully present)
+    // MD20 to MD15 (abbreviated but present)
   ];
   const moreResults = [
     { matchText: "Paris Saint-Germain 3 - 0 Atlético Madrid (Forfeit win PSG)", md: 20 },
@@ -866,7 +893,6 @@
 
   // ---------- Team Icons from Realtime Database ----------
   let teamIconsCache = {};
-
   async function loadIcons() {
     addDebugLog("Loading team icons from Realtime Database...", "info");
     try {
@@ -878,18 +904,175 @@
       addDebugLog(`Loaded ${Object.keys(teamIconsCache).length} team icons`, "success");
       renderLeagueTable();
       renderFixtures(document.getElementById("searchInput")?.value || "", document.getElementById("teamFilter")?.value || "");
-    } catch (err) {
-      addDebugLog(`Failed to load icons: ${err.message}`, "error");
+    } catch (err) { addDebugLog(`Failed to load icons: ${err.message}`, "error"); }
+  }
+  function getTeamIconHtml(teamName, className = "inline-team-icon") {
+    const url = teamIconsCache[teamName];
+    return url ? `<img class="${className}" src="${url}" alt="${teamName}" onerror="this.remove();">` : "";
+  }
+
+  // ---------- Dynamic Slideshow ----------
+  let currentSlideIndex = 0;
+  let slideInterval = null;
+  let slideshowImages = [];
+
+  async function loadSlideshow() {
+    addDebugLog("Loading slideshow from Realtime Database...", "info");
+    try {
+      const snapshot = await database.ref('slideshow/images').once('value');
+      const data = snapshot.val() || [];
+      slideshowImages = Array.isArray(data) ? data : [];
+      addDebugLog(`Loaded ${slideshowImages.length} slides`, "success");
+      startSlideshow();
+    } catch (err) { addDebugLog(`Failed to load slides: ${err.message}`, "error"); }
+  }
+
+  function startSlideshow() {
+    if (slideInterval) clearInterval(slideInterval);
+    if (slideshowImages.length === 0) {
+      document.getElementById("slideshow-img").src = "";
+      return;
+    }
+    currentSlideIndex = 0;
+    updateSlideImage();
+    slideInterval = setInterval(() => {
+      currentSlideIndex = (currentSlideIndex + 1) % slideshowImages.length;
+      updateSlideImage();
+    }, 3000);
+  }
+
+  function updateSlideImage() {
+    const img = document.getElementById("slideshow-img");
+    if (slideshowImages.length && slideshowImages[currentSlideIndex]) {
+      img.src = slideshowImages[currentSlideIndex];
+    } else {
+      img.src = "";
+    }
+    updateDots();
+  }
+
+  function updateDots() {
+    const container = document.getElementById("dotsContainer");
+    if (!container) return;
+    container.innerHTML = "";
+    for (let i = 0; i < slideshowImages.length; i++) {
+      const dot = document.createElement("span");
+      dot.classList.add("dot");
+      if (i === currentSlideIndex) dot.classList.add("active");
+      dot.addEventListener("click", () => {
+        currentSlideIndex = i;
+        updateSlideImage();
+        if (slideInterval) { clearInterval(slideInterval); slideInterval = setInterval(() => { currentSlideIndex = (currentSlideIndex + 1) % slideshowImages.length; updateSlideImage(); }, 3000); }
+      });
+      container.appendChild(dot);
     }
   }
 
-  function getTeamIconHtml(teamName, className = "inline-team-icon") {
-    const url = teamIconsCache[teamName];
-    if (url) return `<img class="${className}" src="${url}" alt="${teamName}" onerror="this.remove();">`;
-    return ""; // no fallback text – team name appears separately
+  async function uploadSlideImage(file) {
+    addDebugLog(`Uploading slide ${file.name}...`, "info");
+    const formData = new FormData();
+    formData.append("image", file);
+    const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: formData });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error?.message || "ImgBB upload failed");
+    addDebugLog("Slide uploaded to ImgBB", "success");
+    return data.data.url;
   }
 
-  // ---------- Table Rendering (no duplicate team names) ----------
+  function showSlideshowManager() {
+    const modalOverlay = document.getElementById("modalOverlay");
+    const modalContent = document.getElementById("modalContent");
+    const slidesList = slideshowImages.map((url, idx) => `
+      <div class="slide-preview-item">
+        <img src="${url}" alt="slide">
+        <button onclick="deleteSlide(${idx})">✕</button>
+      </div>
+    `).join('');
+    modalContent.innerHTML = `
+      <div class="slideshow-modal">
+        <h3>Manage Slideshow</h3>
+        <div class="slide-preview" id="slidePreviewContainer">
+          ${slidesList || '<p>No slides</p>'}
+        </div>
+        <input type="file" id="newSlideFile" accept="image/*">
+        <button id="uploadSlideBtn">Add New Slide</button>
+        <button id="closeSlideModal" class="close-modal" style="margin-top:10px;">Close</button>
+        <div id="slideStatus"></div>
+      </div>
+    `;
+    modalOverlay.classList.add("active");
+    document.getElementById("uploadSlideBtn").onclick = async () => {
+      const fileInput = document.getElementById("newSlideFile");
+      if (!fileInput.files.length) { document.getElementById("slideStatus").innerText = "Select an image."; return; }
+      const statusDiv = document.getElementById("slideStatus");
+      statusDiv.innerText = "Uploading...";
+      try {
+        const url = await uploadSlideImage(fileInput.files[0]);
+        slideshowImages.push(url);
+        await database.ref('slideshow/images').set(slideshowImages);
+        statusDiv.innerText = "✓ Slide added. Reloading...";
+        addDebugLog("Slide added to database", "success");
+        loadSlideshow(); // reload slideshow
+        showSlideshowManager(); // refresh modal
+      } catch (err) { statusDiv.innerText = "Error: " + err.message; addDebugLog(`Slide upload error: ${err.message}`, "error"); }
+    };
+    document.getElementById("closeSlideModal").onclick = () => modalOverlay.classList.remove("active");
+    window.deleteSlide = async (idx) => {
+      slideshowImages.splice(idx, 1);
+      await database.ref('slideshow/images').set(slideshowImages);
+      addDebugLog(`Deleted slide ${idx}`, "success");
+      loadSlideshow();
+      showSlideshowManager();
+    };
+  }
+
+  // ---------- Team Icon Upload ----------
+  async function uploadIconToImgBB(file) {
+    addDebugLog(`Uploading icon ${file.name}...`, "info");
+    const formData = new FormData();
+    formData.append("image", file);
+    const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: formData });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error?.message || "ImgBB upload failed");
+    addDebugLog("Icon uploaded to ImgBB", "success");
+    return data.data.url;
+  }
+  function showUploadModal() {
+    const modalOverlay = document.getElementById("modalOverlay");
+    const modalContent = document.getElementById("modalContent");
+    const teams = LEAGUE_DATA.map(t => t.club);
+    modalContent.innerHTML = `
+      <div class="upload-modal">
+        <h3>Add Team Icon</h3>
+        <select id="teamSelectUpload">${teams.map(t => `<option value="${t}">${t}</option>`).join('')}</select>
+        <input type="file" id="iconFileInput" accept="image/*">
+        <button id="uploadIconBtn">Upload & Save</button>
+        <button id="closeUploadModal" class="close-modal" style="margin-top:10px;">Cancel</button>
+        <div id="uploadStatus"></div>
+      </div>
+    `;
+    modalOverlay.classList.add("active");
+    document.getElementById("uploadIconBtn").onclick = async () => {
+      const team = document.getElementById("teamSelectUpload").value;
+      const fileInput = document.getElementById("iconFileInput");
+      const statusDiv = document.getElementById("uploadStatus");
+      if (!fileInput.files.length) { statusDiv.innerText = "Select an image."; return; }
+      statusDiv.innerText = "Uploading...";
+      try {
+        const imageUrl = await uploadIconToImgBB(fileInput.files[0]);
+        await database.ref(`teamIcons/${team}`).set({ imageUrl, updatedAt: Date.now() });
+        teamIconsCache[team] = imageUrl;
+        statusDiv.innerText = "✓ Saved!";
+        addDebugLog(`Icon saved for ${team}`, "success");
+        renderLeagueTable();
+        renderFixtures(document.getElementById("searchInput")?.value || "", document.getElementById("teamFilter")?.value || "");
+        setTimeout(() => modalOverlay.classList.remove("active"), 1500);
+      } catch (err) { statusDiv.innerText = "Error: " + err.message; addDebugLog(`Icon save error: ${err.message}`, "error"); }
+    };
+    document.getElementById("closeUploadModal").onclick = () => modalOverlay.classList.remove("active");
+  }
+
+  // ---------- Table rendering ----------
   function renderLeagueTable() {
     const tbody = document.getElementById("leagueTableBody");
     if (!tbody) return;
@@ -900,9 +1083,7 @@
       if (team.pos >= 1 && team.pos <= 4) barClass = "blue-bar-vertical";
       else if (team.pos >= 5 && team.pos <= 8) barClass = "orange-bar-vertical";
       else if (team.pos >= 9 && team.pos <= 12) barClass = "green-bar-vertical";
-      if (team.pos === 1) row.classList.add("dashed-separator-gold");
-      else if (team.pos === 8) row.classList.add("dashed-separator-white");
-      else if (team.pos === 12) row.classList.add("dashed-separator-red");
+      // Removed red/black line classes (pos8/pos12)
       const posCell = row.insertCell(0);
       posCell.className = "rank-cell";
       if (barClass) posCell.innerHTML = `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${team.pos}</div>`;
@@ -910,7 +1091,6 @@
 
       let displayName = team.club;
       if (window.currentView === "player") displayName = playerMap[team.club] || team.club;
-
       let clubHtml = '';
       if (window.showFormArrows) {
         const latest = getLatest(team.club);
@@ -921,12 +1101,7 @@
         else clubHtml += '<span style="opacity:0.3;">—</span> ';
       }
       const iconHtml = getTeamIconHtml(team.club, "team-icon");
-      // Only add one name (if no icon, show name; else name after icon)
-      if (iconHtml) {
-        clubHtml += iconHtml + ' ' + displayName;
-      } else {
-        clubHtml += displayName;
-      }
+      clubHtml += iconHtml ? `${iconHtml} ${displayName}` : displayName;
       row.insertCell(1).innerHTML = `<div class="team-name">${clubHtml}</div>`;
       row.insertCell(2).innerText = team.p;
       const gdValue = team.gd;
@@ -1013,29 +1188,10 @@
     });
   }
 
-  // ---------- Slideshow ----------
-  const images = ["images - 2026-04-19T121231.816.jpeg","images - 2026-04-19T155746.715.jpeg","37686bb3-06ce-401b-a022-026933c165e7.jpeg","12871.jpg","1f157df7-2054-4a9d-aa14-b9941ef4a743.jpeg"];
-  let currentIndex = 0;
-  const slideshowImg = document.getElementById("slideshow-img");
-  const dotsContainer = document.getElementById("dotsContainer");
-  function createDots() {
-    dotsContainer.innerHTML = "";
-    for (let i = 0; i < images.length; i++) {
-      const dot = document.createElement("span");
-      dot.classList.add("dot");
-      if (i === currentIndex) dot.classList.add("active");
-      dot.addEventListener("click", () => { currentIndex = i; slideshowImg.src = images[currentIndex]; updateDots(); });
-      dotsContainer.appendChild(dot);
-    }
-  }
-  function updateDots() { document.querySelectorAll(".dot").forEach((dot,idx)=>{ if(idx===currentIndex) dot.classList.add("active"); else dot.classList.remove("active"); }); }
-  if (slideshowImg) { createDots(); setInterval(()=>{ currentIndex = (currentIndex+1)%images.length; slideshowImg.src = images[currentIndex]; updateDots(); }, 2000); }
-
-  // ---------- Filters, Collapsibles, Popups ----------
+  // ---------- Filters, collapsible, three-dot menu ----------
   const allTeamsSet = new Set();
   fixturesWithDates.forEach(f => { allTeamsSet.add(f.home); allTeamsSet.add(f.away); });
   const allTeams = Array.from(allTeamsSet).sort();
-
   let searchInput, teamFilter;
   function setupFilters() {
     searchInput = document.getElementById("searchInput");
@@ -1045,15 +1201,16 @@
     const update = () => renderFixtures(searchInput.value, teamFilter.value);
     searchInput.addEventListener("input", update); teamFilter.addEventListener("change", update); update();
   }
-
   function setupCollapsible(headerId, contentId, iconId) {
     const h=document.getElementById(headerId), c=document.getElementById(contentId), ic=document.getElementById(iconId);
     if(!h||!c) return;
     let collapsed = c.classList.contains("collapsed");
     h.addEventListener("click",()=>{ collapsed=!collapsed; if(collapsed){ c.classList.add("collapsed"); if(ic) ic.innerHTML="▶"; } else { c.classList.remove("collapsed"); if(ic) ic.innerHTML="▼"; } });
   }
+  setupCollapsible("fixturesHeader","fixturesContent","fixturesToggleIcon");
+  setupCollapsible("resultsHeader","resultsContent","resultsToggleIcon");
+  setupCollapsible("debugHeader","debugContent","debugToggleIcon");
 
-  // Three-dot menu
   let currentView = "team", showFormArrows = false, showLast5 = true, popup = null;
   const threeDotBtn = document.getElementById("threeDotBtn");
   function closePopup() { if (popup) { popup.remove(); popup = null; } }
@@ -1086,72 +1243,9 @@
   }
   threeDotBtn.addEventListener("click", togglePopup);
   document.addEventListener("click", (e) => { if (popup && !popup.contains(e.target) && e.target !== threeDotBtn) closePopup(); });
+  window.currentView = currentView; window.showFormArrows = showFormArrows; window.showLast5 = showLast5;
 
-  window.currentView = currentView;
-  window.showFormArrows = showFormArrows;
-  window.showLast5 = showLast5;
-
-  // ---------- Admin Upload (ADD ICON) ----------
-  async function uploadIconToImgBB(file) {
-    addDebugLog(`Uploading ${file.name} to ImgBB...`, "info");
-    const formData = new FormData();
-    formData.append("image", file);
-    try {
-      const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: formData });
-      const data = await response.json();
-      if (data.success) {
-        addDebugLog(`ImgBB upload success: ${data.data.url}`, "success");
-        return data.data.url;
-      } else {
-        throw new Error(data.error?.message || "ImgBB upload failed");
-      }
-    } catch (err) {
-      addDebugLog(`ImgBB error: ${err.message}`, "error");
-      throw err;
-    }
-  }
-
-  function showUploadModal() {
-    const modalOverlay = document.getElementById("modalOverlay");
-    const modalContent = document.getElementById("modalContent");
-    const teams = LEAGUE_DATA.map(t => t.club);
-    modalContent.innerHTML = `
-      <div class="upload-modal">
-        <h3>Add Team Icon</h3>
-        <select id="teamSelectUpload">
-          ${teams.map(t => `<option value="${t}">${t}</option>`).join('')}
-        </select>
-        <input type="file" id="iconFileInput" accept="image/*">
-        <button id="uploadIconBtn">Upload & Save</button>
-        <button id="closeUploadModal" class="close-modal" style="margin-top:10px;">Cancel</button>
-        <div id="uploadStatus" style="margin-top:8px;"></div>
-      </div>
-    `;
-    modalOverlay.classList.add("active");
-    document.getElementById("uploadIconBtn").onclick = async () => {
-      const team = document.getElementById("teamSelectUpload").value;
-      const fileInput = document.getElementById("iconFileInput");
-      const statusDiv = document.getElementById("uploadStatus");
-      if (!fileInput.files.length) { statusDiv.innerText = "Select an image."; return; }
-      statusDiv.innerText = "Uploading...";
-      try {
-        const imageUrl = await uploadIconToImgBB(fileInput.files[0]);
-        await database.ref(`teamIcons/${team}`).set({ imageUrl, updatedAt: Date.now() });
-        teamIconsCache[team] = imageUrl;
-        statusDiv.innerText = "✓ Saved to Realtime Database!";
-        addDebugLog(`Icon saved for ${team}: ${imageUrl}`, "success");
-        renderLeagueTable();
-        renderFixtures(searchInput?.value || "", teamFilter?.value || "");
-        setTimeout(() => modalOverlay.classList.remove("active"), 1500);
-      } catch (err) {
-        statusDiv.innerText = "Error: " + err.message;
-        addDebugLog(`Save failed for ${team}: ${err.message}`, "error");
-      }
-    };
-    document.getElementById("closeUploadModal").onclick = () => modalOverlay.classList.remove("active");
-  }
-
-  // ---------- Hamburger Menu ----------
+  // ---------- Hamburger Menu (Add Icon, Add Slide) ----------
   function buildHamburgerModal() {
     const modalContent = document.getElementById("modalContent");
     modalContent.innerHTML = `
@@ -1160,6 +1254,7 @@
         <a href="nations.html" class="modal-option">UEFA NATIONS LEAGUE</a>
         <a href="rules.html" class="modal-option">RULES</a>
         <div class="modal-option" id="addIconOption">ADD ICON</div>
+        <div class="modal-option" id="addSlideOption">ADD SLIDE</div>
       </div>
       <button class="close-modal" id="closeModalBtn">CLOSE</button>
     `;
@@ -1168,32 +1263,28 @@
       if (key === "@admin#123!") {
         document.getElementById("modalOverlay").classList.remove("active");
         showUploadModal();
-      } else {
-        alert("Access Denied");
-        addDebugLog("Admin key rejected", "error");
-      }
+      } else { alert("Access Denied"); addDebugLog("Admin key rejected for ADD ICON", "error"); }
+    };
+    document.getElementById("addSlideOption").onclick = () => {
+      const key = prompt("Enter admin key:");
+      if (key === "@admin#123!") {
+        document.getElementById("modalOverlay").classList.remove("active");
+        showSlideshowManager();
+      } else { alert("Access Denied"); addDebugLog("Admin key rejected for ADD SLIDE", "error"); }
     };
     document.getElementById("closeModalBtn").onclick = () => document.getElementById("modalOverlay").classList.remove("active");
   }
-
   const hamburger = document.getElementById("hamburgerBtn");
-  const modalOverlay = document.getElementById("modalOverlay");
-  function openModal(){ buildHamburgerModal(); modalOverlay.classList.add("active"); }
+  const modalOverlayElem = document.getElementById("modalOverlay");
+  function openModal(){ buildHamburgerModal(); modalOverlayElem.classList.add("active"); }
   hamburger.addEventListener("click", openModal);
-  modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) modalOverlay.classList.remove("active"); });
+  modalOverlayElem.addEventListener("click", (e) => { if (e.target === modalOverlayElem) modalOverlayElem.classList.remove("active"); });
 
-  // ---------- Collapsible for Debug ----------
-  setupCollapsible("fixturesHeader","fixturesContent","fixturesToggleIcon");
-  setupCollapsible("resultsHeader","resultsContent","resultsToggleIcon");
-  setupCollapsible("debugHeader","debugContent","debugToggleIcon");
-
-  // ---------- Init ----------
-  async function init(){
+  // ---------- Initialisation ----------
+  async function init() {
     addDebugLog("Firebase Realtime Database initialised", "success");
-    await loadIcons();
-    renderLeagueTable();
-    renderResults();
-    setupFilters();
+    await Promise.all([loadIcons(), loadSlideshow()]);
+    renderLeagueTable(); renderResults(); setupFilters();
   }
   init();
 </script>
