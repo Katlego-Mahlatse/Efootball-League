@@ -631,7 +631,7 @@
     <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
     <div class="card-content collapsed" id="resultsContent">
       <div class="scrollable-table">
-        <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></table>
+        <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></tr>
       </div>
     </div>
   </div>
@@ -652,17 +652,17 @@
   const database = firebase.database();
   const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
 
-  // ---------- LEAGUE DATA (after MD23 + Dortmund 4-2 Arsenal MD24) ----------
+  // ---------- LEAGUE DATA (after MD23 + Dortmund 4-2 Arsenal + Barcelona 6-0 AC Milan) ----------
   const LEAGUE_DATA = [
     { pos: 1, club: "Real Madrid", p: 23, gd: 24, pts: 62 },
     { pos: 2, club: "Liverpool", p: 23, gd: 42, pts: 55 },
     { pos: 3, club: "Borussia Dortmund", p: 24, gd: 11, pts: 46 },
-    { pos: 4, club: "Arsenal", p: 24, gd: 4, pts: 41 },
-    { pos: 5, club: "Barcelona", p: 23, gd: 1, pts: 41 },
+    { pos: 4, club: "Barcelona", p: 24, gd: 7, pts: 44 },
+    { pos: 5, club: "Arsenal", p: 24, gd: 4, pts: 41 },
     { pos: 6, club: "Manchester City", p: 23, gd: 2, pts: 37 },
     { pos: 7, club: "PSG", p: 23, gd: -16, pts: 32 },
     { pos: 8, club: "Chelsea", p: 23, gd: 5, pts: 28 },
-    { pos: 9, club: "AC Milan", p: 23, gd: -13, pts: 25 },
+    { pos: 9, club: "AC Milan", p: 24, gd: -19, pts: 25 },
     { pos: 10, club: "Napoli", p: 23, gd: -22, pts: 15 },
     { pos: 11, club: "Inter Milan", p: 23, gd: -15, pts: 14 },
     { pos: 12, club: "Juventus", p: 23, gd: -26, pts: 11 },
@@ -679,17 +679,17 @@
     "Liverpool": "🅿️", "Newcastle United": "~Oratile", "Atletico": "~Stalker.", "Newcastle": "~Oratile"
   };
 
-  // Last 5 form (updated through MD23 + MD24 Dortmund 4-2 Arsenal)
+  // Last 5 form (updated: Barcelona +W, AC Milan +L)
   const last5Exact = {
     "Real Madrid":        ["WF", "WF", "W", "WF", "WF", "L", "WF", "D"],
     "Liverpool":          ["W", "W", "W", "WF", "W", "D", "D", "W"],
     "Borussia Dortmund":  ["D", "WF", "L", "F", "WF", "W", "WF", "L", "W"],
     "Arsenal":            ["L", "L", "W", "W", "WF", "WF", "WF", "L"],
-    "Barcelona":          ["LF", "W", "W", "WF", "LF", "F", "W", "D"],
+    "Barcelona":          ["LF", "W", "W", "WF", "LF", "F", "W", "D", "W"],
     "Manchester City":    ["F", "W", "LF", "WF", "W", "WF", "LF", "WF"],
     "PSG":                ["WF", "L", "WF", "LF", "LF", "W", "L", "W"],
     "Chelsea":            ["F", "WF", "W", "L", "LF", "D", "LF", "F"],
-    "AC Milan":           ["W", "WF", "LF", "LF", "L", "WF", "W", "L"],
+    "AC Milan":           ["W", "WF", "LF", "LF", "L", "WF", "W", "L", "L"],
     "Napoli":             ["LF", "LF", "L", "F", "LF", "LF", "D", "LF"],
     "Inter Milan":        ["WF", "L", "L", "L", "WF", "L", "W"],
     "Juventus":           ["D", "LF", "LF", "W", "WF", "F", "LF", "LF"],
@@ -712,14 +712,13 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // Fixtures (dates now in DD/MM format)
+  // Fixtures (removed AC Milan vs FC Barcelona)
   const matchdayDates = {
     15: "27/04", 16: "28/04", 17: "29/04", 18: "30/04",
     19: "01/05", 20: "02/05", 21: "03/05", 22: "04/05",
     23: "05/05", 24: "06/05", 25: "07/05", 26: "08/05"
   };
   let fixtureList = [
-    { md: 24, home: "AC Milan", away: "FC Barcelona" },
     { md: 24, home: "Manchester City", away: "Real Madrid" },
     { md: 24, home: "Newcastle United", away: "Paris Saint-Germain" },
     { md: 24, home: "Liverpool", away: "Juventus" },
@@ -745,8 +744,9 @@
     homePlayer: playerMap[f.home] || "", awayPlayer: playerMap[f.away] || ""
   }));
 
-  // Results (including Dortmund 4-2 Arsenal)
-  const RESULTS_DATA = [
+  // Results (added Barcelona 6-0 AC Milan at top)
+  const RESULTS_RAW = [
+    { matchText: "FC Barcelona 6 - 0 AC Milan", md: 24 },
     { matchText: "Borussia Dortmund 4 - 2 Arsenal", md: 24 },
     { matchText: "Paris Saint-Germain 2 - 1 AC Milan", md: 23 },
     { matchText: "Chelsea F - F Atletico Madrid (No Contest)", md: 23 },
@@ -769,7 +769,6 @@
     { matchText: "AC Milan 3 - 0 Atlético Madrid (Forfeited - No Reply)", md: 21 },
     { matchText: "Liverpool 1 - 1 Chelsea", md: 21 },
     { matchText: "Paris Saint-Germain 1 - 0 Inter Milan", md: 21 },
-    // MD20 to MD15 (abbreviated but present)
   ];
   const moreResults = [
     { matchText: "Paris Saint-Germain 3 - 0 Atlético Madrid (Forfeit win PSG)", md: 20 },
@@ -815,7 +814,7 @@
     { matchText: "Napoli 3 - 1 Newcastle United", md: 15 },
     { matchText: "Arsenal 1 - 2 Liverpool", md: 15 }
   ];
-  RESULTS_DATA.push(...moreResults);
+  const RESULTS_DATA = RESULTS_RAW.concat(moreResults);
 
   // ---------- Team Icons from Realtime Database ----------
   let teamIconsCache = {};
@@ -828,23 +827,58 @@
       }
       renderLeagueTable();
       renderFixtures(document.getElementById("searchInput")?.value || "", document.getElementById("teamFilter")?.value || "");
+      renderResults();
     } catch (err) { console.warn(err); }
   }
+
+  // Normalisation map: fixture/long names -> database keys
+  function normaliseTeamName(name) {
+    const map = {
+      "Paris Saint-Germain": "PSG",
+      "FC Barcelona": "Barcelona",
+      "Atletico Madrid": "Atlético Madrid",
+      "Atlético Madrid": "Atlético Madrid",
+      "Newcastle United": "Newcastle United",
+      "Manchester City": "Manchester City",
+      "Borussia Dortmund": "Borussia Dortmund",
+      "Inter Milan": "Inter Milan",
+      "AC Milan": "AC Milan",
+      "Real Madrid": "Real Madrid",
+      "Liverpool": "Liverpool",
+      "Arsenal": "Arsenal",
+      "Chelsea": "Chelsea",
+      "Juventus": "Juventus",
+      "Napoli": "Napoli",
+      "Barcelona": "Barcelona",
+      "Dortmund": "Borussia Dortmund",
+      "PSG": "PSG"
+    };
+    return map[name] || name;
+  }
+
   function getTeamIconHtml(teamName, className = "inline-team-icon") {
-    const url = teamIconsCache[teamName];
+    const normalised = normaliseTeamName(teamName);
+    const url = teamIconsCache[normalised];
     return url ? `<img class="${className}" src="${url}" alt="${teamName}" onerror="this.remove();">` : "";
   }
 
-  // ---------- Dynamic Slideshow ----------
+  // ---------- Dynamic Slideshow with Duration ----------
   let currentSlideIndex = 0;
   let slideInterval = null;
   let slideshowImages = [];
+  let slideshowDuration = 3000; // default 3 seconds
 
   async function loadSlideshow() {
     try {
-      const snapshot = await database.ref('slideshow/images').once('value');
-      const data = snapshot.val() || [];
+      // Load images
+      const snapImages = await database.ref('slideshow/images').once('value');
+      const data = snapImages.val() || [];
       slideshowImages = Array.isArray(data) ? data : [];
+      // Load duration
+      const snapDuration = await database.ref('slideshow/duration').once('value');
+      const dur = snapDuration.val();
+      if (dur && typeof dur === 'number') slideshowDuration = dur;
+      else slideshowDuration = 3000;
       startSlideshow();
     } catch (err) { console.warn(err); }
   }
@@ -860,7 +894,7 @@
     slideInterval = setInterval(() => {
       currentSlideIndex = (currentSlideIndex + 1) % slideshowImages.length;
       updateSlideImage();
-    }, 3000);
+    }, slideshowDuration);
   }
 
   function updateSlideImage() {
@@ -884,7 +918,7 @@
       dot.addEventListener("click", () => {
         currentSlideIndex = i;
         updateSlideImage();
-        if (slideInterval) { clearInterval(slideInterval); slideInterval = setInterval(() => { currentSlideIndex = (currentSlideIndex + 1) % slideshowImages.length; updateSlideImage(); }, 3000); }
+        if (slideInterval) { clearInterval(slideInterval); slideInterval = setInterval(() => { currentSlideIndex = (currentSlideIndex + 1) % slideshowImages.length; updateSlideImage(); }, slideshowDuration); }
       });
       container.appendChild(dot);
     }
@@ -899,6 +933,13 @@
     return data.data.url;
   }
 
+  async function saveSlideshowDuration(seconds) {
+    const ms = seconds * 1000;
+    await database.ref('slideshow/duration').set(ms);
+    slideshowDuration = ms;
+    startSlideshow(); // restart with new duration
+  }
+
   function showSlideshowManager() {
     const modalOverlay = document.getElementById("modalOverlay");
     const modalContent = document.getElementById("modalContent");
@@ -908,6 +949,7 @@
         <button onclick="deleteSlide(${idx})">✕</button>
       </div>
     `).join('');
+    const currentDurationSec = slideshowDuration / 1000;
     modalContent.innerHTML = `
       <div class="slideshow-modal">
         <h3>Manage Slideshow</h3>
@@ -916,6 +958,10 @@
         </div>
         <input type="file" id="newSlideFile" accept="image/*">
         <button id="uploadSlideBtn">Add New Slide</button>
+        <div style="margin: 1rem 0 0.5rem; border-top:1px solid #1a1a1a;"></div>
+        <label style="display:block; text-align:left;">Slideshow speed (seconds):</label>
+        <input type="number" id="slideDurationSec" min="1" max="10" step="0.5" value="${currentDurationSec}">
+        <button id="saveDurationBtn">Save Duration</button>
         <button id="closeSlideModal" class="close-modal" style="margin-top:10px;">Close</button>
         <div id="slideStatus"></div>
       </div>
@@ -932,8 +978,18 @@
         await database.ref('slideshow/images').set(slideshowImages);
         statusDiv.innerText = "✓ Slide added.";
         loadSlideshow();
-        showSlideshowManager();
+        showSlideshowManager(); // refresh
       } catch (err) { statusDiv.innerText = "Error: " + err.message; }
+    };
+    document.getElementById("saveDurationBtn").onclick = async () => {
+      const secInput = document.getElementById("slideDurationSec");
+      let sec = parseFloat(secInput.value);
+      if (isNaN(sec)) sec = 3;
+      if (sec < 1) sec = 1;
+      if (sec > 10) sec = 10;
+      await saveSlideshowDuration(sec);
+      document.getElementById("slideStatus").innerText = `Duration set to ${sec} seconds.`;
+      setTimeout(() => { document.getElementById("slideStatus").innerText = ""; }, 2000);
     };
     document.getElementById("closeSlideModal").onclick = () => modalOverlay.classList.remove("active");
     window.deleteSlide = async (idx) => {
@@ -944,7 +1000,7 @@
     };
   }
 
-  // ---------- Team Icon Upload ----------
+  // ---------- Team Icon Upload (unchanged) ----------
   async function uploadIconToImgBB(file) {
     const formData = new FormData();
     formData.append("image", file);
@@ -981,13 +1037,14 @@
         statusDiv.innerText = "✓ Saved!";
         renderLeagueTable();
         renderFixtures(document.getElementById("searchInput")?.value || "", document.getElementById("teamFilter")?.value || "");
+        renderResults();
         setTimeout(() => modalOverlay.classList.remove("active"), 1500);
       } catch (err) { statusDiv.innerText = "Error: " + err.message; }
     };
     document.getElementById("closeUploadModal").onclick = () => modalOverlay.classList.remove("active");
   }
 
-  // ---------- Table rendering (with black dashed line between 8th and 9th) ----------
+  // ---------- Table rendering ----------
   function renderLeagueTable() {
     const tbody = document.getElementById("leagueTableBody");
     if (!tbody) return;
@@ -999,7 +1056,6 @@
       else if (team.pos >= 5 && team.pos <= 8) barClass = "orange-bar-vertical";
       else if (team.pos >= 9 && team.pos <= 12) barClass = "green-bar-vertical";
 
-      // Add black dashed line between 8th and 9th position
       if (team.pos === 8) row.classList.add("dashed-separator-black");
 
       const posCell = row.insertCell(0);
@@ -1066,41 +1122,74 @@
       row.insertCell(0).innerHTML = `<span class="date-badge">${f.date}</span>`;
       const homeIcon = getTeamIconHtml(f.home, "inline-team-icon");
       const awayIcon = getTeamIconHtml(f.away, "inline-team-icon");
-      row.insertCell(1).innerHTML = `<div class="fixture-icons">${homeIcon} ${homeIcon ? '' : f.home} <span style="margin:0 8px;">vs</span> ${awayIcon} ${awayIcon ? '' : f.away}</div>`;
+      const homeDisplay = homeIcon ? homeIcon : f.home;
+      const awayDisplay = awayIcon ? awayIcon : f.away;
+      row.insertCell(1).innerHTML = `<div class="fixture-icons">${homeDisplay} <span style="margin:0 8px;">vs</span> ${awayDisplay}</div>`;
       row.insertCell(2).innerHTML = `<span style="background:#1a1a1a; padding:0.2rem 0.7rem; border-radius:30px; color:#f5d742;">MD ${f.md}</span>`;
     });
     if (tbody.rows.length === 0) { const r=tbody.insertRow(); r.insertCell(0).colSpan=3; r.cells[0].className="empty-message"; r.cells[0].innerText="No fixtures match."; }
   }
 
+  // Clean results: icon‑score‑icon, no duplicate forfeit text
   function renderResults() {
     const tbody = document.getElementById("resultsTableBody");
     if (!tbody) return;
     tbody.innerHTML = "";
     RESULTS_DATA.forEach(r => {
-      const row = tbody.insertRow();
-      let processedText = r.matchText;
-      const teamsToReplace = [
-        "Newcastle United", "Atletico Madrid", "Manchester City", "Paris Saint-Germain", "Borussia Dortmund",
-        "FC Barcelona", "Inter Milan", "Real Madrid", "AC Milan", "Atletico", "Newcastle",
-        "Arsenal", "Barcelona", "Chelsea", "Dortmund", "Juventus", "Liverpool", "Man City", "PSG", "Napoli"
-      ];
-      teamsToReplace.forEach(team => {
-        const regex = new RegExp(`\\b${team.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
-        processedText = processedText.replace(regex, getTeamIconHtml(team, "inline-team-icon"));
-      });
-      processedText = processedText.replace(/\s+/g, ' ').trim();
-      const isForfeit = r.matchText.includes("Forfeited") || r.matchText.includes("No Contest") || r.matchText.includes("F - F") || r.matchText.includes("on Agreement");
-      if (isForfeit) {
-        let forfeitText = "";
-        if (r.matchText.includes("No Contest")) forfeitText = "No Contest";
-        else if (r.matchText.includes("Forfeited - No Reply")) forfeitText = "Forfeited - No Reply";
-        else if (r.matchText.includes("Forfeited - Late Reply")) forfeitText = "Forfeited - Late Reply";
-        else if (r.matchText.includes("Forfeited on Agreement")) forfeitText = "Forfeited on Agreement";
-        else if (r.matchText.includes("F - F")) forfeitText = "No Contest";
-        else forfeitText = "Forfeit";
-        row.insertCell(0).innerHTML = `<div class="result-with-forfeit"><strong>${processedText}</strong><div class="forfeit-text">${forfeitText}</div></div>`;
+      let raw = r.matchText;
+      const isForfeit = raw.includes("Forfeited") || raw.includes("No Contest") || raw.includes("F - F") || raw.includes("on Agreement");
+      let cleanMatch = raw.replace(/\s*\([^)]*\)/g, '').trim();
+      const scoreRegex = /(\d+)\s*-\s*(\d+)|(F)\s*-\s*(F)/;
+      const match = cleanMatch.match(scoreRegex);
+      if (!match) {
+        const row = tbody.insertRow();
+        row.insertCell(0).innerHTML = cleanMatch;
+        row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>`;
+        return;
+      }
+      let homeTeam, awayTeam, score;
+      if (match[1] && match[2]) {
+        score = `${match[1]} - ${match[2]}`;
+        const parts = cleanMatch.split(scoreRegex);
+        homeTeam = parts[0].trim();
+        awayTeam = parts[parts.length-1].trim();
+      } else if (match[3] && match[4]) {
+        score = `F - F`;
+        const parts = cleanMatch.split(/\s*F\s*-\s*F\s*/);
+        homeTeam = parts[0].trim();
+        awayTeam = parts[1] ? parts[1].trim() : "";
       } else {
-        row.insertCell(0).innerHTML = `<strong>${processedText}</strong>`;
+        const row = tbody.insertRow();
+        row.insertCell(0).innerHTML = cleanMatch;
+        row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>`;
+        return;
+      }
+      if (!homeTeam || !awayTeam) {
+        const row = tbody.insertRow();
+        row.insertCell(0).innerHTML = cleanMatch;
+        row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>`;
+        return;
+      }
+      const homeIcon = getTeamIconHtml(homeTeam, "inline-team-icon");
+      const awayIcon = getTeamIconHtml(awayTeam, "inline-team-icon");
+      let resultHtml = "";
+      resultHtml += homeIcon ? homeIcon : homeTeam;
+      resultHtml += ` <strong>${score}</strong> `;
+      resultHtml += awayIcon ? awayIcon : awayTeam;
+      let forfeitText = "";
+      if (isForfeit) {
+        if (raw.includes("No Contest")) forfeitText = "No Contest";
+        else if (raw.includes("Forfeited - No Reply")) forfeitText = "Forfeited - No Reply";
+        else if (raw.includes("Forfeited - Late Reply")) forfeitText = "Forfeited - Late Reply";
+        else if (raw.includes("Forfeited on Agreement")) forfeitText = "Forfeited on Agreement";
+        else if (raw.includes("F - F")) forfeitText = "No Contest";
+        else forfeitText = "Forfeit";
+      }
+      const row = tbody.insertRow();
+      if (forfeitText) {
+        row.insertCell(0).innerHTML = `<div class="result-with-forfeit"><strong>${resultHtml}</strong><div class="forfeit-text">${forfeitText}</div></div>`;
+      } else {
+        row.insertCell(0).innerHTML = `<strong>${resultHtml}</strong>`;
       }
       row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>`;
     });
