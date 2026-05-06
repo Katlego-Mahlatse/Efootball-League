@@ -361,8 +361,11 @@
     .blue-bar-vertical { background-color: #3b82f6; }
     .orange-bar-vertical { background-color: #f97316; }
     .green-bar-vertical { background-color: #22c55e; }
-    /* Removed red and black dashed lines */
-    .dashed-separator-black { border-bottom: 2px dashed #1a1a1a; }
+
+    /* Black dashed line between 8th and 9th */
+    .dashed-separator-black {
+      border-bottom: 2px dashed #1a1a1a !important;
+    }
 
     .rank-cell { font-weight: 700; width: 60px; color: #1a1a1a; }
     .pts-cell { font-weight: 800; color: #1a1a1a; text-align: center; }
@@ -525,49 +528,6 @@
       transform: scale(1.02);
     }
 
-    .debug-panel {
-      background: #1a1a1a;
-      color: #f5d742;
-      border: 2px solid #f5d742;
-      border-radius: 1rem;
-      margin-top: 1rem;
-    }
-    .debug-header {
-      padding: 0.8rem 1.2rem;
-      background: #0a0a0a;
-      border-bottom: 1px solid #f5d742;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .debug-header h3 {
-      color: #f5d742;
-      font-size: 1rem;
-    }
-    .debug-content {
-      padding: 0.8rem;
-      max-height: 200px;
-      overflow-y: auto;
-      font-family: monospace;
-      font-size: 0.75rem;
-    }
-    .debug-log {
-      padding: 0.2rem 0;
-      border-bottom: 1px solid rgba(245,215,66,0.2);
-    }
-    .debug-log.success { color: #22c55e; }
-    .debug-log.error { color: #ef4444; }
-    .debug-log.info { color: #f5d742; }
-    .clear-debug {
-      background: #f5d742;
-      color: #1a1a1a;
-      border: none;
-      padding: 0.2rem 0.8rem;
-      border-radius: 30px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
     .slide-preview {
       display: flex;
       flex-wrap: wrap;
@@ -675,21 +635,6 @@
       </div>
     </div>
   </div>
-
-  <div class="card debug-panel">
-    <div class="card-header" id="debugHeader" style="background:#0a0a0a;">
-      <div class="card-header-left">
-        <h2 style="color:#f5d742;">🐞 DEBUG INFORMATION</h2>
-        <button id="clearDebugBtn" style="background:#f5d742; color:#1a1a1a; border:none; padding:0.2rem 0.8rem; border-radius:30px; cursor:pointer;">Clear Logs</button>
-      </div>
-      <div class="toggle-icon" id="debugToggleIcon" style="color:#f5d742;">▼</div>
-    </div>
-    <div class="card-content" id="debugContent">
-      <div class="debug-content" id="debugLogContainer">
-        <div class="debug-log info">ℹ️ [Init] Debug panel ready</div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -706,25 +651,6 @@
   firebase.initializeApp(firebaseConfig);
   const database = firebase.database();
   const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
-
-  // Debug logger
-  function addDebugLog(message, type = "info") {
-    const container = document.getElementById("debugLogContainer");
-    if (!container) return;
-    const timestamp = new Date().toLocaleTimeString();
-    const logDiv = document.createElement("div");
-    logDiv.className = `debug-log ${type}`;
-    let prefix = type === "success" ? "✅ " : (type === "error" ? "❌ " : "ℹ️ ");
-    logDiv.innerText = `${prefix}[${timestamp}] ${message}`;
-    container.appendChild(logDiv);
-    container.scrollTop = container.scrollHeight;
-    while (container.children.length > 50) container.removeChild(container.firstChild);
-  }
-  document.getElementById("clearDebugBtn")?.addEventListener("click", () => {
-    const container = document.getElementById("debugLogContainer");
-    if (container) container.innerHTML = '<div class="debug-log info">ℹ️ [Init] Debug panel cleared</div>';
-    addDebugLog("Debug logs cleared", "info");
-  });
 
   // ---------- LEAGUE DATA (after MD23 + Dortmund 4-2 Arsenal MD24) ----------
   const LEAGUE_DATA = [
@@ -894,17 +820,15 @@
   // ---------- Team Icons from Realtime Database ----------
   let teamIconsCache = {};
   async function loadIcons() {
-    addDebugLog("Loading team icons from Realtime Database...", "info");
     try {
       const snapshot = await database.ref('teamIcons').once('value');
       const data = snapshot.val() || {};
       for (const [team, value] of Object.entries(data)) {
         if (value.imageUrl) teamIconsCache[team] = value.imageUrl;
       }
-      addDebugLog(`Loaded ${Object.keys(teamIconsCache).length} team icons`, "success");
       renderLeagueTable();
       renderFixtures(document.getElementById("searchInput")?.value || "", document.getElementById("teamFilter")?.value || "");
-    } catch (err) { addDebugLog(`Failed to load icons: ${err.message}`, "error"); }
+    } catch (err) { console.warn(err); }
   }
   function getTeamIconHtml(teamName, className = "inline-team-icon") {
     const url = teamIconsCache[teamName];
@@ -917,14 +841,12 @@
   let slideshowImages = [];
 
   async function loadSlideshow() {
-    addDebugLog("Loading slideshow from Realtime Database...", "info");
     try {
       const snapshot = await database.ref('slideshow/images').once('value');
       const data = snapshot.val() || [];
       slideshowImages = Array.isArray(data) ? data : [];
-      addDebugLog(`Loaded ${slideshowImages.length} slides`, "success");
       startSlideshow();
-    } catch (err) { addDebugLog(`Failed to load slides: ${err.message}`, "error"); }
+    } catch (err) { console.warn(err); }
   }
 
   function startSlideshow() {
@@ -969,13 +891,11 @@
   }
 
   async function uploadSlideImage(file) {
-    addDebugLog(`Uploading slide ${file.name}...`, "info");
     const formData = new FormData();
     formData.append("image", file);
     const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: formData });
     const data = await resp.json();
     if (!data.success) throw new Error(data.error?.message || "ImgBB upload failed");
-    addDebugLog("Slide uploaded to ImgBB", "success");
     return data.data.url;
   }
 
@@ -1010,17 +930,15 @@
         const url = await uploadSlideImage(fileInput.files[0]);
         slideshowImages.push(url);
         await database.ref('slideshow/images').set(slideshowImages);
-        statusDiv.innerText = "✓ Slide added. Reloading...";
-        addDebugLog("Slide added to database", "success");
-        loadSlideshow(); // reload slideshow
-        showSlideshowManager(); // refresh modal
-      } catch (err) { statusDiv.innerText = "Error: " + err.message; addDebugLog(`Slide upload error: ${err.message}`, "error"); }
+        statusDiv.innerText = "✓ Slide added.";
+        loadSlideshow();
+        showSlideshowManager();
+      } catch (err) { statusDiv.innerText = "Error: " + err.message; }
     };
     document.getElementById("closeSlideModal").onclick = () => modalOverlay.classList.remove("active");
     window.deleteSlide = async (idx) => {
       slideshowImages.splice(idx, 1);
       await database.ref('slideshow/images').set(slideshowImages);
-      addDebugLog(`Deleted slide ${idx}`, "success");
       loadSlideshow();
       showSlideshowManager();
     };
@@ -1028,13 +946,11 @@
 
   // ---------- Team Icon Upload ----------
   async function uploadIconToImgBB(file) {
-    addDebugLog(`Uploading icon ${file.name}...`, "info");
     const formData = new FormData();
     formData.append("image", file);
     const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: formData });
     const data = await resp.json();
     if (!data.success) throw new Error(data.error?.message || "ImgBB upload failed");
-    addDebugLog("Icon uploaded to ImgBB", "success");
     return data.data.url;
   }
   function showUploadModal() {
@@ -1063,16 +979,15 @@
         await database.ref(`teamIcons/${team}`).set({ imageUrl, updatedAt: Date.now() });
         teamIconsCache[team] = imageUrl;
         statusDiv.innerText = "✓ Saved!";
-        addDebugLog(`Icon saved for ${team}`, "success");
         renderLeagueTable();
         renderFixtures(document.getElementById("searchInput")?.value || "", document.getElementById("teamFilter")?.value || "");
         setTimeout(() => modalOverlay.classList.remove("active"), 1500);
-      } catch (err) { statusDiv.innerText = "Error: " + err.message; addDebugLog(`Icon save error: ${err.message}`, "error"); }
+      } catch (err) { statusDiv.innerText = "Error: " + err.message; }
     };
     document.getElementById("closeUploadModal").onclick = () => modalOverlay.classList.remove("active");
   }
 
-  // ---------- Table rendering ----------
+  // ---------- Table rendering (with black dashed line between 8th and 9th) ----------
   function renderLeagueTable() {
     const tbody = document.getElementById("leagueTableBody");
     if (!tbody) return;
@@ -1083,7 +998,10 @@
       if (team.pos >= 1 && team.pos <= 4) barClass = "blue-bar-vertical";
       else if (team.pos >= 5 && team.pos <= 8) barClass = "orange-bar-vertical";
       else if (team.pos >= 9 && team.pos <= 12) barClass = "green-bar-vertical";
-      // Removed red/black line classes (pos8/pos12)
+
+      // Add black dashed line between 8th and 9th position
+      if (team.pos === 8) row.classList.add("dashed-separator-black");
+
       const posCell = row.insertCell(0);
       posCell.className = "rank-cell";
       if (barClass) posCell.innerHTML = `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${team.pos}</div>`;
@@ -1209,7 +1127,6 @@
   }
   setupCollapsible("fixturesHeader","fixturesContent","fixturesToggleIcon");
   setupCollapsible("resultsHeader","resultsContent","resultsToggleIcon");
-  setupCollapsible("debugHeader","debugContent","debugToggleIcon");
 
   let currentView = "team", showFormArrows = false, showLast5 = true, popup = null;
   const threeDotBtn = document.getElementById("threeDotBtn");
@@ -1263,14 +1180,14 @@
       if (key === "@admin#123!") {
         document.getElementById("modalOverlay").classList.remove("active");
         showUploadModal();
-      } else { alert("Access Denied"); addDebugLog("Admin key rejected for ADD ICON", "error"); }
+      } else { alert("Access Denied"); }
     };
     document.getElementById("addSlideOption").onclick = () => {
       const key = prompt("Enter admin key:");
       if (key === "@admin#123!") {
         document.getElementById("modalOverlay").classList.remove("active");
         showSlideshowManager();
-      } else { alert("Access Denied"); addDebugLog("Admin key rejected for ADD SLIDE", "error"); }
+      } else { alert("Access Denied"); }
     };
     document.getElementById("closeModalBtn").onclick = () => document.getElementById("modalOverlay").classList.remove("active");
   }
@@ -1282,7 +1199,6 @@
 
   // ---------- Initialisation ----------
   async function init() {
-    addDebugLog("Firebase Realtime Database initialised", "success");
     await Promise.all([loadIcons(), loadSlideshow()]);
     renderLeagueTable(); renderResults(); setupFilters();
   }
