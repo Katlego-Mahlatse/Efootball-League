@@ -545,7 +545,7 @@
 </div>
 
 <div class="dashboard">
-  <!-- SLIDESHOW (added above all cards) -->
+  <!-- SLIDESHOW (independent for Nations League) -->
   <div class="slideshow-container">
     <img id="slideshow-img" class="slideshow-img" src="" alt="Slideshow">
     <div class="dots-container" id="dotsContainer"></div>
@@ -587,14 +587,14 @@
         <table class="inner-table" id="resultsTable">
           <thead><tr><th>Match</th><th>Match Day</th></tr></thead>
           <tbody id="resultsTableBody"></tbody>
-        </table>
+        </td>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-  // ---------- Firebase configuration (same as Premier League) ----------
+  // ---------- Firebase configuration (same as Premier League but using NATIONS path) ----------
   const firebaseConfig = {
     apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
     authDomain: "efootball-412.firebaseapp.com",
@@ -608,7 +608,8 @@
   const database = firebase.database();
   const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
 
-  // ---------- Slideshow functionality (copied from Premier League) ----------
+  // ---------- Slideshow functionality (INDEPENDENT for Nations League) ----------
+  // Using separate Firebase paths: slideshow/nations/images and slideshow/nations/duration
   let currentSlideIndex = 0;
   let slideInterval = null;
   let slideshowImages = [];
@@ -616,10 +617,10 @@
 
   async function loadSlideshow() {
     try {
-      const snapImages = await database.ref('slideshow/images').once('value');
+      const snapImages = await database.ref('slideshow/nations/images').once('value');
       const data = snapImages.val() || [];
       slideshowImages = Array.isArray(data) ? data : [];
-      const snapDuration = await database.ref('slideshow/duration').once('value');
+      const snapDuration = await database.ref('slideshow/nations/duration').once('value');
       const dur = snapDuration.val();
       if (dur && typeof dur === 'number') slideshowDuration = dur;
       else slideshowDuration = 3000;
@@ -679,7 +680,7 @@
 
   async function saveSlideshowDuration(seconds) {
     const ms = seconds * 1000;
-    await database.ref('slideshow/duration').set(ms);
+    await database.ref('slideshow/nations/duration').set(ms);
     slideshowDuration = ms;
     startSlideshow();
   }
@@ -696,7 +697,7 @@
     const currentDurationSec = slideshowDuration / 1000;
     modalContent.innerHTML = `
       <div class="slideshow-modal">
-        <h3>Manage Slideshow</h3>
+        <h3>Manage Slideshow (Nations League)</h3>
         <div class="slide-preview" id="slidePreviewContainer">
           ${slidesList || '<p>No slides</p>'}
         </div>
@@ -719,7 +720,7 @@
       try {
         const url = await uploadSlideImage(fileInput.files[0]);
         slideshowImages.push(url);
-        await database.ref('slideshow/images').set(slideshowImages);
+        await database.ref('slideshow/nations/images').set(slideshowImages);
         statusDiv.innerText = "✓ Slide added.";
         loadSlideshow();
         showSlideshowManager();
@@ -738,7 +739,7 @@
     document.getElementById("closeSlideModal").onclick = () => modalOverlay.classList.remove("active");
     window.deleteSlide = async (idx) => {
       slideshowImages.splice(idx, 1);
-      await database.ref('slideshow/images').set(slideshowImages);
+      await database.ref('slideshow/nations/images').set(slideshowImages);
       loadSlideshow();
       showSlideshowManager();
     };
