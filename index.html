@@ -367,6 +367,17 @@
       border-bottom: 2px dashed #1a1a1a !important;
     }
 
+    /* Champion row glow animation */
+    @keyframes championGlow {
+      0% { background-color: rgba(245,215,66,0.2); box-shadow: 0 0 0px gold; }
+      50% { background-color: rgba(245,215,66,0.5); box-shadow: 0 0 15px gold; }
+      100% { background-color: rgba(245,215,66,0.2); box-shadow: 0 0 0px gold; }
+    }
+    .champion-row {
+      animation: championGlow 1.5s infinite !important;
+      font-weight: 800;
+    }
+
     .rank-cell { font-weight: 700; width: 60px; color: #1a1a1a; }
     .pts-cell { font-weight: 800; color: #1a1a1a; text-align: center; }
 
@@ -563,10 +574,38 @@
       padding: 0;
     }
 
+    .champion-banner {
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, #f5d742, #d4af37);
+      color: #1a1a1a;
+      padding: 1rem 2rem;
+      border-radius: 3rem;
+      font-size: 1.4rem;
+      font-weight: bold;
+      border: 2px solid #1a1a1a;
+      box-shadow: 0 0 30px gold;
+      z-index: 1000;
+      white-space: nowrap;
+      animation: fadeInOut 5s forwards;
+      pointer-events: none;
+      text-align: center;
+      font-family: 'Rajdhani', sans-serif;
+    }
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+      15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      85% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); visibility: hidden; }
+    }
+
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
       .stats-table th, .stats-table td { padding: 0.6rem 0.5rem; font-size: 0.75rem; }
       .team-icon, .inline-team-icon { width: 32px; height: 32px; }
+      .champion-banner { font-size: 1rem; padding: 0.6rem 1.2rem; white-space: nowrap; top: 25%; }
     }
   </style>
 </head>
@@ -631,13 +670,77 @@
     <div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
     <div class="card-content collapsed" id="resultsContent">
       <div class="scrollable-table">
-        <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></tr>
+        <table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></table>
       </div>
     </div>
   </div>
 </div>
 
 <script>
+  // Confetti library (lightweight)
+  (function() {
+    function confettiParticle(colors, duration) {
+      const canvas = document.createElement("canvas");
+      canvas.style.position = "fixed";
+      canvas.style.top = "0";
+      canvas.style.left = "0";
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+      canvas.style.pointerEvents = "none";
+      canvas.style.zIndex = "10000";
+      document.body.appendChild(canvas);
+      const ctx = canvas.getContext("2d");
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      let particles = [];
+      const particleCount = 200;
+      for (let i = 0; i < particleCount; i++) {
+        particles.push({
+          x: Math.random() * width,
+          y: Math.random() * height - height,
+          size: Math.random() * 6 + 2,
+          speedX: Math.random() * 3 - 1.5,
+          speedY: Math.random() * 4 + 2,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rotation: Math.random() * 360,
+          rotSpeed: Math.random() * 10 - 5
+        });
+      }
+      const startTime = performance.now();
+      function draw() {
+        const now = performance.now();
+        const elapsed = now - startTime;
+        if (elapsed >= duration) {
+          ctx.clearRect(0, 0, width, height);
+          canvas.remove();
+          return;
+        }
+        ctx.clearRect(0, 0, width, height);
+        for (let p of particles) {
+          p.x += p.speedX;
+          p.y += p.speedY;
+          p.rotation += p.rotSpeed;
+          if (p.y > height + 50) p.y = -50;
+          if (p.x < -50) p.x = width + 50;
+          if (p.x > width + 50) p.x = -50;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation * Math.PI / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+          ctx.restore();
+        }
+        requestAnimationFrame(draw);
+      }
+      draw();
+    }
+    window.startConfetti = function(colors, durationMs) {
+      confettiParticle(colors, durationMs);
+    };
+  })();
+
   // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
@@ -652,22 +755,22 @@
   const database = firebase.database();
   const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
 
-  // ---------- LEAGUE DATA (after MD23 + Dortmund 4-2 Arsenal + Barcelona 6-0 AC Milan) ----------
+  // ---------- LEAGUE DATA (FINAL AFTER MD24) ----------
   const LEAGUE_DATA = [
-    { pos: 1, club: "Real Madrid", p: 23, gd: 24, pts: 62 },
-    { pos: 2, club: "Liverpool", p: 23, gd: 42, pts: 55 },
+    { pos: 1, club: "Real Madrid", p: 24, gd: 24, pts: 65 },
+    { pos: 2, club: "Liverpool", p: 24, gd: 42, pts: 58 },
     { pos: 3, club: "Borussia Dortmund", p: 24, gd: 11, pts: 46 },
     { pos: 4, club: "Barcelona", p: 24, gd: 7, pts: 44 },
     { pos: 5, club: "Arsenal", p: 24, gd: 4, pts: 41 },
-    { pos: 6, club: "Manchester City", p: 23, gd: 2, pts: 37 },
-    { pos: 7, club: "PSG", p: 23, gd: -16, pts: 32 },
-    { pos: 8, club: "Chelsea", p: 23, gd: 5, pts: 28 },
+    { pos: 6, club: "Manchester City", p: 24, gd: -1, pts: 37 },
+    { pos: 7, club: "PSG", p: 24, gd: -16, pts: 32 },
+    { pos: 8, club: "Chelsea", p: 24, gd: 2, pts: 28 },
     { pos: 9, club: "AC Milan", p: 24, gd: -19, pts: 25 },
-    { pos: 10, club: "Napoli", p: 23, gd: -22, pts: 15 },
-    { pos: 11, club: "Inter Milan", p: 23, gd: -15, pts: 14 },
-    { pos: 12, club: "Juventus", p: 23, gd: -26, pts: 11 },
-    { pos: 13, club: "Newcastle United", p: 23, gd: -50, pts: 9 },
-    { pos: 14, club: "Atlético Madrid", p: 23, gd: -29, pts: 7 }
+    { pos: 10, club: "Inter Milan", p: 24, gd: -12, pts: 17 },
+    { pos: 11, club: "Napoli", p: 24, gd: -22, pts: 15 },
+    { pos: 12, club: "Juventus", p: 24, gd: -29, pts: 11 },
+    { pos: 13, club: "Newcastle United", p: 24, gd: -50, pts: 9 },
+    { pos: 14, club: "Atlético Madrid", p: 24, gd: -29, pts: 7 }
   ];
 
   const playerMap = {
@@ -679,22 +782,22 @@
     "Liverpool": "🅿️", "Newcastle United": "~Oratile", "Atletico": "~Stalker.", "Newcastle": "~Oratile"
   };
 
-  // Last 5 form (updated: Barcelona +W, AC Milan +L)
+  // Last 5 form (updated after MD24)
   const last5Exact = {
-    "Real Madrid":        ["WF", "WF", "W", "WF", "WF", "L", "WF", "D"],
-    "Liverpool":          ["W", "W", "W", "WF", "W", "D", "D", "W"],
+    "Real Madrid":        ["WF", "WF", "W", "WF", "WF", "L", "WF", "D", "WF"],
+    "Liverpool":          ["W", "W", "W", "WF", "W", "D", "D", "W", "WF"],
     "Borussia Dortmund":  ["D", "WF", "L", "F", "WF", "W", "WF", "L", "W"],
     "Arsenal":            ["L", "L", "W", "W", "WF", "WF", "WF", "L"],
     "Barcelona":          ["LF", "W", "W", "WF", "LF", "F", "W", "D", "W"],
-    "Manchester City":    ["F", "W", "LF", "WF", "W", "WF", "LF", "WF"],
-    "PSG":                ["WF", "L", "WF", "LF", "LF", "W", "L", "W"],
-    "Chelsea":            ["F", "WF", "W", "L", "LF", "D", "LF", "F"],
+    "Manchester City":    ["F", "W", "LF", "WF", "W", "WF", "LF", "WF", "LF"],
+    "PSG":                ["WF", "L", "WF", "LF", "LF", "W", "L", "W", "F"],
+    "Chelsea":            ["F", "WF", "W", "L", "LF", "D", "LF", "F", "LF"],
     "AC Milan":           ["W", "WF", "LF", "LF", "L", "WF", "W", "L", "L"],
-    "Napoli":             ["LF", "LF", "L", "F", "LF", "LF", "D", "LF"],
-    "Inter Milan":        ["WF", "L", "L", "L", "WF", "L", "W"],
-    "Juventus":           ["D", "LF", "LF", "W", "WF", "F", "LF", "LF"],
-    "Atlético Madrid":    ["LF", "L", "L", "LF", "LF", "LF", "F", "F"],
-    "Newcastle United":   ["L", "LF", "WF", "LF", "L", "LF", "L"]
+    "Napoli":             ["LF", "LF", "L", "F", "LF", "LF", "D", "LF", "F"],
+    "Inter Milan":        ["WF", "L", "L", "L", "WF", "L", "W", "WF"],
+    "Juventus":           ["D", "LF", "LF", "W", "WF", "F", "LF", "LF", "LF"],
+    "Atlético Madrid":    ["LF", "L", "L", "LF", "LF", "LF", "F", "F", "F"],
+    "Newcastle United":   ["L", "LF", "WF", "LF", "L", "LF", "L", "F"]
   };
   const teamResults = {};
   LEAGUE_DATA.forEach(t => { teamResults[t.club] = []; });
@@ -712,18 +815,13 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // Fixtures (removed AC Milan vs FC Barcelona)
+  // Fixtures (MD25 and MD26 only, MD24 all removed)
   const matchdayDates = {
     15: "27/04", 16: "28/04", 17: "29/04", 18: "30/04",
     19: "01/05", 20: "02/05", 21: "03/05", 22: "04/05",
     23: "05/05", 24: "06/05", 25: "07/05", 26: "08/05"
   };
   let fixtureList = [
-    { md: 24, home: "Manchester City", away: "Real Madrid" },
-    { md: 24, home: "Newcastle United", away: "Paris Saint-Germain" },
-    { md: 24, home: "Liverpool", away: "Juventus" },
-    { md: 24, home: "Chelsea", away: "Inter Milan" },
-    { md: 24, home: "Napoli", away: "Atlético Madrid" },
     { md: 25, home: "Manchester City", away: "FC Barcelona" },
     { md: 25, home: "Newcastle United", away: "AC Milan" },
     { md: 25, home: "Liverpool", away: "Real Madrid" },
@@ -744,8 +842,13 @@
     homePlayer: playerMap[f.home] || "", awayPlayer: playerMap[f.away] || ""
   }));
 
-  // Results (added Barcelona 6-0 AC Milan at top)
+  // Results (all MD24 results at top)
   const RESULTS_RAW = [
+    { matchText: "Newcastle United F - F Paris Saint-Germain (No Contest)", md: 24 },
+    { matchText: "Napoli F - F Atletico Madrid (No Contest)", md: 24 },
+    { matchText: "Inter Milan 3 - 0 Chelsea (Forfeited - No Reply)", md: 24 },
+    { matchText: "Liverpool 3 - 0 Juventus (Forfeited - No Reply)", md: 24 },
+    { matchText: "Real Madrid 3 - 0 Manchester City (Forfeited - No Reply)", md: 24 },
     { matchText: "FC Barcelona 6 - 0 AC Milan", md: 24 },
     { matchText: "Borussia Dortmund 4 - 2 Arsenal", md: 24 },
     { matchText: "Paris Saint-Germain 2 - 1 AC Milan", md: 23 },
@@ -831,7 +934,6 @@
     } catch (err) { console.warn(err); }
   }
 
-  // Normalisation map: fixture/long names -> database keys
   function normaliseTeamName(name) {
     const map = {
       "Paris Saint-Germain": "PSG",
@@ -866,15 +968,13 @@
   let currentSlideIndex = 0;
   let slideInterval = null;
   let slideshowImages = [];
-  let slideshowDuration = 3000; // default 3 seconds
+  let slideshowDuration = 3000;
 
   async function loadSlideshow() {
     try {
-      // Load images
       const snapImages = await database.ref('slideshow/images').once('value');
       const data = snapImages.val() || [];
       slideshowImages = Array.isArray(data) ? data : [];
-      // Load duration
       const snapDuration = await database.ref('slideshow/duration').once('value');
       const dur = snapDuration.val();
       if (dur && typeof dur === 'number') slideshowDuration = dur;
@@ -937,7 +1037,7 @@
     const ms = seconds * 1000;
     await database.ref('slideshow/duration').set(ms);
     slideshowDuration = ms;
-    startSlideshow(); // restart with new duration
+    startSlideshow();
   }
 
   function showSlideshowManager() {
@@ -978,7 +1078,7 @@
         await database.ref('slideshow/images').set(slideshowImages);
         statusDiv.innerText = "✓ Slide added.";
         loadSlideshow();
-        showSlideshowManager(); // refresh
+        showSlideshowManager();
       } catch (err) { statusDiv.innerText = "Error: " + err.message; }
     };
     document.getElementById("saveDurationBtn").onclick = async () => {
@@ -1000,7 +1100,7 @@
     };
   }
 
-  // ---------- Team Icon Upload (unchanged) ----------
+  // ---------- Team Icon Upload ----------
   async function uploadIconToImgBB(file) {
     const formData = new FormData();
     formData.append("image", file);
@@ -1044,7 +1144,7 @@
     document.getElementById("closeUploadModal").onclick = () => modalOverlay.classList.remove("active");
   }
 
-  // ---------- Table rendering ----------
+  // ---------- Table rendering (with champion row glow) ----------
   function renderLeagueTable() {
     const tbody = document.getElementById("leagueTableBody");
     if (!tbody) return;
@@ -1057,6 +1157,10 @@
       else if (team.pos >= 9 && team.pos <= 12) barClass = "green-bar-vertical";
 
       if (team.pos === 8) row.classList.add("dashed-separator-black");
+      // Champion glow for Real Madrid
+      if (team.club === "Real Madrid" && team.pos === 1 && team.pts >= 65) {
+        row.classList.add("champion-row");
+      }
 
       const posCell = row.insertCell(0);
       posCell.className = "rank-cell";
@@ -1130,7 +1234,6 @@
     if (tbody.rows.length === 0) { const r=tbody.insertRow(); r.insertCell(0).colSpan=3; r.cells[0].className="empty-message"; r.cells[0].innerText="No fixtures match."; }
   }
 
-  // Clean results: icon‑score‑icon, no duplicate forfeit text
   function renderResults() {
     const tbody = document.getElementById("resultsTableBody");
     if (!tbody) return;
@@ -1286,10 +1389,35 @@
   hamburger.addEventListener("click", openModal);
   modalOverlayElem.addEventListener("click", (e) => { if (e.target === modalOverlayElem) modalOverlayElem.classList.remove("active"); });
 
+  // ---------- Real Madrid Title Celebration ----------
+  function isChampionMathematical() {
+    const real = LEAGUE_DATA.find(t => t.club === "Real Madrid");
+    const second = LEAGUE_DATA.find(t => t.pos === 2);
+    if (!real || !second) return false;
+    const maxSecondCanGet = second.pts + (2 * 3); // 2 matches left * 3 pts
+    return real.pts > maxSecondCanGet;
+  }
+
+  function showCelebration() {
+    // Banner
+    const banner = document.createElement("div");
+    banner.className = "champion-banner";
+    banner.innerText = "🏆 REAL MADRID - PREMIER LEAGUE CHAMPIONS! 🏆";
+    document.body.appendChild(banner);
+    // Confetti (white, gold, blue) for 10 seconds
+    const colors = ["#ffffff", "#ffffff", "#f5d742", "#f5d742", "#3b82f6"];
+    window.startConfetti(colors, 10000);
+    setTimeout(() => { if (banner && banner.remove) banner.remove(); }, 10000);
+  }
+
   // ---------- Initialisation ----------
   async function init() {
     await Promise.all([loadIcons(), loadSlideshow()]);
     renderLeagueTable(); renderResults(); setupFilters();
+    // After table is rendered, check if Real Madrid are champions
+    if (isChampionMathematical()) {
+      showCelebration();
+    }
   }
   init();
 </script>
