@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>eFootball 412 · UEFA Nations League</title>
+  <!-- Firebase SDKs (Realtime Database) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <style>
     * {
       margin: 0;
@@ -114,6 +117,7 @@
       transition: all 0.2s;
       border: 1px solid #1a1a1a;
       display: block;
+      cursor: pointer;
     }
     .modal-option:hover {
       background: #1a1a1a;
@@ -138,6 +142,38 @@
       max-width: 1400px;
       margin: 0 auto;
       padding: 2rem 1.5rem;
+    }
+    .slideshow-container {
+      position: relative;
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .slideshow-img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      border: 2px solid #f5d742;
+    }
+    .dots-container {
+      text-align: center;
+      margin-top: 0.8rem;
+      position: absolute;
+      bottom: 12px;
+      left: 0;
+      right: 0;
+    }
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #1a1a1a;
+      margin: 0 4px;
+      cursor: pointer;
+    }
+    .dot.active {
+      background-color: #f5d742;
     }
     .card {
       background: #f5d742;
@@ -422,6 +458,71 @@
       text-align: center;
       line-height: 1.4;
     }
+    .upload-modal, .slideshow-modal {
+      background: #f5d742;
+      border: 2px solid #1a1a1a;
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+      min-width: 320px;
+      text-align: center;
+      color: #1a1a1a;
+    }
+    .upload-modal select, .upload-modal input,
+    .slideshow-modal select, .slideshow-modal input {
+      width: 100%;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      background: #1a1a1a;
+      border: 1px solid #f5d742;
+      color: #f5d742;
+      border-radius: 30px;
+    }
+    .upload-modal button, .slideshow-modal button {
+      background: #1a1a1a;
+      color: #f5d742;
+      border: 1px solid #f5d742;
+      padding: 0.4rem 1rem;
+      border-radius: 30px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+    .upload-modal button:hover, .slideshow-modal button:hover {
+      background: #0a0a0a;
+    }
+    .slide-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 1rem 0;
+      justify-content: center;
+    }
+    .slide-preview-item {
+      position: relative;
+      width: 80px;
+      height: 60px;
+      border: 1px solid #1a1a1a;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .slide-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .slide-preview-item button {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 10px;
+      cursor: pointer;
+      padding: 0;
+    }
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
       .group-card { min-width: 100%; }
@@ -429,6 +530,7 @@
       .inline-emoji { font-size: 1rem; }
       .nations-header-image { height: 35px; }
       .card-header-left h2 { font-size: 1.2rem; }
+      .slide-preview-item { width: 60px; height: 45px; }
     }
   </style>
 </head>
@@ -439,25 +541,17 @@
 </div>
 
 <div class="modal-overlay" id="modalOverlay">
-  <div class="modal-content">
-    <h3>TOURNAMENTS</h3>
-    <div class="modal-options">
-      <a href="index.html" class="modal-option">PREMIER LEAGUE HUB</a>
-      <a href="fifa-club-world-cup.html" class="modal-option">FIFA CLUB WORLD CUP</a>
-      <a href="uefa-champions-league.html" class="modal-option">UEFA CHAMPIONS LEAGUE</a>
-      <a href="uefa-europa-league.html" class="modal-option">UEFA EUROPA LEAGUE</a>
-      <a href="uefa-super-league.html" class="modal-option">UEFA SUPER LEAGUE</a>
-      <a href="uefa-conference-league.html" class="modal-option">UEFA CONFERENCE LEAGUE</a>
-      <a href="player-titles.html" class="modal-option">PLAYER TITLES</a>
-      <a href="rules.html" class="modal-option">RULES</a>
-      <a href="calendar.html" class="modal-option">CALENDAR</a>
-    </div>
-    <button class="close-modal" id="closeModalBtn">CLOSE</button>
-  </div>
+  <div class="modal-content" id="modalContent"></div>
 </div>
 
 <div class="dashboard">
-  <!-- KNOCKOUT STAGE (moved to top) -->
+  <!-- SLIDESHOW (added above all cards) -->
+  <div class="slideshow-container">
+    <img id="slideshow-img" class="slideshow-img" src="" alt="Slideshow">
+    <div class="dots-container" id="dotsContainer"></div>
+  </div>
+
+  <!-- KNOCKOUT STAGE (order flipped: Final at top, then 3rd place, then semis, then quarters) -->
   <div class="card">
     <div class="card-header" style="cursor:default;">
       <div class="card-header-left">
@@ -469,7 +563,7 @@
     </div>
   </div>
 
-  <!-- GROUP STAGE TABLES (moved to bottom, no fixtures tab) -->
+  <!-- GROUP STAGE TABLES -->
   <div class="card">
     <div class="card-header" style="cursor:default;">
       <div class="card-header-left">
@@ -482,7 +576,7 @@
     </div>
   </div>
 
-  <!-- RESULTS CARD (kept as is) -->
+  <!-- RESULTS CARD -->
   <div class="card">
     <div class="card-header" id="resultsHeader">
       <div class="card-header-left"><h2>RESULTS</h2></div>
@@ -500,7 +594,184 @@
 </div>
 
 <script>
-  // Player mapping (unchanged)
+  // ---------- Firebase configuration (same as Premier League) ----------
+  const firebaseConfig = {
+    apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
+    authDomain: "efootball-412.firebaseapp.com",
+    databaseURL: "https://efootball-412-default-rtdb.firebaseio.com",
+    projectId: "efootball-412",
+    storageBucket: "efootball-412.firebasestorage.app",
+    messagingSenderId: "596548424249",
+    appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+  const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
+
+  // ---------- Slideshow functionality (copied from Premier League) ----------
+  let currentSlideIndex = 0;
+  let slideInterval = null;
+  let slideshowImages = [];
+  let slideshowDuration = 3000;
+
+  async function loadSlideshow() {
+    try {
+      const snapImages = await database.ref('slideshow/images').once('value');
+      const data = snapImages.val() || [];
+      slideshowImages = Array.isArray(data) ? data : [];
+      const snapDuration = await database.ref('slideshow/duration').once('value');
+      const dur = snapDuration.val();
+      if (dur && typeof dur === 'number') slideshowDuration = dur;
+      else slideshowDuration = 3000;
+      startSlideshow();
+    } catch (err) { console.warn(err); }
+  }
+
+  function startSlideshow() {
+    if (slideInterval) clearInterval(slideInterval);
+    if (slideshowImages.length === 0) {
+      document.getElementById("slideshow-img").src = "";
+      return;
+    }
+    currentSlideIndex = 0;
+    updateSlideImage();
+    slideInterval = setInterval(() => {
+      currentSlideIndex = (currentSlideIndex + 1) % slideshowImages.length;
+      updateSlideImage();
+    }, slideshowDuration);
+  }
+
+  function updateSlideImage() {
+    const img = document.getElementById("slideshow-img");
+    if (slideshowImages.length && slideshowImages[currentSlideIndex]) {
+      img.src = slideshowImages[currentSlideIndex];
+    } else {
+      img.src = "";
+    }
+    updateDots();
+  }
+
+  function updateDots() {
+    const container = document.getElementById("dotsContainer");
+    if (!container) return;
+    container.innerHTML = "";
+    for (let i = 0; i < slideshowImages.length; i++) {
+      const dot = document.createElement("span");
+      dot.classList.add("dot");
+      if (i === currentSlideIndex) dot.classList.add("active");
+      dot.addEventListener("click", () => {
+        currentSlideIndex = i;
+        updateSlideImage();
+        if (slideInterval) { clearInterval(slideInterval); slideInterval = setInterval(() => { currentSlideIndex = (currentSlideIndex + 1) % slideshowImages.length; updateSlideImage(); }, slideshowDuration); }
+      });
+      container.appendChild(dot);
+    }
+  }
+
+  async function uploadSlideImage(file) {
+    const formData = new FormData();
+    formData.append("image", file);
+    const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: formData });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error?.message || "ImgBB upload failed");
+    return data.data.url;
+  }
+
+  async function saveSlideshowDuration(seconds) {
+    const ms = seconds * 1000;
+    await database.ref('slideshow/duration').set(ms);
+    slideshowDuration = ms;
+    startSlideshow();
+  }
+
+  function showSlideshowManager() {
+    const modalOverlay = document.getElementById("modalOverlay");
+    const modalContent = document.getElementById("modalContent");
+    const slidesList = slideshowImages.map((url, idx) => `
+      <div class="slide-preview-item">
+        <img src="${url}" alt="slide">
+        <button onclick="deleteSlide(${idx})">✕</button>
+      </div>
+    `).join('');
+    const currentDurationSec = slideshowDuration / 1000;
+    modalContent.innerHTML = `
+      <div class="slideshow-modal">
+        <h3>Manage Slideshow</h3>
+        <div class="slide-preview" id="slidePreviewContainer">
+          ${slidesList || '<p>No slides</p>'}
+        </div>
+        <input type="file" id="newSlideFile" accept="image/*">
+        <button id="uploadSlideBtn">Add New Slide</button>
+        <div style="margin: 1rem 0 0.5rem; border-top:1px solid #1a1a1a;"></div>
+        <label style="display:block; text-align:left;">Slideshow speed (seconds):</label>
+        <input type="number" id="slideDurationSec" min="1" max="10" step="0.5" value="${currentDurationSec}">
+        <button id="saveDurationBtn">Save Duration</button>
+        <button id="closeSlideModal" class="close-modal" style="margin-top:10px;">Close</button>
+        <div id="slideStatus"></div>
+      </div>
+    `;
+    modalOverlay.classList.add("active");
+    document.getElementById("uploadSlideBtn").onclick = async () => {
+      const fileInput = document.getElementById("newSlideFile");
+      if (!fileInput.files.length) { document.getElementById("slideStatus").innerText = "Select an image."; return; }
+      const statusDiv = document.getElementById("slideStatus");
+      statusDiv.innerText = "Uploading...";
+      try {
+        const url = await uploadSlideImage(fileInput.files[0]);
+        slideshowImages.push(url);
+        await database.ref('slideshow/images').set(slideshowImages);
+        statusDiv.innerText = "✓ Slide added.";
+        loadSlideshow();
+        showSlideshowManager();
+      } catch (err) { statusDiv.innerText = "Error: " + err.message; }
+    };
+    document.getElementById("saveDurationBtn").onclick = async () => {
+      const secInput = document.getElementById("slideDurationSec");
+      let sec = parseFloat(secInput.value);
+      if (isNaN(sec)) sec = 3;
+      if (sec < 1) sec = 1;
+      if (sec > 10) sec = 10;
+      await saveSlideshowDuration(sec);
+      document.getElementById("slideStatus").innerText = `Duration set to ${sec} seconds.`;
+      setTimeout(() => { document.getElementById("slideStatus").innerText = ""; }, 2000);
+    };
+    document.getElementById("closeSlideModal").onclick = () => modalOverlay.classList.remove("active");
+    window.deleteSlide = async (idx) => {
+      slideshowImages.splice(idx, 1);
+      await database.ref('slideshow/images').set(slideshowImages);
+      loadSlideshow();
+      showSlideshowManager();
+    };
+  }
+
+  // ---------- Hamburger menu (add "ADD SLIDE") ----------
+  function buildHamburgerModal() {
+    const modalContent = document.getElementById("modalContent");
+    modalContent.innerHTML = `
+      <h3>TOURNAMENTS</h3>
+      <div class="modal-options">
+        <a href="nations.html" class="modal-option">UEFA NATIONS LEAGUE</a>
+        <a href="rules.html" class="modal-option">RULES</a>
+        <div class="modal-option" id="addSlideOption">ADD SLIDE</div>
+      </div>
+      <button class="close-modal" id="closeModalBtn">CLOSE</button>
+    `;
+    document.getElementById("addSlideOption").onclick = () => {
+      const key = prompt("Enter admin key:");
+      if (key === "@admin#123!") {
+        document.getElementById("modalOverlay").classList.remove("active");
+        showSlideshowManager();
+      } else { alert("Access Denied"); }
+    };
+    document.getElementById("closeModalBtn").onclick = () => document.getElementById("modalOverlay").classList.remove("active");
+  }
+  const hamburger = document.getElementById("hamburgerBtn");
+  const modalOverlayElem = document.getElementById("modalOverlay");
+  function openModal(){ buildHamburgerModal(); modalOverlayElem.classList.add("active"); }
+  hamburger.addEventListener("click", openModal);
+  modalOverlayElem.addEventListener("click", (e) => { if (e.target === modalOverlayElem) modalOverlayElem.classList.remove("active"); });
+
+  // ---------- Existing Nations League logic (unchanged) ----------
   const playerMap = {
     "Brazil": "Karabo",
     "Portugal": "Mali",
@@ -516,7 +787,6 @@
     "Morocco": "Spectre007"
   };
 
-  // Nations data (12 teams)
   const nations = [
     { name: "France", emoji: "🇫🇷", group: "A" },
     { name: "Belgium", emoji: "🇧🇪", group: "A" },
@@ -539,7 +809,6 @@
     D: { name: "Group D", teams: nations.filter(n => n.group === "D") }
   };
 
-  // ---------- FINAL STATS (unchanged) ----------
   const stats = {
     "France": { p: 4, gd: 1, pts: 10 },
     "Belgium": { p: 4, gd: -1, pts: 7 },
@@ -664,7 +933,6 @@
     return found ? found.emoji : "🏳️";
   }
 
-  // RESULTS_DATA unchanged (already includes all previous matches)
   const RESULTS_DATA = [
     { matchText: "Italy 2 - 2 Germany", md: 6 },
     { matchText: "Spain 0 - 3 Argentina (Forfeit win Argentina)", md: 6 },
@@ -715,17 +983,24 @@
   function renderKnockout() {
     const container = document.getElementById("knockoutBracket");
     if (!container) return;
-    // Updated knockout with all results:
-    // QF1: France 3-0 Croatia
-    // QF2: Portugal 2-1 Belgium
-    // QF3: Netherlands 0-1 Brazil -> Brazil wins, Netherlands strikethrough
-    // QF4: Argentina 0-3 Italy
-    // SF1: Portugal 1-0 France (France strikethrough)
-    // SF2: Brazil 1-3 Italy (Brazil strikethrough)
-    // Third place: France 3-0 Brazil (Brazil strikethrough)
-    // Final: Portugal vs Italy
+    // Order flipped: Final at top, then Third place, then Semi-finals, then Quarter-finals
     container.innerHTML = `
-      <div class="knockout-title">🏆 QUARTER-FINALS (3-4 May) 🏆</div>
+      <div class="knockout-title" style="margin-top:0;">🏆 FINAL (7 May) 🏆</div>
+      <div class="bracket">
+        <div class="round"><h4>7 May</h4><div class="match">Portugal 🇵🇹 vs Italy 🇮🇹</div></div>
+      </div>
+      <div class="knockout-title" style="margin-top:1rem;">🏆 THIRD PLACE PLAY-OFF (6 May) 🏆</div>
+      <div class="bracket">
+        <div class="round"><h4>6 May</h4><div class="match">France 🇫🇷 3-0 <s>Brazil</s> 🇧🇷</div></div>
+      </div>
+      <div class="knockout-title" style="margin-top:1rem;">🏆 SEMI-FINALS (5 May) 🏆</div>
+      <div class="bracket">
+        <div class="round"><h4>5 May</h4>
+          <div class="match">SF1: Portugal 🇵🇹 1-0 <s>France</s> 🇫🇷</div>
+          <div class="match">SF2: <s>Brazil</s> 🇧🇷 1-3 Italy 🇮🇹</div>
+        </div>
+      </div>
+      <div class="knockout-title" style="margin-top:1rem;">🏆 QUARTER-FINALS (3-4 May) 🏆</div>
       <div class="bracket">
         <div class="round"><h4>3 May</h4>
           <div class="match">QF1: France 🇫🇷 3-0 <s>Croatia</s> 🇭🇷</div>
@@ -736,26 +1011,10 @@
           <div class="match">QF4: <s>Argentina</s> 🇦🇷 0-3 Italy 🇮🇹</div>
         </div>
       </div>
-      <div class="knockout-title" style="margin-top:1rem;">🏆 SEMI-FINALS (5 May) 🏆</div>
-      <div class="bracket">
-        <div class="round"><h4>5 May</h4>
-          <div class="match">SF1: Portugal 🇵🇹 1-0 <s>France</s> 🇫🇷</div>
-          <div class="match">SF2: <s>Brazil</s> 🇧🇷 1-3 Italy 🇮🇹</div>
-        </div>
-      </div>
-      <div class="knockout-title" style="margin-top:1rem;">🏆 THIRD PLACE PLAY-OFF (6 May) 🏆</div>
-      <div class="bracket">
-        <div class="round"><h4>6 May</h4><div class="match">France 🇫🇷 3-0 <s>Brazil</s> 🇧🇷</div></div>
-      </div>
-      <div class="knockout-title" style="margin-top:1rem;">🏆 FINAL (7 May) 🏆</div>
-      <div class="bracket">
-        <div class="round"><h4>7 May</h4><div class="match">Portugal 🇵🇹 vs Italy 🇮🇹</div></div>
-      </div>
       <div style="font-size:0.7rem; margin-top:0.8rem; opacity:0.7;">* Matchups determined by group stage results</div>
     `;
   }
 
-  // Collapsible results (fixtures tab removed)
   const resultsHeader = document.getElementById("resultsHeader");
   const resultsContent = document.getElementById("resultsContent");
   const resultsToggleIcon = document.getElementById("resultsToggleIcon");
@@ -774,18 +1033,14 @@
     if (resultsToggleIcon) resultsToggleIcon.innerHTML = "▶";
   }
 
-  const hamburger = document.getElementById("hamburgerBtn");
-  const modalOverlay = document.getElementById("modalOverlay");
-  const closeModalBtn = document.getElementById("closeModalBtn");
-  function openModal() { modalOverlay.classList.add("active"); }
-  function closeModal() { modalOverlay.classList.remove("active"); }
-  if (hamburger) hamburger.addEventListener("click", openModal);
-  if (closeModalBtn) closeModalBtn.addEventListener("click", closeModal);
-  if (modalOverlay) modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
-
-  buildGroupCards();
-  renderKnockout();
-  renderResults();
+  // Initialise everything
+  async function init() {
+    await loadSlideshow();
+    buildGroupCards();
+    renderKnockout();
+    renderResults();
+  }
+  init();
 </script>
 </body>
 </html>
