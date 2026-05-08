@@ -755,7 +755,7 @@
   const database = firebase.database();
   const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
 
-  // ---------- LEAGUE DATA (After MD24 correction + MD25 results - correct order) ----------
+  // ---------- LEAGUE DATA (FINAL AFTER MD25) ----------
   const LEAGUE_DATA = [
     { pos: 1, club: "Real Madrid", p: 25, gd: 21, pts: 65 },
     { pos: 2, club: "Liverpool", p: 25, gd: 42, pts: 61 },
@@ -763,13 +763,13 @@
     { pos: 4, club: "Barcelona", p: 25, gd: 11, pts: 47 },
     { pos: 5, club: "Arsenal", p: 25, gd: 4, pts: 44 },
     { pos: 6, club: "Manchester City", p: 25, gd: -5, pts: 37 },
-    { pos: 7, club: "PSG", p: 24, gd: -16, pts: 35 },
-    { pos: 8, club: "Chelsea", p: 24, gd: 2, pts: 28 },
-    { pos: 9, club: "AC Milan", p: 24, gd: -19, pts: 25 },
+    { pos: 7, club: "PSG", p: 25, gd: -16, pts: 35 },
+    { pos: 8, club: "Chelsea", p: 25, gd: 2, pts: 28 },
+    { pos: 9, club: "AC Milan", p: 25, gd: -16, pts: 28 },
     { pos: 10, club: "Inter Milan", p: 25, gd: -9, pts: 20 },
     { pos: 11, club: "Napoli", p: 25, gd: -25, pts: 15 },
     { pos: 12, club: "Juventus", p: 25, gd: -32, pts: 11 },
-    { pos: 13, club: "Newcastle United", p: 24, gd: -53, pts: 9 },
+    { pos: 13, club: "Newcastle United", p: 25, gd: -56, pts: 9 },
     { pos: 14, club: "Atlético Madrid", p: 25, gd: -32, pts: 7 }
   ];
 
@@ -782,7 +782,7 @@
     "Liverpool": "🅿️", "Newcastle United": "~Oratile", "Atletico": "~Stalker.", "Newcastle": "~Oratile"
   };
 
-  // Last 5 form (updated after MD24 fix + MD25 results)
+  // Last 5 form (updated after MD25)
   const last5Exact = {
     "Real Madrid":        ["WF", "WF", "W", "WF", "WF", "L", "WF", "D", "WF", "LF"],
     "Liverpool":          ["W", "W", "W", "WF", "W", "D", "D", "W", "WF", "WF"],
@@ -790,14 +790,14 @@
     "Arsenal":            ["L", "L", "W", "W", "WF", "WF", "WF", "L", "WF"],
     "Barcelona":          ["LF", "W", "W", "WF", "LF", "F", "W", "D", "W", "W"],
     "Manchester City":    ["F", "W", "LF", "WF", "W", "WF", "LF", "WF", "LF", "L"],
-    "PSG":                ["WF", "L", "WF", "LF", "LF", "W", "L", "W", "WF"],
-    "Chelsea":            ["F", "WF", "W", "L", "LF", "D", "LF", "F", "LF"],
-    "AC Milan":           ["W", "WF", "LF", "LF", "L", "WF", "W", "L", "L"],
-    "Napoli":             ["LF", "LF", "L", "F", "LF", "LF", "D", "LF", "LF"],
+    "PSG":                ["WF", "L", "WF", "LF", "LF", "W", "L", "W", "WF", "F"],
+    "Chelsea":            ["F", "WF", "W", "L", "LF", "D", "LF", "F", "LF", "F"],
+    "AC Milan":           ["W", "WF", "LF", "LF", "L", "WF", "W", "L", "L", "WF"],
+    "Napoli":             ["LF", "LF", "L", "F", "LF", "LF", "D", "LF", "LF", "LF"],
     "Inter Milan":        ["WF", "L", "L", "L", "WF", "L", "W", "WF", "WF"],
-    "Juventus":           ["D", "LF", "LF", "W", "WF", "F", "LF", "LF", "LF"],
+    "Juventus":           ["D", "LF", "LF", "W", "WF", "F", "LF", "LF", "LF", "LF"],
     "Atlético Madrid":    ["LF", "L", "L", "LF", "LF", "LF", "F", "F", "F", "LF"],
-    "Newcastle United":   ["L", "LF", "WF", "LF", "L", "LF", "L", "LF"]
+    "Newcastle United":   ["L", "LF", "WF", "LF", "L", "LF", "L", "LF", "LF"]
   };
   const teamResults = {};
   LEAGUE_DATA.forEach(t => { teamResults[t.club] = []; });
@@ -815,15 +815,13 @@
     return arr.length ? arr[arr.length-1] : null;
   }
 
-  // Fixtures (MD25 remaining: Newcastle vs AC Milan, Chelsea vs PSG; MD26 all)
+  // Fixtures: only MD26 matches left
   const matchdayDates = {
     15: "27/04", 16: "28/04", 17: "29/04", 18: "30/04",
     19: "01/05", 20: "02/05", 21: "03/05", 22: "04/05",
     23: "05/05", 24: "06/05", 25: "07/05", 26: "08/05"
   };
   let fixtureList = [
-    { md: 25, home: "Newcastle United", away: "AC Milan" },
-    { md: 25, home: "Chelsea", away: "Paris Saint-Germain" },
     { md: 26, home: "Newcastle United", away: "FC Barcelona" },
     { md: 26, home: "Liverpool", away: "Manchester City" },
     { md: 26, home: "Chelsea", away: "AC Milan" },
@@ -837,14 +835,16 @@
     homePlayer: playerMap[f.home] || "", awayPlayer: playerMap[f.away] || ""
   }));
 
-  // Results (MD24 correction and MD25 results added)
+  // Results (all MD25 results at top)
   const RESULTS_RAW = [
+    { matchText: "Chelsea F - F Paris Saint-Germain (No Contest)", md: 25 },
+    { matchText: "AC Milan 3 - 0 Newcastle United (Forfeited - No Reply)", md: 25 },
     { matchText: "FC Barcelona 5 - 1 Manchester City", md: 25 },
     { matchText: "Liverpool 3 - 0 Real Madrid (Forfeited - No Reply)", md: 25 },
     { matchText: "Borussia Dortmund 3 - 0 Atletico Madrid (Forfeited - No Reply)", md: 25 },
     { matchText: "Inter Milan 3 - 0 Napoli (Forfeited - No Reply)", md: 25 },
     { matchText: "Arsenal 3 - 0 Juventus (Forfeited - No Reply)", md: 25 },
-    { matchText: "Paris Saint-Germain 3 - 0 Newcastle United (Forfeited - No Reply)", md: 24 },  // correction
+    { matchText: "Paris Saint-Germain 3 - 0 Newcastle United (Forfeited - No Reply)", md: 24 },
     { matchText: "Napoli F - F Atletico Madrid (No Contest)", md: 24 },
     { matchText: "Inter Milan 3 - 0 Chelsea (Forfeited - No Reply)", md: 24 },
     { matchText: "Liverpool 3 - 0 Juventus (Forfeited - No Reply)", md: 24 },
@@ -1318,7 +1318,6 @@
     const last5Opt = document.createElement("div");
     last5Opt.innerText = showLast5 ? "Hide Last 5" : "Show Last 5";
     last5Opt.onclick = () => { showLast5 = !showLast5; window.showLast5 = showLast5; renderLeagueTable(); closePopup(); };
-    // Calendar option removed
     const rulesOpt = document.createElement("div");
     rulesOpt.innerText = "Rules";
     rulesOpt.onclick = () => { window.location.href = "rules.html"; closePopup(); };
@@ -1369,7 +1368,7 @@
     const real = LEAGUE_DATA.find(t => t.club === "Real Madrid");
     const second = LEAGUE_DATA.find(t => t.pos === 2);
     if (!real || !second) return false;
-    const maxSecondCanGet = second.pts + (2 * 3);
+    const maxSecondCanGet = second.pts + (1 * 3); // only MD26 left
     return real.pts > maxSecondCanGet;
   }
   function showCelebration() {
