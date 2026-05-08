@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>eFootball Feed | The Beautiful Game</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <!-- Lucide Icons (optional fallback, but we use inline for simplicity) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Segoe UI', 'Poppins', Arial, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FFD700;
+            border-radius: 8px;
+        }
+
+        /* animations */
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes heartPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        .post-card {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        .heart-liked {
+            animation: heartPop 0.3s ease;
+        }
+        .toast-msg {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #FFD700;
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: bold;
+            z-index: 3000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        button, .clickable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        button:active { transform: scale(0.97); }
+        .hover-gold:hover {
+            color: #FFD700 !important;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+<div id="toastMsg" class="toast-msg"></div>
+
+<!-- NAVBAR -->
+<nav style="background: linear-gradient(135deg, #000 0%, #1a1a1a 100%); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(255,215,0,0.2); position: sticky; top:0; z-index: 1000;">
+    <h1 style="color:#FFD700; font-size: 1.7rem; letter-spacing: 1px; font-weight: bold; display: flex; align-items: center; gap: 8px;"><i class="fas fa-futbol"></i> eFootball Feed</h1>
+    <div style="display: flex; gap: 20px; align-items: center;">
+        <button id="dashboardBtn" style="background: linear-gradient(135deg, #FFD700, #FFA500); border: none; padding: 8px 20px; border-radius: 30px; font-weight: bold; color: #000; transition: 0.2s; box-shadow: 0 2px 8px rgba(255,215,0,0.5);">📊 Dashboard</button>
+        <div id="hamburgerIcon" style="cursor: pointer; font-size: 28px; color: #FFD700;"><i class="fas fa-bars"></i></div>
+    </div>
+</nav>
+
+<!-- HAMBURGER MENU SIDEBAR -->
+<div id="sideMenu" style="position: fixed; top:0; right:-320px; width: 300px; height: 100vh; background: #0a0a0a; border-left: 3px solid #FFD700; z-index: 2000; transition: right 0.3s cubic-bezier(0.2,0.9,0.4,1.1); padding: 30px 20px; box-shadow: -5px 0 30px rgba(0,0,0,0.8);">
+    <div style="display: flex; justify-content: flex-end;"><i id="closeMenu" class="fas fa-times" style="font-size: 28px; color: #FFD700; cursor: pointer;"></i></div>
+    <div style="margin-top: 50px; display: flex; flex-direction: column; gap: 20px;">
+        <div class="menu-item" data-link="login.html"><i class="fas fa-sign-in-alt" style="width: 30px;"></i> Login</div>
+        <div class="menu-item" data-link="rules.html"><i class="fas fa-gavel"></i> Rules</div>
+        <div id="disclaimerItem" class="menu-item"><i class="fas fa-exclamation-triangle"></i> Disclaimer</div>
+        <div class="menu-item" data-link="nations.html"><i class="fas fa-trophy"></i> UEFA Nations League</div>
+    </div>
+</div>
+
+<!-- SLIDESHOW CONTAINER -->
+<div style="position: relative; width: 100%; height: 400px; background: #000; overflow: hidden;">
+    <div id="slideshowContainer" style="position: relative; width: 100%; height: 100%;"></div>
+    <!-- Navigation arrows -->
+    <button id="prevSlideBtn" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); border: none; border-radius: 50%; width: 44px; height: 44px; color:#FFD700; font-size: 28px; cursor: pointer; z-index: 20;"><i class="fas fa-chevron-left"></i></button>
+    <button id="nextSlideBtn" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); border: none; border-radius: 50%; width: 44px; height: 44px; color:#FFD700; font-size: 28px; cursor: pointer; z-index: 20;"><i class="fas fa-chevron-right"></i></button>
+</div>
+
+<!-- Admin Slideshow Add Panel (hidden by default) -->
+<div id="adminSlideshowPanel" style="display: none; text-align: center; padding: 20px; background: #111; border-bottom: 1px solid #FFD70030; margin-top: 5px;">
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+        <input type="text" id="newSlideUrl" placeholder="Image URL (or upload via ImgBB)" style="padding: 10px; border-radius: 40px; background: #1e1e1e; border: 1px solid #FFD700; color: white; width: 260px;">
+        <button id="uploadImgBBBtn" style="background: #333; color:#FFD700; border:1px solid #FFD700; border-radius: 40px; padding: 8px 18px;"><i class="fas fa-cloud-upload-alt"></i> Upload Image</button>
+        <button id="confirmAddSlideBtn" style="background: #FFD700; color:#000; border: none; border-radius: 40px; padding: 8px 20px; font-weight: bold;">Add Slide</button>
+        <button id="cancelSlideBtn" style="background: #555; border-radius: 40px; padding: 8px 18px; color:white;">Cancel</button>
+    </div>
+    <div style="margin-top: 10px; font-size: 12px; color:#aaa;">Tip: Use "Upload Image" to host via ImgBB, then URL auto-fills.</div>
+</div>
+
+<!-- SUBHEADING: Login prompt -->
+<div style="text-align: center; margin: 30px 20px 20px;">
+    <p style="font-size: 1.2rem; font-weight: 500;">Please Login To View League Data - <a id="loginLinkSub" href="login.html" style="color: #4169E1; text-decoration: underline; font-weight: bold;">click here to login</a></p>
+</div>
+
+<!-- POSTS FEED -->
+<div id="postsFeed" style="max-width: 650px; margin: 0 auto 80px auto; padding: 0 16px;"></div>
+
+<script>
+    // -------------------- FIREBASE INIT --------------------
+    const firebaseConfig = {
+        apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
+        authDomain: "efootball-412.firebaseapp.com",
+        databaseURL: "https://efootball-412-default-rtdb.firebaseio.com", // corrected
+        projectId: "efootball-412",
+        storageBucket: "efootball-412.firebasestorage.app",
+        messagingSenderId: "596548424249",
+        appId: "1:596548424249:web:4349f6e87a40a1590bf3e8",
+        measurementId: "G-KHY86ZMPZH"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // ImgBB API key
+    const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
+
+    // Global state
+    let currentUser = null;          // { userId, username, accountType, email }
+    let slides = [];                 // array of { id, imageUrl, order }
+    let currentSlideIndex = 0;
+    let slideInterval = null;
+    let posts = [];
+    let userPins = {};               // { postId: true } for current user
+
+    // Helper: show toast
+    function showToast(msg, isError = false) {
+        const toast = document.getElementById('toastMsg');
+        toast.textContent = msg;
+        toast.style.backgroundColor = isError ? '#c62828' : '#FFD700';
+        toast.style.color = isError ? 'white' : '#000';
+        toast.style.opacity = '1';
+        setTimeout(() => { toast.style.opacity = '0'; }, 2800);
+    }
+
+    // Load current user from localStorage
+    function loadUserFromStorage() {
+        const stored = localStorage.getItem('football_user');
+        if (stored) {
+            try {
+                currentUser = JSON.parse(stored);
+                return true;
+            } catch(e) { console.warn(e); }
+        }
+        currentUser = null;
+        return false;
+    }
+
+    // Save user after login (we assume login.html sets this; but also we can simulate)
+    // In feed, we just read it.
+
+    // -------------------- SLIDESHOW (RTDB) --------------------
+    function fetchSlides() {
+        database.ref('slideshow').orderByChild('order').once('value', (snap) => {
+            const data = snap.val();
+            if (data) {
+                slides = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+                slides.sort((a,b) => (a.order||0) - (b.order||0));
+            } else {
+                // default demo slides
+                slides = [
+                    { id: 'demo1', imageUrl: 'https://picsum.photos/id/104/1200/400?grayscale', order: 1 },
+                    { id: 'demo2', imageUrl: 'https://picsum.photos/id/56/1200/400', order: 2 },
+                    { id: 'demo3', imageUrl: 'https://picsum.photos/id/28/1200/400', order: 3 }
+                ];
+                // save default
+                slides.forEach(s => database.ref('slideshow/' + s.id).set(s));
+            }
+            renderSlideshow();
+            startAutoSlide();
+        });
+    }
+
+    function renderSlideshow() {
+        const container = document.getElementById('slideshowContainer');
+        if (!container) return;
+        if (slides.length === 0) {
+            container.innerHTML = '<div style="color:#FFD700; text-align:center; padding-top:180px;">🏆 No slides yet</div>';
+            return;
+        }
+        let html = '';
+        slides.forEach((slide, idx) => {
+            const activeClass = idx === currentSlideIndex ? 'active' : '';
+            html += `<div class="slide-item ${activeClass}" style="position: absolute; top:0; left:0; width:100%; height:100%; transition: transform 0.7s ease-in-out, opacity 0.7s; transform: translateX(${idx === currentSlideIndex ? '0%' : '100%'}); opacity: ${idx === currentSlideIndex ? '1' : '0'}; z-index: ${idx === currentSlideIndex ? '2' : '1'};">
+                        <img src="${slide.imageUrl}" alt="slide" style="width:100%; height:100%; object-fit: cover;">
+                        ${currentUser?.accountType === 'admin' ? `<button class="remove-slide-btn" data-id="${slide.id}" style="position:absolute; top:15px; right:15px; background:#c62828; color:white; border:none; border-radius:30px; padding:6px 12px; font-weight:bold; z-index:30;">🗑️ Remove</button>` : ''}
+                    </div>`;
+        });
+        container.innerHTML = html;
+        // attach remove events for admin
+        if (currentUser?.accountType === 'admin') {
+            document.querySelectorAll('.remove-slide-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const slideId = btn.getAttribute('data-id');
+                    if (confirm('Remove this slide from slideshow?')) {
+                        database.ref('slideshow/' + slideId).remove().then(() => {
+                            showToast('Slide removed');
+                            fetchSlides();
+                        }).catch(err => showToast('Error', true));
+                    }
+                });
+            });
+        }
+    }
+
+    function startAutoSlide() {
+        if (slideInterval) clearInterval(slideInterval);
+        if (slides.length <= 1) return;
+        slideInterval = setInterval(() => {
+            nextSlide();
+        }, 5000);
+    }
+
+    function nextSlide() {
+        if (slides.length === 0) return;
+        currentSlideIndex = (currentSlideIndex + 1) % slides.length;
+        renderSlideshow();
+    }
+    function prevSlide() {
+        if (slides.length === 0) return;
+        currentSlideIndex = (currentSlideIndex - 1 + slides.length) % slides.length;
+        renderSlideshow();
+    }
+
+    // Admin add slide via ImgBB
+    async function uploadToImgBB(fileInput = null, urlInput) {
+        return new Promise((resolve, reject) => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return reject('No file');
+                const formData = new FormData();
+                formData.append('image', file);
+                formData.append('key', IMGBB_API_KEY);
+                try {
+                    const res = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.success) {
+                        resolve(data.data.url);
+                    } else {
+                        reject('ImgBB upload failed');
+                    }
+                } catch(err) { reject(err); }
+            };
+            input.click();
+        });
+    }
+
+    // -------------------- POSTS + LIKES/COMMENTS/PINS --------------------
+    function fetchPosts() {
+        database.ref('posts').orderByChild('timestamp').once('value', (snap) => {
+            const data = snap.val();
+            if (data) {
+                posts = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+            } else {
+                // demo posts for admin creation demo
+                posts = [];
+            }
+            // sort by timestamp desc
+            posts.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+            renderPosts();
+        });
+    }
+
+    // fetch user pins (independent per user)
+    function fetchUserPins() {
+        if (!currentUser) {
+            userPins = {};
+            renderPosts();
+            return;
+        }
+        database.ref(`userPins/${currentUser.userId}`).once('value', (snap) => {
+            userPins = snap.val() || {};
+            renderPosts();
+        });
+    }
+
+    function togglePin(postId) {
+        if (!currentUser) { showToast('Please login to pin posts', true); return; }
+        const wasPinned = !!userPins[postId];
+        const newPins = { ...userPins };
+        if (wasPinned) {
+            delete newPins[postId];
+        } else {
+            newPins[postId] = true;
+        }
+        database.ref(`userPins/${currentUser.userId}`).set(newPins).then(() => {
+            userPins = newPins;
+            showToast(wasPinned ? 'Post unpinned' : 'Post pinned to your feed');
+            renderPosts(); // re-render to reflect pin icon
+        }).catch(e => showToast('Error pinning', true));
+    }
+
+    function handleLike(postId) {
+        if (!currentUser) { showToast('Please login to like posts', true); return; }
+        const postRef = database.ref(`posts/${postId}`);
+        postRef.once('value', (snap) => {
+            const post = snap.val();
+            if (!post) return;
+            const likedBy = post.likedBy || [];
+            const hasLiked = likedBy.includes(currentUser.userId);
+            let newLikes = (post.likes || 0);
+            let newLikedBy;
+            if (hasLiked) {
+                newLikes--;
+                newLikedBy = likedBy.filter(uid => uid !== currentUser.userId);
+            } else {
+                newLikes++;
+                newLikedBy = [...likedBy, currentUser.userId];
+            }
+            postRef.update({ likes: newLikes, likedBy: newLikedBy }).then(() => fetchPosts());
+        });
+    }
+
+    function addComment(postId, text) {
+        if (!currentUser) { showToast('Login to comment', true); return; }
+        if (!text.trim()) return;
+        const commentObj = {
+            id: Date.now() + Math.random(),
+            username: currentUser.username,
+            userId: currentUser.userId,
+            text: text.trim(),
+            timestamp: Date.now()
+        };
+        const postRef = database.ref(`posts/${postId}/comments`);
+        postRef.once('value', (snap) => {
+            let comments = snap.val() || [];
+            comments.push(commentObj);
+            postRef.set(comments).then(() => fetchPosts());
+        });
+    }
+
+    function deleteComment(postId, commentId) {
+        if (!currentUser || currentUser.accountType !== 'admin') { showToast('Only admins can delete comments', true); return; }
+        const postRef = database.ref(`posts/${postId}/comments`);
+        postRef.once('value', (snap) => {
+            let comments = snap.val() || [];
+            const updated = comments.filter(c => c.id != commentId);
+            postRef.set(updated).then(() => fetchPosts());
+        });
+    }
+
+    function deletePost(postId) {
+        if (!currentUser || currentUser.accountType !== 'admin') { showToast('Admin only', true); return; }
+        if (confirm('Delete this post permanently?')) {
+            database.ref(`posts/${postId}`).remove().then(() => fetchPosts());
+        }
+    }
+
+    // Render posts with interactivity
+    function renderPosts() {
+        const feedDiv = document.getElementById('postsFeed');
+        if (!feedDiv) return;
+        if (posts.length === 0) {
+            feedDiv.innerHTML = '<div style="text-align:center; padding:60px; background:#0f0f0f; border-radius: 24px; margin-top:20px;">⚽ No posts yet. Admins can create new posts from dashboard.</div>';
+            return;
+        }
+        let html = '';
+        // show pinned first (for current user)
+        const pinnedPosts = posts.filter(p => userPins[p.id]);
+        const normalPosts = posts.filter(p => !userPins[p.id]);
+        [...pinnedPosts, ...normalPosts].forEach(post => {
+            const isLiked = currentUser && post.likedBy?.includes(currentUser.userId);
+            const likeColor = isLiked ? '#ff4444' : '#FFD700';
+            const likeFill = isLiked ? '#ff4444' : 'none';
+            const isPinnedByUser = userPins[post.id];
+            const pinFill = isPinnedByUser ? '#FFD700' : 'none';
+            const isAdmin = currentUser?.accountType === 'admin';
+            // media render
+            let mediaHtml = '';
+            if (post.mediaType === 'image') {
+                mediaHtml = `<img src="${post.mediaUrl}" style="width:100%; max-height: 550px; object-fit: cover; display:block;" alt="post">`;
+            } else if (post.mediaType === 'youtube' && post.mediaUrl) {
+                let videoId = '';
+                const url = post.mediaUrl;
+                if (url.includes('youtu.be')) videoId = url.split('/').pop();
+                else if (url.includes('v=')) videoId = url.split('v=')[1]?.split('&')[0];
+                if (videoId) mediaHtml = `<iframe width="100%" height="400" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`;
+                else mediaHtml = `<div style="padding:40px; background:#222;">YouTube video unavailable</div>`;
+            } else {
+                mediaHtml = `<div style="padding:40px; text-align:center; background:#111;">📷 Media preview not available</div>`;
+            }
+
+            html += `
+                <div class="post-card" style="background: linear-gradient(145deg, #121212, #080808); border-radius: 24px; margin-bottom: 32px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid rgba(255,215,0,0.2);">
+                    <div style="padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,215,0,0.1);">
+                        <div style="display: flex; gap:12px; align-items:center;">
+                            <div style="background:#FFD700; width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#000;">${post.username?.charAt(0) || 'U'}</div>
+                            <div><strong style="color:#FFD700;">${post.username || 'Anonymous'}</strong><div style="font-size:11px; color:#aaa;">${formatTimestamp(post.timestamp)}</div></div>
+                        </div>
+                        ${isAdmin ? `<div><button class="delete-post-btn" data-id="${post.id}" style="background: none; border: none; color:#ff5555; font-size:18px;"><i class="fas fa-trash-alt"></i></button></div>` : ''}
+                    </div>
+                    <div>${mediaHtml}</div>
+                    <div style="padding: 16px;">
+                        <div style="display: flex; gap: 24px; margin-bottom: 12px;">
+                            <div class="action-like" data-id="${post.id}" style="display:flex; align-items:center; gap:6px; cursor:pointer;"><i class="fas fa-heart" style="color:${likeColor}; fill:${likeFill}; font-size: 24px;"></i> <span>${post.likes || 0}</span></div>
+                            <div class="action-comment-toggle" data-id="${post.id}" style="display:flex; align-items:center; gap:6px; cursor:pointer;"><i class="fas fa-comment" style="color:#FFD700; font-size:22px;"></i> <span>${post.comments?.length || 0}</span></div>
+                            <div class="action-pin" data-id="${post.id}" style="display:flex; align-items:center; gap:6px; cursor:pointer;"><i class="fas fa-thumbtack" style="color:#FFD700; transform: rotate(45deg);"></i></div>
+                        </div>
+                        <div style="margin-top: 8px;"><strong style="color:#FFD700;">${post.username}</strong> ${post.caption || ''}</div>
+                        <div id="comments-section-${post.id}" style="display: none; margin-top: 20px; border-top: 1px solid #333; padding-top: 16px;"></div>
+                    </div>
+                </div>
+            `;
+        });
+        feedDiv.innerHTML = html;
+
+        // attach event listeners
+        document.querySelectorAll('.action-like').forEach(el => {
+            el.addEventListener('click', (e) => { e.stopPropagation(); handleLike(el.getAttribute('data-id')); });
+        });
+        document.querySelectorAll('.action-pin').forEach(el => {
+            el.addEventListener('click', (e) => { e.stopPropagation(); togglePin(el.getAttribute('data-id')); });
+        });
+        document.querySelectorAll('.delete-post-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => { e.stopPropagation(); deletePost(btn.getAttribute('data-id')); });
+        });
+        document.querySelectorAll('.action-comment-toggle').forEach(el => {
+            el.addEventListener('click', (e) => {
+                const pid = el.getAttribute('data-id');
+                const commentsDiv = document.getElementById(`comments-section-${pid}`);
+                if (commentsDiv.style.display === 'none') {
+                    const post = posts.find(p => p.id === pid);
+                    renderComments(pid, post?.comments || [], commentsDiv);
+                    commentsDiv.style.display = 'block';
+                } else {
+                    commentsDiv.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    function renderComments(postId, commentsArray, containerElem) {
+        if (!containerElem) return;
+        let html = `<div style="max-height: 300px; overflow-y: auto;">`;
+        commentsArray.forEach(c => {
+            html += `<div style="margin-bottom: 12px; background: #1a1a1a; border-radius: 20px; padding: 8px 14px; display: flex; justify-content: space-between;">
+                        <div><strong style="color:#FFD700;">${c.username}</strong> <span style="color:#ddd;">${c.text}</span><div style="font-size:10px; color:#888;">${formatTimestamp(c.timestamp)}</div></div>
+                        ${currentUser?.accountType === 'admin' ? `<button class="delete-comment-btn" data-post="${postId}" data-comment="${c.id}" style="background:transparent; border:none; color:#ff8888;"><i class="fas fa-times-circle"></i></button>` : ''}
+                    </div>`;
+        });
+        html += `</div><div style="display:flex; gap:10px; margin-top:12px;"><input type="text" id="commentInput-${postId}" placeholder="${currentUser ? 'Write a comment...' : 'Login to comment'}" style="flex:1; background:#111; border:1px solid #FFD700; border-radius: 30px; padding: 10px 16px; color:white;" ${!currentUser ? 'disabled' : ''}><button class="submit-comment-btn" data-id="${postId}" style="background:#FFD700; border:none; border-radius:30px; padding:0 20px; font-weight:bold;">Post</button></div>`;
+        containerElem.innerHTML = html;
+        document.querySelectorAll('.submit-comment-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const pid = btn.getAttribute('data-id');
+                const input = document.getElementById(`commentInput-${pid}`);
+                const text = input?.value || '';
+                if (text.trim()) addComment(pid, text);
+                input.value = '';
+            });
+        });
+        document.querySelectorAll('.delete-comment-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const pid = btn.getAttribute('data-post');
+                const cid = btn.getAttribute('data-comment');
+                deleteComment(pid, cid);
+            });
+        });
+    }
+
+    function formatTimestamp(ts) {
+        if (!ts) return 'Just now';
+        const d = new Date(ts);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute:'2-digit' });
+    }
+
+    // check admin slideshow panel visibility
+    function updateAdminUI() {
+        const panel = document.getElementById('adminSlideshowPanel');
+        if (currentUser?.accountType === 'admin') {
+            panel.style.display = 'block';
+        } else {
+            panel.style.display = 'none';
+        }
+        // dashboard button redirect
+        const dashBtn = document.getElementById('dashboardBtn');
+        if (dashBtn) {
+            dashBtn.onclick = () => {
+                if (currentUser?.accountType === 'admin') window.location.href = 'admindash.html';
+                else window.location.href = 'dashboard.html';
+            };
+        }
+        fetchUserPins();
+    }
+
+    // ImgBB & Add slide logic
+    document.addEventListener('click', async (e) => {
+        if (e.target.id === 'uploadImgBBBtn') {
+            try {
+                const url = await uploadToImgBB();
+                document.getElementById('newSlideUrl').value = url;
+                showToast('Image URL ready!');
+            } catch(err) { showToast('Upload failed', true); }
+        }
+        if (e.target.id === 'confirmAddSlideBtn') {
+            const urlInput = document.getElementById('newSlideUrl').value.trim();
+            if (!urlInput) { showToast('Enter image URL or upload first', true); return; }
+            const newSlideRef = database.ref('slideshow').push();
+            const newOrder = slides.length + 1;
+            await newSlideRef.set({ imageUrl: urlInput, order: newOrder });
+            showToast('Slide added');
+            document.getElementById('newSlideUrl').value = '';
+            fetchSlides();
+        }
+        if (e.target.id === 'cancelSlideBtn') {
+            document.getElementById('newSlideUrl').value = '';
+        }
+    });
+
+    // Menu & Disclaimer
+    const menu = document.getElementById('sideMenu');
+    document.getElementById('hamburgerIcon').onclick = () => { menu.style.right = '0'; };
+    document.getElementById('closeMenu').onclick = () => { menu.style.right = '-320px'; };
+    document.querySelectorAll('.menu-item[data-link]').forEach(el => {
+        el.addEventListener('click', () => { window.location.href = el.getAttribute('data-link'); });
+    });
+    document.getElementById('disclaimerItem').addEventListener('click', () => {
+        const disclaimerHtml = `<div id="disclaimerModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; align-items:center; justify-content:center; z-index:4000;"><div style="background:#0a0a0a; max-width:500px; padding:30px; border-radius:30px; border: 2px solid #FFD700; text-align:center;"><h2 style="color:#FFD700;">Disclaimer</h2><p style="margin:20px 0;">We are not in collaboration with UEFA, FIFA, British Football Federation or Football, this is a fan made website for entertainment purposes only. We do not sell any products.</p><button id="closeDisclaimerBtn" style="background:#FFD700; border:none; padding:8px 28px; border-radius:40px; font-weight:bold;">Close</button></div></div>`;
+        document.body.insertAdjacentHTML('beforeend', disclaimerHtml);
+        document.getElementById('closeDisclaimerBtn').onclick = () => document.getElementById('disclaimerModal').remove();
+    });
+    document.getElementById('prevSlideBtn').onclick = prevSlide;
+    document.getElementById('nextSlideBtn').onclick = nextSlide;
+
+    // initial load
+    loadUserFromStorage();
+    fetchSlides();
+    fetchPosts();
+    // real-time listener for posts & slides
+    database.ref('posts').on('value', () => fetchPosts());
+    database.ref('slideshow').on('value', () => fetchSlides());
+    updateAdminUI();
+    // realtime user pin update
+    window.addEventListener('storage', (e) => { if (e.key === 'football_user') { loadUserFromStorage(); updateAdminUI(); fetchPosts(); } });
+</script>
+</body>
+</html>
