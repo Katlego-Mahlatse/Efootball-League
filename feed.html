@@ -18,51 +18,17 @@
             min-height: 100vh;
         }
 
-        /* Navbar */
+        /* Navbar - only menu button now */
         .navbar {
             background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
             padding: 15px 30px;
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             align-items: center;
             box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
             position: sticky;
             top: 0;
             z-index: 1000;
-        }
-
-        .navbar h1 {
-            color: #FFD700;
-            font-size: 28px;
-            font-weight: bold;
-            text-shadow: 2px 2px 8px rgba(255, 215, 0, 0.5);
-            letter-spacing: 1px;
-        }
-
-        .navbar-right {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .dashboard-btn {
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-            color: #000;
-            border: none;
-            padding: 12px 28px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .dashboard-btn:hover {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.6);
         }
 
         .menu-icon {
@@ -325,7 +291,7 @@
             cursor: not-allowed;
         }
 
-        /* Login Prompt */
+        /* Login Prompt - now just a hint */
         .login-prompt {
             text-align: center;
             padding: 35px;
@@ -337,19 +303,6 @@
             margin: 0;
             color: #e0e0e0;
             font-weight: 400;
-        }
-
-        .login-link {
-            color: #4169E1;
-            text-decoration: underline;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .login-link:hover {
-            color: #5B7FFF;
-            text-shadow: 0 0 10px rgba(65, 105, 225, 0.6);
         }
 
         /* Create Post Button */
@@ -819,13 +772,9 @@
     </style>
 </head>
 <body>
-    <!-- Navbar -->
+    <!-- Navbar - only menu button -->
     <nav class="navbar">
-        <h1>⚽ eFootball Feed</h1>
-        <div class="navbar-right">
-            <button class="dashboard-btn" onclick="window.location.href='login.html'">Dashboard</button>
-            <div class="menu-icon" onclick="toggleMenu()">☰</div>
-        </div>
+        <div class="menu-icon" onclick="toggleMenu()">☰</div>
     </nav>
 
     <!-- Overlay -->
@@ -835,7 +784,7 @@
     <div class="hamburger-menu" id="hamburgerMenu">
         <span class="close-menu" onclick="closeMenu()">✕</span>
         <div class="menu-items">
-            <div class="menu-item" onclick="window.location.href='login.html'">Login</div>
+            <div class="menu-item" id="adminModeBtn" onclick="promptAdminKey()">👑 Admin Mode</div>
             <div class="menu-item" onclick="window.location.href='rules.html'">Rules</div>
             <div class="menu-item" onclick="showDisclaimer()">Disclaimer</div>
             <div class="menu-item" onclick="window.location.href='nations.html'">UEFA Nations League</div>
@@ -860,18 +809,18 @@
         </div>
     </div>
 
-    <!-- Admin Slideshow Controls -->
+    <!-- Admin Slideshow Controls (hidden by default) -->
     <div class="admin-controls" id="adminSlideControls" style="display: none;">
         <input type="file" id="slideUpload" accept="image/*" onchange="uploadSlideshow()">
         <label for="slideUpload" class="admin-btn" id="slideUploadBtn">➕ Add Slideshow Image</label>
     </div>
 
-    <!-- Login Prompt -->
+    <!-- Login Prompt (informational only) -->
     <div class="login-prompt">
-        <p>Please Login To View League Data - <a href="login.html" class="login-link">click here to login</a></p>
+        <p>⚽ Welcome to eFootball Feed — like, comment, and share football moments!</p>
     </div>
 
-    <!-- Admin Create Post Button -->
+    <!-- Admin Create Post Button (hidden by default) -->
     <div class="create-post-section" id="createPostSection" style="display: none;">
         <button class="create-post-btn" onclick="showCreatePostModal()">➕ Create New Post</button>
     </div>
@@ -955,7 +904,7 @@
         const IMGBB_API_KEY = '81c24f30884ec6dda1dbd2b39739e0c9';
 
         // Global Variables
-        let currentUser = null;
+        let isAdminMode = false;
         let posts = [];
         let slideshow = [];
         let currentSlide = 0;
@@ -969,20 +918,26 @@
 
         // Initialize
         window.onload = function() {
-            checkLoggedInUser();
             loadSlideshow();
             loadPosts();
+            // No login checks - admin mode starts false
         };
 
-        // Check for logged in user
-        function checkLoggedInUser() {
-            const savedUser = localStorage.getItem('user');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                if (currentUser.accountType === 'admin') {
-                    document.getElementById('adminSlideControls').style.display = 'block';
-                    document.getElementById('createPostSection').style.display = 'block';
-                }
+        // Admin Mode Functions
+        function promptAdminKey() {
+            const key = prompt("Enter Admin Key:");
+            if (key === "@admin#123!") {
+                isAdminMode = true;
+                // Show admin UI elements
+                document.getElementById('adminSlideControls').style.display = 'block';
+                document.getElementById('createPostSection').style.display = 'block';
+                // Re-render posts to show admin controls (delete/edit buttons)
+                renderPosts();
+                // Show success message
+                alert("Admin mode activated! You can now create posts, manage slideshow, and delete content.");
+                closeMenu();
+            } else if (key !== null) {
+                alert("Invalid admin key. Access denied.");
             }
         }
 
@@ -1043,7 +998,7 @@
                 slideDiv.className = 'slide' + (index === 0 ? ' active' : '');
                 slideDiv.innerHTML = `
                     <img src="${slide.imageUrl}" alt="Slide">
-                    ${currentUser?.accountType === 'admin' ? `<button class="remove-slide-btn" onclick="removeSlide('${slide.id}')">Remove</button>` : ''}
+                    ${isAdminMode ? `<button class="remove-slide-btn" onclick="removeSlide('${slide.id}')">Remove</button>` : ''}
                 `;
                 container.appendChild(slideDiv);
             });
@@ -1054,6 +1009,7 @@
         }
 
         function startSlideshow() {
+            if (slideInterval) clearInterval(slideInterval);
             if (slideshow.length > 1) {
                 slideInterval = setInterval(() => {
                     changeSlide(1);
@@ -1071,6 +1027,7 @@
         }
 
         async function uploadSlideshow() {
+            if (!isAdminMode) return;
             const file = document.getElementById('slideUpload').files[0];
             if (!file) return;
 
@@ -1080,7 +1037,6 @@
 
             try {
                 const url = await uploadToImgBB(file);
-                
                 const slideData = {
                     imageUrl: url,
                     order: slideshow.length + 1
@@ -1106,6 +1062,7 @@
         }
 
         async function removeSlide(slideId) {
+            if (!isAdminMode) return;
             if (!confirm('Remove this slide?')) return;
 
             try {
@@ -1123,6 +1080,7 @@
 
         // Post Modal Functions
         function showCreatePostModal() {
+            if (!isAdminMode) return;
             editingPostId = null;
             document.getElementById('postModalTitle').textContent = 'Create New Post';
             document.getElementById('postHeading').value = '';
@@ -1212,6 +1170,7 @@
         }
 
         async function submitPost() {
+            if (!isAdminMode) return;
             const heading = document.getElementById('postHeading').value.trim();
             const caption = document.getElementById('postCaption').value.trim();
             const mediaType = document.getElementById('mediaType').value;
@@ -1284,7 +1243,8 @@
 
             if (posts.length === 0) {
                 emptyFeed.style.display = 'block';
-                emptyFeed.textContent = 'No posts yet.' + (currentUser?.accountType === 'admin' ? ' Create your first post!' : '');
+                emptyFeed.textContent = 'No posts yet.' + (isAdminMode ? ' Create your first post!' : '');
+                container.innerHTML = '';
                 return;
             }
 
@@ -1298,11 +1258,11 @@
                         <div class="post-user">
                             <img src="${post.userAvatar}" alt="${post.username}" class="post-avatar">
                             <div>
-                                <div class="post-username">${post.username}</div>
+                                <div class="post-username">${escapeHtml(post.username)}</div>
                                 <div class="post-time">${formatTimestamp(post.timestamp)}</div>
                             </div>
                         </div>
-                        ${currentUser?.accountType === 'admin' ? `
+                        ${isAdminMode ? `
                             <div class="post-actions-top">
                                 <span class="action-icon" onclick="editPost('${post.id}')">✏️</span>
                                 <span class="action-icon delete-icon" onclick="deletePost('${post.id}')">🗑️</span>
@@ -1325,8 +1285,8 @@
                     <div class="post-content">
                         <div class="post-interactions">
                             <button class="interaction-btn" onclick="likePost('${post.id}')">
-                                <span class="interaction-icon ${post.likedBy?.includes(currentUser?.userId) ? 'liked' : ''}">
-                                    ${post.likedBy?.includes(currentUser?.userId) ? '❤️' : '🤍'}
+                                <span class="interaction-icon ${post.likedBy?.includes('guest') ? 'liked' : ''}">
+                                    ${post.likedBy?.includes('guest') ? '❤️' : '🤍'}
                                 </span>
                                 <span>${post.likes || 0}</span>
                             </button>
@@ -1340,8 +1300,8 @@
                         </div>
 
                         <div class="post-caption">
-                            <span class="caption-username">${post.username}</span>
-                            ${post.caption}
+                            <span class="caption-username">${escapeHtml(post.username)}</span>
+                            ${escapeHtml(post.caption)}
                         </div>
 
                         <div class="comments-section" id="comments-${post.id}" style="display: none;">
@@ -1364,11 +1324,11 @@
                 html += commentsArray.map(comment => `
                     <div class="comment">
                         <div class="comment-content">
-                            <span class="comment-username">${comment.username}</span>
-                            <span class="comment-text">${comment.text}</span>
+                            <span class="comment-username">${escapeHtml(comment.username)}</span>
+                            <span class="comment-text">${escapeHtml(comment.text)}</span>
                             <div class="comment-time">${formatTimestamp(comment.timestamp)}</div>
                         </div>
-                        ${currentUser?.accountType === 'admin' ? `
+                        ${isAdminMode ? `
                             <span class="comment-delete" onclick="deleteComment('${postId}', '${comment.id}')">🗑️</span>
                         ` : ''}
                     </div>
@@ -1380,10 +1340,9 @@
             html += `
                 <div class="comment-input-section">
                     <input type="text" class="comment-input" id="comment-input-${postId}" 
-                           placeholder="${currentUser ? 'Add a comment...' : 'Login to comment'}" 
-                           ${!currentUser ? 'disabled' : ''}
+                           placeholder="Add a comment..." 
                            onkeypress="if(event.key === 'Enter') addComment('${postId}')">
-                    <button class="comment-submit" onclick="addComment('${postId}')" ${!currentUser ? 'disabled' : ''}>
+                    <button class="comment-submit" onclick="addComment('${postId}')">
                         Post
                     </button>
                 </div>
@@ -1402,16 +1361,11 @@
         }
 
         async function likePost(postId) {
-            if (!currentUser) {
-                alert('Please log in to like posts');
-                return;
-            }
-
             const post = posts.find(p => p.id === postId);
-            const hasLiked = post.likedBy?.includes(currentUser.userId);
+            const hasLiked = post.likedBy?.includes('guest');
             const newLikedBy = hasLiked 
-                ? (post.likedBy || []).filter(id => id !== currentUser.userId)
-                : [...(post.likedBy || []), currentUser.userId];
+                ? (post.likedBy || []).filter(id => id !== 'guest')
+                : [...(post.likedBy || []), 'guest'];
 
             try {
                 await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, {
@@ -1432,17 +1386,12 @@
         }
 
         async function addComment(postId) {
-            if (!currentUser) {
-                alert('Please log in to comment');
-                return;
-            }
-
             const input = document.getElementById(`comment-input-${postId}`);
             const text = input.value.trim();
             if (!text) return;
 
             const commentData = {
-                username: currentUser.username,
+                username: "Fan",
                 text: text,
                 timestamp: Date.now()
             };
@@ -1461,14 +1410,15 @@
                 
                 renderPosts();
                 document.getElementById(`comments-${postId}`).style.display = 'block';
+                input.value = '';
             } catch (error) {
                 console.error('Failed to add comment:', error);
             }
         }
 
         async function deleteComment(postId, commentId) {
-            if (!currentUser || currentUser.accountType !== 'admin') return;
-            if (!confirm('Are you sure you want to delete this comment?')) return;
+            if (!isAdminMode) return;
+            if (!confirm('Delete this comment?')) return;
 
             try {
                 await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}/comments/${commentId}.json`, {
@@ -1484,10 +1434,7 @@
         }
 
         async function pinPost(postId) {
-            if (!currentUser) {
-                alert('Please log in to pin posts');
-                return;
-            }
+            if (!isAdminMode) return;
 
             const post = posts.find(p => p.id === postId);
             const newPinnedState = !post.pinned;
@@ -1507,8 +1454,8 @@
         }
 
         async function deletePost(postId) {
-            if (!currentUser || currentUser.accountType !== 'admin') return;
-            if (!confirm('Are you sure you want to delete this post?')) return;
+            if (!isAdminMode) return;
+            if (!confirm('Permanently delete this post?')) return;
 
             try {
                 await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, {
@@ -1523,8 +1470,7 @@
         }
 
         function editPost(postId) {
-            // Edit functionality - you can implement this similar to create post
-            alert('Edit post functionality - to be implemented');
+            alert('Edit feature coming soon');
         }
 
         // Utility Functions
@@ -1543,6 +1489,18 @@
             const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
             return `https://www.youtube.com/embed/${videoId}`;
         }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+                return c;
+            });
+        }
     </script>
 </body>
-    </html>
+</html>
