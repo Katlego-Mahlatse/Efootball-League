@@ -18,12 +18,12 @@
             min-height: 100vh;
         }
 
-        /* Gold navbar matching Nations page - only menu button */
+        /* Gold navbar with View League button */
         .navbar {
             background: linear-gradient(135deg, #f5d742, #d4af37);
-            padding: 0.4rem 1.2rem;
+            padding: 0.5rem 1.2rem;
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
             align-items: center;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             position: sticky;
@@ -31,7 +31,27 @@
             z-index: 1000;
         }
 
-        /* Black circular menu button */
+        .view-league-btn {
+            background: #1a1a1a;
+            color: #f5d742;
+            border: 1.5px solid #f5d742;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .view-league-btn:hover {
+            background: #f5d742;
+            color: #1a1a1a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 215, 66, 0.4);
+        }
+
         .menu-icon {
             background: #1a1a1a;
             width: 36px;
@@ -189,106 +209,155 @@
             color: #e0e0e0;
         }
 
-        .slideshow {
+        /* Circular Instagram-style Slideshow */
+        .slideshow-container {
             position: relative;
             width: 100%;
-            height: 450px;
-            overflow: hidden;
+            height: 140px;
             background: #000;
+            overflow: hidden;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.1);
         }
 
-        .slide {
-            position: absolute;
-            top: 0;
-            left: 0;
+        .slideshow-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .story-circle {
+            position: relative;
+            flex-shrink: 0;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .story-circle.active {
+            transform: scale(1);
+        }
+
+        .story-circle:not(.active) {
+            transform: scale(0.7);
+            opacity: 0.4;
+        }
+
+        .story-ring {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #f5d742, #d4af37, #FFD700);
+            padding: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .story-circle.active .story-ring {
+            width: 100px;
+            height: 100px;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+        }
+
+        .story-ring:hover {
+            transform: scale(1.05);
+        }
+
+        .story-image-wrapper {
             width: 100%;
             height: 100%;
-            opacity: 0;
-            transform: translateX(100%);
-            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 50%;
+            overflow: hidden;
+            background: #000;
+            border: 3px solid #000;
         }
 
-        .slide.active {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .slide img {
+        .story-image {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .slide-controls {
+        .story-controls {
             position: absolute;
             width: 100%;
             top: 50%;
             transform: translateY(-50%);
             display: flex;
             justify-content: space-between;
-            padding: 0 30px;
+            padding: 0 20px;
             pointer-events: none;
         }
 
-        .slide-btn {
-            background: rgba(255, 215, 0, 0.85);
+        .story-btn {
+            background: rgba(255, 215, 0, 0.9);
             border: none;
             border-radius: 50%;
-            width: 55px;
-            height: 55px;
+            width: 40px;
+            height: 40px;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             pointer-events: all;
-            font-size: 32px;
+            font-size: 20px;
             color: #000;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-weight: bold;
         }
 
-        .slide-btn:hover {
+        .story-btn:hover {
             background: rgba(255, 215, 0, 1);
             transform: scale(1.1);
-            box-shadow: 0 6px 30px rgba(255, 215, 0, 0.6);
+            box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6);
         }
 
-        .remove-slide-btn {
+        .remove-story-btn {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(220, 20, 60, 0.9);
-            border: none;
+            top: -5px;
+            right: -5px;
+            background: rgba(220, 20, 60, 0.95);
+            border: 2px solid #000;
             color: #fff;
-            padding: 10px 18px;
-            border-radius: 8px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
             cursor: pointer;
             font-weight: bold;
+            font-size: 16px;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
         }
 
-        .remove-slide-btn:hover {
+        .remove-story-btn:hover {
             background: rgba(255, 0, 0, 1);
-            transform: scale(1.05);
+            transform: scale(1.1);
         }
 
         .admin-controls {
             text-align: center;
-            padding: 25px;
-            background: rgba(255, 215, 0, 0.05);
-            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+            padding: 20px;
+            background: rgba(255, 215, 0, 0.03);
+            border-bottom: 1px solid rgba(255, 215, 0, 0.1);
         }
 
         .admin-btn {
             background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
             color: #000;
             border: none;
-            padding: 14px 35px;
-            border-radius: 30px;
+            padding: 12px 30px;
+            border-radius: 25px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 15px;
+            font-size: 14px;
             transition: all 0.3s ease;
             box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
         }
@@ -305,12 +374,12 @@
 
         .site-header {
             text-align: center;
-            padding: 35px;
-            background: linear-gradient(180deg, rgba(26, 26, 26, 0.6) 0%, rgba(0, 0, 0, 0.8) 100%);
+            padding: 30px;
+            background: #000;
         }
 
         .site-header h2 {
-            font-size: 28px;
+            font-size: 26px;
             color: #FFD700;
             margin: 0;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
@@ -319,19 +388,20 @@
 
         .create-post-section {
             text-align: center;
-            padding: 30px;
-            background: rgba(0, 0, 0, 0.5);
+            padding: 25px;
+            background: #000;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.1);
         }
 
         .create-post-btn {
             background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
             color: #000;
             border: none;
-            padding: 16px 40px;
-            border-radius: 30px;
+            padding: 14px 35px;
+            border-radius: 25px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 17px;
+            font-size: 15px;
             transition: all 0.3s ease;
             box-shadow: 0 6px 25px rgba(255, 215, 0, 0.5);
             text-transform: uppercase;
@@ -358,11 +428,11 @@
             margin-bottom: 8px;
             color: #FFD700;
             font-weight: 600;
+            font-size: 14px;
         }
 
         .form-group input,
-        .form-group textarea,
-        .form-group select {
+        .form-group textarea {
             width: 100%;
             padding: 12px;
             border-radius: 10px;
@@ -377,8 +447,13 @@
             resize: vertical;
         }
 
+        .file-upload-wrapper {
+            margin-bottom: 20px;
+        }
+
         .file-upload-label {
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: 10px;
@@ -388,13 +463,35 @@
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s ease;
-            min-height: 80px;
+            min-height: 100px;
             color: #FFD700;
             font-weight: 600;
         }
 
         .file-upload-label:hover {
             background: rgba(255, 215, 0, 0.2);
+            border-color: #FFA500;
+        }
+
+        .preview-container {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 10px;
+            border: 2px solid #FFD700;
+        }
+
+        .circle-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #FFD700;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
         }
 
         .checkbox-label {
@@ -433,15 +530,25 @@
             color: #000;
         }
 
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6);
+        }
+
         .btn-secondary {
             background: #333;
             color: #fff;
         }
 
+        .btn-secondary:hover {
+            background: #444;
+        }
+
+        /* Instagram-style Feed */
         .feed-container {
-            max-width: 630px;
+            max-width: 470px;
             margin: 0 auto;
-            padding: 30px 20px;
+            padding: 20px 0;
         }
 
         .empty-feed {
@@ -452,27 +559,23 @@
         }
 
         .post {
-            background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
-            border-radius: 20px;
-            margin-bottom: 35px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 215, 0, 0.25);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-            animation: fadeInUp 0.6s ease;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #000;
+            border: 1px solid #262626;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.5s ease;
+            transition: all 0.3s ease;
         }
 
         .post:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.4);
+            border-color: rgba(255, 215, 0, 0.3);
         }
 
+        /* Instagram Post Header */
         .post-header {
-            padding: 18px 20px;
+            padding: 14px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(255, 215, 0, 0.15);
         }
 
         .post-user {
@@ -482,252 +585,274 @@
         }
 
         .post-avatar {
-            width: 45px;
-            height: 45px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            border: 2.5px solid #FFD700;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+            border: 2px solid #FFD700;
+            object-fit: cover;
+        }
+
+        .post-user-info {
+            display: flex;
+            flex-direction: column;
         }
 
         .post-username {
-            font-weight: bold;
-            color: #FFD700;
-            font-size: 16px;
-            margin-bottom: 3px;
+            font-weight: 600;
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 2px;
         }
 
         .post-time {
-            font-size: 13px;
-            color: #999;
+            font-size: 12px;
+            color: #8e8e8e;
         }
 
-        .post-actions-top {
+        .post-menu {
             display: flex;
-            gap: 12px;
+            gap: 10px;
+            align-items: center;
         }
 
-        .action-icon {
+        .post-menu-icon {
             cursor: pointer;
             color: #FFD700;
-            transition: all 0.3s ease;
-            font-size: 22px;
+            font-size: 20px;
+            transition: all 0.2s ease;
         }
 
-        .action-icon:hover {
+        .post-menu-icon:hover {
             transform: scale(1.2);
-            filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
         }
 
         .delete-icon {
             color: #ff4444;
         }
 
-        .delete-icon:hover {
-            filter: drop-shadow(0 0 8px rgba(255, 68, 68, 0.8));
-        }
-
-        .post-media {
+        /* Instagram Post Image */
+        .post-image-container {
+            width: 100%;
             background: #000;
         }
 
-        .post-media img {
+        .post-image {
             width: 100%;
             display: block;
-            max-height: 650px;
+            max-height: 585px;
             object-fit: cover;
         }
 
-        .post-media iframe {
-            width: 100%;
-            height: 450px;
-            display: block;
-            border: none;
-        }
-
-        .instagram-link {
-            padding: 40px;
-            text-align: center;
-            background: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
-        }
-
-        .instagram-link a {
-            color: #FFD700;
-            font-size: 17px;
-            text-decoration: none;
-            padding: 12px 30px;
-            border: 2px solid #FFD700;
-            border-radius: 25px;
-            display: inline-block;
-            transition: all 0.3s ease;
-        }
-
-        .instagram-link a:hover {
-            background: rgba(255, 215, 0, 0.1);
-            transform: scale(1.05);
-        }
-
-        .post-content {
-            padding: 18px 20px;
-        }
-
-        .post-interactions {
+        /* Instagram Post Actions */
+        .post-actions {
+            padding: 12px 16px 8px;
             display: flex;
-            gap: 25px;
-            margin-bottom: 15px;
-        }
-
-        .interaction-btn {
-            display: flex;
+            gap: 16px;
             align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
+        }
+
+        .action-btn {
             background: none;
             border: none;
-            color: #FFD700;
-            font-size: 15px;
-            font-weight: 600;
+            cursor: pointer;
+            padding: 0;
+            transition: all 0.2s ease;
         }
 
-        .interaction-btn:hover {
-            transform: scale(1.15);
+        .action-icon-main {
+            font-size: 24px;
+            transition: all 0.2s ease;
         }
 
-        .interaction-icon {
-            font-size: 26px;
+        .action-btn:hover .action-icon-main {
+            transform: scale(1.1);
         }
 
-        .liked {
+        .like-icon {
+            color: #fff;
+        }
+
+        .like-icon.liked {
             color: #ff4444;
+            animation: likeAnimation 0.4s ease;
         }
 
-        .pinned {
-            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6));
+        .comment-icon {
+            color: #fff;
         }
 
+        .pin-icon {
+            color: #fff;
+        }
+
+        .pin-icon.pinned {
+            color: #FFD700;
+            filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
+        }
+
+        /* Instagram Post Likes */
+        .post-likes {
+            padding: 0 16px;
+            margin-bottom: 8px;
+        }
+
+        .likes-count {
+            font-weight: 600;
+            font-size: 14px;
+            color: #fff;
+        }
+
+        /* Instagram Post Caption */
         .post-caption {
-            margin-top: 12px;
-            color: #e0e0e0;
-            line-height: 1.6;
-            font-size: 15px;
+            padding: 0 16px;
+            margin-bottom: 8px;
         }
 
         .caption-username {
-            font-weight: bold;
-            color: #FFD700;
-            margin-right: 8px;
+            font-weight: 600;
+            color: #fff;
+            margin-right: 6px;
+            font-size: 14px;
         }
 
-        .comments-section {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 215, 0, 0.2);
+        .caption-text {
+            color: #fff;
+            font-size: 14px;
+            line-height: 18px;
         }
 
-        .comment {
+        /* Instagram Comments Section */
+        .post-comments {
+            padding: 0 16px;
             margin-bottom: 12px;
-            padding: 12px;
-            background: rgba(255, 215, 0, 0.05);
-            border-radius: 10px;
+        }
+
+        .view-comments {
+            color: #8e8e8e;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: color 0.2s ease;
+        }
+
+        .view-comments:hover {
+            color: #fff;
+        }
+
+        .comments-list {
+            display: none;
+            margin-top: 12px;
+        }
+
+        .comments-list.show {
+            display: block;
+        }
+
+        .comment-item {
+            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: start;
-            transition: all 0.3s ease;
+            padding: 8px;
+            background: rgba(255, 215, 0, 0.03);
+            border-radius: 8px;
+            transition: all 0.2s ease;
         }
 
-        .comment:hover {
-            background: rgba(255, 215, 0, 0.1);
+        .comment-item:hover {
+            background: rgba(255, 215, 0, 0.08);
         }
 
-        .comment-content {
+        .comment-content-wrapper {
             flex: 1;
         }
 
-        .comment-username {
-            font-weight: bold;
-            color: #FFD700;
+        .comment-user {
+            font-weight: 600;
+            color: #fff;
             font-size: 14px;
+            margin-right: 6px;
         }
 
-        .comment-text {
-            margin-left: 10px;
-            color: #e0e0e0;
+        .comment-text-content {
+            color: #fff;
             font-size: 14px;
+            display: inline;
         }
 
-        .comment-time {
+        .comment-timestamp {
             font-size: 12px;
-            color: #999;
-            margin-top: 6px;
+            color: #8e8e8e;
+            margin-top: 4px;
         }
 
-        .comment-delete {
+        .comment-delete-btn {
             cursor: pointer;
             color: #ff4444;
-            flex-shrink: 0;
+            font-size: 16px;
             margin-left: 10px;
-            font-size: 18px;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
 
-        .comment-delete:hover {
-            transform: scale(1.3);
-            filter: drop-shadow(0 0 6px rgba(255, 68, 68, 0.8));
+        .comment-delete-btn:hover {
+            transform: scale(1.2);
         }
 
-        .no-comments {
-            color: #666;
+        .no-comments-yet {
+            color: #8e8e8e;
             font-size: 14px;
-            text-align: center;
-            margin: 15px 0;
+            font-style: italic;
         }
 
-        .comment-input-section {
+        /* Instagram Add Comment */
+        .add-comment {
+            padding: 12px 16px;
+            border-top: 1px solid #262626;
+            display: none;
+        }
+
+        .add-comment.show {
+            display: block;
+        }
+
+        .comment-input-wrapper {
             display: flex;
-            gap: 12px;
-            margin-top: 15px;
+            gap: 10px;
         }
 
         .comment-input {
             flex: 1;
-            padding: 12px 18px;
-            border-radius: 25px;
-            border: 2px solid #FFD700;
-            background: #0d0d0d;
+            background: none;
+            border: none;
             color: #fff;
             font-size: 14px;
             outline: none;
-            transition: all 0.3s ease;
         }
 
-        .comment-input:focus {
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        .comment-input::placeholder {
+            color: #8e8e8e;
         }
 
-        .comment-submit {
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-            color: #000;
+        .comment-post-btn {
+            background: none;
             border: none;
-            padding: 12px 25px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: bold;
+            color: #FFD700;
+            font-weight: 600;
             font-size: 14px;
-            transition: all 0.3s ease;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
 
-        .comment-submit:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5);
+        .comment-post-btn:hover {
+            color: #FFA500;
         }
 
-        .comment-submit:disabled {
-            background: #333;
-            color: #666;
+        .comment-post-btn:disabled {
+            opacity: 0.3;
             cursor: not-allowed;
-            opacity: 0.5;
         }
 
+        /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -736,7 +861,7 @@
         @keyframes fadeInUp {
             from {
                 opacity: 0;
-                transform: translateY(30px);
+                transform: translateY(20px);
             }
             to {
                 opacity: 1;
@@ -747,7 +872,7 @@
         @keyframes scaleIn {
             from {
                 opacity: 0;
-                transform: scale(0.9);
+                transform: scale(0.95);
             }
             to {
                 opacity: 1;
@@ -755,8 +880,32 @@
             }
         }
 
+        @keyframes likeAnimation {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            border: 3px solid rgba(255, 215, 0, 0.3);
+            border-top: 3px solid #FFD700;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Scrollbar */
         ::-webkit-scrollbar {
-            width: 10px;
+            width: 8px;
         }
 
         ::-webkit-scrollbar-track {
@@ -765,7 +914,7 @@
 
         ::-webkit-scrollbar-thumb {
             background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
-            border-radius: 5px;
+            border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
@@ -785,10 +934,18 @@
             text-align: center;
             font-size: 14px;
         }
+
+        .upload-status {
+            color: #FFD700;
+            font-size: 13px;
+            margin-top: 8px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <nav class="navbar">
+        <a href="login.html" class="view-league-btn">View League</a>
         <div class="menu-icon" onclick="toggleMenu()">
             <span></span><span></span><span></span>
         </div>
@@ -814,18 +971,21 @@
         </div>
     </div>
 
-    <div class="slideshow" id="slideshow">
-        <div id="slidesContainer"></div>
-        <div class="slide-controls" id="slideControls" style="display: none;">
-            <button class="slide-btn" onclick="changeSlide(-1)">‹</button>
-            <button class="slide-btn" onclick="changeSlide(1)">›</button>
+    <!-- Circular Instagram-style Slideshow -->
+    <div class="slideshow-container" id="slideshowContainer">
+        <div class="slideshow-wrapper" id="slideshowWrapper">
+            <!-- Stories will be inserted here -->
+        </div>
+        <div class="story-controls" id="storyControls" style="display: none;">
+            <button class="story-btn" onclick="changeStory(-1)">‹</button>
+            <button class="story-btn" onclick="changeStory(1)">›</button>
         </div>
     </div>
 
     <div class="admin-controls" id="adminSlideControls" style="display: none;">
         <input type="file" id="slideUpload" accept="image/*" onchange="uploadSlideshow()">
-        <label for="slideUpload" class="admin-btn" id="slideUploadBtn">➕ Add Slideshow Image</label>
-        <div id="slideUploadError" style="color: #ff6666; margin-top: 8px;"></div>
+        <label for="slideUpload" class="admin-btn" id="slideUploadBtn">➕ Add Story</label>
+        <div id="slideUploadError" class="upload-status"></div>
     </div>
 
     <div class="site-header">
@@ -836,49 +996,61 @@
         <button class="create-post-btn" onclick="showCreatePostModal()">➕ Create New Post</button>
     </div>
 
+    <!-- Create Post Modal -->
     <div class="modal" id="postModal">
         <div class="modal-content form-modal">
             <span class="modal-close" onclick="closePostModal()">✕</span>
             <h2 id="postModalTitle">Create New Post</h2>
             <div id="postFormError" class="error-message" style="display: none;"></div>
+            
             <div class="form-group">
-                <label>Heading (Username) *</label>
-                <input type="text" id="postHeading" placeholder="Enter heading/username">
+                <label>Profile Name *</label>
+                <input type="text" id="profileName" placeholder="Enter profile name">
             </div>
-            <div class="form-group">
-                <label>Profile Picture URL</label>
-                <input type="url" id="profilePicUrl" placeholder="https://... (optional)">
+
+            <div class="file-upload-wrapper">
+                <label>Profile Photo (Optional)</label>
+                <input type="file" id="profilePhotoUpload" accept="image/*" onchange="previewProfilePhoto()">
+                <label for="profilePhotoUpload" class="file-upload-label">
+                    <span>📷 Upload Profile Photo</span>
+                    <span style="font-size: 12px; opacity: 0.7;">Click to select image</span>
+                </label>
+                <div id="profilePhotoPreview" class="preview-container" style="display: none;">
+                    <img id="profilePhotoPreviewImg" class="circle-preview">
+                </div>
+                <div id="profilePhotoStatus" class="upload-status"></div>
             </div>
-            <div class="form-group">
-                <label>Media Type *</label>
-                <select id="mediaType" onchange="changeMediaType()">
-                    <option value="image">Image</option>
-                    <option value="youtube">YouTube Video</option>
-                    <option value="instagram">Instagram Video</option>
-                </select>
+
+            <div class="file-upload-wrapper">
+                <label>Post Image *</label>
+                <input type="file" id="postImageUpload" accept="image/*" onchange="previewPostImage()">
+                <label for="postImageUpload" class="file-upload-label">
+                    <span>🖼️ Upload Post Image</span>
+                    <span style="font-size: 12px; opacity: 0.7;">Click to select image</span>
+                </label>
+                <div id="postImagePreview" class="preview-container" style="display: none;">
+                    <img id="postImagePreviewImg" class="image-preview">
+                </div>
+                <div id="postImageStatus" class="upload-status"></div>
             </div>
-            <div class="form-group" id="imageUrlGroup">
-                <label>Image URL *</label>
-                <input type="url" id="imageUrl" placeholder="https://raw.githubusercontent.com/.../image.jpg">
-            </div>
-            <div class="form-group" id="videoUrlGroup" style="display: none;">
-                <label>Video URL *</label>
-                <input type="url" id="videoUrl" placeholder="Paste video URL here">
-            </div>
+
             <div class="form-group">
                 <label>Caption *</label>
                 <textarea id="postCaption" rows="4" placeholder="Write a caption..."></textarea>
             </div>
+
             <div class="form-group">
                 <label class="checkbox-label">
                     <input type="checkbox" id="useRealTime" checked onchange="toggleCustomTime()">
                     <span>Use current time</span>
                 </label>
             </div>
+
             <div class="form-group" id="customTimeGroup" style="display: none;">
                 <label>📅 Custom Date & Time</label>
                 <input type="datetime-local" id="customTimestamp">
             </div>
+
             <div class="form-buttons">
                 <button class="btn-primary" id="submitPostBtn" onclick="submitPost()">Post</button>
                 <button class="btn-secondary" onclick="closePostModal()">Cancel</button>
@@ -900,16 +1072,17 @@
         let isAdminMode = false;
         let posts = [];
         let slideshow = [];
-        let currentSlide = 0;
-        let slideInterval = null;
-        let editingPostId = null;
+        let currentStory = 0;
+        let storyInterval = null;
+        let uploadedProfilePhotoUrl = null;
+        let uploadedPostImageUrl = null;
 
         window.onload = function() {
             loadSlideshow();
             loadPosts();
         };
 
-        async function uploadToImgBB(file) { /* kept for slideshow but not used for posts */ 
+        async function uploadToImgBB(file) {
             const formData = new FormData();
             formData.append("image", file);
             const controller = new AbortController();
@@ -948,13 +1121,22 @@
             document.getElementById('hamburgerMenu').classList.toggle('active');
             document.getElementById('overlay').classList.toggle('active');
         }
+        
         function closeMenu() {
             document.getElementById('hamburgerMenu').classList.remove('active');
             document.getElementById('overlay').classList.remove('active');
         }
-        function showDisclaimer() { closeMenu(); document.getElementById('disclaimerModal').classList.add('active'); }
-        function closeDisclaimer() { document.getElementById('disclaimerModal').classList.remove('active'); }
+        
+        function showDisclaimer() { 
+            closeMenu(); 
+            document.getElementById('disclaimerModal').classList.add('active'); 
+        }
+        
+        function closeDisclaimer() { 
+            document.getElementById('disclaimerModal').classList.remove('active'); 
+        }
 
+        // Slideshow Functions
         async function loadSlideshow() {
             try {
                 const response = await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow.json`);
@@ -962,184 +1144,520 @@
                 if (data) {
                     slideshow = Object.keys(data).map(key => ({ id: key, ...data[key] })).sort((a, b) => a.order - b.order);
                     renderSlideshow();
-                    startSlideshow();
+                    startStoryAutoplay();
                 }
-            } catch (error) { console.error(error); }
+            } catch (error) { 
+                console.error(error); 
+            }
         }
 
         function renderSlideshow() {
-            const container = document.getElementById('slidesContainer');
-            container.innerHTML = '';
+            const wrapper = document.getElementById('slideshowWrapper');
+            wrapper.innerHTML = '';
+            
             if (slideshow.length === 0) {
-                container.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #1a1a1a 0%, #000 100%);color:#666;font-size:20px;">No slideshow images yet</div>';
-                document.getElementById('slideControls').style.display = 'none';
+                wrapper.innerHTML = '<div style="color:#666;font-size:16px;">No stories yet</div>';
+                document.getElementById('storyControls').style.display = 'none';
                 return;
             }
-            slideshow.forEach((slide, index) => {
-                const slideDiv = document.createElement('div');
-                slideDiv.className = 'slide' + (index === 0 ? ' active' : '');
-                slideDiv.innerHTML = `<img src="${slide.imageUrl}" alt="Slide">${isAdminMode ? `<button class="remove-slide-btn" onclick="removeSlide('${slide.id}')">Remove</button>` : ''}`;
-                container.appendChild(slideDiv);
+
+            slideshow.forEach((story, index) => {
+                const storyDiv = document.createElement('div');
+                storyDiv.className = 'story-circle' + (index === currentStory ? ' active' : '');
+                storyDiv.onclick = () => goToStory(index);
+                
+                storyDiv.innerHTML = `
+                    ${isAdminMode ? `<button class="remove-story-btn" onclick="event.stopPropagation(); removeStory('${story.id}')">×</button>` : ''}
+                    <div class="story-ring">
+                        <div class="story-image-wrapper">
+                            <img src="${story.imageUrl}" class="story-image" alt="Story">
+                        </div>
+                    </div>
+                `;
+                wrapper.appendChild(storyDiv);
             });
-            if (slideshow.length > 1) document.getElementById('slideControls').style.display = 'flex';
+
+            if (slideshow.length > 1) {
+                document.getElementById('storyControls').style.display = 'flex';
+            }
+
+            updateStoryPosition();
         }
 
-        function startSlideshow() {
-            if (slideInterval) clearInterval(slideInterval);
-            if (slideshow.length > 1) slideInterval = setInterval(() => changeSlide(1), 4000);
+        function updateStoryPosition() {
+            const stories = document.querySelectorAll('.story-circle');
+            stories.forEach((story, index) => {
+                story.classList.toggle('active', index === currentStory);
+            });
         }
-        function changeSlide(direction) {
-            const slides = document.querySelectorAll('.slide');
-            if (slides.length === 0) return;
-            slides[currentSlide].classList.remove('active');
-            currentSlide = (currentSlide + direction + slides.length) % slides.length;
-            slides[currentSlide].classList.add('active');
+
+        function goToStory(index) {
+            currentStory = index;
+            updateStoryPosition();
+        }
+
+        function changeStory(direction) {
+            if (slideshow.length === 0) return;
+            currentStory = (currentStory + direction + slideshow.length) % slideshow.length;
+            updateStoryPosition();
+        }
+
+        function startStoryAutoplay() {
+            if (storyInterval) clearInterval(storyInterval);
+            if (slideshow.length > 1) {
+                storyInterval = setInterval(() => changeStory(1), 4000);
+            }
         }
 
         async function uploadSlideshow() {
             if (!isAdminMode) return;
             const file = document.getElementById('slideUpload').files[0];
             const errorDiv = document.getElementById('slideUploadError');
-            if (!file) { errorDiv.innerText = "Please select an image."; return; }
+            if (!file) { 
+                errorDiv.innerText = "Please select an image."; 
+                return; 
+            }
             errorDiv.innerText = "";
             const btn = document.getElementById('slideUploadBtn');
             btn.textContent = 'Uploading...';
             btn.disabled = true;
+            
             try {
                 const url = await uploadToImgBB(file);
                 const slideData = { imageUrl: url, order: slideshow.length + 1 };
-                const response = await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow.json`, { method: 'POST', body: JSON.stringify(slideData) });
+                const response = await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow.json`, { 
+                    method: 'POST', 
+                    body: JSON.stringify(slideData) 
+                });
                 const result = await response.json();
                 slideshow.push({ id: result.name, ...slideData });
                 renderSlideshow();
-                btn.textContent = '➕ Add Slideshow Image';
+                btn.textContent = '➕ Add Story';
                 btn.disabled = false;
                 document.getElementById('slideUpload').value = '';
-                errorDiv.innerText = "✅ Slide added successfully!";
+                errorDiv.innerText = "✅ Story added!";
                 setTimeout(() => errorDiv.innerText = "", 3000);
             } catch (error) {
                 errorDiv.innerText = "Upload failed: " + error.message;
-                btn.textContent = '➕ Add Slideshow Image';
+                btn.textContent = '➕ Add Story';
                 btn.disabled = false;
             }
         }
 
-        async function removeSlide(slideId) {
-            if (!isAdminMode || !confirm('Remove this slide?')) return;
+        async function removeStory(storyId) {
+            if (!isAdminMode || !confirm('Remove this story?')) return;
             try {
-                await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow/${slideId}.json`, { method: 'DELETE' });
-                slideshow = slideshow.filter(s => s.id !== slideId);
-                currentSlide = 0;
+                await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow/${storyId}.json`, { method: 'DELETE' });
+                slideshow = slideshow.filter(s => s.id !== storyId);
+                currentStory = 0;
                 renderSlideshow();
-            } catch (error) { alert('Failed to remove slide: ' + error.message); }
+            } catch (error) { 
+                alert('Failed to remove story: ' + error.message); 
+            }
         }
 
+        // Post Modal Functions
         function showCreatePostModal() {
             if (!isAdminMode) return;
-            editingPostId = null;
             document.getElementById('postModalTitle').textContent = 'Create New Post';
-            document.getElementById('postHeading').value = '';
+            document.getElementById('profileName').value = '';
             document.getElementById('postCaption').value = '';
-            document.getElementById('profilePicUrl').value = '';
-            document.getElementById('imageUrl').value = '';
-            document.getElementById('videoUrl').value = '';
             document.getElementById('useRealTime').checked = true;
             document.getElementById('customTimestamp').value = '';
-            document.getElementById('mediaType').value = 'image';
-            changeMediaType();
+            document.getElementById('profilePhotoUpload').value = '';
+            document.getElementById('postImageUpload').value = '';
+            document.getElementById('profilePhotoPreview').style.display = 'none';
+            document.getElementById('postImagePreview').style.display = 'none';
+            document.getElementById('profilePhotoStatus').textContent = '';
+            document.getElementById('postImageStatus').textContent = '';
+            uploadedProfilePhotoUrl = null;
+            uploadedPostImageUrl = null;
+            toggleCustomTime();
             document.getElementById('postModal').classList.add('active');
         }
-        function closePostModal() { document.getElementById('postModal').classList.remove('active'); editingPostId = null; }
-        function changeMediaType() {
-            const mt = document.getElementById('mediaType').value;
-            document.getElementById('imageUrlGroup').style.display = mt === 'image' ? 'block' : 'none';
-            document.getElementById('videoUrlGroup').style.display = mt !== 'image' ? 'block' : 'none';
+
+        function closePostModal() { 
+            document.getElementById('postModal').classList.remove('active'); 
         }
-        function toggleCustomTime() { document.getElementById('customTimeGroup').style.display = document.getElementById('useRealTime').checked ? 'none' : 'block'; }
+
+        function toggleCustomTime() { 
+            document.getElementById('customTimeGroup').style.display = 
+                document.getElementById('useRealTime').checked ? 'none' : 'block'; 
+        }
+
+        async function previewProfilePhoto() {
+            const file = document.getElementById('profilePhotoUpload').files[0];
+            const preview = document.getElementById('profilePhotoPreview');
+            const previewImg = document.getElementById('profilePhotoPreviewImg');
+            const status = document.getElementById('profilePhotoStatus');
+            
+            if (!file) return;
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            // Upload to ImgBB
+            status.innerHTML = 'Uploading... <span class="loading-spinner"></span>';
+            try {
+                uploadedProfilePhotoUrl = await uploadToImgBB(file);
+                status.innerHTML = '✅ Profile photo uploaded!';
+                status.style.color = '#4CAF50';
+            } catch (error) {
+                status.innerHTML = '❌ Upload failed: ' + error.message;
+                status.style.color = '#ff4444';
+                uploadedProfilePhotoUrl = null;
+            }
+        }
+
+        async function previewPostImage() {
+            const file = document.getElementById('postImageUpload').files[0];
+            const preview = document.getElementById('postImagePreview');
+            const previewImg = document.getElementById('postImagePreviewImg');
+            const status = document.getElementById('postImageStatus');
+            
+            if (!file) return;
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            // Upload to ImgBB
+            status.innerHTML = 'Uploading... <span class="loading-spinner"></span>';
+            try {
+                uploadedPostImageUrl = await uploadToImgBB(file);
+                status.innerHTML = '✅ Post image uploaded!';
+                status.style.color = '#4CAF50';
+            } catch (error) {
+                status.innerHTML = '❌ Upload failed: ' + error.message;
+                status.style.color = '#ff4444';
+                uploadedPostImageUrl = null;
+            }
+        }
 
         async function submitPost() {
             if (!isAdminMode) return;
-            const heading = document.getElementById('postHeading').value.trim();
+            
+            const profileName = document.getElementById('profileName').value.trim();
             const caption = document.getElementById('postCaption').value.trim();
-            const mediaType = document.getElementById('mediaType').value;
-            let mediaUrl = '';
-            if (mediaType === 'image') {
-                mediaUrl = document.getElementById('imageUrl').value.trim();
-            } else {
-                mediaUrl = document.getElementById('videoUrl').value.trim();
+            
+            if (!profileName || !caption) {
+                alert('Please fill in profile name and caption');
+                return;
             }
-            const profilePicUrl = document.getElementById('profilePicUrl').value.trim();
-            if (!heading || !mediaUrl || !caption) { alert('Please fill all required fields (heading, media URL, caption)'); return; }
-            const timestamp = document.getElementById('useRealTime').checked ? Date.now() : new Date(document.getElementById('customTimestamp').value).getTime();
+
+            if (!uploadedPostImageUrl) {
+                alert('Please upload a post image');
+                return;
+            }
+
+            const timestamp = document.getElementById('useRealTime').checked ? 
+                Date.now() : 
+                new Date(document.getElementById('customTimestamp').value).getTime();
+
             const postData = {
-                username: heading,
-                userAvatar: profilePicUrl || 'https://via.placeholder.com/50/FFD700/000000?text=User',
-                mediaUrl: mediaUrl,
-                mediaType: mediaType,
+                username: profileName,
+                userAvatar: uploadedProfilePhotoUrl || 'https://via.placeholder.com/150/FFD700/000000?text=' + profileName.charAt(0).toUpperCase(),
+                imageUrl: uploadedPostImageUrl,
                 caption: caption,
                 likes: 0,
-                likedBy: [],
                 comments: {},
                 pinned: false,
                 timestamp: timestamp
             };
+
             try {
-                const response = await fetch(`${FIREBASE_CONFIG.databaseURL}/posts.json`, { method: 'POST', body: JSON.stringify(postData) });
+                const btn = document.getElementById('submitPostBtn');
+                btn.textContent = 'Posting...';
+                btn.disabled = true;
+
+                const response = await fetch(`${FIREBASE_CONFIG.databaseURL}/posts.json`, { 
+                    method: 'POST', 
+                    body: JSON.stringify(postData) 
+                });
                 const result = await response.json();
                 posts.push({ id: result.name, ...postData });
                 renderPosts();
                 closePostModal();
-            } catch (error) { alert('Failed to create post: ' + error.message); }
+                
+                btn.textContent = 'Post';
+                btn.disabled = false;
+            } catch (error) { 
+                alert('Failed to create post: ' + error.message);
+                document.getElementById('submitPostBtn').textContent = 'Post';
+                document.getElementById('submitPostBtn').disabled = false;
+            }
         }
 
+        // Posts Functions
         async function loadPosts() {
             try {
                 const response = await fetch(`${FIREBASE_CONFIG.databaseURL}/posts.json`);
                 const data = await response.json();
-                if (data) posts = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+                if (data) {
+                    posts = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+                }
                 renderPosts();
-            } catch (error) { console.error(error); }
+            } catch (error) { 
+                console.error(error); 
+            }
         }
 
         function renderPosts() {
             const container = document.getElementById('feedContainer');
             const emptyFeed = document.getElementById('emptyFeed');
-            if (posts.length === 0) { emptyFeed.style.display = 'block'; emptyFeed.textContent = 'No posts yet.' + (isAdminMode ? ' Create your first post!' : ''); container.innerHTML = ''; return; }
+            
+            if (posts.length === 0) { 
+                emptyFeed.style.display = 'block'; 
+                emptyFeed.textContent = 'No posts yet.' + (isAdminMode ? ' Create your first post!' : ''); 
+                return; 
+            }
+            
             emptyFeed.style.display = 'none';
-            const sortedPosts = [...posts].sort((a,b) => b.timestamp - a.timestamp);
-            container.innerHTML = sortedPosts.map(post => `
-                <div class="post">
-                    <div class="post-header">
-                        <div class="post-user"><img src="${post.userAvatar}" class="post-avatar"><div><div class="post-username">${escapeHtml(post.username)}</div><div class="post-time">${formatTimestamp(post.timestamp)}</div></div></div>
-                        ${isAdminMode ? `<div class="post-actions-top"><span class="action-icon" onclick="editPost('${post.id}')">✏️</span><span class="action-icon delete-icon" onclick="deletePost('${post.id}')">🗑️</span></div>` : ''}
+            const sortedPosts = [...posts].sort((a, b) => b.timestamp - a.timestamp);
+            
+            container.innerHTML = sortedPosts.map(post => {
+                const commentsArray = post.comments ? Object.keys(post.comments).map(k => ({id: k, ...post.comments[k]})) : [];
+                const commentsCount = commentsArray.length;
+                
+                return `
+                    <div class="post">
+                        <div class="post-header">
+                            <div class="post-user">
+                                <img src="${post.userAvatar}" class="post-avatar" alt="${escapeHtml(post.username)}">
+                                <div class="post-user-info">
+                                    <div class="post-username">${escapeHtml(post.username)}</div>
+                                    <div class="post-time">${formatTimestamp(post.timestamp)}</div>
+                                </div>
+                            </div>
+                            ${isAdminMode ? `
+                                <div class="post-menu">
+                                    <span class="post-menu-icon delete-icon" onclick="deletePost('${post.id}')">🗑️</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="post-image-container">
+                            <img src="${post.imageUrl}" class="post-image" alt="Post">
+                        </div>
+                        
+                        <div class="post-actions">
+                            <button class="action-btn" onclick="likePost('${post.id}')">
+                                <span class="action-icon-main like-icon ${post.likes > 0 ? 'liked' : ''}">
+                                    ${post.likes > 0 ? '❤️' : '🤍'}
+                                </span>
+                            </button>
+                            <button class="action-btn" onclick="toggleComments('${post.id}')">
+                                <span class="action-icon-main comment-icon">💬</span>
+                            </button>
+                            ${isAdminMode ? `
+                                <button class="action-btn" onclick="pinPost('${post.id}')">
+                                    <span class="action-icon-main pin-icon ${post.pinned ? 'pinned' : ''}">📌</span>
+                                </button>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="post-likes">
+                            <span class="likes-count">${post.likes} likes</span>
+                        </div>
+                        
+                        <div class="post-caption">
+                            <span class="caption-username">${escapeHtml(post.username)}</span>
+                            <span class="caption-text">${escapeHtml(post.caption)}</span>
+                        </div>
+                        
+                        <div class="post-comments">
+                            ${commentsCount > 0 ? `
+                                <div class="view-comments" onclick="toggleComments('${post.id}')">
+                                    View all ${commentsCount} comment${commentsCount !== 1 ? 's' : ''}
+                                </div>
+                            ` : ''}
+                            
+                            <div class="comments-list" id="comments-${post.id}">
+                                ${commentsArray.length > 0 ? commentsArray.map(c => `
+                                    <div class="comment-item">
+                                        <div class="comment-content-wrapper">
+                                            <span class="comment-user">${escapeHtml(c.username)}</span>
+                                            <span class="comment-text-content">${escapeHtml(c.text)}</span>
+                                            <div class="comment-timestamp">${formatTimestamp(c.timestamp)}</div>
+                                        </div>
+                                        ${isAdminMode ? `
+                                            <span class="comment-delete-btn" onclick="deleteComment('${post.id}', '${c.id}')">🗑️</span>
+                                        ` : ''}
+                                    </div>
+                                `).join('') : '<div class="no-comments-yet">No comments yet.</div>'}
+                            </div>
+                        </div>
+                        
+                        ${isAdminMode ? `
+                            <div class="add-comment" id="add-comment-${post.id}">
+                                <div class="comment-input-wrapper">
+                                    <input type="text" class="comment-input" id="comment-input-${post.id}" 
+                                           placeholder="Add a comment..." 
+                                           onkeypress="if(event.key==='Enter') addComment('${post.id}')">
+                                    <button class="comment-post-btn" onclick="addComment('${post.id}')">Post</button>
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
-                    <div class="post-media">${post.mediaType==='image'?`<img src="${post.mediaUrl}" onerror="this.style.display='none'">`:post.mediaType==='youtube'?`<iframe src="${getYoutubeEmbedUrl(post.mediaUrl)}" allowfullscreen></iframe>`:`<div class="instagram-link"><a href="${post.mediaUrl}" target="_blank">📸 View on Instagram</a></div>`}</div>
-                    <div class="post-content">
-                        <div class="post-interactions"><button class="interaction-btn" onclick="likePost('${post.id}')"><span class="interaction-icon ${post.likedBy?.includes('guest')?'liked':''}">${post.likedBy?.includes('guest')?'❤️':'🤍'}</span><span>${post.likes||0}</span></button><button class="interaction-btn" onclick="toggleComments('${post.id}')"><span class="interaction-icon">💬</span><span>${getCommentsCount(post.comments)}</span></button><button class="interaction-btn" onclick="pinPost('${post.id}')"><span class="interaction-icon ${post.pinned?'pinned':''}">📌</span></button></div>
-                        <div class="post-caption"><span class="caption-username">${escapeHtml(post.username)}</span> ${escapeHtml(post.caption)}</div>
-                        <div class="comments-section" id="comments-${post.id}" style="display:none;">${renderComments(post.id, post.comments)}</div>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
-        function renderComments(postId, comments) {
-            const commentsArray = comments ? Object.keys(comments).map(k=>({id:k,...comments[k]})) : [];
-            let html = commentsArray.length ? commentsArray.map(c=>`<div class="comment"><div class="comment-content"><span class="comment-username">${escapeHtml(c.username)}</span><span class="comment-text">${escapeHtml(c.text)}</span><div class="comment-time">${formatTimestamp(c.timestamp)}</div></div>${isAdminMode?`<span class="comment-delete" onclick="deleteComment('${postId}','${c.id}')">🗑️</span>`:''}</div>`).join('') : '<div class="no-comments">No comments yet.</div>';
-            html += `<div class="comment-input-section"><input type="text" class="comment-input" id="comment-input-${postId}" placeholder="Add a comment..." onkeypress="if(event.key==='Enter') addComment('${postId}')"><button class="comment-submit" onclick="addComment('${postId}')">Post</button></div>`;
-            return html;
+        function toggleComments(postId) {
+            const commentsList = document.getElementById(`comments-${postId}`);
+            const addComment = document.getElementById(`add-comment-${postId}`);
+            
+            if (commentsList.classList.contains('show')) {
+                commentsList.classList.remove('show');
+                if (addComment) addComment.classList.remove('show');
+            } else {
+                commentsList.classList.add('show');
+                if (addComment) addComment.classList.add('show');
+            }
         }
-        function getCommentsCount(c) { return c ? Object.keys(c).length : 0; }
-        function toggleComments(id) { const el=document.getElementById(`comments-${id}`); if(el) el.style.display=el.style.display==='none'?'block':'none'; }
-        async function likePost(id) { const p=posts.find(p=>p.id===id); if(!p)return; const liked=p.likedBy?.includes('guest'); const newBy=liked?(p.likedBy||[]).filter(i=>i!=='guest'):[...(p.likedBy||[]),'guest']; await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${id}.json`,{method:'PATCH',body:JSON.stringify({likes:liked?(p.likes-1):(p.likes+1),likedBy:newBy})}); const idx=posts.findIndex(p=>p.id===id); posts[idx].likes=liked?(p.likes-1):(p.likes+1); posts[idx].likedBy=newBy; renderPosts(); }
-        async function addComment(postId){ const input=document.getElementById(`comment-input-${postId}`); const text=input.value.trim(); if(!text)return; const commentData={username:"Fan",text,timestamp:Date.now()}; const resp=await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}/comments.json`,{method:'POST',body:JSON.stringify(commentData)}); const result=await resp.json(); const p=posts.find(p=>p.id===postId); if(!p.comments)p.comments={}; p.comments[result.name]=commentData; renderPosts(); document.getElementById(`comments-${postId}`).style.display='block'; input.value=''; }
-        async function deleteComment(postId,commentId){ if(!isAdminMode||!confirm('Delete comment?'))return; await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}/comments/${commentId}.json`,{method:'DELETE'}); delete posts.find(p=>p.id===postId).comments[commentId]; renderPosts(); }
-        async function pinPost(id){ if(!isAdminMode)return; const p=posts.find(p=>p.id===id); const np=!p.pinned; await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${id}.json`,{method:'PATCH',body:JSON.stringify({pinned:np})}); posts.find(p=>p.id===id).pinned=np; renderPosts(); }
-        async function deletePost(id){ if(!isAdminMode||!confirm('Delete post?'))return; await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${id}.json`,{method:'DELETE'}); posts=posts.filter(p=>p.id!==id); renderPosts(); }
-        function editPost(id){ alert('Edit feature coming soon'); }
-        function formatTimestamp(ts){ const d=new Date(ts); return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
-        function getYoutubeEmbedUrl(url){ const vid=url.split('v=')[1]?.split('&')[0]||url.split('/').pop(); return `https://www.youtube.com/embed/${vid}`; }
-        function escapeHtml(str){ if(!str)return ''; return str.replace(/[&<>]/g,function(m){if(m==='&')return'&amp;';if(m==='<')return'&lt;';if(m==='>')return'&gt;';return m;}); }
+
+        async function likePost(postId) {
+            const post = posts.find(p => p.id === postId);
+            if (!post) return;
+            
+            const newLikes = post.likes + 1;
+            
+            try {
+                await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ likes: newLikes })
+                });
+                
+                const postIndex = posts.findIndex(p => p.id === postId);
+                posts[postIndex].likes = newLikes;
+                renderPosts();
+            } catch (error) {
+                console.error('Failed to like post:', error);
+            }
+        }
+
+        async function addComment(postId) {
+            if (!isAdminMode) return;
+            
+            const input = document.getElementById(`comment-input-${postId}`);
+            const text = input.value.trim();
+            
+            if (!text) return;
+            
+            const commentData = {
+                username: "Admin",
+                text: text,
+                timestamp: Date.now()
+            };
+            
+            try {
+                const response = await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}/comments.json`, {
+                    method: 'POST',
+                    body: JSON.stringify(commentData)
+                });
+                const result = await response.json();
+                
+                const post = posts.find(p => p.id === postId);
+                if (!post.comments) post.comments = {};
+                post.comments[result.name] = commentData;
+                
+                renderPosts();
+                
+                // Auto-open comments after adding
+                setTimeout(() => {
+                    const commentsList = document.getElementById(`comments-${postId}`);
+                    const addComment = document.getElementById(`add-comment-${postId}`);
+                    if (commentsList) commentsList.classList.add('show');
+                    if (addComment) addComment.classList.add('show');
+                }, 100);
+            } catch (error) {
+                alert('Failed to add comment: ' + error.message);
+            }
+        }
+
+        async function deleteComment(postId, commentId) {
+            if (!isAdminMode || !confirm('Delete this comment?')) return;
+            
+            try {
+                await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}/comments/${commentId}.json`, {
+                    method: 'DELETE'
+                });
+                
+                const post = posts.find(p => p.id === postId);
+                delete post.comments[commentId];
+                renderPosts();
+            } catch (error) {
+                alert('Failed to delete comment: ' + error.message);
+            }
+        }
+
+        async function pinPost(postId) {
+            if (!isAdminMode) return;
+            
+            const post = posts.find(p => p.id === postId);
+            const newPinned = !post.pinned;
+            
+            try {
+                await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ pinned: newPinned })
+                });
+                
+                posts.find(p => p.id === postId).pinned = newPinned;
+                renderPosts();
+            } catch (error) {
+                alert('Failed to pin post: ' + error.message);
+            }
+        }
+
+        async function deletePost(postId) {
+            if (!isAdminMode || !confirm('Delete this post?')) return;
+            
+            try {
+                await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, {
+                    method: 'DELETE'
+                });
+                
+                posts = posts.filter(p => p.id !== postId);
+                renderPosts();
+            } catch (error) {
+                alert('Failed to delete post: ' + error.message);
+            }
+        }
+
+        // Utility Functions
+        function formatTimestamp(timestamp) {
+            const now = Date.now();
+            const diff = now - timestamp;
+            const seconds = Math.floor(diff / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+            
+            if (seconds < 60) return 'just now';
+            if (minutes < 60) return `${minutes}m ago`;
+            if (hours < 24) return `${hours}h ago`;
+            if (days < 7) return `${days}d ago`;
+            
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
     </script>
 </body>
 </html>
