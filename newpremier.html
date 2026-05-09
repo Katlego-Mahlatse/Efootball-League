@@ -3,32 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Premier League · eFootball 412</title>
+  <title>eFootball 412 · Premier League Hub</title>
+  <!-- Firebase SDKs (Compat for easy Realtime DB) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     body {
       background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 100%);
       font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
       padding: 0;
-      color: #f5f0ff;
+      color: #1a1a1a;
     }
 
+    /* Gold / Black theme (applied to cards, navbar) */
     .gold-navbar {
-      background: linear-gradient(135deg, #d4af37, #f5d742);
+      background: linear-gradient(135deg, #f5d742, #d4af37);
       padding: 0.4rem 1.2rem;
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       align-items: center;
-      gap: 0.8rem;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       position: sticky;
       top: 0;
       z-index: 100;
     }
 
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
     .hamburger-btn {
-      background: #6a3bb5;
+      background: #1a1a1a;
       width: 36px;
       height: 36px;
       border-radius: 50%;
@@ -39,344 +52,403 @@
       gap: 4px;
       cursor: pointer;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      transition: transform 0.2s, background 0.2s;
+      transition: transform 0.2s;
       border: 1.5px solid #f5d742;
     }
-    .hamburger-btn:hover { transform: scale(1.05); background: #7e4acf; }
-    .hamburger-btn span { display: block; width: 18px; height: 2.5px; background-color: #f5d742; border-radius: 2px; }
+    .hamburger-btn span {
+      display: block;
+      width: 18px;
+      height: 2.5px;
+      background-color: #f5d742;
+      border-radius: 2px;
+    }
+
+    /* Admin mode badge */
+    .admin-badge {
+      background: #ef4444;
+      color: white;
+      padding: 0.2rem 0.8rem;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
 
     .modal-overlay {
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.5);
+      background-color: rgba(0,0,0,0.7);
       z-index: 200;
       visibility: hidden;
-      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .modal-overlay.active { visibility: visible; pointer-events: auto; }
-
+    .modal-overlay.active {
+      visibility: visible;
+      pointer-events: auto;
+    }
     .modal-content {
-      position: absolute;
-      top: 60px; right: 20px;
-      background: linear-gradient(135deg, #2d1b4e, #1f0f3a);
-      border: 2px solid #f5d742;
+      background: #f5d742;
+      border: 2px solid #1a1a1a;
       border-radius: 1.2rem;
       padding: 1rem 1.2rem;
-      min-width: 200px;
+      min-width: 260px;
       text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-      animation: fadeInDown 0.2s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
     }
-    @keyframes fadeInDown {
-      from { transform: translateY(-15px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+    .modal-content h3 {
+      color: #1a1a1a;
+      border-bottom: 2px solid #1a1a1a;
+      display: inline-block;
+      padding-bottom: 0.2rem;
     }
-    .modal-content h3 { font-size: 1.1rem; color: #f5d742; margin-bottom: 0.8rem; font-weight: 800; border-bottom: 1px solid #f5d742; display: inline-block; padding-bottom: 0.2rem; }
-    .modal-options { display: flex; flex-direction: column; gap: 0.6rem; margin: 0.8rem 0; }
+    .modal-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin: 0.8rem 0;
+    }
     .modal-option {
-      background: rgba(106,59,181,0.3);
+      background: rgba(0,0,0,0.1);
       padding: 0.4rem 0.8rem;
       border-radius: 40px;
-      text-decoration: none;
-      color: #f5d742;
+      color: #1a1a1a;
       font-weight: 700;
-      font-size: 0.8rem;
-      transition: all 0.2s;
-      border: 1px solid #f5d742;
-      display: block;
+      border: 1px solid #1a1a1a;
       cursor: pointer;
     }
-    .modal-option:hover { background: #6a3bb5; transform: translateX(3px); }
-    .close-modal { background: #6a3bb5; color: #f5d742; border: none; padding: 0.3rem 0.9rem; border-radius: 30px; font-weight: bold; cursor: pointer; margin-top: 0.5rem; font-size: 0.7rem; }
-    .close-modal:hover { background: #7e4acf; }
+    .modal-option:hover {
+      background: #1a1a1a;
+      color: #f5d742;
+    }
+    .close-modal {
+      background: #1a1a1a;
+      color: #f5d742;
+      border: none;
+      padding: 0.3rem 0.9rem;
+      border-radius: 30px;
+      cursor: pointer;
+    }
 
-    .dashboard { max-width: 1400px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .dashboard {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
 
-    .slideshow-container { position: relative; text-align: center; margin-bottom: 2.5rem; }
-    .slideshow-img { max-width: 100%; height: auto; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-    .dots-container { text-align: center; margin-top: 0.8rem; position: absolute; bottom: 12px; left: 0; right: 0; }
-    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #f5d742; margin: 0 4px; cursor: pointer; }
-    .dot.active { background-color: #6a3bb5; }
+    /* Slideshow */
+    .slideshow-container {
+      position: relative;
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .slideshow-img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 1.5rem;
+      border: 2px solid #f5d742;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    .dots-container {
+      text-align: center;
+      margin-top: 0.8rem;
+    }
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #1a1a1a;
+      margin: 0 4px;
+      cursor: pointer;
+    }
+    .dot.active {
+      background-color: #f5d742;
+    }
 
+    /* Cards – gold theme */
     .card {
-      background: rgba(45, 25, 75, 0.85);
-      backdrop-filter: blur(10px);
+      background: #f5d742;
       border-radius: 2rem;
-      border: 1px solid rgba(245, 215, 66, 0.4);
+      border: 2px solid #1a1a1a;
       overflow: hidden;
       margin-bottom: 1.5rem;
     }
-
     .card-header {
       padding: 1.2rem 1.8rem;
-      background: rgba(30, 15, 55, 0.9);
-      border-bottom: 2px solid #f5d742;
+      background: #d4af37;
+      border-bottom: 2px solid #1a1a1a;
       display: flex;
-      align-items: center;
       justify-content: space-between;
       cursor: pointer;
     }
-    .card-header-left {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
+    .card-header-left h2 {
+      font-size: 1.6rem;
+      color: #1a1a1a;
     }
-    .card-header-left h2 { font-size: 1.6rem; font-weight: 700; color: #f5e6ff; }
+    .toggle-icon {
+      font-size: 1.3rem;
+      color: #1a1a1a;
+    }
+    .card-content {
+      transition: max-height 0.4s ease-out;
+      max-height: 2000px;
+      overflow: hidden;
+    }
+    .card-content.collapsed {
+      max-height: 0;
+    }
 
     .three-dot-menu {
       background: none;
       border: none;
-      color: #f5d742;
       font-size: 1.8rem;
       cursor: pointer;
-      line-height: 1;
-      padding: 0 0.2rem;
-      transition: transform 0.1s;
-      margin-left: auto;
+      color: #1a1a1a;
     }
-    .three-dot-menu:hover { transform: scale(1.1); }
-
     .popup-menu {
       position: absolute;
-      background: linear-gradient(135deg, #2d1b4e, #1f0f3a);
-      border: 1px solid #f5d742;
+      background: #f5d742;
+      border: 1px solid #1a1a1a;
       border-radius: 1rem;
       padding: 0.5rem 0;
-      min-width: 160px;
+      min-width: 140px;
       z-index: 150;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      backdrop-filter: blur(12px);
     }
     .popup-menu div {
       padding: 0.5rem 1rem;
       cursor: pointer;
-      color: #f5e6ff;
-      transition: background 0.1s;
-      font-size: 0.85rem;
+      color: #1a1a1a;
     }
-    .popup-menu div:hover { background: rgba(245, 215, 66, 0.2); }
-
-    .toggle-icon { font-size: 1.3rem; color: #f5d742; }
-
-    .card-content { transition: max-height 0.4s ease-out; max-height: 2000px; overflow: hidden; }
-    .card-content.collapsed { max-height: 0; }
+    .popup-menu div:hover {
+      background: rgba(0,0,0,0.1);
+    }
 
     .filter-container {
       display: flex;
       gap: 1rem;
       padding: 1rem 1.2rem;
-      background: rgba(30, 15, 55, 0.6);
-      border-bottom: 1px solid rgba(245, 215, 66, 0.3);
+      background: rgba(0,0,0,0.1);
       flex-wrap: wrap;
     }
-    .filter-input {
-      background: rgba(45, 25, 75, 0.9);
+    .filter-input, .filter-select {
+      background: #1a1a1a;
       border: 1px solid #f5d742;
       border-radius: 30px;
       padding: 0.5rem 1rem;
-      color: #f5e6ff;
-      font-size: 0.8rem;
-      outline: none;
-      width: 220px;
+      color: #f5d742;
     }
-    .filter-input::placeholder { color: #d4baff; }
 
-    .scrollable-table { max-height: 450px; overflow-y: auto; overflow-x: auto; }
-    .scrollable-table::-webkit-scrollbar { width: 8px; height: 8px; }
-    .scrollable-table::-webkit-scrollbar-track { background: rgba(30,15,55,0.5); border-radius: 10px; }
-    .scrollable-table::-webkit-scrollbar-thumb { background: #f5d742; border-radius: 10px; }
-
-    .stats-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    .stats-table th {
+    .stats-table, .inner-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .stats-table th, .inner-table th {
       text-align: left;
       padding: 0.9rem 0.8rem 0.7rem 1.2rem;
-      background: rgba(55, 35, 95, 0.7);
-      border-bottom: 1px solid #f5d742;
-      color: #f5e6ff;
+      background: #d4af37;
+      border-bottom: 2px solid #1a1a1a;
+      color: #1a1a1a;
     }
-    .stats-table td {
+    .stats-table td, .inner-table td {
       padding: 0.75rem 0.8rem 0.75rem 1.2rem;
-      border-bottom: 1px solid rgba(245, 215, 66, 0.2);
-      color: #f0eaff;
+      border-bottom: 1px solid rgba(0,0,0,0.2);
+      color: #1a1a1a;
       vertical-align: middle;
     }
 
-    .inner-table { width: 100%; border-collapse: collapse; }
-    .inner-table th {
-      text-align: left;
-      padding: 0.9rem 0.8rem 0.7rem 1.2rem;
-      background: rgba(55, 35, 95, 0.5);
-      border-bottom: 1px solid #f5d742;
-      color: #f5e6ff;
+    .team-name {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
     }
-    .inner-table td {
-      padding: 0.9rem 0.8rem 0.9rem 1.2rem;
-      border-bottom: 1px solid rgba(245, 215, 66, 0.2);
+    .team-icon, .inline-team-icon {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+    }
+    .inline-team-icon {
+      width: 36px;
+      height: 36px;
       vertical-align: middle;
     }
 
-    .pos-with-bar { display: flex; align-items: center; gap: 6px; }
-    .vertical-bar { width: 4px; height: 18px; border-radius: 2px; display: inline-block; }
+    .pos-with-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .vertical-bar {
+      width: 4px;
+      height: 18px;
+      border-radius: 2px;
+      display: inline-block;
+    }
     .blue-bar-vertical { background-color: #3b82f6; }
     .orange-bar-vertical { background-color: #f97316; }
     .green-bar-vertical { background-color: #22c55e; }
 
-    .dashed-separator-gold { border-bottom: 2px dashed #d4af37 !important; }
-    .dashed-separator-white { border-bottom: 2px dashed #ffffff !important; }
-    .dashed-separator-red { border-bottom: 2px dashed #ef4444 !important; }
+    .champion-row {
+      animation: championGlow 1.5s infinite;
+      font-weight: 800;
+    }
+    @keyframes championGlow {
+      0% { background-color: rgba(245,215,66,0.3); }
+      50% { background-color: rgba(245,215,66,0.7); }
+      100% { background-color: rgba(245,215,66,0.3); }
+    }
 
-    .rank-cell { font-weight: 700; width: 60px; color: #f5d742; }
-    .pts-cell { font-weight: 800; color: #f5d742; text-align: center; }
-
-    .team-name { display: flex; align-items: center; gap: 12px; }
-    .team-icon { width: 44px; height: 44px; object-fit: contain; background: transparent; }
-    .team-icon-sm { width: 30px; height: 30px; object-fit: contain; vertical-align: middle; }
-    .inline-team-icon { width: 36px; height: 36px; object-fit: contain; vertical-align: middle; margin: 0 4px; display: inline-block; }
-
-    .fixture-icons { display: inline-flex; align-items: center; flex-wrap: nowrap; white-space: nowrap; gap: 4px; }
-
-    .form-circles { display: flex; gap: 4px; align-items: center; }
-    .circle-result { width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; }
+    .form-circles {
+      display: flex;
+      gap: 4px;
+    }
+    .circle-result {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: bold;
+    }
     .circle-win { background-color: #22c55e; color: white; }
     .circle-loss { background-color: #ef4444; color: white; }
     .circle-draw { background-color: #6b7280; color: white; }
     .circle-forfeit-win { background-color: #22c55e; color: white; }
     .circle-forfeit-loss { background-color: #ef4444; color: white; }
     .circle-forfeit-grey { background-color: #6b7280; color: white; }
-    .circle-blank { background-color: transparent; border: 1px solid #a0a0a0; color: transparent; }
 
-    .arrow-up { color: #22c55e; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
-    .arrow-down { color: #ef4444; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
-    .arrow-side { color: #f5d742; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
+    .arrow-up { color: #22c55e; font-size: 1.2rem; width: 24px; display: inline-block; }
+    .arrow-down { color: #ef4444; font-size: 1.2rem; width: 24px; display: inline-block; }
+    .arrow-side { color: #f5d742; font-size: 1.2rem; width: 24px; display: inline-block; }
 
     .legend-under-table {
       padding: 0.8rem 1.2rem;
-      background: rgba(30, 15, 55, 0.5);
+      background: rgba(0,0,0,0.1);
       display: flex;
-      flex-wrap: wrap;
       gap: 1.5rem;
       justify-content: center;
       font-size: 0.7rem;
     }
-    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
-    .legend-vertical-bar { width: 4px; height: 16px; border-radius: 2px; display: inline-block; }
-    .legend-blue { background-color: #3b82f6; }
-    .legend-orange { background-color: #f97316; }
-    .legend-green { background-color: #22c55e; }
-    .legend-dashed-white { display: inline-block; width: 20px; height: 2px; border-bottom: 2px dashed #ffffff; vertical-align: middle; }
-    .legend-text { color: #e6d5ff; }
-
-    .match-highlight { background: #3d2a6b; border-radius: 20px; padding: 0.2rem 0.8rem; display: inline-block; font-size: 0.8rem; color: #f5d742; }
-    .date-badge { font-size: 0.7rem; background: rgba(0,0,0,0.4); padding: 0.2rem 0.6rem; border-radius: 20px; }
-    .result-with-forfeit { display: flex; flex-direction: column; align-items: flex-start; }
-    .forfeit-text { font-size: 0.7rem; color: #f5d742; margin-top: 4px; }
-    .empty-message { text-align: center; padding: 2rem; color: #c4b0ff; font-style: italic; }
-
-    @media (max-width: 780px) {
-      .dashboard { padding: 1rem; }
-      .stats-table th, .stats-table td { padding: 0.6rem 0.5rem; font-size: 0.75rem; }
-      .card-header-left h2 { font-size: 1.3rem; }
-      .circle-result { width: 14px; height: 14px; font-size: 7px; }
-      .arrow-up, .arrow-down, .arrow-side { font-size: 1rem; width: 18px; }
-      .team-icon { width: 32px; height: 32px; }
-      .inline-team-icon { width: 28px; height: 28px; }
+    .edit-icon {
+      cursor: pointer;
+      margin-left: 8px;
+      font-size: 0.9rem;
+      background: #1a1a1a;
+      color: #f5d742;
+      padding: 0 6px;
+      border-radius: 20px;
+      display: inline-block;
+    }
+    .admin-edit-btn {
+      background: #1a1a1a;
+      color: #f5d742;
+      border: none;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+    .fixture-actions, .result-actions {
+      display: inline-flex;
+      gap: 6px;
+      margin-left: 12px;
+    }
+    .delete-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 2px 8px;
+      cursor: pointer;
+      font-size: 0.7rem;
+    }
+    .add-btn {
+      background: #22c55e;
+      color: #1a1a1a;
+      border: none;
+      border-radius: 20px;
+      padding: 4px 12px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .small-input {
+      width: 60px;
+      padding: 4px;
+      border-radius: 20px;
+      border: 1px solid #1a1a1a;
     }
   </style>
 </head>
 <body>
 
 <div class="gold-navbar">
-  <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
+  <div></div>
+  <div class="nav-right">
+    <div id="adminBadge" style="display:none;" class="admin-badge">ADMIN MODE</div>
+    <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
+  </div>
 </div>
 
 <div class="modal-overlay" id="modalOverlay">
-  <div class="modal-content">
-    <h3>TOURNAMENTS</h3>
-    <div class="modal-options">
-      <div class="modal-option" id="rulesBtn">RULES</div>
-      <div class="modal-option" id="playerTitlesBtn">PLAYER TITLES</div>
-      <div class="modal-option" id="logoutBtn">LOGOUT</div>
-    </div>
-    <button class="close-modal" id="closeModalBtn">CLOSE</button>
-  </div>
+  <div class="modal-content" id="modalContent"></div>
 </div>
 
 <div class="dashboard">
   <div class="slideshow-container">
-    <img id="slideshow-img" class="slideshow-img" src="images - 2026-04-19T121231.816.jpeg" alt="Slideshow">
+    <img id="slideshow-img" class="slideshow-img" src="" alt="Slideshow">
     <div class="dots-container" id="dotsContainer"></div>
   </div>
 
-  <!-- League Table -->
-  <div class="card" style="margin-bottom:2rem;">
+  <div class="card">
     <div class="card-header" style="cursor:default;">
-      <div class="card-header-left">
-        <h2>🏆 PREMIER LEAGUE TABLE</h2>
-        <button class="three-dot-menu" id="threeDotBtn">⋮</button>
-      </div>
+      <div class="card-header-left"><h2>🏆 PREMIER LEAGUE TABLE</h2></div>
+      <button class="three-dot-menu" id="threeDotBtn">⋮</button>
     </div>
     <div class="card-content">
       <div style="overflow-x:auto;">
         <table class="stats-table" id="leagueTable">
           <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th></tr></thead>
-          <tbody id="tableBody"></tbody>
+          <tbody id="leagueTableBody"></tbody>
         </table>
       </div>
       <div class="legend-under-table">
-        <span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span class="legend-text">UEFA Champions League</span></span>
-        <span class="legend-item"><span class="legend-vertical-bar legend-orange"></span><span class="legend-text">Europa League</span></span>
-        <span class="legend-item"><span class="legend-vertical-bar legend-green"></span><span class="legend-text">UEFA Conference League</span></span>
-        <span class="legend-item"><span class="legend-dashed-white"></span><span class="legend-text">FIFA Club World Cup</span></span>
+        <span><span class="vertical-bar blue-bar-vertical" style="display:inline-block;"></span> UCL</span>
+        <span><span class="vertical-bar orange-bar-vertical" style="display:inline-block;"></span> UEL</span>
+        <span><span class="vertical-bar green-bar-vertical" style="display:inline-block;"></span> UECL</span>
+        <span><span style="border-bottom:2px dashed #1a1a1a; width:20px; display:inline-block;"></span> FIFA CWC</span>
       </div>
     </div>
   </div>
 
-  <!-- Fixtures -->
   <div class="card">
-    <div class="card-header" id="fixturesHeader">
-      <div class="card-header-left"><h2>📅 FIXTURES</h2></div>
-      <div class="toggle-icon" id="fixturesToggleIcon">▶</div>
-    </div>
-    <div class="card-content collapsed" id="fixturesContent">
+    <div class="card-header" id="fixturesHeader"><div><h2>📅 FIXTURES</h2></div><div class="toggle-icon" id="fixturesToggleIcon">▼</div></div>
+    <div class="card-content" id="fixturesContent">
       <div class="filter-container">
-        <input type="text" id="fixtureSearch" class="filter-input" placeholder="🔍 Search team...">
+        <input type="text" id="searchInput" class="filter-input" placeholder="Search team...">
+        <select id="teamFilter" class="filter-select"><option value="">All Teams</option></select>
+        <div id="adminFixtureAdd" style="display:none;"><button class="add-btn" id="addFixtureBtn">+ Add Fixture</button></div>
       </div>
-      <div class="scrollable-table">
-        <table class="inner-table">
-          <thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead>
-          <tbody id="fixturesBody"></tbody>
-        </table>
-      </div>
+      <div class="scrollable-table"><table class="inner-table"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesTableBody"></tbody></table></div>
     </div>
   </div>
 
-  <!-- Results -->
   <div class="card">
-    <div class="card-header" id="resultsHeader">
-      <div class="card-header-left"><h2>📝 RESULTS</h2></div>
-      <div class="toggle-icon" id="resultsToggleIcon">▶</div>
-    </div>
-    <div class="card-content collapsed" id="resultsContent">
-      <div class="scrollable-table">
-        <table class="inner-table">
-          <thead><tr><th>Match</th><th>Match Day</th></tr></thead>
-          <tbody id="resultsBody"></tbody>
-        </table>
-      </div>
+    <div class="card-header" id="resultsHeader"><div><h2>📝 RESULTS</h2></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
+    <div class="card-content" id="resultsContent">
+      <div id="adminResultAdd" style="display:none; padding:0.5rem 1rem;"><button class="add-btn" id="addResultBtn">+ Add Result</button></div>
+      <div class="scrollable-table"><table class="inner-table"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsTableBody"></tbody></table></div>
     </div>
   </div>
 </div>
 
-<script type="importmap">
-  { "imports": { "firebase/app": "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js", "firebase/database": "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js", "firebase/auth": "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js" } }
-</script>
-<script type="module">
-  import { initializeApp } from "firebase/app";
-  import { getDatabase, ref, onValue } from "firebase/database";
-  import { getAuth, signOut } from "firebase/auth";
-
+<script>
+  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
     authDomain: "efootball-412.firebaseapp.com",
@@ -386,153 +458,98 @@
     messagingSenderId: "596548424249",
     appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
   };
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  const auth = getAuth(app);
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
 
-  const teamIcons = {
-    "Arsenal": "b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png",
-    "AC Milan": "44e0f58a-e5db-445b-9896-db22ea99b936.png",
-    "PSG": "4dea795d-a516-46ae-bd34-07a784693d80.png",
-    "Barcelona": "IMG_20260421_085117.jpg",
-    "Inter Milan": "IMG_20260421_092951.png",
-    "Atletico": "IMG_20260421_093024.png",
-    "Newcastle": "IMG_20260421_093046.png",
-    "Napoli": "IMG_20260421_100318.jpg",
-    "Chelsea": "IMG_20260421_100354.jpg",
-    "Dortmund": "01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg",
-    "Real Madrid": "21259ea4-042f-48ff-902f-1e776d27fe58.jpeg",
-    "Man City": "9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg",
-    "Liverpool": "269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg",
-    "Juventus": "IMG_20260421_151224.jpg"
-  };
+  // ---------- Global state ----------
+  let teamsData = [];         // [{ name, p, gd, pts, pos }]
+  let fixturesData = [];      // [{ md, date, home, away }]
+  let resultsData = [];       // [{ md, matchText }]
+  let last5Data = {};         // { teamName: [result strings] }
+  let teamIcons = {};         // { teamName: imageUrl }
+  let slideshowImages = [];
+  let slideshowDuration = 3000;
+  let currentSlideIdx = 0, slideInterval = null;
 
-  const playerMap = {
-    "Barcelona": "~Rea🫡",
-    "Inter Milan": "Mali",
-    "Dortmund": "~Qha we 🤍",
-    "Juventus": "Izu",
-    "Atletico": "~Stalker.",
-    "PSG": "~MJ",
-    "Napoli": "~PrettyBoy Tendancies. 👅",
-    "Real Madrid": "~Karabo",
-    "Arsenal": "Kath",
-    "AC Milan": "Tapz",
-    "Chelsea": "~Zazo",
-    "Man City": "gry",
-    "Liverpool": "🅿️",
-    "Newcastle": "~Oratile"
-  };
-
-  function getTeamIconHtml(team, cls = "inline-team-icon") {
-    const src = teamIcons[team];
-    return src ? `<img class="${cls}" src="${src}" alt="${team}">` : `<span>${team}</span>`;
-  }
-
-  // ─── State ───────────────────────────────────────────────────────────────
-  let teamsData = [];
-  let allResultsCache = [];
-  let fixturesData = [];
-  let resultsData = [];
-  let currentView = "team";
-  let showFormArrows = true;
+  let adminMode = false;
+  let currentView = "team";     // "team" or "player"
+  let showFormArrows = false;
   let showLast5 = true;
-  let popup = null;
+  let popupMenu = null;
 
-  // ─── Results helpers ─────────────────────────────────────────────────────
-  function getResultStatusForTeam(team, resultText) {
-    const lower = resultText.toLowerCase();
-    if (lower.includes("no contest") || lower.includes("f - f")) return "F";
-    const isForfeit = lower.includes("forfeit") || lower.includes("forfeited");
-    const parts = resultText.match(/([A-Za-z\s]+?)\s+(\d+)\s*[-–]\s*(\d+)\s+([A-Za-z\s]+)/);
-    if (parts) {
-      const home = parts[1].trim(), homeScore = parseInt(parts[2]), awayScore = parseInt(parts[3]), away = parts[4].trim();
-      if (home === team && homeScore > awayScore) return isForfeit ? "WF" : "W";
-      if (home === team && homeScore < awayScore) return isForfeit ? "LF" : "L";
-      if (away === team && awayScore > homeScore) return isForfeit ? "WF" : "W";
-      if (away === team && awayScore < homeScore) return isForfeit ? "LF" : "L";
-      if ((home === team || away === team) && homeScore === awayScore) return "D";
-    }
-    if (resultText.includes(`${team} `) && isForfeit) {
-      if (lower.includes("win")) return "WF";
-      if (lower.includes("loss")) return "LF";
-    }
-    return null;
+  // Player name mapping
+  const playerMap = {
+    "Arsenal": "Kath", "Liverpool": "🅿️", "Manchester City": "gry", "Chelsea": "~Zazo",
+    "Real Madrid": "~Karabo", "Barcelona": "~Rea🫡", "PSG": "~MJ", "Borussia Dortmund": "~Qhawe 🤍",
+    "Inter Milan": "Mali", "AC Milan": "Tapz", "Juventus": "Izu", "Atlético Madrid": "~Stalker.",
+    "Napoli": "~PrettyBoy Tendancies. 👅", "Newcastle United": "~Oratile"
+  };
+  function getDisplayName(team) {
+    if (currentView === "player") return playerMap[team] || team;
+    return team;
   }
 
-  function getTeamLast5(team) {
-    const teamResults = allResultsCache
-      .filter(r => r.matchText && r.matchText.includes(team))
-      .sort((a, b) => (b.md || 0) - (a.md || 0));
-    const statuses = teamResults.slice(0, 5).map(r => getResultStatusForTeam(team, r.matchText)).filter(Boolean);
-    while (statuses.length < 5) statuses.push(null);
-    return statuses.reverse();
+  // ---------- Helpers ----------
+  function normaliseTeam(n) {
+    const map = { "PSG":"PSG","FC Barcelona":"Barcelona","Atletico Madrid":"Atlético Madrid","Dortmund":"Borussia Dortmund","Man City":"Manchester City","Newcastle":"Newcastle United" };
+    return map[n] || n;
+  }
+  function getTeamIcon(team, cls="inline-team-icon") {
+    let url = teamIcons[team];
+    if (!url) return `<span>${team}</span>`;
+    return `<img class="${cls}" src="${url}" alt="${team}" onerror="this.remove();">`;
   }
 
+  // Last 5 helpers
+  function getLast5(team) { return (last5Data[team] || []).slice(-5).reverse(); }
   function getLatestArrow(team) {
-    const teamResults = allResultsCache
-      .filter(r => r.matchText && r.matchText.includes(team))
-      .sort((a, b) => (b.md || 0) - (a.md || 0));
-    if (!teamResults.length) return null;
-    const status = getResultStatusForTeam(team, teamResults[0].matchText);
-    if (status === "W" || status === "WF") return "up";
-    if (status === "L" || status === "LF") return "down";
-    if (status === "D") return "side";
+    let arr = last5Data[team] || [];
+    if (!arr.length) return null;
+    let last = arr[arr.length-1];
+    if (last === "W" || last === "WF") return "up";
+    if (last === "L" || last === "LF") return "down";
+    if (last === "D") return "side";
     return null;
   }
 
-  // ─── League Table ─────────────────────────────────────────────────────────
-  function renderLeagueTable() {
-    const tbody = document.getElementById('tableBody');
+  // Render league table
+  function renderTable() {
+    const tbody = document.getElementById("leagueTableBody");
     if (!tbody) return;
-    tbody.innerHTML = '';
-    const sorted = [...teamsData].sort((a, b) => b.pts - a.pts || b.gd - a.gd);
+    tbody.innerHTML = "";
+    const sorted = [...teamsData].sort((a,b) => b.pts - a.pts || b.gd - a.gd);
     sorted.forEach((team, idx) => {
       const row = tbody.insertRow();
-      const pos = idx + 1;
+      const pos = idx+1;
       let barClass = "";
       if (pos <= 4) barClass = "blue-bar-vertical";
       else if (pos <= 8) barClass = "orange-bar-vertical";
       else if (pos <= 12) barClass = "green-bar-vertical";
+      if (pos === 8) row.classList.add("dashed-separator-black");
+      if (pos === 1 && team.pts >= 65) row.classList.add("champion-row");
 
-      if (pos === 1) row.classList.add("dashed-separator-gold");
-      else if (pos === 8) row.classList.add("dashed-separator-white");
-      else if (pos === 12) row.classList.add("dashed-separator-red");
-
-      // Pos cell
-      const posCell = row.insertCell(0);
-      posCell.className = "rank-cell";
-      posCell.innerHTML = barClass
-        ? `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${pos}</div>`
-        : pos;
-
-      // Club cell
-      const displayName = currentView === "player" ? (playerMap[team.name] || team.name) : team.name;
-      let clubHtml = '';
+      let arrowHtml = "";
       if (showFormArrows) {
         const dir = getLatestArrow(team.name);
-        if (dir === "up") clubHtml += '<span class="arrow-up">↑</span> ';
-        else if (dir === "down") clubHtml += '<span class="arrow-down">↓</span> ';
-        else if (dir === "side") clubHtml += '<span class="arrow-side">→</span> ';
-        else clubHtml += '<span style="opacity:0.3;">—</span> ';
+        if (dir === "up") arrowHtml = '<span class="arrow-up">↑</span> ';
+        else if (dir === "down") arrowHtml = '<span class="arrow-down">↓</span> ';
+        else if (dir === "side") arrowHtml = '<span class="arrow-side">→</span> ';
+        else arrowHtml = '<span style="opacity:0.3;">—</span> ';
       }
-      clubHtml += getTeamIconHtml(team.name, "team-icon") + ' ' + displayName;
-      row.insertCell(1).innerHTML = `<div class="team-name">${clubHtml}</div>`;
-
-      row.insertCell(2).innerText = team.p || 0;
-      const gd = team.gd || 0;
-      row.insertCell(3).innerText = gd > 0 ? `+${gd}` : gd;
-      const ptsCell = row.insertCell(4);
-      ptsCell.className = "pts-cell";
-      ptsCell.innerText = team.pts || 0;
-
-      // Last 5 cell
+      const icon = getTeamIcon(team.name, "team-icon");
+      row.insertCell(0).innerHTML = barClass ? `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${pos}</div>` : pos;
+      row.insertCell(1).innerHTML = `<div class="team-name">${arrowHtml} ${icon} ${getDisplayName(team.name)} ${adminMode ? `<span class="edit-icon" data-team="${team.name}" data-action="editTeam">✏️</span>` : ''}</div>`;
+      row.insertCell(2).innerHTML = adminMode ? `<input type="number" class="small-input p-input" data-team="${team.name}" value="${team.p}" style="width:50px;">` : team.p;
+      row.insertCell(3).innerHTML = adminMode ? `<input type="number" class="small-input gd-input" data-team="${team.name}" value="${team.gd}" style="width:60px;">` : (team.gd>0 ? `+${team.gd}` : team.gd);
+      row.insertCell(4).innerHTML = adminMode ? `<input type="number" class="small-input pts-input" data-team="${team.name}" value="${team.pts}" style="width:50px;">` : `<span class="pts-cell">${team.pts}</span>`;
+      
       const last5Cell = row.insertCell(5);
       if (showLast5) {
-        const last5 = getTeamLast5(team.name);
+        const last5Arr = getLast5(team.name);
         const container = document.createElement("div");
         container.className = "form-circles";
-        last5.forEach(res => {
+        last5Arr.forEach(res => {
           const circle = document.createElement("span");
           circle.className = "circle-result";
           if (res === "W") { circle.classList.add("circle-win"); circle.innerHTML = "✓"; }
@@ -545,157 +562,184 @@
           container.appendChild(circle);
         });
         last5Cell.appendChild(container);
+        if (adminMode) {
+          const editBtn = document.createElement("button");
+          editBtn.innerText = "✎";
+          editBtn.className = "admin-edit-btn";
+          editBtn.onclick = () => editLast5(team.name);
+          last5Cell.appendChild(editBtn);
+        }
       }
     });
+    // attach event listeners for inline edits if adminMode
+    if (adminMode) {
+      document.querySelectorAll(".p-input").forEach(inp => inp.addEventListener("change", (e) => updateTeamField(e.target.dataset.team, "p", parseInt(e.target.value))));
+      document.querySelectorAll(".gd-input").forEach(inp => inp.addEventListener("change", (e) => updateTeamField(e.target.dataset.team, "gd", parseInt(e.target.value))));
+      document.querySelectorAll(".pts-input").forEach(inp => inp.addEventListener("change", (e) => updateTeamField(e.target.dataset.team, "pts", parseInt(e.target.value))));
+      document.querySelectorAll("[data-action='editTeam']").forEach(btn => btn.addEventListener("click", (e) => editTeamName(btn.dataset.team)));
+    }
   }
 
-  // ─── Fixtures ─────────────────────────────────────────────────────────────
-  function renderFixtures() {
-    const search = (document.getElementById('fixtureSearch')?.value || '').toLowerCase();
-    const tbody = document.getElementById('fixturesBody');
-    tbody.innerHTML = '';
-    const filtered = fixturesData.filter(f =>
-      !search || f.home.toLowerCase().includes(search) || f.away.toLowerCase().includes(search)
-    );
-    if (!filtered.length) {
-      const r = tbody.insertRow(); r.insertCell(0).colSpan = 3;
-      r.cells[0].className = "empty-message"; r.cells[0].innerText = "No fixtures found.";
-      return;
-    }
+  async function updateTeamField(team, field, value) { await db.ref(`premier_league/teams/${team}/${field}`).set(value); }
+  async function editTeamName(oldName) { let newName = prompt("New team name:", oldName); if(newName && newName !== oldName) { await db.ref(`premier_league/teams/${newName}`).set({ ...teamsData.find(t=>t.name===oldName), name:newName }); await db.ref(`premier_league/teams/${oldName}`).remove(); } }
+  async function editLast5(team) {
+    let current = last5Data[team] || [];
+    let newStr = prompt(`Edit last 5 results (comma separated):\nW, L, D, WF, LF, F\nCurrent: ${current.join(",")}`, current.join(","));
+    if(newStr) { let arr = newStr.split(",").map(s=>s.trim()); await db.ref(`premier_league/last5/${team}`).set(arr); }
+  }
+
+  // Fixtures render
+  function renderFixtures(filter="", filterTeam="") {
+    const tbody = document.getElementById("fixturesTableBody");
+    if(!tbody) return;
+    tbody.innerHTML = "";
+    let filtered = fixturesData.filter(f => {
+      let match = (!filter || f.home.toLowerCase().includes(filter) || f.away.toLowerCase().includes(filter));
+      let teamMatch = (!filterTeam || f.home===filterTeam || f.away===filterTeam);
+      return match && teamMatch;
+    });
     filtered.forEach(f => {
       const row = tbody.insertRow();
-      row.insertCell(0).innerHTML = `<span class="date-badge">${f.date || ''}</span>`;
-      const homeIcon = getTeamIconHtml(f.home, "inline-team-icon");
-      const awayIcon = getTeamIconHtml(f.away, "inline-team-icon");
-      row.insertCell(1).innerHTML = `<div class="fixture-icons">${homeIcon}<span style="margin:0 8px; color:#f5d742; font-weight:700;">vs</span>${awayIcon}</div>`;
-      row.insertCell(2).innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px; color:#f5d742; font-size:0.8rem;">MD ${f.md}</span>`;
+      row.insertCell(0).innerHTML = `<span class="date-badge">${f.date||""}</span>`;
+      const homeIcon = getTeamIcon(f.home);
+      const awayIcon = getTeamIcon(f.away);
+      row.insertCell(1).innerHTML = `<div>${homeIcon} <strong>vs</strong> ${awayIcon}</div>`;
+      row.insertCell(2).innerHTML = `<span style="background:#1a1a1a; padding:0.2rem 0.7rem; border-radius:30px; color:#f5d742;">MD ${f.md}</span>${adminMode ? `<div class="fixture-actions"><button class="delete-btn" data-md="${f.md}" data-home="${f.home}" data-away="${f.away}">Delete</button></div>` : ''}`;
     });
+    if(adminMode) document.querySelectorAll(".delete-btn").forEach(btn => btn.addEventListener("click", async () => { await db.ref(`premier_league/fixtures/${btn.dataset.md}_${btn.dataset.home}_${btn.dataset.away}`).remove(); }));
   }
-
-  // ─── Results ──────────────────────────────────────────────────────────────
   function renderResults() {
-    const tbody = document.getElementById('resultsBody');
-    tbody.innerHTML = '';
-    const teamList = Object.keys(teamIcons);
+    const tbody = document.getElementById("resultsTableBody");
+    if(!tbody) return;
+    tbody.innerHTML = "";
     resultsData.forEach(r => {
-      let processed = r.matchText;
-      teamList.forEach(team => {
-        const regex = new RegExp(`\\b${team.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
-        processed = processed.replace(regex, getTeamIconHtml(team, "inline-team-icon") + ' ' + team);
-      });
       const row = tbody.insertRow();
-      const isForfeit = r.matchText.includes("Forfeit") || r.matchText.includes("No Contest") || r.matchText.includes("F - F");
-      if (isForfeit) {
-        let forfeitText = "Forfeit";
-        if (r.matchText.includes("No Contest") || r.matchText.includes("F - F")) forfeitText = "No Contest";
-        else if (r.matchText.includes("No Reply")) forfeitText = "Forfeited - No Reply";
-        else if (r.matchText.includes("on Agreement")) forfeitText = "Forfeited on Agreement";
-        row.insertCell(0).innerHTML = `<div class="result-with-forfeit"><strong>${processed}</strong><div class="forfeit-text">${forfeitText}</div></div>`;
-      } else {
-        row.insertCell(0).innerHTML = `<strong>${processed}</strong>`;
-      }
-      row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>`;
+      row.insertCell(0).innerHTML = `<strong>${r.matchText}</strong>`;
+      row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>${adminMode ? `<button class="delete-btn result-del" data-md="${r.md}" data-text="${r.matchText}">🗑️</button>` : ''}`;
     });
+    if(adminMode) document.querySelectorAll(".result-del").forEach(btn => btn.addEventListener("click", async () => { await db.ref(`premier_league/results/${btn.dataset.md}_${btn.dataset.text.slice(0,30)}`).remove(); }));
   }
 
-  // ─── Three-dot popup ──────────────────────────────────────────────────────
-  const threeDotBtn = document.getElementById('threeDotBtn');
-  function closePopup() { if (popup) { popup.remove(); popup = null; } }
-  threeDotBtn.addEventListener('click', (e) => {
+  // UI Helpers
+  function setupFilters() {
+    let teamsSet = new Set();
+    fixturesData.forEach(f=>{ teamsSet.add(f.home); teamsSet.add(f.away); });
+    const select = document.getElementById("teamFilter");
+    select.innerHTML = '<option value="">All Teams</option>';
+    Array.from(teamsSet).sort().forEach(t => { let opt = document.createElement("option"); opt.value=t; opt.textContent=t; select.appendChild(opt); });
+    document.getElementById("searchInput").addEventListener("input", () => renderFixtures(document.getElementById("searchInput").value, document.getElementById("teamFilter").value));
+    select.addEventListener("change", () => renderFixtures(document.getElementById("searchInput").value, select.value));
+  }
+  function setupCollapsible(headerId, contentId, iconId) {
+    const h=document.getElementById(headerId), c=document.getElementById(contentId), ic=document.getElementById(iconId);
+    if(!h||!c) return;
+    let collapsed=false;
+    h.addEventListener("click",()=>{ collapsed=!collapsed; if(collapsed){ c.classList.add("collapsed"); if(ic) ic.innerHTML="▶"; } else { c.classList.remove("collapsed"); if(ic) ic.innerHTML="▼"; } });
+  }
+
+  // Firebase listeners
+  function bindFirebase() {
+    db.ref('premier_league/teams').on('value', snap => {
+      let data = snap.val() || {};
+      teamsData = Object.entries(data).map(([name, val]) => ({ name, ...val }));
+      renderTable();
+    });
+    db.ref('premier_league/fixtures').on('value', snap => {
+      let data = snap.val() || {};
+      fixturesData = Object.values(data);
+      renderFixtures(document.getElementById("searchInput")?.value || "", document.getElementById("teamFilter")?.value || "");
+      setupFilters();
+    });
+    db.ref('premier_league/results').on('value', snap => {
+      let data = snap.val() || {};
+      resultsData = Object.values(data);
+      renderResults();
+    });
+    db.ref('premier_league/last5').on('value', snap => { last5Data = snap.val() || {}; renderTable(); });
+    db.ref('teamIcons').on('value', snap => { teamIcons = snap.val() || {}; renderTable(); renderFixtures(); renderResults(); });
+    db.ref('slideshow/images').on('value', snap => { slideshowImages = snap.val() || []; startSlideshow(); });
+    db.ref('slideshow/duration').on('value', snap => { if(snap.val()) slideshowDuration = snap.val(); startSlideshow(); });
+  }
+
+  // Slideshow
+  function startSlideshow() {
+    if(slideInterval) clearInterval(slideInterval);
+    if(!slideshowImages.length) return;
+    currentSlideIdx = 0;
+    updateSlide();
+    slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx+1)%slideshowImages.length; updateSlide(); }, slideshowDuration);
+  }
+  function updateSlide() { document.getElementById("slideshow-img").src = slideshowImages[currentSlideIdx]; updateDots(); }
+  function updateDots() {
+    const container = document.getElementById("dotsContainer");
+    container.innerHTML = "";
+    slideshowImages.forEach((_,i) => { let dot = document.createElement("span"); dot.className="dot"; if(i===currentSlideIdx) dot.classList.add("active"); dot.onclick = () => { currentSlideIdx = i; updateSlide(); }; container.appendChild(dot); });
+  }
+
+  // ImgBB upload
+  async function uploadToImgBB(file) { let fd=new FormData(); fd.append("image",file); let res=await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,{method:"POST",body:fd}); let data=await res.json(); if(!data.success) throw new Error(data.error?.message); return data.data.url; }
+  async function addTeamIcon() { let team = prompt("Team name:"); if(!team) return; let fileInput = document.createElement("input"); fileInput.type="file"; fileInput.accept="image/*"; fileInput.onchange=async (e)=>{ let file=e.target.files[0]; if(file){ let url=await uploadToImgBB(file); await db.ref(`teamIcons/${team}`).set(url); alert("Icon saved!"); } }; fileInput.click(); }
+  async function addSlideImage() { let fileInput=document.createElement("input"); fileInput.type="file"; fileInput.accept="image/*"; fileInput.onchange=async (e)=>{ let file=e.target.files[0]; if(file){ let url=await uploadToImgBB(file); slideshowImages.push(url); await db.ref('slideshow/images').set(slideshowImages); } }; fileInput.click(); }
+
+  // Admin mode
+  function enableAdminMode() { adminMode=true; document.getElementById("adminBadge").style.display="block"; document.getElementById("adminFixtureAdd").style.display="block"; document.getElementById("adminResultAdd").style.display="block"; renderTable(); renderFixtures(); renderResults(); }
+  function disableAdminMode() { adminMode=false; document.getElementById("adminBadge").style.display="none"; document.getElementById("adminFixtureAdd").style.display="none"; document.getElementById("adminResultAdd").style.display="none"; renderTable(); renderFixtures(); renderResults(); }
+
+  // Add Fixture/Result modals
+  function showAddFixture() { let md=prompt("Matchday (number):"); let date=prompt("Date (DD/MM):"); let home=prompt("Home team:"); let away=prompt("Away team:"); if(md&&date&&home&&away) db.ref(`premier_league/fixtures/${md}_${home}_${away}`).set({ md:parseInt(md), date, home, away }); }
+  function showAddResult() { let md=prompt("Matchday:"); let matchText=prompt("Match text (e.g. Arsenal 2-1 Chelsea):"); if(md&&matchText) db.ref(`premier_league/results/${md}_${matchText.slice(0,30)}`).set({ md:parseInt(md), matchText }); }
+
+  // Hamburger menu
+  function buildHamburgerModal() {
+    const modal = document.getElementById("modalContent");
+    modal.innerHTML = `
+      <h3>MENU</h3>
+      <div class="modal-options">
+        <div class="modal-option" id="adminModeOption">${adminMode ? "Exit Admin Mode" : "Admin Mode"}</div>
+        <div class="modal-option" id="addIconOption">Add Team Icon</div>
+        <div class="modal-option" id="addSlideOption">Add Slide</div>
+        <div class="modal-option" id="rulesOption">Rules</div>
+      </div>
+      <button class="close-modal" id="closeModalBtn">Close</button>
+    `;
+    document.getElementById("adminModeOption").onclick = () => {
+      if(!adminMode) { let key=prompt("Enter admin key:"); if(key==="admin@100") enableAdminMode(); else alert("Wrong key"); }
+      else disableAdminMode();
+      document.getElementById("modalOverlay").classList.remove("active");
+    };
+    document.getElementById("addIconOption").onclick = () => { if(adminMode) addTeamIcon(); else alert("Admin only"); document.getElementById("modalOverlay").classList.remove("active"); };
+    document.getElementById("addSlideOption").onclick = () => { if(adminMode) addSlideImage(); else alert("Admin only"); document.getElementById("modalOverlay").classList.remove("active"); };
+    document.getElementById("rulesOption").onclick = () => { window.location.href="rules.html"; };
+    document.getElementById("closeModalBtn").onclick = () => document.getElementById("modalOverlay").classList.remove("active");
+  }
+  document.getElementById("hamburgerBtn").onclick = () => { buildHamburgerModal(); document.getElementById("modalOverlay").classList.add("active"); };
+  document.getElementById("modalOverlay").addEventListener("click", (e) => { if(e.target === document.getElementById("modalOverlay")) document.getElementById("modalOverlay").classList.remove("active"); });
+  document.getElementById("addFixtureBtn")?.addEventListener("click", showAddFixture);
+  document.getElementById("addResultBtn")?.addEventListener("click", showAddResult);
+
+  // Three-dot popup
+  const threeBtn = document.getElementById("threeDotBtn");
+  function closePopup() { if(popupMenu) popupMenu.remove(); popupMenu=null; }
+  threeBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    if (popup) { closePopup(); return; }
-    const rect = threeDotBtn.getBoundingClientRect();
-    popup = document.createElement('div');
-    popup.className = 'popup-menu';
-    popup.style.position = 'absolute';
-    popup.style.top = (rect.bottom + window.scrollY + 5) + 'px';
-    popup.style.left = (rect.left + window.scrollX - 80) + 'px';
-
-    const items = [
-      { label: () => currentView === "team" ? "Manager names" : "Team names", action: () => { currentView = currentView === "team" ? "player" : "team"; renderLeagueTable(); closePopup(); } },
-      { label: () => showFormArrows ? "Hide Form arrows" : "Show Form arrows", action: () => { showFormArrows = !showFormArrows; renderLeagueTable(); closePopup(); } },
-      { label: () => showLast5 ? "Hide Last 5" : "Show Last 5", action: () => { showLast5 = !showLast5; renderLeagueTable(); closePopup(); } },
-      { label: () => "Calendar", action: () => { window.location.href = 'calendar.html'; closePopup(); } },
-      { label: () => "Rules", action: () => { window.location.href = 'rules.html'; closePopup(); } },
-    ];
-    items.forEach(item => {
-      const div = document.createElement('div');
-      div.innerText = item.label();
-      div.addEventListener('click', item.action);
-      popup.appendChild(div);
-    });
-    document.body.appendChild(popup);
+    if(popupMenu) { closePopup(); return; }
+    const rect = threeBtn.getBoundingClientRect();
+    popupMenu = document.createElement("div");
+    popupMenu.className = "popup-menu";
+    popupMenu.style.position = "absolute"; popupMenu.style.top = (rect.bottom+5)+"px"; popupMenu.style.left = (rect.left-60)+"px";
+    const opt1 = document.createElement("div"); opt1.innerText = currentView==="team"?"Manager names":"Team names"; opt1.onclick = () => { currentView = currentView==="team"?"player":"team"; renderTable(); closePopup(); };
+    const opt2 = document.createElement("div"); opt2.innerText = showFormArrows?"Hide Form arrows":"Show Form arrows"; opt2.onclick = () => { showFormArrows = !showFormArrows; renderTable(); closePopup(); };
+    const opt3 = document.createElement("div"); opt3.innerText = showLast5?"Hide Last 5":"Show Last 5"; opt3.onclick = () => { showLast5 = !showLast5; renderTable(); closePopup(); };
+    popupMenu.appendChild(opt1); popupMenu.appendChild(opt2); popupMenu.appendChild(opt3);
+    document.body.appendChild(popupMenu);
   });
-  document.addEventListener('click', (e) => { if (popup && !popup.contains(e.target) && e.target !== threeDotBtn) closePopup(); });
+  document.addEventListener("click", (e) => { if(popupMenu && !popupMenu.contains(e.target) && e.target !== threeBtn) closePopup(); });
 
-  // ─── Collapsible cards ────────────────────────────────────────────────────
-  function setupCollapse(headerId, contentId, iconId) {
-    const h = document.getElementById(headerId), c = document.getElementById(contentId), ic = document.getElementById(iconId);
-    if (!h || !c) return;
-    let collapsed = c.classList.contains('collapsed');
-    h.addEventListener('click', () => {
-      collapsed = !collapsed;
-      if (collapsed) { c.classList.add('collapsed'); if (ic) ic.innerHTML = '▶'; }
-      else { c.classList.remove('collapsed'); if (ic) ic.innerHTML = '▼'; }
-    });
-  }
-  setupCollapse('fixturesHeader', 'fixturesContent', 'fixturesToggleIcon');
-  setupCollapse('resultsHeader', 'resultsContent', 'resultsToggleIcon');
-
-  // ─── Firebase listeners ───────────────────────────────────────────────────
-  onValue(ref(db, 'premier_league/results'), (snap) => {
-    allResultsCache = snap.val() ? Object.values(snap.val()) : [];
-    resultsData = allResultsCache;
-    renderLeagueTable();
-    renderResults();
-  });
-
-  onValue(ref(db, 'premier_league/table'), (snap) => {
-    teamsData = snap.val() ? Object.entries(snap.val()).map(([k, v]) => ({ key: k, ...v })) : [];
-    renderLeagueTable();
-  });
-
-  onValue(ref(db, 'premier_league/fixtures'), (snap) => {
-    fixturesData = snap.val() ? Object.values(snap.val()) : [];
-    renderFixtures();
-  });
-
-  document.getElementById('fixtureSearch')?.addEventListener('input', renderFixtures);
-
-  // ─── Hamburger modal ──────────────────────────────────────────────────────
-  const hamburger = document.getElementById('hamburgerBtn');
-  const modalOverlay = document.getElementById('modalOverlay');
-  const closeModalBtn = document.getElementById('closeModalBtn');
-  hamburger.onclick = () => modalOverlay.classList.add('active');
-  closeModalBtn.onclick = () => modalOverlay.classList.remove('active');
-  modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) modalOverlay.classList.remove('active'); });
-  document.getElementById('rulesBtn').onclick = () => window.location.href = 'rules.html';
-  document.getElementById('playerTitlesBtn').onclick = () => window.location.href = 'player-titles.html';
-  document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href = 'login.html'; };
-
-  // ─── Slideshow ────────────────────────────────────────────────────────────
-  const images = [
-    "images - 2026-04-19T121231.816.jpeg",
-    "images - 2026-04-19T155746.715.jpeg",
-    "37686bb3-06ce-401b-a022-026933c165e7.jpeg",
-    "12871.jpg",
-    "1f157df7-2054-4a9d-aa14-b9941ef4a743.jpeg"
-  ];
-  let idx = 0;
-  const imgEl = document.getElementById('slideshow-img');
-  const dotsContainer = document.getElementById('dotsContainer');
-  function createDots() {
-    dotsContainer.innerHTML = '';
-    images.forEach((_, i) => {
-      const dot = document.createElement('span');
-      dot.classList.add('dot');
-      if (i === idx) dot.classList.add('active');
-      dot.addEventListener('click', () => { idx = i; imgEl.src = images[idx]; updateDots(); });
-      dotsContainer.appendChild(dot);
-    });
-  }
-  function updateDots() { document.querySelectorAll('.dot').forEach((d, i) => { d.classList.toggle('active', i === idx); }); }
-  if (imgEl) { createDots(); setInterval(() => { idx = (idx + 1) % images.length; imgEl.src = images[idx]; updateDots(); }, 2000); }
+  // Initialisation
+  setupCollapsible("fixturesHeader","fixturesContent","fixturesToggleIcon");
+  setupCollapsible("resultsHeader","resultsContent","resultsToggleIcon");
+  bindFirebase();
+  startSlideshow();
 </script>
 </body>
 </html>
