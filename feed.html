@@ -18,25 +18,17 @@
             min-height: 100vh;
         }
 
-        /* Gold navbar matching Nations page */
+        /* Gold navbar matching Nations page - only menu button */
         .navbar {
             background: linear-gradient(135deg, #f5d742, #d4af37);
             padding: 0.4rem 1.2rem;
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             align-items: center;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             position: sticky;
             top: 0;
             z-index: 1000;
-        }
-
-        .navbar h1 {
-            color: #1a1a1a;
-            font-size: 1.3rem;
-            font-weight: 800;
-            letter-spacing: 1px;
-            margin: 0;
         }
 
         /* Black circular menu button */
@@ -797,7 +789,6 @@
 </head>
 <body>
     <nav class="navbar">
-        <h1>eFootball-412</h1>
         <div class="menu-icon" onclick="toggleMenu()">
             <span></span><span></span><span></span>
         </div>
@@ -855,11 +846,8 @@
                 <input type="text" id="postHeading" placeholder="Enter heading/username">
             </div>
             <div class="form-group">
-                <label>Profile Picture</label>
-                <input type="file" id="profilePicUpload" accept="image/*" onchange="uploadProfilePic()">
-                <label for="profilePicUpload" class="file-upload-label">
-                    <span id="profilePicStatus">📷 Upload profile picture</span>
-                </label>
+                <label>Profile Picture URL</label>
+                <input type="url" id="profilePicUrl" placeholder="https://... (optional)">
             </div>
             <div class="form-group">
                 <label>Media Type *</label>
@@ -869,12 +857,9 @@
                     <option value="instagram">Instagram Video</option>
                 </select>
             </div>
-            <div class="form-group" id="imageUploadGroup">
-                <label>Upload Image *</label>
-                <input type="file" id="postImageUpload" accept="image/*" onchange="uploadPostImage()">
-                <label for="postImageUpload" class="file-upload-label">
-                    <span id="postImageStatus">📤 Click to upload image</span>
-                </label>
+            <div class="form-group" id="imageUrlGroup">
+                <label>Image URL *</label>
+                <input type="url" id="imageUrl" placeholder="https://raw.githubusercontent.com/.../image.jpg">
             </div>
             <div class="form-group" id="videoUrlGroup" style="display: none;">
                 <label>Video URL *</label>
@@ -910,47 +895,35 @@
             databaseURL: 'https://efootball-412-default-rtdb.firebaseio.com',
             projectId: 'efootball-412'
         };
+        const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
 
         let isAdminMode = false;
         let posts = [];
         let slideshow = [];
         let currentSlide = 0;
         let slideInterval = null;
-        let tempPostData = { profilePicture: '', mediaUrl: '' };
+        let editingPostId = null;
 
         window.onload = function() {
             loadSlideshow();
             loadPosts();
         };
 
-        // Catbox.moe upload - no API key, returns plain text URL
-        async function uploadToCatbox(file) {
+        async function uploadToImgBB(file) { /* kept for slideshow but not used for posts */ 
             const formData = new FormData();
-            formData.append("reqtype", "fileupload");
-            formData.append("file", file);
-            
+            formData.append("image", file);
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 30000);
-            
             try {
-                const response = await fetch("https://catbox.moe/user/api.php", {
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
                     method: "POST",
                     body: formData,
                     signal: controller.signal
                 });
                 clearTimeout(timeoutId);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const url = await response.text();
-                // Catbox returns the URL as plain text, sometimes with newline
-                const cleanUrl = url.trim();
-                if (!cleanUrl.startsWith("https://")) {
-                    throw new Error("Invalid response from Catbox");
-                }
-                return cleanUrl;
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error?.message || "ImgBB upload failed");
+                return data.data.url;
             } catch (err) {
                 clearTimeout(timeoutId);
                 throw err;
@@ -1033,7 +1006,7 @@
             btn.textContent = 'Uploading...';
             btn.disabled = true;
             try {
-                const url = await uploadToCatbox(file);
+                const url = await uploadToImgBB(file);
                 const slideData = { imageUrl: url, order: slideshow.length + 1 };
                 const response = await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow.json`, { method: 'POST', body: JSON.stringify(slideData) });
                 const result = await response.json();
@@ -1063,51 +1036,26 @@
 
         function showCreatePostModal() {
             if (!isAdminMode) return;
+            editingPostId = null;
             document.getElementById('postModalTitle').textContent = 'Create New Post';
             document.getElementById('postHeading').value = '';
             document.getElementById('postCaption').value = '';
+            document.getElementById('profilePicUrl').value = '';
+            document.getElementById('imageUrl').value = '';
             document.getElementById('videoUrl').value = '';
             document.getElementById('useRealTime').checked = true;
             document.getElementById('customTimestamp').value = '';
             document.getElementById('mediaType').value = 'image';
-            document.getElementById('profilePicStatus').textContent = '📷 Upload profile picture';
-            document.getElementById('postImageStatus').textContent = '📤 Click to upload image';
-            tempPostData = { profilePicture: '', mediaUrl: '' };
             changeMediaType();
             document.getElementById('postModal').classList.add('active');
         }
-        function closePostModal() { document.getElementById('postModal').classList.remove('active'); tempPostData = { profilePicture: '', mediaUrl: '' }; }
+        function closePostModal() { document.getElementById('postModal').classList.remove('active'); editingPostId = null; }
         function changeMediaType() {
             const mt = document.getElementById('mediaType').value;
-            document.getElementById('imageUploadGroup').style.display = mt === 'image' ? 'block' : 'none';
+            document.getElementById('imageUrlGroup').style.display = mt === 'image' ? 'block' : 'none';
             document.getElementById('videoUrlGroup').style.display = mt !== 'image' ? 'block' : 'none';
         }
         function toggleCustomTime() { document.getElementById('customTimeGroup').style.display = document.getElementById('useRealTime').checked ? 'none' : 'block'; }
-
-        async function uploadProfilePic() {
-            const file = document.getElementById('profilePicUpload').files[0];
-            if (!file) return;
-            const statusSpan = document.getElementById('profilePicStatus');
-            statusSpan.textContent = 'Uploading...';
-            try {
-                const url = await uploadToCatbox(file);
-                tempPostData.profilePicture = url;
-                statusSpan.textContent = '✓ Profile picture uploaded';
-            } catch (err) { statusSpan.textContent = 'Upload failed: ' + err.message; }
-        }
-        async function uploadPostImage() {
-            const file = document.getElementById('postImageUpload').files[0];
-            if (!file) return;
-            const statusSpan = document.getElementById('postImageStatus');
-            statusSpan.textContent = 'Uploading...';
-            document.getElementById('submitPostBtn').disabled = true;
-            try {
-                const url = await uploadToCatbox(file);
-                tempPostData.mediaUrl = url;
-                statusSpan.textContent = '✓ Image uploaded';
-            } catch (err) { statusSpan.textContent = 'Upload failed: ' + err.message; }
-            finally { document.getElementById('submitPostBtn').disabled = false; }
-        }
 
         async function submitPost() {
             if (!isAdminMode) return;
@@ -1115,15 +1063,25 @@
             const caption = document.getElementById('postCaption').value.trim();
             const mediaType = document.getElementById('mediaType').value;
             let mediaUrl = '';
-            if (mediaType === 'image') mediaUrl = tempPostData.mediaUrl;
-            else mediaUrl = document.getElementById('videoUrl').value.trim();
-            if (!heading || !mediaUrl || !caption) { alert('Please fill all required fields'); return; }
+            if (mediaType === 'image') {
+                mediaUrl = document.getElementById('imageUrl').value.trim();
+            } else {
+                mediaUrl = document.getElementById('videoUrl').value.trim();
+            }
+            const profilePicUrl = document.getElementById('profilePicUrl').value.trim();
+            if (!heading || !mediaUrl || !caption) { alert('Please fill all required fields (heading, media URL, caption)'); return; }
             const timestamp = document.getElementById('useRealTime').checked ? Date.now() : new Date(document.getElementById('customTimestamp').value).getTime();
             const postData = {
                 username: heading,
-                userAvatar: tempPostData.profilePicture || 'https://via.placeholder.com/50/FFD700/000000?text=User',
-                mediaUrl, mediaType, caption,
-                likes: 0, likedBy: [], comments: {}, pinned: false, timestamp
+                userAvatar: profilePicUrl || 'https://via.placeholder.com/50/FFD700/000000?text=User',
+                mediaUrl: mediaUrl,
+                mediaType: mediaType,
+                caption: caption,
+                likes: 0,
+                likedBy: [],
+                comments: {},
+                pinned: false,
+                timestamp: timestamp
             };
             try {
                 const response = await fetch(`${FIREBASE_CONFIG.databaseURL}/posts.json`, { method: 'POST', body: JSON.stringify(postData) });
@@ -1155,7 +1113,7 @@
                         <div class="post-user"><img src="${post.userAvatar}" class="post-avatar"><div><div class="post-username">${escapeHtml(post.username)}</div><div class="post-time">${formatTimestamp(post.timestamp)}</div></div></div>
                         ${isAdminMode ? `<div class="post-actions-top"><span class="action-icon" onclick="editPost('${post.id}')">✏️</span><span class="action-icon delete-icon" onclick="deletePost('${post.id}')">🗑️</span></div>` : ''}
                     </div>
-                    <div class="post-media">${post.mediaType==='image'?`<img src="${post.mediaUrl}">`:post.mediaType==='youtube'?`<iframe src="${getYoutubeEmbedUrl(post.mediaUrl)}" allowfullscreen></iframe>`:`<div class="instagram-link"><a href="${post.mediaUrl}" target="_blank">📸 View on Instagram</a></div>`}</div>
+                    <div class="post-media">${post.mediaType==='image'?`<img src="${post.mediaUrl}" onerror="this.style.display='none'">`:post.mediaType==='youtube'?`<iframe src="${getYoutubeEmbedUrl(post.mediaUrl)}" allowfullscreen></iframe>`:`<div class="instagram-link"><a href="${post.mediaUrl}" target="_blank">📸 View on Instagram</a></div>`}</div>
                     <div class="post-content">
                         <div class="post-interactions"><button class="interaction-btn" onclick="likePost('${post.id}')"><span class="interaction-icon ${post.likedBy?.includes('guest')?'liked':''}">${post.likedBy?.includes('guest')?'❤️':'🤍'}</span><span>${post.likes||0}</span></button><button class="interaction-btn" onclick="toggleComments('${post.id}')"><span class="interaction-icon">💬</span><span>${getCommentsCount(post.comments)}</span></button><button class="interaction-btn" onclick="pinPost('${post.id}')"><span class="interaction-icon ${post.pinned?'pinned':''}">📌</span></button></div>
                         <div class="post-caption"><span class="caption-username">${escapeHtml(post.username)}</span> ${escapeHtml(post.caption)}</div>
