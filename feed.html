@@ -176,7 +176,6 @@
             transform: rotate(90deg) scale(1.2);
         }
 
-        /* Menu items container */
         .menu-items {
             margin-top: 80px;
         }
@@ -198,7 +197,7 @@
             transform: translateX(10px);
         }
 
-        /* Dropdown submenu for Calendar */
+        /* Calendar dropdown - BELOW (not to the right) */
         .menu-item.calendar-parent {
             position: relative;
             cursor: pointer;
@@ -206,14 +205,15 @@
         .calendar-dropdown {
             display: none;
             position: absolute;
-            left: 100%;
-            top: 0;
-            width: 220px;
+            top: 100%;
+            left: 0;
+            width: 100%;
             background: linear-gradient(180deg, #1a1a1a 0%, #000 100%);
             border-left: 5px solid #FFD700;
             border-radius: 12px;
             z-index: 2100;
             padding: 8px 0;
+            margin-top: 4px;
         }
         .menu-item.calendar-parent:hover .calendar-dropdown {
             display: block;
@@ -285,7 +285,7 @@
             margin-bottom: 25px;
         }
 
-        /* Stories carousel - larger circles (2x), moved down */
+        /* Stories carousel - larger circles (2x), moved down, smooth slide animation */
         .stories-carousel {
             position: relative;
             width: 100%;
@@ -338,7 +338,7 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease;
             margin: 0 auto;
         }
 
@@ -702,7 +702,6 @@
             <div class="menu-item" onclick="showDisclaimer()">Disclaimer</div>
             <div class="menu-item" onclick="window.location.href='nations.html'">UEFA Nations League</div>
             <div class="menu-item" onclick="promptAdminKey()">Admin Mode</div>
-            <!-- New options -->
             <div class="menu-item" onclick="window.location.href='login.html'">Login</div>
             <div class="menu-item" onclick="window.location.href='signup.html'">Signup</div>
             <div class="menu-item calendar-parent">
@@ -740,7 +739,7 @@
         </div>
     </div>
 
-    <!-- Stories Carousel (larger, moved down) -->
+    <!-- Stories Carousel (larger, moved down, smooth slide) -->
     <div class="stories-carousel" id="storiesCarousel">
         <div class="carousel-track" id="carouselTrack"></div>
     </div>
@@ -805,6 +804,46 @@
         </div>
     </div>
 
+    <!-- Edit Post Modal -->
+    <div class="modal" id="editPostModal">
+        <div class="modal-content form-modal">
+            <span class="modal-close" onclick="closeEditPostModal()">✕</span>
+            <h2>Edit Post</h2>
+            <div id="editPostFormError" class="error-message" style="display: none;"></div>
+            <input type="hidden" id="editPostId">
+            <div class="form-group">
+                <label>Profile Name</label>
+                <input type="text" id="editProfileName" placeholder="Profile name">
+            </div>
+            <div class="file-upload-wrapper">
+                <label>Profile Photo (Optional, leave blank to keep current)</label>
+                <input type="file" id="editProfilePhotoUpload" accept="image/*" onchange="previewEditProfilePhoto()">
+                <label for="editProfilePhotoUpload" class="file-upload-label">📷 Change Profile Photo</label>
+                <div id="editProfilePhotoPreview" class="preview-container" style="display: none;">
+                    <img id="editProfilePhotoPreviewImg" class="circle-preview">
+                </div>
+                <div id="editProfilePhotoStatus" class="upload-status"></div>
+            </div>
+            <div class="file-upload-wrapper">
+                <label>Post Image (leave blank to keep current)</label>
+                <input type="file" id="editPostImageUpload" accept="image/*" onchange="previewEditPostImage()">
+                <label for="editPostImageUpload" class="file-upload-label">🖼️ Change Post Image</label>
+                <div id="editPostImagePreview" class="preview-container" style="display: none;">
+                    <img id="editPostImagePreviewImg" class="image-preview">
+                </div>
+                <div id="editPostImageStatus" class="upload-status"></div>
+            </div>
+            <div class="form-group">
+                <label>Caption</label>
+                <textarea id="editCaption" rows="4" placeholder="Write a caption..."></textarea>
+            </div>
+            <div class="form-buttons">
+                <button class="btn-primary" id="updatePostBtn" onclick="updatePost()">Update Post</button>
+                <button class="btn-secondary" onclick="closeEditPostModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Story Modal (Add Story with caption) -->
     <div class="modal" id="storyModal">
         <div class="modal-content form-modal">
@@ -843,6 +882,9 @@
         let autoSlideInterval = null;
         let uploadedProfilePhotoUrl = null;
         let uploadedPostImageUrl = null;
+        let editUploadedProfilePhotoUrl = null;
+        let editUploadedPostImageUrl = null;
+        let currentEditPostId = null;
 
         window.onload = function() { loadStories(); loadPosts(); };
 
@@ -863,9 +905,10 @@
             }
         }
 
+        // Unified admin key: admin@100
         function promptAdminKey() {
             const key = prompt("Enter Admin Key:");
-            if (key === "@admin#123!") {
+            if (key === "admin@100") {
                 isAdminMode = true;
                 document.getElementById('adminSlideControls').style.display = 'block';
                 document.getElementById('createPostSection').style.display = 'block';
@@ -894,7 +937,7 @@
         function showDisclaimer() { closeMenu(); document.getElementById('disclaimerModal').classList.add('active'); }
         function closeDisclaimer() { document.getElementById('disclaimerModal').classList.remove('active'); }
 
-        // ========== STORIES (auto-slide, no arrows, captions, larger) ==========
+        // ========== STORIES (auto-slide, smooth left-to-right transition) ==========
         async function loadStories() {
             try {
                 const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow.json`);
@@ -1002,7 +1045,7 @@
             }
         });
 
-        // ========== POSTS ==========
+        // ========== POSTS with Edit functionality ==========
         async function loadPosts() {
             try {
                 const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/posts.json`);
@@ -1027,7 +1070,10 @@
                                 <img src="${post.userAvatar}" class="post-avatar">
                                 <div><div class="post-username">${escapeHtml(post.username)}</div><div class="post-time">${formatTimestamp(post.timestamp)}</div></div>
                             </div>
-                            ${isAdminMode ? `<span class="post-menu-icon delete-icon" style="cursor:pointer; font-size:20px;" onclick="deletePost('${post.id}')">🗑️</span>` : ''}
+                            ${isAdminMode ? `<div style="display:flex; gap:12px;">
+                                <span style="cursor:pointer; font-size:20px;" onclick="editPost('${post.id}')">✏️</span>
+                                <span style="cursor:pointer; font-size:20px; color:#ff4444;" onclick="deletePost('${post.id}')">🗑️</span>
+                            </div>` : ''}
                         </div>
                         <div class="post-image-container"><img src="${post.imageUrl}" class="post-image"></div>
                         <div class="post-actions">
@@ -1055,6 +1101,65 @@
         async function deleteComment(postId, commentId) { if(!isAdminMode || !confirm('Delete comment?')) return; await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}/comments/${commentId}.json`, { method:'DELETE' }); delete posts.find(p=>p.id===postId).comments[commentId]; renderPosts(); }
         async function pinPost(postId) { if(!isAdminMode) return; const post = posts.find(p=>p.id===postId); const newPinned = !post.pinned; await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, { method:'PATCH', body:JSON.stringify({pinned:newPinned}) }); post.pinned=newPinned; renderPosts(); }
         async function deletePost(postId) { if(!isAdminMode || !confirm('Delete post?')) return; await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, { method:'DELETE' }); posts = posts.filter(p=>p.id!==postId); renderPosts(); }
+        
+        // Edit Post functions
+        function editPost(postId) {
+            if (!isAdminMode) return;
+            const post = posts.find(p => p.id === postId);
+            if (!post) return;
+            currentEditPostId = postId;
+            document.getElementById('editProfileName').value = post.username;
+            document.getElementById('editCaption').value = post.caption;
+            document.getElementById('editProfilePhotoUpload').value = '';
+            document.getElementById('editPostImageUpload').value = '';
+            document.getElementById('editProfilePhotoPreview').style.display = 'none';
+            document.getElementById('editPostImagePreview').style.display = 'none';
+            editUploadedProfilePhotoUrl = null;
+            editUploadedPostImageUrl = null;
+            document.getElementById('editPostModal').classList.add('active');
+        }
+        function closeEditPostModal() { document.getElementById('editPostModal').classList.remove('active'); currentEditPostId = null; }
+        async function previewEditProfilePhoto() {
+            const file = document.getElementById('editProfilePhotoUpload').files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => { document.getElementById('editProfilePhotoPreviewImg').src = e.target.result; document.getElementById('editProfilePhotoPreview').style.display = 'block'; };
+            reader.readAsDataURL(file);
+            document.getElementById('editProfilePhotoStatus').innerHTML = 'Uploading... <span class="loading-spinner"></span>';
+            try { editUploadedProfilePhotoUrl = await uploadToImgBB(file); document.getElementById('editProfilePhotoStatus').innerHTML = '✅ Uploaded!'; } 
+            catch(e) { document.getElementById('editProfilePhotoStatus').innerHTML = '❌ Failed'; editUploadedProfilePhotoUrl = null; }
+        }
+        async function previewEditPostImage() {
+            const file = document.getElementById('editPostImageUpload').files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => { document.getElementById('editPostImagePreviewImg').src = e.target.result; document.getElementById('editPostImagePreview').style.display = 'block'; };
+            reader.readAsDataURL(file);
+            document.getElementById('editPostImageStatus').innerHTML = 'Uploading... <span class="loading-spinner"></span>';
+            try { editUploadedPostImageUrl = await uploadToImgBB(file); document.getElementById('editPostImageStatus').innerHTML = '✅ Uploaded!'; } 
+            catch(e) { document.getElementById('editPostImageStatus').innerHTML = '❌ Failed'; editUploadedPostImageUrl = null; }
+        }
+        async function updatePost() {
+            if (!isAdminMode || !currentEditPostId) return;
+            const newUsername = document.getElementById('editProfileName').value.trim();
+            const newCaption = document.getElementById('editCaption').value.trim();
+            if (!newUsername || !newCaption) { alert("Profile name and caption required"); return; }
+            const post = posts.find(p => p.id === currentEditPostId);
+            if (!post) return;
+            const updateData = { username: newUsername, caption: newCaption };
+            if (editUploadedProfilePhotoUrl) updateData.userAvatar = editUploadedProfilePhotoUrl;
+            if (editUploadedPostImageUrl) updateData.imageUrl = editUploadedPostImageUrl;
+            try {
+                await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${currentEditPostId}.json`, { method:'PATCH', body:JSON.stringify(updateData) });
+                post.username = newUsername;
+                post.caption = newCaption;
+                if (editUploadedProfilePhotoUrl) post.userAvatar = editUploadedProfilePhotoUrl;
+                if (editUploadedPostImageUrl) post.imageUrl = editUploadedPostImageUrl;
+                renderPosts();
+                closeEditPostModal();
+            } catch(e) { alert("Update failed: "+e.message); }
+        }
+
         function showCreatePostModal() { if(!isAdminMode) return; document.getElementById('postModalTitle').textContent='Create New Post'; document.getElementById('profileName').value=''; document.getElementById('postCaption').value=''; document.getElementById('useRealTime').checked=true; toggleCustomTime(); document.getElementById('profilePhotoUpload').value=''; document.getElementById('postImageUpload').value=''; document.getElementById('profilePhotoPreview').style.display='none'; document.getElementById('postImagePreview').style.display='none'; uploadedProfilePhotoUrl=null; uploadedPostImageUrl=null; document.getElementById('postModal').classList.add('active'); }
         function closePostModal() { document.getElementById('postModal').classList.remove('active'); }
         function toggleCustomTime() { document.getElementById('customTimeGroup').style.display = document.getElementById('useRealTime').checked ? 'none' : 'block'; }
