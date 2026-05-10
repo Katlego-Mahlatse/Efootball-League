@@ -754,8 +754,8 @@
         }
 
         .action-btn.liked svg {
-            fill: #ff3040;
-            stroke: #ff3040;
+            fill: #FFD700;
+            stroke: #FFD700;
         }
 
         .post-likes, .post-caption {
@@ -1115,9 +1115,9 @@
                 <div id="profilePhotoStatus" class="upload-status"></div>
             </div>
             <div class="form-group">
-                <label>Post Images (up to 5, optional)</label>
+                <label>Post Images (select multiple images)</label>
                 <input type="file" id="postImagesUpload" accept="image/*" multiple onchange="previewPostImages()">
-                <label for="postImagesUpload" class="file-upload-label">🖼️ Select up to 5 images</label>
+                <label for="postImagesUpload" class="file-upload-label">🖼️ Select images (no limit)</label>
                 <div id="postImagesPreview" class="image-row"></div>
                 <div id="postImagesStatus" class="upload-status"></div>
             </div>
@@ -1162,9 +1162,9 @@
                 <div id="editProfilePhotoStatus" class="upload-status"></div>
             </div>
             <div class="form-group">
-                <label>Post Images (up to 5, leave empty to keep current)</label>
+                <label>Post Images (select multiple images, replaces current)</label>
                 <input type="file" id="editPostImagesUpload" accept="image/*" multiple onchange="previewEditPostImages()">
-                <label for="editPostImagesUpload" class="file-upload-label">🖼️ Add/Replace Images</label>
+                <label for="editPostImagesUpload" class="file-upload-label">🖼️ Add/Replace Images (no limit)</label>
                 <div id="editPostImagesPreview" class="image-row"></div>
                 <div id="editPostImagesStatus" class="upload-status"></div>
                 <div id="currentImagesList" style="margin-top:10px; color:#888; font-size:12px;"></div>
@@ -1560,13 +1560,13 @@
                         ${galleryHtml}
                         <div class="post-actions">
                             <button class="action-btn ${post.likes > 0 ? 'liked' : ''}" onclick="likePost('${post.id}')">
-                                <svg aria-label="Like" fill="${post.likes > 0 ? '#ff3040' : 'none'}" height="24" viewBox="0 0 24 24" width="24">
-                                    <path d="M16.792 3.904A4.989 4.989 0 0121.5 9.122c0 3.072-2.652 4.959-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.309-2.143-1.823-4.303-3.752C5.141 14.072 2.5 12.167 2.5 9.122a4.989 4.989 0 014.708-5.218 4.21 4.21 0 013.675 1.941c.84 1.175.98 1.763 1.12 1.763s.278-.588 1.11-1.766a4.17 4.17 0 013.679-1.938m0-2a6.04 6.04 0 00-4.797 2.127 6.052 6.052 0 00-4.787-2.127A6.985 6.985 0 00.5 9.122c0 3.61 2.55 5.827 5.015 7.97.283.246.569.494.853.747l1.027.918a44.998 44.998 0 003.518 3.018 2 2 0 002.174 0 45.263 45.263 0 003.626-3.115l.922-.824c.293-.26.59-.519.885-.774 2.334-2.025 4.98-4.32 4.98-7.94a6.985 6.985 0 00-6.708-7.218z" stroke="${post.likes > 0 ? '#ff3040' : 'currentColor'}" stroke-width="2"></path>
+                                <svg aria-label="Like" fill="${post.likes > 0 ? '#FFD700' : 'none'}" height="24" viewBox="0 0 24 24" width="24">
+                                    <path d="M16.792 3.904A4.989 4.989 0 0121.5 9.122c0 3.072-2.652 4.959-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.309-2.143-1.823-4.303-3.752C5.141 14.072 2.5 12.167 2.5 9.122a4.989 4.989 0 014.708-5.218 4.21 4.21 0 013.675 1.941c.84 1.175.98 1.763 1.12 1.763s.278-.588 1.11-1.766a4.17 4.17 0 013.679-1.938m0-2a6.04 6.04 0 00-4.797 2.127 6.052 6.052 0 00-4.787-2.127A6.985 6.985 0 00.5 9.122c0 3.61 2.55 5.827 5.015 7.97.283.246.569.494.853.747l1.027.918a44.998 44.998 0 003.518 3.018 2 2 0 002.174 0 45.263 45.263 0 003.626-3.115l.922-.824c.293-.26.59-.519.885-.774 2.334-2.025 4.98-4.32 4.98-7.94a6.985 6.985 0 00-6.708-7.218z" stroke="#FFD700" stroke-width="2"></path>
                                 </svg>
                             </button>
                             <button class="action-btn" onclick="toggleComments('${post.id}')">
                                 <svg aria-label="Comment" fill="none" height="24" viewBox="0 0 24 24" width="24">
-                                    <path d="M20.656 17.008a9.993 9.993 0 10-3.59 3.615L22 22z" stroke="currentColor" stroke-linejoin="round" stroke-width="2"></path>
+                                    <path d="M20.656 17.008a9.993 9.993 0 10-3.59 3.615L22 22z" stroke="#FFD700" stroke-linejoin="round" stroke-width="2"></path>
                                 </svg>
                             </button>
                             ${isAdminMode ? `<button class="action-btn" onclick="pinPost('${post.id}')"><span>${post.pinned ? '📌 pinned' : '📌'}</span></button>` : ''}
@@ -1750,10 +1750,7 @@
         
         async function previewPostImages() {
             const files = Array.from(document.getElementById('postImagesUpload').files);
-            if (files.length > 5) { 
-                alert("Maximum 5 images"); 
-                return; 
-            }
+            // No maximum limit check
             const previewDiv = document.getElementById('postImagesPreview');
             previewDiv.innerHTML = '';
             for (let file of files) {
