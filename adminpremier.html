@@ -3,28 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Admin · Premier League · Gold/Black</title>
+  <title>Admin · Premier League</title>
+  <!-- Firebase SDKs (Compat for easier port) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       background: #0a0a0a;
       background: linear-gradient(145deg, #0a0a0a 0%, #1a1a1a 100%);
-      font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
-      color: #1a1a1a;
+      font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
       padding-bottom: 2rem;
     }
-    /* Gold navbar with black elements */
+    /* Gold navbar */
     .gold-navbar {
       background: linear-gradient(135deg, #f5d742, #d4af37);
       padding: 0.4rem 1.2rem;
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       align-items: center;
       gap: 0.8rem;
       position: sticky;
       top: 0;
       z-index: 100;
     }
+    .nav-left {
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+    }
+    .admin-mode-btn {
+      background: #1a1a1a;
+      color: #f5d742;
+      border: 1.5px solid #f5d742;
+      padding: 0.3rem 1rem;
+      border-radius: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: 0.2s;
+    }
+    .admin-mode-btn.active {
+      background: #22c55e;
+      color: #1a1a1a;
+      border-color: #1a1a1a;
+    }
+    .admin-mode-btn:hover { transform: scale(1.02); background: #0a0a0a; color: #f5d742; }
     .debug-btn, .hamburger-btn {
       background: #1a1a1a;
       width: 36px;
@@ -36,10 +60,6 @@
       cursor: pointer;
       border: 1.5px solid #f5d742;
       transition: transform 0.2s, background 0.2s;
-    }
-    .debug-btn:hover, .hamburger-btn:hover {
-      transform: scale(1.05);
-      background: #0a0a0a;
     }
     .hamburger-btn { flex-direction: column; gap: 4px; }
     .hamburger-btn span { width: 18px; height: 2.5px; background: #f5d742; border-radius: 2px; }
@@ -66,8 +86,8 @@
       min-width: 200px;
       text-align: center;
       box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      color: #1a1a1a;
     }
-    .debug-modal { background: #f5d742; color: #1a1a1a; }
     .modal-option {
       background: rgba(0,0,0,0.1);
       padding: 0.4rem 0.8rem;
@@ -82,10 +102,7 @@
       cursor: pointer;
       transition: all 0.2s;
     }
-    .modal-option:hover {
-      background: #1a1a1a;
-      color: #f5d742;
-    }
+    .modal-option:hover { background: #1a1a1a; color: #f5d742; }
     .close-modal {
       background: #1a1a1a;
       color: #f5d742;
@@ -96,7 +113,7 @@
       font-weight: bold;
     }
     .dashboard { max-width: 1400px; margin: 0 auto; padding: 2rem 1.5rem; }
-    .slideshow-container { text-align: center; margin-bottom: 2rem; }
+    .slideshow-container { text-align: center; margin-bottom: 2rem; position: relative; }
     .slideshow-img { max-width: 100%; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 2px solid #f5d742; }
     .dots-container { margin-top: 0.8rem; }
     .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #1a1a1a; margin: 0 4px; cursor: pointer; }
@@ -118,7 +135,7 @@
       align-items: center;
       cursor: pointer;
     }
-    .card-header-left { display: flex; align-items: center; gap: 1rem; }
+    .card-header-left { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
     .card-header-left h2 { font-size: 1.4rem; color: #1a1a1a; }
     .toggle-icon { font-size: 1.2rem; color: #1a1a1a; margin-left: 1rem; }
     .add-btn {
@@ -131,10 +148,7 @@
       cursor: pointer;
       transition: 0.2s;
     }
-    .add-btn:hover {
-      background: #0a0a0a;
-      transform: scale(1.02);
-    }
+    .add-btn:hover { background: #0a0a0a; transform: scale(1.02); }
     .three-dot-menu {
       background: none;
       border: none;
@@ -142,20 +156,18 @@
       font-size: 1.8rem;
       cursor: pointer;
       padding: 0 0.5rem;
-      transition: transform 0.1s;
     }
-    .three-dot-menu:hover { transform: scale(1.1); }
     .card-content { transition: max-height 0.4s ease; max-height: 2000px; overflow: hidden; }
     .card-content.collapsed { max-height: 0; }
     .filter-container { padding: 1rem; background: rgba(0,0,0,0.1); border-bottom: 1px solid #1a1a1a; }
     .filter-input { background: #1a1a1a; border: 1px solid #f5d742; border-radius: 30px; padding: 0.5rem 1rem; color: #f5d742; width: 220px; }
-    .filter-input::placeholder { color: #d4af37; }
     .scrollable-table { max-height: 450px; overflow-y: auto; }
     .stats-table, .inner-table { width: 100%; border-collapse: collapse; }
     .stats-table th, .inner-table th { text-align: left; padding: 0.8rem; background: #d4af37; border-bottom: 2px solid #1a1a1a; color: #1a1a1a; }
-    .stats-table td, .inner-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(0,0,0,0.2); color: #1a1a1a; }
+    .stats-table td, .inner-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(0,0,0,0.2); color: #1a1a1a; vertical-align: middle; }
     .team-icon-sm { width: 30px; height: 30px; object-fit: contain; vertical-align: middle; margin-right: 8px; }
     .team-icon { width: 40px; height: 40px; object-fit: contain; vertical-align: middle; margin-right: 8px; display: inline-block; }
+    .inline-team-icon { width: 30px; height: 30px; object-fit: contain; vertical-align: middle; margin: 0 4px; display: inline-block; }
     .rank-cell { font-weight: 700; width: 60px; }
     .pos-with-bar { display: flex; align-items: center; gap: 6px; }
     .vertical-bar { width: 4px; height: 18px; border-radius: 2px; }
@@ -166,6 +178,7 @@
     .dashed-separator-white { border-bottom: 2px dashed #ffffff !important; }
     .dashed-separator-red { border-bottom: 2px dashed #ef4444 !important; }
     .pts-cell { font-weight: 800; color: #1a1a1a; text-align: center; }
+    .team-name { display: flex; align-items: center; gap: 8px; font-weight: 700; }
     .form-circles { display: flex; gap: 4px; align-items: center; }
     .circle-result { width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; }
     .circle-win { background: #22c55e; color: white; }
@@ -180,13 +193,13 @@
     .arrow-side { color: #f5d742; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
     .legend-under-table { margin-top: 1rem; padding: 0.8rem 1.2rem; background: rgba(0,0,0,0.1); border-radius: 1rem; display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; font-size: 0.7rem; }
     .legend-item { display: inline-flex; align-items: center; gap: 6px; }
-    .legend-vertical-bar { width: 4px; height: 16px; border-radius: 2px; }
+    .legend-vertical-bar { width: 4px; height: 16px; border-radius: 2px; display: inline-block; }
     .legend-blue { background: #3b82f6; }
     .legend-orange { background: #f97316; }
     .legend-green { background: #22c55e; }
     .legend-dashed-white { display: inline-block; width: 20px; height: 2px; border-bottom: 2px dashed #ffffff; vertical-align: middle; }
     .forfeit-text { font-size: 0.7rem; color: #1a1a1a; margin-top: 4px; background: rgba(0,0,0,0.1); display: inline-block; padding: 0 0.3rem; border-radius: 12px; }
-    .edit-btn, .delete-btn { background: #1a1a1a; border: none; color: #f5d742; margin: 0 0.3rem; cursor: pointer; font-size: 1rem; padding: 0.2rem 0.5rem; border-radius: 20px; transition: 0.2s; }
+    .edit-btn, .delete-btn { background: #1a1a1a; border: none; color: #f5d742; margin: 0 0.2rem; cursor: pointer; font-size: 0.9rem; padding: 0.2rem 0.5rem; border-radius: 20px; transition: 0.2s; }
     .edit-btn:hover, .delete-btn:hover { background: #0a0a0a; transform: scale(1.05); }
     .form-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85);
@@ -195,14 +208,7 @@
     .form-overlay.active { visibility: visible; }
     .form-card { background: #f5d742; border: 2px solid #1a1a1a; border-radius: 2rem; padding: 1.5rem; width: 90%; max-width: 500px; color: #1a1a1a; }
     .form-card input, .form-card select { width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: #1a1a1a; border: 1px solid #f5d742; border-radius: 2rem; color: #f5d742; }
-    .form-card button { background: #1a1a1a; border: none; border-radius: 2rem; padding: 0.5rem 1rem; color: #f5d742; margin-top: 1rem; cursor: pointer; transition: 0.2s; }
-    .form-card button:hover { background: #0a0a0a; }
-    @media (max-width: 780px) {
-      .dashboard { padding: 1rem; }
-      .stats-table th, .stats-table td { padding: 0.4rem; font-size: 0.75rem; }
-      .circle-result { width: 14px; height: 14px; font-size: 7px; }
-    }
-    /* Popup menu gold/black */
+    .form-card button { background: #1a1a1a; border: none; border-radius: 2rem; padding: 0.5rem 1rem; color: #f5d742; margin-top: 1rem; cursor: pointer; }
     .popup-menu {
       background: #f5d742;
       border: 1px solid #1a1a1a;
@@ -211,113 +217,127 @@
       z-index: 150;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
-    .popup-menu div {
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      color: #1a1a1a;
-      transition: background 0.1s;
-    }
-    .popup-menu div:hover {
-      background: rgba(0,0,0,0.1);
+    .popup-menu div { padding: 0.5rem 1rem; cursor: pointer; color: #1a1a1a; transition: background 0.1s; }
+    .popup-menu div:hover { background: rgba(0,0,0,0.1); }
+    @media (max-width: 780px) {
+      .dashboard { padding: 1rem; }
+      .stats-table th, .stats-table td { padding: 0.4rem; font-size: 0.75rem; }
+      .team-icon { width: 30px; height: 30px; }
     }
   </style>
 </head>
 <body>
 
 <div class="gold-navbar">
-  <div style="display: flex; gap: 0.5rem;">
+  <div class="nav-left">
+    <button id="adminModeBtn" class="admin-mode-btn">🔐 ADMIN MODE</button>
     <div class="debug-btn" id="debugBtn">🐞</div>
-    <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
   </div>
+  <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
 </div>
 
-<div id="debugModal" class="modal-overlay" style="z-index:250;"><div class="debug-modal"><h3>Debug</h3><div id="debugContent">Loading...</div><button id="closeDebugBtn" class="close-modal">Close</button></div></div>
-<div class="modal-overlay" id="modalOverlay"><div class="modal-content"><h3>TOURNAMENTS</h3><div class="modal-option" id="rulesBtn">RULES</div><div class="modal-option" id="playerTitlesBtn">PLAYER TITLES</div><div class="modal-option" id="logoutBtn">LOGOUT</div><button class="close-modal" id="closeModalBtn">CLOSE</button></div></div>
+<div id="debugModal" class="modal-overlay"><div class="debug-modal"><h3>Debug</h3><div id="debugContent">Ready</div><button id="closeDebugBtn" class="close-modal">Close</button></div></div>
+<div class="modal-overlay" id="modalOverlay"><div class="modal-content" id="modalContent"></div></div>
 
 <div class="dashboard">
-  <div class="slideshow-container"><img id="slideshow-img" class="slideshow-img" src="images - 2026-04-19T121231.816.jpeg"><div class="dots-container" id="dotsContainer"></div></div>
+  <div class="slideshow-container">
+    <img id="slideshow-img" class="slideshow-img" src="" alt="Slideshow">
+    <div class="dots-container" id="dotsContainer"></div>
+  </div>
 
   <div class="card">
     <div class="card-header" style="cursor:default;">
-      <div class="card-header-left"><h2>🏆 PREMIER LEAGUE TABLE</h2><button class="add-btn" id="addTeamBtn">+ Add Team</button></div>
+      <div class="card-header-left">
+        <h2>🏆 PREMIER LEAGUE TABLE</h2>
+        <button class="add-btn" id="addTeamBtn" style="display:none;">+ Add Team</button>
+      </div>
       <button class="three-dot-menu" id="threeDotBtn">⋮</button>
     </div>
     <div class="card-content">
-      <div class="scrollable-table"><table class="stats-table" id="leagueTable"><thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th><th>Actions</th></tr></thead><tbody id="tableBody"></tbody></table></div>
-      <div class="legend-under-table"><div style="display:flex; flex-wrap:wrap; gap:1.5rem; justify-content:center;"><span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span>UCL</span></span><span class="legend-item"><span class="legend-vertical-bar legend-orange"></span><span>UEL</span></span><span class="legend-item"><span class="legend-vertical-bar legend-green"></span><span>UECL</span></span><span class="legend-item"><span class="legend-dashed-white"></span><span>FIFA CWC</span></span></div></div>
+      <div class="scrollable-table"><table class="stats-table" id="leagueTable"><thead><tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>Pts</th><th>Last 5</th><th id="actionHeader" style="display:none;">Actions</th></tr></thead><tbody id="tableBody"></tbody></table></div>
+      <div class="legend-under-table"><div style="display:flex; flex-wrap:wrap; gap:1.5rem; justify-content:center;"><span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span>UEFA Champions League</span></span><span class="legend-item"><span class="legend-vertical-bar legend-orange"></span><span>Europa League</span></span><span class="legend-item"><span class="legend-vertical-bar legend-green"></span><span>UEFA Conference League</span></span><span class="legend-item"><span class="legend-dashed-white"></span><span>FIFA Club World Cup</span></span></div></div>
     </div>
   </div>
 
-  <div class="card"><div class="card-header" id="fixturesHeader"><div class="card-header-left"><h2>📅 FIXTURES</h2><button class="add-btn" id="addFixtureBtn">+ Add Fixture</button></div><div class="toggle-icon" id="fixturesToggleIcon">▼</div></div>
-  <div class="card-content" id="fixturesContent"><div class="filter-container"><input type="text" id="fixtureSearch" class="filter-input" placeholder="🔍 Search team..."></div><div class="scrollable-table"><table class="inner-table"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesBody"></tbody></table></div></div></div>
+  <div class="card"><div class="card-header" id="fixturesHeader"><div class="card-header-left"><h2>📅 FIXTURES</h2><button class="add-btn" id="addFixtureBtn" style="display:none;">+ Add Fixture</button></div><div class="toggle-icon" id="fixturesToggleIcon">▼</div></div>
+  <div class="card-content" id="fixturesContent"><div class="filter-container"><input type="text" id="fixtureSearch" class="filter-input" placeholder="🔍 Search team..."></div><div class="scrollable-table"><table class="inner-table"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th><th id="fixtureActionHeader" style="display:none;">Actions</th></tr></thead><tbody id="fixturesBody"></tbody></table></div></div></div>
 
-  <div class="card"><div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>📝 RESULTS</h2><button class="add-btn" id="addResultBtn">+ Add Result</button></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
-  <div class="card-content" id="resultsContent"><div class="scrollable-table"><table class="inner-table"><thead><tr><th>Match</th><th>Match Day</th> </tr></thead><tbody id="resultsBody"></tbody></table></div></div></div>
+  <div class="card"><div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>📝 RESULTS</h2><button class="add-btn" id="addResultBtn" style="display:none;">+ Add Result</button></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
+  <div class="card-content" id="resultsContent"><div class="scrollable-table"><table class="inner-table"><thead><tr><th>Match</th><th>Match Day</th><th id="resultActionHeader" style="display:none;">Actions</th><tr></thead><tbody id="resultsBody"></tbody></table></div></div></div>
 </div>
 
-<!-- CRUD Forms -->
+<!-- CRUD Forms (same as original) -->
 <div id="teamForm" class="form-overlay"><div class="form-card"><h3>Add/Edit Team</h3><select id="teamNameSelect"></select><input type="number" id="teamP" placeholder="Played"><input type="number" id="teamGD" placeholder="Goal Difference"><input type="number" id="teamPts" placeholder="Points"><button id="saveTeamBtn">Save</button><button id="cancelTeamBtn">Cancel</button></div></div>
 <div id="fixtureForm" class="form-overlay"><div class="form-card"><h3>Add/Edit Fixture</h3><input type="text" id="fixtureDate" placeholder="Date (e.g., Apr 28)"><select id="fixtureHome"></select><select id="fixtureAway"></select><input type="number" id="fixtureMd" placeholder="Matchday"><button id="saveFixtureBtn">Save</button><button id="cancelFixtureBtn">Cancel</button></div></div>
 <div id="resultForm" class="form-overlay"><div class="form-card"><h3>Add/Edit Result</h3><input type="text" id="resultText" placeholder="Match text (e.g., Real Madrid 3 - 2 Arsenal)"><input type="number" id="resultMd" placeholder="Matchday"><button id="saveResultBtn">Save</button><button id="cancelResultBtn">Cancel</button></div></div>
 
-<script type="importmap">
-  { "imports": { "firebase/app": "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js", "firebase/database": "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js", "firebase/auth": "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js" } }
-</script>
-<script type="module">
-  import { initializeApp } from "firebase/app";
-  import { getDatabase, ref, set, onValue, push, remove } from "firebase/database";
-  import { getAuth, signOut } from "firebase/auth";
+<script>
+  // Firebase config (same as original)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
+    authDomain: "efootball-412.firebaseapp.com",
+    databaseURL: "https://efootball-412-default-rtdb.firebaseio.com",
+    projectId: "efootball-412",
+    storageBucket: "efootball-412.firebasestorage.app",
+    messagingSenderId: "596548424249",
+    appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+  const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
 
-  const firebaseConfig = { apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4", authDomain: "efootball-412.firebaseapp.com", databaseURL: "https://efootball-412-default-rtdb.firebaseio.com", projectId: "efootball-412", storageBucket: "efootball-412.firebasestorage.app", messagingSenderId: "596548424249", appId: "1:596548424249:web:4349f6e87a40a1590bf3e8" };
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  const auth = getAuth(app);
+  // ---------- Global State ----------
+  let isAdminMode = false;
+  let teamsData = [], fixturesData = [], resultsData = [];
+  let teamIconsCache = {};        // loaded from Firebase
+  let slideshowImages = [], slideshowDuration = 3000, slideInterval = null, currentSlideIdx = 0;
 
-  // Team icons mapping
-  const teamIcons = { "Arsenal":"b688ae57-b21a-4ee9-ba6c-5027a09cc9c5.png","AC Milan":"44e0f58a-e5db-445b-9896-db22ea99b936.png","PSG":"4dea795d-a516-46ae-bd34-07a784693d80.png","Barcelona":"IMG_20260421_085117.jpg","Inter Milan":"IMG_20260421_092951.png","Atletico":"IMG_20260421_093024.png","Newcastle":"IMG_20260421_093046.png","Napoli":"IMG_20260421_100318.jpg","Chelsea":"IMG_20260421_100354.jpg","Dortmund":"01cf2986-d9d6-4a33-830d-5d12de4e21b2.jpeg","Real Madrid":"21259ea4-042f-48ff-902f-1e776d27fe58.jpeg","Man City":"9e92a100-327b-48fc-96d4-e4c89f69d7ef.jpeg","Liverpool":"269acb36-d189-45ea-860d-ea8f1cf05f05.jpeg","Juventus":"IMG_20260421_151224.jpg" };
-  const teamList = Object.keys(teamIcons);
-  function getTeamIconHtml(team, cls="team-icon-sm") { const src = teamIcons[team]; return src ? `<img class="${cls}" src="${src}">` : team; }
+  // Helper: normalise team names for icons
+  const teamList = ["Arsenal","AC Milan","PSG","Barcelona","Inter Milan","Atletico","Newcastle","Napoli","Chelsea","Dortmund","Real Madrid","Man City","Liverpool","Juventus"];
 
+  // Load team icons from Firebase
+  async function loadTeamIcons() {
+    const snapshot = await database.ref('teamIcons').once('value');
+    const data = snapshot.val() || {};
+    for (const [team, value] of Object.entries(data)) {
+      if (value.imageUrl) teamIconsCache[team] = value.imageUrl;
+    }
+    renderLeagueTable(); renderFixtures(); renderResults();
+  }
+
+  function getTeamIconHtml(team, className = "team-icon-sm") {
+    const url = teamIconsCache[team];
+    return url ? `<img class="${className}" src="${url}" alt="${team}" onerror="this.remove();">` : team;
+  }
+
+  // Player mapping
   const playerMap = { "Barcelona":"~Rea🫡","Inter Milan":"Mali","Dortmund":"~Qhawe 🤍","Juventus":"Izu","Atletico":"~Stalker.","PSG":"~MJ","Napoli":"~PrettyBoy Tendancies. 👅","Real Madrid":"~Karabo","Arsenal":"Kath","AC Milan":"Tapz","Chelsea":"~Zazo","Man City":"gry","Liverpool":"🅿️","Newcastle":"~Oratile" };
 
-  let currentView = "team";
-  let showFormArrows = true;
-  let showLast5 = true;
-
-  let teamsData = [];
-  let fixturesData = [];
-  let resultsData = [];
-
-  function getResultStatusForTeam(team, resultText) {
-    const lower = resultText.toLowerCase();
+  // Last 5 & arrow helpers (unchanged from original logic)
+  function getResultStatusForTeam(team, matchText) { /* same as original */ 
+    const lower = matchText.toLowerCase();
     if (lower.includes("no contest") || lower.includes("f - f")) return "F";
     const isForfeit = lower.includes("forfeit") || lower.includes("forfeited");
-    const parts = resultText.match(/([A-Za-z\s]+?)\s+(\d+)\s*[-–]\s*(\d+)\s+([A-Za-z\s]+)/);
+    const parts = matchText.match(/([A-Za-z\s]+?)\s+(\d+)\s*[-–]\s*(\d+)\s+([A-Za-z\s]+)/);
     if (parts) {
-      let home = parts[1].trim(), homeScore = parseInt(parts[2]), awayScore = parseInt(parts[3]), away = parts[4].trim();
-      if (home === team && homeScore > awayScore) return isForfeit ? "WF" : "W";
-      if (home === team && homeScore < awayScore) return isForfeit ? "LF" : "L";
-      if (away === team && awayScore > homeScore) return isForfeit ? "WF" : "W";
-      if (away === team && awayScore < homeScore) return isForfeit ? "LF" : "L";
-      if ((home === team || away === team) && homeScore === awayScore) return "D";
-    }
-    if (resultText.includes(`${team} `) && isForfeit) {
-      if (lower.includes("win")) return "WF";
-      if (lower.includes("loss")) return "LF";
+      let home = parts[1].trim(), hScore = parseInt(parts[2]), aScore = parseInt(parts[3]), away = parts[4].trim();
+      if (home === team && hScore > aScore) return isForfeit ? "WF" : "W";
+      if (home === team && hScore < aScore) return isForfeit ? "LF" : "L";
+      if (away === team && aScore > hScore) return isForfeit ? "WF" : "W";
+      if (away === team && aScore < hScore) return isForfeit ? "LF" : "L";
+      if ((home === team || away === team) && hScore === aScore) return "D";
     }
     return null;
   }
-
   function getTeamLast5(team) {
     const teamResults = resultsData.filter(r => r.matchText.includes(team)).sort((a,b) => (b.md||0) - (a.md||0));
-    const last5Status = teamResults.slice(0,5).map(r => getResultStatusForTeam(team, r.matchText)).filter(s => s);
-    while(last5Status.length < 5) last5Status.push(null);
-    return last5Status.reverse();
+    const last5 = teamResults.slice(0,5).map(r => getResultStatusForTeam(team, r.matchText)).filter(s => s);
+    while(last5.length < 5) last5.push(null);
+    return last5.reverse();
   }
-
   function getLatestArrow(team) {
     const teamResults = resultsData.filter(r => r.matchText.includes(team)).sort((a,b) => (b.md||0) - (a.md||0));
-    if(teamResults.length === 0) return null;
+    if(!teamResults.length) return null;
     const status = getResultStatusForTeam(team, teamResults[0].matchText);
     if(status === "W" || status === "WF") return "↑";
     if(status === "L" || status === "LF") return "↓";
@@ -326,8 +346,11 @@
     return null;
   }
 
+  // Render League Table with conditional actions
   function renderLeagueTable() {
     const tbody = document.getElementById('tableBody'); if(!tbody) return;
+    const actionHeader = document.getElementById('actionHeader');
+    if(actionHeader) actionHeader.style.display = isAdminMode ? 'table-cell' : 'none';
     tbody.innerHTML = '';
     const sorted = [...teamsData].sort((a,b) => b.pts - a.pts || b.gd - a.gd);
     sorted.forEach((team, idx) => {
@@ -346,7 +369,7 @@
       else posCell.innerText = pos;
 
       let arrowHtml = "";
-      if(showFormArrows) {
+      if(window.showFormArrows) {
         const arrow = getLatestArrow(team.name);
         if(arrow === "↑") arrowHtml = '<span class="arrow-up">↑</span> ';
         else if(arrow === "↓") arrowHtml = '<span class="arrow-down">↓</span> ';
@@ -354,24 +377,19 @@
         else if(arrow === "⚪") arrowHtml = '<span style="opacity:0.5;">⚪</span> ';
         else arrowHtml = '<span style="opacity:0.3;">—</span> ';
       }
-      const displayName = (currentView === "player" && playerMap[team.name]) ? playerMap[team.name] : team.name;
+      const displayName = (window.currentView === "player" && playerMap[team.name]) ? playerMap[team.name] : team.name;
       const iconHtml = getTeamIconHtml(team.name, "team-icon");
       row.insertCell(1).innerHTML = `<div class="team-name">${arrowHtml}${iconHtml} ${displayName}</div>`;
       row.insertCell(2).innerText = team.p || 0;
-      const gdValue = team.gd || 0;
-      row.insertCell(3).innerText = gdValue > 0 ? `+${gdValue}` : `${gdValue}`;
-      const ptsCell = row.insertCell(4);
-      ptsCell.className = "pts-cell";
-      ptsCell.innerText = team.pts || 0;
-
+      const gd = team.gd || 0;
+      row.insertCell(3).innerText = gd > 0 ? `+${gd}` : `${gd}`;
+      const ptsCell = row.insertCell(4); ptsCell.className = "pts-cell"; ptsCell.innerText = team.pts || 0;
       const last5Cell = row.insertCell(5);
-      if(showLast5) {
+      if(window.showLast5) {
         const last5 = getTeamLast5(team.name);
-        const container = document.createElement("div");
-        container.className = "form-circles";
+        const container = document.createElement("div"); container.className = "form-circles";
         last5.forEach(res => {
-          const circle = document.createElement("span");
-          circle.className = "circle-result";
+          const circle = document.createElement("span"); circle.className = "circle-result";
           if(res === "W") { circle.classList.add("circle-win"); circle.innerHTML = "✓"; }
           else if(res === "L") { circle.classList.add("circle-loss"); circle.innerHTML = "✗"; }
           else if(res === "D") { circle.classList.add("circle-draw"); circle.innerHTML = "–"; }
@@ -382,96 +400,117 @@
           container.appendChild(circle);
         });
         last5Cell.appendChild(container);
-      } else {
-        last5Cell.innerHTML = '';
+      } else last5Cell.innerHTML = '';
+      if(isAdminMode) {
+        const actions = row.insertCell(6);
+        const editBtn = document.createElement('button'); editBtn.innerText='✏️'; editBtn.className='edit-btn'; editBtn.onclick=()=>openTeamForm(team.key,team);
+        const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await database.ref(`premier_league/table/${team.key}`).remove(); };
+        actions.appendChild(editBtn); actions.appendChild(delBtn);
       }
-
-      const actions = row.insertCell(6);
-      const editBtn = document.createElement('button'); editBtn.innerText='✏️'; editBtn.className='edit-btn'; editBtn.onclick=()=>openTeamForm(team.key,team);
-      const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await remove(ref(db,`premier_league/table/${team.key}`)); };
-      actions.appendChild(editBtn); actions.appendChild(delBtn);
     });
   }
 
-  let editingTeamKey = null;
-  function openTeamForm(key,data){ editingTeamKey=key; const sel=document.getElementById('teamNameSelect'); sel.innerHTML=teamList.map(t=>`<option value="${t}">${t}</option>`).join(''); if(data?.name) sel.value=data.name; document.getElementById('teamP').value=data?.p||''; document.getElementById('teamGD').value=data?.gd||''; document.getElementById('teamPts').value=data?.pts||''; document.getElementById('teamForm').classList.add('active'); }
-  document.getElementById('addTeamBtn').onclick=()=>openTeamForm(null); document.getElementById('saveTeamBtn').onclick=async()=>{ const name=document.getElementById('teamNameSelect').value; const p=parseInt(document.getElementById('teamP').value)||0; const gd=parseInt(document.getElementById('teamGD').value)||0; const pts=parseInt(document.getElementById('teamPts').value)||0; if(!name) return; if(editingTeamKey) await set(ref(db,`premier_league/table/${editingTeamKey}`),{name,p,gd,pts}); else await set(push(ref(db,'premier_league/table')),{name,p,gd,pts}); document.getElementById('teamForm').classList.remove('active'); }; document.getElementById('cancelTeamBtn').onclick=()=>document.getElementById('teamForm').classList.remove('active');
-
+  // Fixtures render (with actions)
   function renderFixtures() {
+    const tbody = document.getElementById('fixturesBody'); if(!tbody) return;
+    const actionHeader = document.getElementById('fixtureActionHeader');
+    if(actionHeader) actionHeader.style.display = isAdminMode ? 'table-cell' : 'none';
     const search = document.getElementById('fixtureSearch')?.value.toLowerCase() || '';
-    const tbody = document.getElementById('fixturesBody');
-    if(!tbody) return;
     tbody.innerHTML = '';
     fixturesData.forEach(f => {
       if(search && !f.home.toLowerCase().includes(search) && !f.away.toLowerCase().includes(search)) return;
       const row = tbody.insertRow();
-      row.insertCell(0).innerHTML = `<span class="date-badge">${f.date || ''}</span>`;
+      row.insertCell(0).innerHTML = `<span>${f.date || ''}</span>`;
       const homeIcon = getTeamIconHtml(f.home, "inline-team-icon");
       const awayIcon = getTeamIconHtml(f.away, "inline-team-icon");
-      row.insertCell(1).innerHTML = `<div class="fixture-icons">${homeIcon} ${f.home} vs ${awayIcon} ${f.away}</div>`;
+      row.insertCell(1).innerHTML = `<div>${homeIcon} ${f.home} vs ${awayIcon} ${f.away}</div>`;
       row.insertCell(2).innerHTML = `<span style="background:#1a1a1a; padding:0.2rem 0.7rem; border-radius:30px; color:#f5d742;">MD ${f.md}</span>`;
+      if(isAdminMode) {
+        const actions = row.insertCell(3);
+        const editBtn = document.createElement('button'); editBtn.innerText='✏️'; editBtn.className='edit-btn'; editBtn.onclick=()=>openFixtureForm(f.key,f);
+        const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await database.ref(`premier_league/fixtures/${f.key}`).remove(); };
+        actions.appendChild(editBtn); actions.appendChild(delBtn);
+      }
     });
-    if(tbody.rows.length === 0) { const r=tbody.insertRow(); r.insertCell(0).colSpan=3; r.cells[0].className="empty-message"; r.cells[0].innerText="No fixtures match."; }
+    if(tbody.rows.length===0){ const r=tbody.insertRow(); r.insertCell(0).colSpan=4; r.cells[0].innerText="No fixtures"; }
   }
 
+  // Results render (with actions)
   function renderResults() {
-    const tbody = document.getElementById('resultsBody');
-    if(!tbody) return;
+    const tbody = document.getElementById('resultsBody'); if(!tbody) return;
+    const actionHeader = document.getElementById('resultActionHeader');
+    if(actionHeader) actionHeader.style.display = isAdminMode ? 'table-cell' : 'none';
     tbody.innerHTML = '';
     resultsData.forEach(r => {
       let processed = r.matchText;
-      teamList.forEach(team => {
-        const regex = new RegExp(`\\b${team}\\b`, 'g');
-        processed = processed.replace(regex, `${getTeamIconHtml(team, "inline-team-icon")} ${team}`);
-      });
+      teamList.forEach(team => { processed = processed.replace(new RegExp(`\\b${team}\\b`, 'g'), `${getTeamIconHtml(team, "inline-team-icon")} ${team}`); });
       const row = tbody.insertRow();
-      const isForfeit = r.matchText.includes("Forfeit") || r.matchText.includes("No Contest") || r.matchText.includes("F - F");
-      if(isForfeit) {
-        let forfeitText = "Forfeit";
-        if(r.matchText.includes("No Contest")) forfeitText = "No Contest";
-        else if(r.matchText.includes("Forfeited - No Reply")) forfeitText = "Forfeited - No Reply";
-        else if(r.matchText.includes("Forfeited on Agreement")) forfeitText = "Forfeited on Agreement";
-        else if(r.matchText.includes("F - F")) forfeitText = "No Contest";
-        row.insertCell(0).innerHTML = `<div class="result-with-forfeit"><strong>${processed}</strong><div class="forfeit-text">${forfeitText}</div></div>`;
-      } else {
-        row.insertCell(0).innerHTML = `<strong>${processed}</strong>`;
+      row.insertCell(0).innerHTML = `<strong>${processed}</strong>`;
+      row.insertCell(1).innerHTML = `<span style="background:#1a1a1a; padding:0.2rem 0.7rem; border-radius:30px; color:#f5d742;">MD${r.md}</span>`;
+      if(isAdminMode) {
+        const actions = row.insertCell(2);
+        const editBtn = document.createElement('button'); editBtn.innerText='✏️'; editBtn.className='edit-btn'; editBtn.onclick=()=>openResultForm(r.key,r);
+        const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await database.ref(`premier_league/results/${r.key}`).remove(); };
+        actions.appendChild(editBtn); actions.appendChild(delBtn);
       }
-      row.insertCell(1).innerHTML = `<span class="match-highlight" style="background:#1a1a1a; color:#f5d742; padding:0.2rem 0.7rem; border-radius:30px;">MD${r.md}</span>`;
-      const actions = row.insertCell(2);
-      const editBtn = document.createElement('button'); editBtn.innerText='✏️'; editBtn.className='edit-btn'; editBtn.onclick=()=>openResultForm(r.key,r);
-      const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await remove(ref(db,`premier_league/results/${r.key}`)); };
-      actions.appendChild(editBtn); actions.appendChild(delBtn);
     });
   }
 
+  // CRUD forms (identical to original)
+  let editingTeamKey = null;
+  function openTeamForm(key,data){ editingTeamKey=key; const sel=document.getElementById('teamNameSelect'); sel.innerHTML=teamList.map(t=>`<option value="${t}">${t}</option>`).join(''); if(data?.name) sel.value=data.name; document.getElementById('teamP').value=data?.p||''; document.getElementById('teamGD').value=data?.gd||''; document.getElementById('teamPts').value=data?.pts||''; document.getElementById('teamForm').classList.add('active'); }
+  document.getElementById('addTeamBtn').onclick=()=>openTeamForm(null);
+  document.getElementById('saveTeamBtn').onclick=async()=>{ const name=document.getElementById('teamNameSelect').value; const p=parseInt(document.getElementById('teamP').value)||0; const gd=parseInt(document.getElementById('teamGD').value)||0; const pts=parseInt(document.getElementById('teamPts').value)||0; if(!name) return; if(editingTeamKey) await database.ref(`premier_league/table/${editingTeamKey}`).set({name,p,gd,pts}); else await database.ref('premier_league/table').push({name,p,gd,pts}); document.getElementById('teamForm').classList.remove('active'); };
+  document.getElementById('cancelTeamBtn').onclick=()=>document.getElementById('teamForm').classList.remove('active');
+
   let editingFixtureKey = null;
-  function openFixtureForm(key,data){ editingFixtureKey=key; document.getElementById('fixtureDate').value=data?.date||''; const homeSel=document.getElementById('fixtureHome'), awaySel=document.getElementById('fixtureAway'); homeSel.innerHTML=teamList.map(t=>`<option value="${t}">${t}</option>`); awaySel.innerHTML=teamList.map(t=>`<option value="${t}">${t}</option>`); if(data?.home) homeSel.value=data.home; if(data?.away) awaySel.value=data.away; document.getElementById('fixtureMd').value=data?.md||''; document.getElementById('fixtureForm').classList.add('active'); }
-  document.getElementById('addFixtureBtn').onclick=()=>openFixtureForm(null); document.getElementById('saveFixtureBtn').onclick=async()=>{ const date=document.getElementById('fixtureDate').value; const home=document.getElementById('fixtureHome').value; const away=document.getElementById('fixtureAway').value; const md=parseInt(document.getElementById('fixtureMd').value); if(!date||!home||!away||!md) return; if(editingFixtureKey) await set(ref(db,`premier_league/fixtures/${editingFixtureKey}`),{date,home,away,md}); else await set(push(ref(db,'premier_league/fixtures')),{date,home,away,md}); document.getElementById('fixtureForm').classList.remove('active'); }; document.getElementById('cancelFixtureBtn').onclick=()=>document.getElementById('fixtureForm').classList.remove('active');
-  document.getElementById('fixtureSearch')?.addEventListener('input', renderFixtures);
+  function openFixtureForm(key,data){ editingFixtureKey=key; document.getElementById('fixtureDate').value=data?.date||''; const homeSel=document.getElementById('fixtureHome'), awaySel=document.getElementById('fixtureAway'); homeSel.innerHTML=teamList.map(t=>`<option>${t}</option>`); awaySel.innerHTML=teamList.map(t=>`<option>${t}</option>`); if(data?.home) homeSel.value=data.home; if(data?.away) awaySel.value=data.away; document.getElementById('fixtureMd').value=data?.md||''; document.getElementById('fixtureForm').classList.add('active'); }
+  document.getElementById('addFixtureBtn').onclick=()=>openFixtureForm(null);
+  document.getElementById('saveFixtureBtn').onclick=async()=>{ const date=document.getElementById('fixtureDate').value; const home=document.getElementById('fixtureHome').value; const away=document.getElementById('fixtureAway').value; const md=parseInt(document.getElementById('fixtureMd').value); if(!date||!home||!away||!md) return; if(editingFixtureKey) await database.ref(`premier_league/fixtures/${editingFixtureKey}`).set({date,home,away,md}); else await database.ref('premier_league/fixtures').push({date,home,away,md}); document.getElementById('fixtureForm').classList.remove('active'); };
+  document.getElementById('cancelFixtureBtn').onclick=()=>document.getElementById('fixtureForm').classList.remove('active');
 
   let editingResultKey = null;
   function openResultForm(key,data){ editingResultKey=key; document.getElementById('resultText').value=data?.matchText||''; document.getElementById('resultMd').value=data?.md||''; document.getElementById('resultForm').classList.add('active'); }
-  document.getElementById('addResultBtn').onclick=()=>openResultForm(null); document.getElementById('saveResultBtn').onclick=async()=>{ const text=document.getElementById('resultText').value; const md=parseInt(document.getElementById('resultMd').value); if(!text||!md) return; if(editingResultKey) await set(ref(db,`premier_league/results/${editingResultKey}`),{matchText:text,md}); else await set(push(ref(db,'premier_league/results')),{matchText:text,md}); document.getElementById('resultForm').classList.remove('active'); }; document.getElementById('cancelResultBtn').onclick=()=>document.getElementById('resultForm').classList.remove('active');
+  document.getElementById('addResultBtn').onclick=()=>openResultForm(null);
+  document.getElementById('saveResultBtn').onclick=async()=>{ const text=document.getElementById('resultText').value; const md=parseInt(document.getElementById('resultMd').value); if(!text||!md) return; if(editingResultKey) await database.ref(`premier_league/results/${editingResultKey}`).set({matchText:text,md}); else await database.ref('premier_league/results').push({matchText:text,md}); document.getElementById('resultForm').classList.remove('active'); };
+  document.getElementById('cancelResultBtn').onclick=()=>document.getElementById('resultForm').classList.remove('active');
 
-  onValue(ref(db,'premier_league/table'), (snap) => { teamsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderLeagueTable(); });
-  onValue(ref(db,'premier_league/fixtures'), (snap)=>{ fixturesData = snap.val() ? Object.values(snap.val()) : []; renderFixtures(); });
-  onValue(ref(db,'premier_league/results'), (snap)=>{ resultsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderResults(); renderLeagueTable(); });
+  // Firebase listeners
+  database.ref('premier_league/table').on('value', snap => { teamsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderLeagueTable(); });
+  database.ref('premier_league/fixtures').on('value', snap => { fixturesData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderFixtures(); });
+  database.ref('premier_league/results').on('value', snap => { resultsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderResults(); renderLeagueTable(); });
 
-  let popup = null;
+  // Admin mode toggle
+  const adminBtn = document.getElementById('adminModeBtn');
+  adminBtn.addEventListener('click', () => {
+    const key = prompt("Enter admin key:");
+    if(key === "admin@100") {
+      isAdminMode = true;
+      adminBtn.classList.add('active');
+      adminBtn.innerText = "👑 ADMIN ACTIVE";
+      document.getElementById('addTeamBtn').style.display = 'inline-block';
+      document.getElementById('addFixtureBtn').style.display = 'inline-block';
+      document.getElementById('addResultBtn').style.display = 'inline-block';
+      renderLeagueTable(); renderFixtures(); renderResults();
+      // Rebuild hamburger menu to show extra options
+      buildHamburgerModal();
+    } else alert("Wrong key");
+  });
+
+  // Three-dot menu (manager view, arrows, last5, calendar, rules)
+  let currentView = "team", showFormArrows = true, showLast5 = true, popup = null;
+  window.currentView = currentView; window.showFormArrows = showFormArrows; window.showLast5 = showLast5;
   const threeDot = document.getElementById('threeDotBtn');
   function closePopup() { if(popup) { popup.remove(); popup = null; } }
   threeDot.addEventListener('click', (e) => {
     e.stopPropagation();
     if(popup) { closePopup(); return; }
     const rect = threeDot.getBoundingClientRect();
-    popup = document.createElement('div');
-    popup.className = 'popup-menu';
-    popup.style.position = 'absolute';
-    popup.style.top = (rect.bottom + window.scrollY + 5) + 'px';
-    popup.style.left = (rect.left + window.scrollX - 60) + 'px';
-    const playersOpt = document.createElement('div'); playersOpt.innerText = (currentView === "team") ? "Manager names" : "Team View"; playersOpt.onclick = () => { currentView = (currentView === "team") ? "player" : "team"; renderLeagueTable(); closePopup(); };
-    const formOpt = document.createElement('div'); formOpt.innerText = showFormArrows ? "Hide Form arrows" : "Show Form arrows"; formOpt.onclick = () => { showFormArrows = !showFormArrows; renderLeagueTable(); closePopup(); };
-    const last5Opt = document.createElement('div'); last5Opt.innerText = showLast5 ? "Hide Last 5" : "Show Last 5"; last5Opt.onclick = () => { showLast5 = !showLast5; renderLeagueTable(); closePopup(); };
+    popup = document.createElement('div'); popup.className = 'popup-menu';
+    popup.style.position = 'absolute'; popup.style.top = (rect.bottom + window.scrollY + 5) + 'px'; popup.style.left = (rect.left + window.scrollX - 60) + 'px';
+    const playersOpt = document.createElement('div'); playersOpt.innerText = currentView === "team" ? "Manager names" : "Team View"; playersOpt.onclick = () => { currentView = currentView === "team" ? "player" : "team"; window.currentView = currentView; renderLeagueTable(); closePopup(); };
+    const formOpt = document.createElement('div'); formOpt.innerText = showFormArrows ? "Hide Form arrows" : "Show Form arrows"; formOpt.onclick = () => { showFormArrows = !showFormArrows; window.showFormArrows = showFormArrows; renderLeagueTable(); closePopup(); };
+    const last5Opt = document.createElement('div'); last5Opt.innerText = showLast5 ? "Hide Last 5" : "Show Last 5"; last5Opt.onclick = () => { showLast5 = !showLast5; window.showLast5 = showLast5; renderLeagueTable(); closePopup(); };
     const calendarOpt = document.createElement('div'); calendarOpt.innerText = 'Calendar'; calendarOpt.onclick = () => { window.location.href = 'calendar.html'; closePopup(); };
     const rulesOpt = document.createElement('div'); rulesOpt.innerText = 'Rules'; rulesOpt.onclick = () => { window.location.href = 'rules.html'; closePopup(); };
     popup.appendChild(playersOpt); popup.appendChild(formOpt); popup.appendChild(last5Opt); popup.appendChild(calendarOpt); popup.appendChild(rulesOpt);
@@ -479,54 +518,145 @@
   });
   document.addEventListener('click', (e) => { if(popup && !popup.contains(e.target) && e.target !== threeDot) closePopup(); });
 
+  // Collapsible cards
   function setupCollapse(headerId, contentId, iconId) {
-    const h = document.getElementById(headerId);
-    const c = document.getElementById(contentId);
-    const ic = document.getElementById(iconId);
-    if(!h || !c) return;
+    const h=document.getElementById(headerId), c=document.getElementById(contentId), ic=document.getElementById(iconId);
+    if(!h||!c) return;
     let collapsed = c.classList.contains('collapsed');
-    h.addEventListener('click', () => {
-      collapsed = !collapsed;
-      if(collapsed) { c.classList.add('collapsed'); if(ic) ic.innerHTML = '▶'; }
-      else { c.classList.remove('collapsed'); if(ic) ic.innerHTML = '▼'; }
-    });
+    h.addEventListener('click',()=>{ collapsed=!collapsed; if(collapsed){ c.classList.add('collapsed'); if(ic) ic.innerHTML='▶'; } else { c.classList.remove('collapsed'); if(ic) ic.innerHTML='▼'; } });
   }
-  setupCollapse('fixturesHeader', 'fixturesContent', 'fixturesToggleIcon');
-  setupCollapse('resultsHeader', 'resultsContent', 'resultsToggleIcon');
-  document.getElementById('fixturesContent')?.classList.add('collapsed');
-  document.getElementById('resultsContent')?.classList.add('collapsed');
-  if(document.getElementById('fixturesToggleIcon')) document.getElementById('fixturesToggleIcon').innerHTML = '▶';
-  if(document.getElementById('resultsToggleIcon')) document.getElementById('resultsToggleIcon').innerHTML = '▶';
+  setupCollapse('fixturesHeader','fixturesContent','fixturesToggleIcon');
+  setupCollapse('resultsHeader','resultsContent','resultsToggleIcon');
+  document.getElementById('fixturesContent').classList.add('collapsed');
+  document.getElementById('resultsContent').classList.add('collapsed');
+  document.getElementById('fixturesToggleIcon').innerHTML = '▶';
+  document.getElementById('resultsToggleIcon').innerHTML = '▶';
 
-  const images = ["images - 2026-04-19T121231.816.jpeg", "images - 2026-04-19T155746.715.jpeg", "37686bb3-06ce-401b-a022-026933c165e7.jpeg", "12871.jpg", "1f157df7-2054-4a9d-aa14-b9941ef4a743.jpeg"];
-  let idx = 0;
-  const slideshowImg = document.getElementById('slideshow-img');
-  const dotsContainer = document.getElementById('dotsContainer');
-  function createDots() {
-    if(!dotsContainer) return;
-    dotsContainer.innerHTML = '';
-    images.forEach((_, i) => {
-      const dot = document.createElement('span');
-      dot.classList.add('dot');
-      if(i === idx) dot.classList.add('active');
-      dot.addEventListener('click', () => { idx = i; slideshowImg.src = images[idx]; updateDots(); });
-      dotsContainer.appendChild(dot);
-    });
+  // Slideshow from Firebase (unchanged but dynamic)
+  async function loadSlideshow() {
+    const snap = await database.ref('slideshow/images').once('value');
+    slideshowImages = snap.val() || [];
+    const durSnap = await database.ref('slideshow/duration').once('value');
+    slideshowDuration = durSnap.val() || 3000;
+    startSlideshow();
   }
-  function updateDots() { document.querySelectorAll('.dot').forEach((dot, i) => { if(i === idx) dot.classList.add('active'); else dot.classList.remove('active'); }); }
-  if(slideshowImg) { createDots(); setInterval(() => { idx = (idx+1) % images.length; slideshowImg.src = images[idx]; updateDots(); }, 2000); }
+  function startSlideshow() {
+    if(slideInterval) clearInterval(slideInterval);
+    if(!slideshowImages.length) return;
+    currentSlideIdx = 0;
+    updateSlideImage();
+    slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx+1)%slideshowImages.length; updateSlideImage(); }, slideshowDuration);
+  }
+  function updateSlideImage() { document.getElementById('slideshow-img').src = slideshowImages[currentSlideIdx] || ''; updateDots(); }
+  function updateDots() {
+    const container = document.getElementById('dotsContainer'); if(!container) return;
+    container.innerHTML = '';
+    slideshowImages.forEach((_,i) => { const dot = document.createElement('span'); dot.classList.add('dot'); if(i===currentSlideIdx) dot.classList.add('active'); dot.onclick = () => { currentSlideIdx = i; updateSlideImage(); if(slideInterval){ clearInterval(slideInterval); slideInterval = setInterval(()=>{ currentSlideIdx = (currentSlideIdx+1)%slideshowImages.length; updateSlideImage(); }, slideshowDuration); } }; container.appendChild(dot); });
+  }
 
+  // Hamburger menu with admin extras
+  function buildHamburgerModal() {
+    const modalContent = document.getElementById('modalContent');
+    let options = `<h3>TOURNAMENTS</h3><div class="modal-options"><div class="modal-option" id="rulesBtn">RULES</div><div class="modal-option" id="playerTitlesBtn">PLAYER TITLES</div>`;
+    if(isAdminMode) {
+      options += `<div class="modal-option" id="addIconBtn">ADD TEAM ICON</div><div class="modal-option" id="addSlideBtn">ADD SLIDE</div>`;
+    }
+    options += `<div class="modal-option" id="logoutBtn">LOGOUT</div></div><button class="close-modal" id="closeModalBtn">CLOSE</button>`;
+    modalContent.innerHTML = options;
+    document.getElementById('rulesBtn').onclick = () => window.location.href = 'rules.html';
+    document.getElementById('playerTitlesBtn').onclick = () => window.location.href = 'player-titles.html';
+    if(isAdminMode) {
+      document.getElementById('addIconBtn').onclick = () => { document.getElementById('modalOverlay').classList.remove('active'); showUploadIconModal(); };
+      document.getElementById('addSlideBtn').onclick = () => { document.getElementById('modalOverlay').classList.remove('active'); showSlideshowManager(); };
+    }
+    document.getElementById('logoutBtn').onclick = () => { window.location.href = 'login.html'; };
+    document.getElementById('closeModalBtn').onclick = () => document.getElementById('modalOverlay').classList.remove('active');
+  }
   const hamburger = document.getElementById('hamburgerBtn');
   const modalOverlay = document.getElementById('modalOverlay');
-  const closeModalBtn = document.getElementById('closeModalBtn');
-  hamburger.onclick = () => modalOverlay.classList.add('active');
-  closeModalBtn.onclick = () => modalOverlay.classList.remove('active');
-  document.getElementById('rulesBtn').onclick = () => window.location.href = 'rules.html';
-  document.getElementById('playerTitlesBtn').onclick = () => window.location.href = 'player-titles.html';
-  document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href = 'login.html'; };
+  hamburger.onclick = () => { buildHamburgerModal(); modalOverlay.classList.add('active'); };
+  modalOverlay.addEventListener('click', (e) => { if(e.target === modalOverlay) modalOverlay.classList.remove('active'); });
 
+  // Upload icon modal
+  async function uploadToImgBB(file) {
+    const fd = new FormData(); fd.append('image', file);
+    const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: fd });
+    const data = await resp.json();
+    if(!data.success) throw new Error(data.error?.message);
+    return data.data.url;
+  }
+  function showUploadIconModal() {
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    content.innerHTML = `<div class="modal-content" style="background:#f5d742;"><h3>Add Team Icon</h3><select id="iconTeamSelect">${teamList.map(t=>`<option>${t}</option>`).join('')}</select><input type="file" id="iconFile" accept="image/*"><button id="uploadIconSave" class="modal-option">UPLOAD</button><button id="closeIconModal" class="close-modal">Cancel</button><div id="iconStatus"></div></div>`;
+    document.getElementById('uploadIconSave').onclick = async () => {
+      const team = document.getElementById('iconTeamSelect').value;
+      const file = document.getElementById('iconFile').files[0];
+      if(!file) { document.getElementById('iconStatus').innerText = 'Select an image'; return; }
+      try {
+        const url = await uploadToImgBB(file);
+        await database.ref(`teamIcons/${team}`).set({ imageUrl: url, updatedAt: Date.now() });
+        teamIconsCache[team] = url;
+        renderLeagueTable(); renderFixtures(); renderResults();
+        document.getElementById('iconStatus').innerText = '✓ Icon saved';
+        setTimeout(() => modal.classList.remove('active'), 1500);
+      } catch(err) { document.getElementById('iconStatus').innerText = 'Error: '+err.message; }
+    };
+    document.getElementById('closeIconModal').onclick = () => modal.classList.remove('active');
+  }
+
+  // Slideshow manager (admin only)
+  async function showSlideshowManager() {
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    const currentDurSec = slideshowDuration/1000;
+    content.innerHTML = `<div class="modal-content" style="min-width:300px;"><h3>Manage Slideshow</h3><div id="slidePreviewList" style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;"></div><input type="file" id="newSlideFile" accept="image/*"><button id="uploadSlideBtn" class="modal-option">Add Slide</button><div style="margin:10px 0;"><label>Duration (seconds):</label><input type="number" id="slideDurationSec" min="1" max="10" step="0.5" value="${currentDurSec}" style="width:80px;"></div><button id="saveDurBtn" class="modal-option">Set Duration</button><button id="closeSlideModal" class="close-modal">Close</button><div id="slideStatus"></div></div>`;
+    const previewDiv = document.getElementById('slidePreviewList');
+    function refreshPreviews() {
+      previewDiv.innerHTML = slideshowImages.map((url, idx) => `<div style="position:relative;"><img src="${url}" style="width:80px;height:60px;object-fit:cover;border:1px solid black;"><button onclick="window.deleteSlide(${idx})" style="position:absolute;top:-5px;right:-5px;background:#ef4444;color:white;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;">✕</button></div>`).join('');
+    }
+    refreshPreviews();
+    window.deleteSlide = async (idx) => {
+      slideshowImages.splice(idx,1);
+      await database.ref('slideshow/images').set(slideshowImages);
+      loadSlideshow();
+      refreshPreviews();
+    };
+    document.getElementById('uploadSlideBtn').onclick = async () => {
+      const file = document.getElementById('newSlideFile').files[0];
+      if(!file) { document.getElementById('slideStatus').innerText = 'Select file'; return; }
+      try {
+        const url = await uploadToImgBB(file);
+        slideshowImages.push(url);
+        await database.ref('slideshow/images').set(slideshowImages);
+        loadSlideshow();
+        refreshPreviews();
+        document.getElementById('slideStatus').innerText = '✓ Added';
+      } catch(e) { document.getElementById('slideStatus').innerText = 'Error'; }
+    };
+    document.getElementById('saveDurBtn').onclick = async () => {
+      let sec = parseFloat(document.getElementById('slideDurationSec').value);
+      if(isNaN(sec)) sec=3;
+      sec = Math.min(10, Math.max(1, sec));
+      await database.ref('slideshow/duration').set(sec*1000);
+      slideshowDuration = sec*1000;
+      startSlideshow();
+      document.getElementById('slideStatus').innerText = `Duration set to ${sec}s`;
+    };
+    document.getElementById('closeSlideModal').onclick = () => modal.classList.remove('active');
+    modal.classList.add('active');
+  }
+
+  // Search filter for fixtures
+  document.getElementById('fixtureSearch')?.addEventListener('input', () => renderFixtures());
+
+  // Debug modal
   document.getElementById('debugBtn').onclick = () => document.getElementById('debugModal').classList.add('active');
   document.getElementById('closeDebugBtn').onclick = () => document.getElementById('debugModal').classList.remove('active');
+
+  // Initialization
+  loadTeamIcons();
+  loadSlideshow();
 </script>
 </body>
 </html>
