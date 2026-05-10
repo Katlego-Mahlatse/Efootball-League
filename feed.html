@@ -786,7 +786,7 @@
         <button class="create-post-btn" onclick="showCreatePostModal()">➕ Create New Post</button>
     </div>
 
-    <!-- Create Post Modal with multiple images -->
+    <!-- Create Post Modal -->
     <div class="modal" id="postModal">
         <div class="modal-content form-modal">
             <span class="modal-close" onclick="closePostModal()">✕</span>
@@ -833,7 +833,7 @@
         </div>
     </div>
 
-    <!-- Edit Post Modal (similar with multiple images) -->
+    <!-- Edit Post Modal -->
     <div class="modal" id="editPostModal">
         <div class="modal-content form-modal">
             <span class="modal-close" onclick="closeEditPostModal()">✕</span>
@@ -844,7 +844,7 @@
                 <input type="text" id="editProfileName">
             </div>
             <div class="file-upload-wrapper">
-                <label>Profile Photo (Optional)</label>
+                <label>Profile Photo (Optional, leave blank to keep current)</label>
                 <input type="file" id="editProfilePhotoUpload" accept="image/*" onchange="previewEditProfilePhoto()">
                 <label for="editProfilePhotoUpload" class="file-upload-label">📷 Change Profile Photo</label>
                 <div id="editProfilePhotoPreview" class="preview-container" style="display: none;">
@@ -906,7 +906,7 @@
         let currentStoryIndex = 0;
         let autoSlideInterval = null;
         let uploadedProfilePhotoUrl = null;
-        let uploadedPostImageUrls = [];   // array of URLs
+        let uploadedPostImageUrls = [];
         let editUploadedProfilePhotoUrl = null;
         let editUploadedPostImageUrls = [];
         let currentEditPostId = null;
@@ -970,7 +970,7 @@
         function showDisclaimer() { closeMenu(); document.getElementById('disclaimerModal').classList.add('active'); }
         function closeDisclaimer() { document.getElementById('disclaimerModal').classList.remove('active'); }
 
-        // STORIES (unchanged except smooth auto-slide)
+        // STORIES
         async function loadStories() {
             try {
                 const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow.json`);
@@ -1078,7 +1078,7 @@
             }
         });
 
-        // POSTS with multiple images, edit, delete
+        // POSTS with edit & delete buttons ALWAYS shown in admin mode
         async function loadPosts() {
             try {
                 const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/posts.json`);
@@ -1147,6 +1147,13 @@
                 const commentsArr = post.comments ? Object.keys(post.comments).map(k => ({ id:k, ...post.comments[k] })) : [];
                 const images = post.images || (post.imageUrl ? [post.imageUrl] : []);
                 const galleryHtml = images.length ? renderGallery(images, post.id) : '';
+                // Edit and Delete buttons - always shown when isAdminMode is true
+                const adminButtons = isAdminMode ? `
+                    <div style="display:flex; gap:12px;">
+                        <span style="cursor:pointer; font-size:20px;" onclick="editPost('${post.id}')">✏️</span>
+                        <span style="cursor:pointer; font-size:20px; color:#ff4444;" onclick="deletePost('${post.id}')">🗑️</span>
+                    </div>
+                ` : '';
                 return `
                     <div class="post">
                         <div class="post-header">
@@ -1154,10 +1161,7 @@
                                 <img src="${post.userAvatar}" class="post-avatar">
                                 <div><div class="post-username">${escapeHtml(post.username)}</div><div class="post-time">${formatTimestamp(post.timestamp)}</div></div>
                             </div>
-                            ${isAdminMode ? `<div style="display:flex; gap:12px;">
-                                <span style="cursor:pointer; font-size:20px;" onclick="editPost('${post.id}')">✏️</span>
-                                <span style="cursor:pointer; font-size:20px; color:#ff4444;" onclick="deletePost('${post.id}')">🗑️</span>
-                            </div>` : ''}
+                            ${adminButtons}
                         </div>
                         ${galleryHtml}
                         <div class="post-actions">
@@ -1193,7 +1197,7 @@
         async function addComment(postId) { if(!isAdminMode) return; const input = document.getElementById(`comment-input-${postId}`); const text = input?.value.trim(); if(!text) return; const commentData = { username:"Admin", text, timestamp:Date.now() }; const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}/comments.json`, { method:'POST', body:JSON.stringify(commentData) }); const result = await res.json(); const post = posts.find(p=>p.id===postId); if(!post.comments) post.comments={}; post.comments[result.name]=commentData; renderPosts(); setTimeout(()=>{ const cl = document.getElementById(`comments-${postId}`); if(cl) cl.classList.add('show'); const ac = document.getElementById(`add-comment-${postId}`); if(ac) ac.classList.add('show'); },100); }
         async function deleteComment(postId, commentId) { if(!isAdminMode || !confirm('Delete comment?')) return; await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}/comments/${commentId}.json`, { method:'DELETE' }); delete posts.find(p=>p.id===postId).comments[commentId]; renderPosts(); }
         async function pinPost(postId) { if(!isAdminMode) return; const post = posts.find(p=>p.id===postId); const newPinned = !post.pinned; await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, { method:'PATCH', body:JSON.stringify({pinned:newPinned}) }); post.pinned=newPinned; renderPosts(); }
-        async function deletePost(postId) { if(!isAdminMode || !confirm('Delete post?')) return; await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, { method:'DELETE' }); posts = posts.filter(p=>p.id!==postId); renderPosts(); }
+        async function deletePost(postId) { if(!isAdminMode || !confirm('Delete this post?')) return; await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, { method:'DELETE' }); posts = posts.filter(p=>p.id!==postId); renderPosts(); }
 
         function editPost(postId) {
             if (!isAdminMode) return;
