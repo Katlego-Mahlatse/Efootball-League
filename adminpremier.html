@@ -3,17 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Admin · Premier League</title>
+  <title>Admin · Premier League · Gold/Black</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 100%);
+      background: #0a0a0a;
+      background: linear-gradient(145deg, #0a0a0a 0%, #1a1a1a 100%);
       font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
-      color: #f5f0ff;
+      color: #1a1a1a;
       padding-bottom: 2rem;
     }
+    /* Gold navbar with black elements */
     .gold-navbar {
-      background: linear-gradient(135deg, #d4af37, #f5d742);
+      background: linear-gradient(135deg, #f5d742, #d4af37);
       padding: 0.4rem 1.2rem;
       display: flex;
       justify-content: flex-end;
@@ -24,7 +26,7 @@
       z-index: 100;
     }
     .debug-btn, .hamburger-btn {
-      background: #6a3bb5;
+      background: #1a1a1a;
       width: 36px;
       height: 36px;
       border-radius: 50%;
@@ -33,6 +35,11 @@
       justify-content: center;
       cursor: pointer;
       border: 1.5px solid #f5d742;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .debug-btn:hover, .hamburger-btn:hover {
+      transform: scale(1.05);
+      background: #0a0a0a;
     }
     .hamburger-btn { flex-direction: column; gap: 4px; }
     .hamburger-btn span { width: 18px; height: 2.5px; background: #f5d742; border-radius: 2px; }
@@ -42,95 +49,111 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.85);
       z-index: 200;
       visibility: hidden;
       pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .modal-overlay.active { visibility: visible; pointer-events: auto; }
     .modal-content, .debug-modal {
-      position: absolute;
-      top: 60px;
-      right: 20px;
-      background: linear-gradient(135deg, #2d1b4e, #1f0f3a);
-      border: 2px solid #f5d742;
+      background: #f5d742;
+      border: 2px solid #1a1a1a;
       border-radius: 1.2rem;
       padding: 1rem;
       min-width: 200px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
     }
-    .debug-modal { left: 20px; right: auto; }
+    .debug-modal { background: #f5d742; color: #1a1a1a; }
     .modal-option {
-      background: rgba(106,59,181,0.3);
+      background: rgba(0,0,0,0.1);
       padding: 0.4rem 0.8rem;
       border-radius: 40px;
       text-decoration: none;
-      color: #f5d742;
+      color: #1a1a1a;
       font-weight: 700;
       font-size: 0.8rem;
       display: block;
       margin: 0.5rem 0;
-      border: 1px solid #f5d742;
+      border: 1px solid #1a1a1a;
       cursor: pointer;
+      transition: all 0.2s;
+    }
+    .modal-option:hover {
+      background: #1a1a1a;
+      color: #f5d742;
     }
     .close-modal {
-      background: #6a3bb5;
+      background: #1a1a1a;
       color: #f5d742;
       border: none;
       padding: 0.3rem 0.9rem;
       border-radius: 30px;
       cursor: pointer;
+      font-weight: bold;
     }
     .dashboard { max-width: 1400px; margin: 0 auto; padding: 2rem 1.5rem; }
     .slideshow-container { text-align: center; margin-bottom: 2rem; }
-    .slideshow-img { max-width: 100%; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    .slideshow-img { max-width: 100%; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 2px solid #f5d742; }
     .dots-container { margin-top: 0.8rem; }
-    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f5d742; margin: 0 4px; cursor: pointer; }
-    .dot.active { background: #6a3bb5; }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #1a1a1a; margin: 0 4px; cursor: pointer; }
+    .dot.active { background: #f5d742; }
     .card {
-      background: rgba(45,25,75,0.85);
-      backdrop-filter: blur(10px);
+      background: #f5d742;
       border-radius: 2rem;
-      border: 1px solid rgba(245,215,66,0.4);
+      border: 2px solid #1a1a1a;
       margin-bottom: 2rem;
       overflow: hidden;
+      color: #1a1a1a;
     }
     .card-header {
       padding: 1rem 1.5rem;
-      background: rgba(30,15,55,0.9);
-      border-bottom: 2px solid #f5d742;
+      background: #d4af37;
+      border-bottom: 2px solid #1a1a1a;
       display: flex;
       justify-content: space-between;
       align-items: center;
       cursor: pointer;
     }
     .card-header-left { display: flex; align-items: center; gap: 1rem; }
-    .card-header-left h2 { font-size: 1.4rem; }
-    .toggle-icon { font-size: 1.2rem; color: #f5d742; margin-left: 1rem; }
+    .card-header-left h2 { font-size: 1.4rem; color: #1a1a1a; }
+    .toggle-icon { font-size: 1.2rem; color: #1a1a1a; margin-left: 1rem; }
     .add-btn {
-      background: #6a3bb5;
+      background: #1a1a1a;
       border: 1px solid #f5d742;
       border-radius: 2rem;
       padding: 0.3rem 1rem;
       color: #f5d742;
       font-weight: bold;
       cursor: pointer;
+      transition: 0.2s;
+    }
+    .add-btn:hover {
+      background: #0a0a0a;
+      transform: scale(1.02);
     }
     .three-dot-menu {
       background: none;
       border: none;
-      color: #f5d742;
+      color: #1a1a1a;
       font-size: 1.8rem;
       cursor: pointer;
       padding: 0 0.5rem;
+      transition: transform 0.1s;
     }
+    .three-dot-menu:hover { transform: scale(1.1); }
     .card-content { transition: max-height 0.4s ease; max-height: 2000px; overflow: hidden; }
     .card-content.collapsed { max-height: 0; }
-    .filter-container { padding: 1rem; background: rgba(30,15,55,0.6); border-bottom: 1px solid rgba(245,215,66,0.3); }
-    .filter-input { background: rgba(45,25,75,0.9); border: 1px solid #f5d742; border-radius: 30px; padding: 0.5rem 1rem; color: white; width: 220px; }
+    .filter-container { padding: 1rem; background: rgba(0,0,0,0.1); border-bottom: 1px solid #1a1a1a; }
+    .filter-input { background: #1a1a1a; border: 1px solid #f5d742; border-radius: 30px; padding: 0.5rem 1rem; color: #f5d742; width: 220px; }
+    .filter-input::placeholder { color: #d4af37; }
     .scrollable-table { max-height: 450px; overflow-y: auto; }
     .stats-table, .inner-table { width: 100%; border-collapse: collapse; }
-    .stats-table th, .inner-table th { text-align: left; padding: 0.8rem; background: rgba(55,35,95,0.7); border-bottom: 1px solid #f5d742; }
-    .stats-table td, .inner-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(245,215,66,0.2); }
+    .stats-table th, .inner-table th { text-align: left; padding: 0.8rem; background: #d4af37; border-bottom: 2px solid #1a1a1a; color: #1a1a1a; }
+    .stats-table td, .inner-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(0,0,0,0.2); color: #1a1a1a; }
     .team-icon-sm { width: 30px; height: 30px; object-fit: contain; vertical-align: middle; margin-right: 8px; }
     .team-icon { width: 40px; height: 40px; object-fit: contain; vertical-align: middle; margin-right: 8px; display: inline-block; }
     .rank-cell { font-weight: 700; width: 60px; }
@@ -142,7 +165,7 @@
     .dashed-separator-gold { border-bottom: 2px dashed #d4af37 !important; }
     .dashed-separator-white { border-bottom: 2px dashed #ffffff !important; }
     .dashed-separator-red { border-bottom: 2px dashed #ef4444 !important; }
-    .pts-cell { font-weight: 800; color: #f5d742; text-align: center; }
+    .pts-cell { font-weight: 800; color: #1a1a1a; text-align: center; }
     .form-circles { display: flex; gap: 4px; align-items: center; }
     .circle-result { width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; }
     .circle-win { background: #22c55e; color: white; }
@@ -155,27 +178,47 @@
     .arrow-up { color: #22c55e; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
     .arrow-down { color: #ef4444; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
     .arrow-side { color: #f5d742; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
-    .legend-under-table { margin-top: 1rem; padding: 0.8rem 1.2rem; background: rgba(30,15,55,0.5); border-radius: 1rem; display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; font-size: 0.7rem; }
+    .legend-under-table { margin-top: 1rem; padding: 0.8rem 1.2rem; background: rgba(0,0,0,0.1); border-radius: 1rem; display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; font-size: 0.7rem; }
     .legend-item { display: inline-flex; align-items: center; gap: 6px; }
     .legend-vertical-bar { width: 4px; height: 16px; border-radius: 2px; }
     .legend-blue { background: #3b82f6; }
     .legend-orange { background: #f97316; }
     .legend-green { background: #22c55e; }
     .legend-dashed-white { display: inline-block; width: 20px; height: 2px; border-bottom: 2px dashed #ffffff; vertical-align: middle; }
-    .forfeit-text { font-size: 0.7rem; color: #f5d742; margin-top: 4px; }
-    .edit-btn, .delete-btn { background: none; border: none; color: #f5d742; margin: 0 0.3rem; cursor: pointer; font-size: 1rem; }
+    .forfeit-text { font-size: 0.7rem; color: #1a1a1a; margin-top: 4px; background: rgba(0,0,0,0.1); display: inline-block; padding: 0 0.3rem; border-radius: 12px; }
+    .edit-btn, .delete-btn { background: #1a1a1a; border: none; color: #f5d742; margin: 0 0.3rem; cursor: pointer; font-size: 1rem; padding: 0.2rem 0.5rem; border-radius: 20px; transition: 0.2s; }
+    .edit-btn:hover, .delete-btn:hover { background: #0a0a0a; transform: scale(1.05); }
     .form-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85);
       display: flex; align-items: center; justify-content: center; visibility: hidden; z-index: 300;
     }
     .form-overlay.active { visibility: visible; }
-    .form-card { background: linear-gradient(135deg, #2d1b4e, #1f0f3a); border: 2px solid #f5d742; border-radius: 2rem; padding: 1.5rem; width: 90%; max-width: 500px; }
-    .form-card input, .form-card select { width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: rgba(30,15,55,0.8); border: 1px solid #f5d742; border-radius: 2rem; color: white; }
-    .form-card button { background: #6a3bb5; border: none; border-radius: 2rem; padding: 0.5rem 1rem; color: white; margin-top: 1rem; cursor: pointer; }
+    .form-card { background: #f5d742; border: 2px solid #1a1a1a; border-radius: 2rem; padding: 1.5rem; width: 90%; max-width: 500px; color: #1a1a1a; }
+    .form-card input, .form-card select { width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: #1a1a1a; border: 1px solid #f5d742; border-radius: 2rem; color: #f5d742; }
+    .form-card button { background: #1a1a1a; border: none; border-radius: 2rem; padding: 0.5rem 1rem; color: #f5d742; margin-top: 1rem; cursor: pointer; transition: 0.2s; }
+    .form-card button:hover { background: #0a0a0a; }
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
       .stats-table th, .stats-table td { padding: 0.4rem; font-size: 0.75rem; }
       .circle-result { width: 14px; height: 14px; font-size: 7px; }
+    }
+    /* Popup menu gold/black */
+    .popup-menu {
+      background: #f5d742;
+      border: 1px solid #1a1a1a;
+      border-radius: 1rem;
+      padding: 0.5rem 0;
+      z-index: 150;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .popup-menu div {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      color: #1a1a1a;
+      transition: background 0.1s;
+    }
+    .popup-menu div:hover {
+      background: rgba(0,0,0,0.1);
     }
   </style>
 </head>
@@ -188,7 +231,7 @@
   </div>
 </div>
 
-<div id="debugModal" class="modal-overlay" style="z-index:250;"><div class="debug-modal"><h3>Debug</h3><div id="debugContent">Loading...</div><button id="closeDebugBtn">Close</button></div></div>
+<div id="debugModal" class="modal-overlay" style="z-index:250;"><div class="debug-modal"><h3>Debug</h3><div id="debugContent">Loading...</div><button id="closeDebugBtn" class="close-modal">Close</button></div></div>
 <div class="modal-overlay" id="modalOverlay"><div class="modal-content"><h3>TOURNAMENTS</h3><div class="modal-option" id="rulesBtn">RULES</div><div class="modal-option" id="playerTitlesBtn">PLAYER TITLES</div><div class="modal-option" id="logoutBtn">LOGOUT</div><button class="close-modal" id="closeModalBtn">CLOSE</button></div></div>
 
 <div class="dashboard">
@@ -209,7 +252,7 @@
   <div class="card-content" id="fixturesContent"><div class="filter-container"><input type="text" id="fixtureSearch" class="filter-input" placeholder="🔍 Search team..."></div><div class="scrollable-table"><table class="inner-table"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th></tr></thead><tbody id="fixturesBody"></tbody></table></div></div></div>
 
   <div class="card"><div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>📝 RESULTS</h2><button class="add-btn" id="addResultBtn">+ Add Result</button></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
-  <div class="card-content" id="resultsContent"><div class="scrollable-table"><table class="inner-table"><thead><tr><th>Match</th><th>Match Day</th></tr></thead><tbody id="resultsBody"></tbody></table></div></div></div>
+  <div class="card-content" id="resultsContent"><div class="scrollable-table"><table class="inner-table"><thead><tr><th>Match</th><th>Match Day</th> </tr></thead><tbody id="resultsBody"></tbody></table></div></div></div>
 </div>
 
 <!-- CRUD Forms -->
@@ -235,21 +278,16 @@
   const teamList = Object.keys(teamIcons);
   function getTeamIconHtml(team, cls="team-icon-sm") { const src = teamIcons[team]; return src ? `<img class="${cls}" src="${src}">` : team; }
 
-  // Player names mapping (same as index)
   const playerMap = { "Barcelona":"~Rea🫡","Inter Milan":"Mali","Dortmund":"~Qhawe 🤍","Juventus":"Izu","Atletico":"~Stalker.","PSG":"~MJ","Napoli":"~PrettyBoy Tendancies. 👅","Real Madrid":"~Karabo","Arsenal":"Kath","AC Milan":"Tapz","Chelsea":"~Zazo","Man City":"gry","Liverpool":"🅿️","Newcastle":"~Oratile" };
 
-  // --- Toggle state variables (exactly like index) ---
-  let currentView = "team";        // "team" or "player"
+  let currentView = "team";
   let showFormArrows = true;
   let showLast5 = true;
-  // For the three-dot menu text we will update dynamically
 
-  // --- Firebase data caches ---
-  let teamsData = [];            // array of {key, name, p, gd, pts}
+  let teamsData = [];
   let fixturesData = [];
-  let resultsData = [];          // array of {key, matchText, md}
+  let resultsData = [];
 
-  // --- Helpers for last5 and arrow from results ---
   function getResultStatusForTeam(team, resultText) {
     const lower = resultText.toLowerCase();
     if (lower.includes("no contest") || lower.includes("f - f")) return "F";
@@ -274,8 +312,7 @@
     const teamResults = resultsData.filter(r => r.matchText.includes(team)).sort((a,b) => (b.md||0) - (a.md||0));
     const last5Status = teamResults.slice(0,5).map(r => getResultStatusForTeam(team, r.matchText)).filter(s => s);
     while(last5Status.length < 5) last5Status.push(null);
-    return last5Status.reverse();  // oldest first for display left-to-right? index shows newest first on right? We'll follow index: newest first on right, but our display uses left-to-right as chronological? In index they reverse. We'll do same as index: newest first, left is oldest? Actually index last5 array order: most recent at the end. We'll follow the same rendering: take last5 from array and display left-to-right as oldest to most recent? To match index exactly we need to check. But index uses getLast5NewestFirst and then displays circles left-to-right as newest on left? No, they used reverse() to show newest first on left. We'll just mimic: we already reversed to have newest last? Let's keep simple: we show in order from oldest to newest (left to right) which is typical. But to match index visual, we'll render exactly as they did: they push results in reverse order. I'll adjust: they get last5 results (most recent first), then reverse() to show on screen. Our getTeamLast5 already returns oldest first? Actually we slice(0,5) from newest to oldest, then reverse() gives oldest to newest. That's fine.
-    return last5Status;
+    return last5Status.reverse();
   }
 
   function getLatestArrow(team) {
@@ -289,7 +326,6 @@
     return null;
   }
 
-  // --- Render league table ---
   function renderLeagueTable() {
     const tbody = document.getElementById('tableBody'); if(!tbody) return;
     tbody.innerHTML = '';
@@ -309,7 +345,6 @@
       if(barClass) posCell.innerHTML = `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${pos}</div>`;
       else posCell.innerText = pos;
 
-      // Arrow span
       let arrowHtml = "";
       if(showFormArrows) {
         const arrow = getLatestArrow(team.name);
@@ -351,7 +386,6 @@
         last5Cell.innerHTML = '';
       }
 
-      // Actions column (admin only)
       const actions = row.insertCell(6);
       const editBtn = document.createElement('button'); editBtn.innerText='✏️'; editBtn.className='edit-btn'; editBtn.onclick=()=>openTeamForm(team.key,team);
       const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await remove(ref(db,`premier_league/table/${team.key}`)); };
@@ -359,12 +393,10 @@
     });
   }
 
-  // --- CRUD for teams ---
   let editingTeamKey = null;
   function openTeamForm(key,data){ editingTeamKey=key; const sel=document.getElementById('teamNameSelect'); sel.innerHTML=teamList.map(t=>`<option value="${t}">${t}</option>`).join(''); if(data?.name) sel.value=data.name; document.getElementById('teamP').value=data?.p||''; document.getElementById('teamGD').value=data?.gd||''; document.getElementById('teamPts').value=data?.pts||''; document.getElementById('teamForm').classList.add('active'); }
   document.getElementById('addTeamBtn').onclick=()=>openTeamForm(null); document.getElementById('saveTeamBtn').onclick=async()=>{ const name=document.getElementById('teamNameSelect').value; const p=parseInt(document.getElementById('teamP').value)||0; const gd=parseInt(document.getElementById('teamGD').value)||0; const pts=parseInt(document.getElementById('teamPts').value)||0; if(!name) return; if(editingTeamKey) await set(ref(db,`premier_league/table/${editingTeamKey}`),{name,p,gd,pts}); else await set(push(ref(db,'premier_league/table')),{name,p,gd,pts}); document.getElementById('teamForm').classList.remove('active'); }; document.getElementById('cancelTeamBtn').onclick=()=>document.getElementById('teamForm').classList.remove('active');
 
-  // --- Fixtures rendering (exactly like index) ---
   function renderFixtures() {
     const search = document.getElementById('fixtureSearch')?.value.toLowerCase() || '';
     const tbody = document.getElementById('fixturesBody');
@@ -377,12 +409,11 @@
       const homeIcon = getTeamIconHtml(f.home, "inline-team-icon");
       const awayIcon = getTeamIconHtml(f.away, "inline-team-icon");
       row.insertCell(1).innerHTML = `<div class="fixture-icons">${homeIcon} ${f.home} vs ${awayIcon} ${f.away}</div>`;
-      row.insertCell(2).innerHTML = `<span style="background:#5e3a9e; padding:0.2rem 0.7rem; border-radius:30px;">MD ${f.md}</span>`;
+      row.insertCell(2).innerHTML = `<span style="background:#1a1a1a; padding:0.2rem 0.7rem; border-radius:30px; color:#f5d742;">MD ${f.md}</span>`;
     });
     if(tbody.rows.length === 0) { const r=tbody.insertRow(); r.insertCell(0).colSpan=3; r.cells[0].className="empty-message"; r.cells[0].innerText="No fixtures match."; }
   }
 
-  // --- Results rendering (like index) ---
   function renderResults() {
     const tbody = document.getElementById('resultsBody');
     if(!tbody) return;
@@ -405,7 +436,7 @@
       } else {
         row.insertCell(0).innerHTML = `<strong>${processed}</strong>`;
       }
-      row.insertCell(1).innerHTML = `<span class="match-highlight">MD${r.md}</span>`;
+      row.insertCell(1).innerHTML = `<span class="match-highlight" style="background:#1a1a1a; color:#f5d742; padding:0.2rem 0.7rem; border-radius:30px;">MD${r.md}</span>`;
       const actions = row.insertCell(2);
       const editBtn = document.createElement('button'); editBtn.innerText='✏️'; editBtn.className='edit-btn'; editBtn.onclick=()=>openResultForm(r.key,r);
       const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await remove(ref(db,`premier_league/results/${r.key}`)); };
@@ -413,37 +444,22 @@
     });
   }
 
-  // --- Fixture CRUD ---
   let editingFixtureKey = null;
   function openFixtureForm(key,data){ editingFixtureKey=key; document.getElementById('fixtureDate').value=data?.date||''; const homeSel=document.getElementById('fixtureHome'), awaySel=document.getElementById('fixtureAway'); homeSel.innerHTML=teamList.map(t=>`<option value="${t}">${t}</option>`); awaySel.innerHTML=teamList.map(t=>`<option value="${t}">${t}</option>`); if(data?.home) homeSel.value=data.home; if(data?.away) awaySel.value=data.away; document.getElementById('fixtureMd').value=data?.md||''; document.getElementById('fixtureForm').classList.add('active'); }
   document.getElementById('addFixtureBtn').onclick=()=>openFixtureForm(null); document.getElementById('saveFixtureBtn').onclick=async()=>{ const date=document.getElementById('fixtureDate').value; const home=document.getElementById('fixtureHome').value; const away=document.getElementById('fixtureAway').value; const md=parseInt(document.getElementById('fixtureMd').value); if(!date||!home||!away||!md) return; if(editingFixtureKey) await set(ref(db,`premier_league/fixtures/${editingFixtureKey}`),{date,home,away,md}); else await set(push(ref(db,'premier_league/fixtures')),{date,home,away,md}); document.getElementById('fixtureForm').classList.remove('active'); }; document.getElementById('cancelFixtureBtn').onclick=()=>document.getElementById('fixtureForm').classList.remove('active');
   document.getElementById('fixtureSearch')?.addEventListener('input', renderFixtures);
 
-  // --- Result CRUD ---
   let editingResultKey = null;
   function openResultForm(key,data){ editingResultKey=key; document.getElementById('resultText').value=data?.matchText||''; document.getElementById('resultMd').value=data?.md||''; document.getElementById('resultForm').classList.add('active'); }
   document.getElementById('addResultBtn').onclick=()=>openResultForm(null); document.getElementById('saveResultBtn').onclick=async()=>{ const text=document.getElementById('resultText').value; const md=parseInt(document.getElementById('resultMd').value); if(!text||!md) return; if(editingResultKey) await set(ref(db,`premier_league/results/${editingResultKey}`),{matchText:text,md}); else await set(push(ref(db,'premier_league/results')),{matchText:text,md}); document.getElementById('resultForm').classList.remove('active'); }; document.getElementById('cancelResultBtn').onclick=()=>document.getElementById('resultForm').classList.remove('active');
 
-  // --- Firebase listeners ---
   onValue(ref(db,'premier_league/table'), (snap) => { teamsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderLeagueTable(); });
   onValue(ref(db,'premier_league/fixtures'), (snap)=>{ fixturesData = snap.val() ? Object.values(snap.val()) : []; renderFixtures(); });
-  onValue(ref(db,'premier_league/results'), (snap)=>{ resultsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderResults(); renderLeagueTable(); }); // re-render table when results change
+  onValue(ref(db,'premier_league/results'), (snap)=>{ resultsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderResults(); renderLeagueTable(); });
 
-  // --- Three-dot menu (dynamic text updates) ---
   let popup = null;
   const threeDot = document.getElementById('threeDotBtn');
   function closePopup() { if(popup) { popup.remove(); popup = null; } }
-
-  function updateMenuOptions() {
-    if(!popup) return;
-    const playersOpt = popup.children[0];
-    playersOpt.innerText = (currentView === "team") ? "Manager names" : "Team View";
-    const formOpt = popup.children[1];
-    formOpt.innerText = showFormArrows ? "Hide Form arrows" : "Show Form arrows";
-    const last5Opt = popup.children[2];
-    last5Opt.innerText = showLast5 ? "Hide Last 5" : "Show Last 5";
-  }
-
   threeDot.addEventListener('click', (e) => {
     e.stopPropagation();
     if(popup) { closePopup(); return; }
@@ -453,41 +469,16 @@
     popup.style.position = 'absolute';
     popup.style.top = (rect.bottom + window.scrollY + 5) + 'px';
     popup.style.left = (rect.left + window.scrollX - 60) + 'px';
-    popup.style.background = 'linear-gradient(135deg, #2d1b4e, #1f0f3a)';
-    popup.style.border = '1px solid #f5d742';
-    popup.style.borderRadius = '1rem';
-    popup.style.padding = '0.5rem 0';
-    popup.style.zIndex = '150';
-
-    const playersOpt = document.createElement('div'); playersOpt.style.padding = '0.5rem 1rem'; playersOpt.style.cursor = 'pointer';
-    playersOpt.innerText = (currentView === "team") ? "Manager names" : "Team View";
-    playersOpt.onclick = () => {
-      currentView = (currentView === "team") ? "player" : "team";
-      renderLeagueTable();
-      updateMenuOptions();
-    };
-    const formOpt = document.createElement('div'); formOpt.style.padding = '0.5rem 1rem'; formOpt.style.cursor = 'pointer';
-    formOpt.innerText = showFormArrows ? "Hide Form arrows" : "Show Form arrows";
-    formOpt.onclick = () => {
-      showFormArrows = !showFormArrows;
-      renderLeagueTable();
-      updateMenuOptions();
-    };
-    const last5Opt = document.createElement('div'); last5Opt.style.padding = '0.5rem 1rem'; last5Opt.style.cursor = 'pointer';
-    last5Opt.innerText = showLast5 ? "Hide Last 5" : "Show Last 5";
-    last5Opt.onclick = () => {
-      showLast5 = !showLast5;
-      renderLeagueTable();
-      updateMenuOptions();
-    };
-    const calendarOpt = document.createElement('div'); calendarOpt.innerText = 'Calendar'; calendarOpt.style.padding = '0.5rem 1rem'; calendarOpt.onclick = () => { window.location.href = 'calendar.html'; closePopup(); };
-    const rulesOpt = document.createElement('div'); rulesOpt.innerText = 'Rules'; rulesOpt.style.padding = '0.5rem 1rem'; rulesOpt.onclick = () => { window.location.href = 'rules.html'; closePopup(); };
+    const playersOpt = document.createElement('div'); playersOpt.innerText = (currentView === "team") ? "Manager names" : "Team View"; playersOpt.onclick = () => { currentView = (currentView === "team") ? "player" : "team"; renderLeagueTable(); closePopup(); };
+    const formOpt = document.createElement('div'); formOpt.innerText = showFormArrows ? "Hide Form arrows" : "Show Form arrows"; formOpt.onclick = () => { showFormArrows = !showFormArrows; renderLeagueTable(); closePopup(); };
+    const last5Opt = document.createElement('div'); last5Opt.innerText = showLast5 ? "Hide Last 5" : "Show Last 5"; last5Opt.onclick = () => { showLast5 = !showLast5; renderLeagueTable(); closePopup(); };
+    const calendarOpt = document.createElement('div'); calendarOpt.innerText = 'Calendar'; calendarOpt.onclick = () => { window.location.href = 'calendar.html'; closePopup(); };
+    const rulesOpt = document.createElement('div'); rulesOpt.innerText = 'Rules'; rulesOpt.onclick = () => { window.location.href = 'rules.html'; closePopup(); };
     popup.appendChild(playersOpt); popup.appendChild(formOpt); popup.appendChild(last5Opt); popup.appendChild(calendarOpt); popup.appendChild(rulesOpt);
     document.body.appendChild(popup);
   });
   document.addEventListener('click', (e) => { if(popup && !popup.contains(e.target) && e.target !== threeDot) closePopup(); });
 
-  // --- Collapsible cards (Fixtures & Results) ---
   function setupCollapse(headerId, contentId, iconId) {
     const h = document.getElementById(headerId);
     const c = document.getElementById(contentId);
@@ -507,7 +498,6 @@
   if(document.getElementById('fixturesToggleIcon')) document.getElementById('fixturesToggleIcon').innerHTML = '▶';
   if(document.getElementById('resultsToggleIcon')) document.getElementById('resultsToggleIcon').innerHTML = '▶';
 
-  // --- Slideshow (same as index) ---
   const images = ["images - 2026-04-19T121231.816.jpeg", "images - 2026-04-19T155746.715.jpeg", "37686bb3-06ce-401b-a022-026933c165e7.jpeg", "12871.jpg", "1f157df7-2054-4a9d-aa14-b9941ef4a743.jpeg"];
   let idx = 0;
   const slideshowImg = document.getElementById('slideshow-img');
@@ -526,7 +516,6 @@
   function updateDots() { document.querySelectorAll('.dot').forEach((dot, i) => { if(i === idx) dot.classList.add('active'); else dot.classList.remove('active'); }); }
   if(slideshowImg) { createDots(); setInterval(() => { idx = (idx+1) % images.length; slideshowImg.src = images[idx]; updateDots(); }, 2000); }
 
-  // --- Modal menu ---
   const hamburger = document.getElementById('hamburgerBtn');
   const modalOverlay = document.getElementById('modalOverlay');
   const closeModalBtn = document.getElementById('closeModalBtn');
@@ -536,7 +525,6 @@
   document.getElementById('playerTitlesBtn').onclick = () => window.location.href = 'player-titles.html';
   document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href = 'login.html'; };
 
-  // Debug modal
   document.getElementById('debugBtn').onclick = () => document.getElementById('debugModal').classList.add('active');
   document.getElementById('closeDebugBtn').onclick = () => document.getElementById('debugModal').classList.remove('active');
 </script>
