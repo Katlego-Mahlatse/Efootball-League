@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>Admin · Premier League</title>
-  <!-- Firebase SDKs (Compat for easier port) -->
+  <!-- Firebase SDKs (Compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <style>
@@ -20,48 +20,28 @@
       background: linear-gradient(135deg, #f5d742, #d4af37);
       padding: 0.4rem 1.2rem;
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
       gap: 0.8rem;
       position: sticky;
       top: 0;
       z-index: 100;
     }
-    .nav-left {
-      display: flex;
-      gap: 0.8rem;
-      align-items: center;
-    }
-    .admin-mode-btn {
-      background: #1a1a1a;
-      color: #f5d742;
-      border: 1.5px solid #f5d742;
-      padding: 0.3rem 1rem;
-      border-radius: 30px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 0.8rem;
-      transition: 0.2s;
-    }
-    .admin-mode-btn.active {
-      background: #22c55e;
-      color: #1a1a1a;
-      border-color: #1a1a1a;
-    }
-    .admin-mode-btn:hover { transform: scale(1.02); background: #0a0a0a; color: #f5d742; }
-    .debug-btn, .hamburger-btn {
+    .hamburger-btn {
       background: #1a1a1a;
       width: 36px;
       height: 36px;
       border-radius: 50%;
       display: flex;
-      align-items: center;
+      flex-direction: column;
       justify-content: center;
+      align-items: center;
+      gap: 4px;
       cursor: pointer;
       border: 1.5px solid #f5d742;
       transition: transform 0.2s, background 0.2s;
     }
-    .hamburger-btn { flex-direction: column; gap: 4px; }
+    .hamburger-btn:hover { transform: scale(1.05); background: #0a0a0a; }
     .hamburger-btn span { width: 18px; height: 2.5px; background: #f5d742; border-radius: 2px; }
     .modal-overlay {
       position: fixed;
@@ -78,7 +58,7 @@
       justify-content: center;
     }
     .modal-overlay.active { visibility: visible; pointer-events: auto; }
-    .modal-content, .debug-modal {
+    .modal-content {
       background: #f5d742;
       border: 2px solid #1a1a1a;
       border-radius: 1.2rem;
@@ -229,14 +209,9 @@
 <body>
 
 <div class="gold-navbar">
-  <div class="nav-left">
-    <button id="adminModeBtn" class="admin-mode-btn">🔐 ADMIN MODE</button>
-    <div class="debug-btn" id="debugBtn">🐞</div>
-  </div>
   <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
 </div>
 
-<div id="debugModal" class="modal-overlay"><div class="debug-modal"><h3>Debug</h3><div id="debugContent">Ready</div><button id="closeDebugBtn" class="close-modal">Close</button></div></div>
 <div class="modal-overlay" id="modalOverlay"><div class="modal-content" id="modalContent"></div></div>
 
 <div class="dashboard">
@@ -263,16 +238,16 @@
   <div class="card-content" id="fixturesContent"><div class="filter-container"><input type="text" id="fixtureSearch" class="filter-input" placeholder="🔍 Search team..."></div><div class="scrollable-table"><table class="inner-table"><thead><tr><th>Date</th><th>Home vs Away</th><th>Matchday</th><th id="fixtureActionHeader" style="display:none;">Actions</th></tr></thead><tbody id="fixturesBody"></tbody></table></div></div></div>
 
   <div class="card"><div class="card-header" id="resultsHeader"><div class="card-header-left"><h2>📝 RESULTS</h2><button class="add-btn" id="addResultBtn" style="display:none;">+ Add Result</button></div><div class="toggle-icon" id="resultsToggleIcon">▼</div></div>
-  <div class="card-content" id="resultsContent"><div class="scrollable-table"><table class="inner-table"><thead><tr><th>Match</th><th>Match Day</th><th id="resultActionHeader" style="display:none;">Actions</th><tr></thead><tbody id="resultsBody"></tbody></table></div></div></div>
+  <div class="card-content" id="resultsContent"><div class="scrollable-table"><table class="inner-table"><thead><tr><th>Match</th><th>Match Day</th><th id="resultActionHeader" style="display:none;">Actions</th></tr></thead><tbody id="resultsBody"></tbody></table></div></div></div>
 </div>
 
-<!-- CRUD Forms (same as original) -->
+<!-- CRUD Forms -->
 <div id="teamForm" class="form-overlay"><div class="form-card"><h3>Add/Edit Team</h3><select id="teamNameSelect"></select><input type="number" id="teamP" placeholder="Played"><input type="number" id="teamGD" placeholder="Goal Difference"><input type="number" id="teamPts" placeholder="Points"><button id="saveTeamBtn">Save</button><button id="cancelTeamBtn">Cancel</button></div></div>
 <div id="fixtureForm" class="form-overlay"><div class="form-card"><h3>Add/Edit Fixture</h3><input type="text" id="fixtureDate" placeholder="Date (e.g., Apr 28)"><select id="fixtureHome"></select><select id="fixtureAway"></select><input type="number" id="fixtureMd" placeholder="Matchday"><button id="saveFixtureBtn">Save</button><button id="cancelFixtureBtn">Cancel</button></div></div>
 <div id="resultForm" class="form-overlay"><div class="form-card"><h3>Add/Edit Result</h3><input type="text" id="resultText" placeholder="Match text (e.g., Real Madrid 3 - 2 Arsenal)"><input type="number" id="resultMd" placeholder="Matchday"><button id="saveResultBtn">Save</button><button id="cancelResultBtn">Cancel</button></div></div>
 
 <script>
-  // Firebase config (same as original)
+  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
     authDomain: "efootball-412.firebaseapp.com",
@@ -289,10 +264,9 @@
   // ---------- Global State ----------
   let isAdminMode = false;
   let teamsData = [], fixturesData = [], resultsData = [];
-  let teamIconsCache = {};        // loaded from Firebase
+  let teamIconsCache = {};
   let slideshowImages = [], slideshowDuration = 3000, slideInterval = null, currentSlideIdx = 0;
 
-  // Helper: normalise team names for icons
   const teamList = ["Arsenal","AC Milan","PSG","Barcelona","Inter Milan","Atletico","Newcastle","Napoli","Chelsea","Dortmund","Real Madrid","Man City","Liverpool","Juventus"];
 
   // Load team icons from Firebase
@@ -313,8 +287,8 @@
   // Player mapping
   const playerMap = { "Barcelona":"~Rea🫡","Inter Milan":"Mali","Dortmund":"~Qhawe 🤍","Juventus":"Izu","Atletico":"~Stalker.","PSG":"~MJ","Napoli":"~PrettyBoy Tendancies. 👅","Real Madrid":"~Karabo","Arsenal":"Kath","AC Milan":"Tapz","Chelsea":"~Zazo","Man City":"gry","Liverpool":"🅿️","Newcastle":"~Oratile" };
 
-  // Last 5 & arrow helpers (unchanged from original logic)
-  function getResultStatusForTeam(team, matchText) { /* same as original */ 
+  // Last 5 & arrow helpers
+  function getResultStatusForTeam(team, matchText) {
     const lower = matchText.toLowerCase();
     if (lower.includes("no contest") || lower.includes("f - f")) return "F";
     const isForfeit = lower.includes("forfeit") || lower.includes("forfeited");
@@ -346,7 +320,7 @@
     return null;
   }
 
-  // Render League Table with conditional actions
+  // Render League Table (no dash between icon and name)
   function renderLeagueTable() {
     const tbody = document.getElementById('tableBody'); if(!tbody) return;
     const actionHeader = document.getElementById('actionHeader');
@@ -379,6 +353,7 @@
       }
       const displayName = (window.currentView === "player" && playerMap[team.name]) ? playerMap[team.name] : team.name;
       const iconHtml = getTeamIconHtml(team.name, "team-icon");
+      // Removed the dash: just icon + space + name
       row.insertCell(1).innerHTML = `<div class="team-name">${arrowHtml}${iconHtml} ${displayName}</div>`;
       row.insertCell(2).innerText = team.p || 0;
       const gd = team.gd || 0;
@@ -410,7 +385,6 @@
     });
   }
 
-  // Fixtures render (with actions)
   function renderFixtures() {
     const tbody = document.getElementById('fixturesBody'); if(!tbody) return;
     const actionHeader = document.getElementById('fixtureActionHeader');
@@ -435,7 +409,6 @@
     if(tbody.rows.length===0){ const r=tbody.insertRow(); r.insertCell(0).colSpan=4; r.cells[0].innerText="No fixtures"; }
   }
 
-  // Results render (with actions)
   function renderResults() {
     const tbody = document.getElementById('resultsBody'); if(!tbody) return;
     const actionHeader = document.getElementById('resultActionHeader');
@@ -456,7 +429,7 @@
     });
   }
 
-  // CRUD forms (identical to original)
+  // CRUD forms (unchanged)
   let editingTeamKey = null;
   function openTeamForm(key,data){ editingTeamKey=key; const sel=document.getElementById('teamNameSelect'); sel.innerHTML=teamList.map(t=>`<option value="${t}">${t}</option>`).join(''); if(data?.name) sel.value=data.name; document.getElementById('teamP').value=data?.p||''; document.getElementById('teamGD').value=data?.gd||''; document.getElementById('teamPts').value=data?.pts||''; document.getElementById('teamForm').classList.add('active'); }
   document.getElementById('addTeamBtn').onclick=()=>openTeamForm(null);
@@ -480,22 +453,20 @@
   database.ref('premier_league/fixtures').on('value', snap => { fixturesData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderFixtures(); });
   database.ref('premier_league/results').on('value', snap => { resultsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderResults(); renderLeagueTable(); });
 
-  // Admin mode toggle
-  const adminBtn = document.getElementById('adminModeBtn');
-  adminBtn.addEventListener('click', () => {
+  // Admin mode activation (called from hamburger)
+  function activateAdminMode() {
+    if(isAdminMode) return;
     const key = prompt("Enter admin key:");
     if(key === "admin@100") {
       isAdminMode = true;
-      adminBtn.classList.add('active');
-      adminBtn.innerText = "👑 ADMIN ACTIVE";
       document.getElementById('addTeamBtn').style.display = 'inline-block';
       document.getElementById('addFixtureBtn').style.display = 'inline-block';
       document.getElementById('addResultBtn').style.display = 'inline-block';
       renderLeagueTable(); renderFixtures(); renderResults();
-      // Rebuild hamburger menu to show extra options
+      // Rebuild hamburger menu to show admin options
       buildHamburgerModal();
     } else alert("Wrong key");
-  });
+  }
 
   // Three-dot menu (manager view, arrows, last5, calendar, rules)
   let currentView = "team", showFormArrows = true, showLast5 = true, popup = null;
@@ -532,7 +503,7 @@
   document.getElementById('fixturesToggleIcon').innerHTML = '▶';
   document.getElementById('resultsToggleIcon').innerHTML = '▶';
 
-  // Slideshow from Firebase (unchanged but dynamic)
+  // Slideshow from Firebase
   async function loadSlideshow() {
     const snap = await database.ref('slideshow/images').once('value');
     slideshowImages = snap.val() || [];
@@ -554,28 +525,33 @@
     slideshowImages.forEach((_,i) => { const dot = document.createElement('span'); dot.classList.add('dot'); if(i===currentSlideIdx) dot.classList.add('active'); dot.onclick = () => { currentSlideIdx = i; updateSlideImage(); if(slideInterval){ clearInterval(slideInterval); slideInterval = setInterval(()=>{ currentSlideIdx = (currentSlideIdx+1)%slideshowImages.length; updateSlideImage(); }, slideshowDuration); } }; container.appendChild(dot); });
   }
 
-  // Hamburger menu with admin extras
+  // Hamburger menu builder (with admin mode option, no player titles/logout, added Home)
   function buildHamburgerModal() {
     const modalContent = document.getElementById('modalContent');
-    let options = `<h3>TOURNAMENTS</h3><div class="modal-options"><div class="modal-option" id="rulesBtn">RULES</div><div class="modal-option" id="playerTitlesBtn">PLAYER TITLES</div>`;
+    let options = `<h3>TOURNAMENTS</h3><div class="modal-options">`;
+    options += `<div class="modal-option" id="rulesBtn">RULES</div>`;
+    options += `<div class="modal-option" id="adminModeOption">ADMIN MODE</div>`;
     if(isAdminMode) {
-      options += `<div class="modal-option" id="addIconBtn">ADD TEAM ICON</div><div class="modal-option" id="addSlideBtn">ADD SLIDE</div>`;
+      options += `<div class="modal-option" id="addIconBtn">ADD TEAM ICON</div>`;
+      options += `<div class="modal-option" id="addSlideBtn">ADD SLIDE</div>`;
     }
-    options += `<div class="modal-option" id="logoutBtn">LOGOUT</div></div><button class="close-modal" id="closeModalBtn">CLOSE</button>`;
+    options += `<div class="modal-option" id="homeBtn">HOME</div>`;
+    options += `</div><button class="close-modal" id="closeModalBtn">CLOSE</button>`;
     modalContent.innerHTML = options;
     document.getElementById('rulesBtn').onclick = () => window.location.href = 'rules.html';
-    document.getElementById('playerTitlesBtn').onclick = () => window.location.href = 'player-titles.html';
+    document.getElementById('adminModeOption').onclick = () => { document.getElementById('modalOverlay').classList.remove('active'); activateAdminMode(); };
     if(isAdminMode) {
       document.getElementById('addIconBtn').onclick = () => { document.getElementById('modalOverlay').classList.remove('active'); showUploadIconModal(); };
       document.getElementById('addSlideBtn').onclick = () => { document.getElementById('modalOverlay').classList.remove('active'); showSlideshowManager(); };
     }
-    document.getElementById('logoutBtn').onclick = () => { window.location.href = 'login.html'; };
+    document.getElementById('homeBtn').onclick = () => window.location.href = 'feed.html';
     document.getElementById('closeModalBtn').onclick = () => document.getElementById('modalOverlay').classList.remove('active');
   }
+
   const hamburger = document.getElementById('hamburgerBtn');
-  const modalOverlay = document.getElementById('modalOverlay');
-  hamburger.onclick = () => { buildHamburgerModal(); modalOverlay.classList.add('active'); };
-  modalOverlay.addEventListener('click', (e) => { if(e.target === modalOverlay) modalOverlay.classList.remove('active'); });
+  const modalOverlayElem = document.getElementById('modalOverlay');
+  hamburger.onclick = () => { buildHamburgerModal(); modalOverlayElem.classList.add('active'); };
+  modalOverlayElem.addEventListener('click', (e) => { if(e.target === modalOverlayElem) modalOverlayElem.classList.remove('active'); });
 
   // Upload icon modal
   async function uploadToImgBB(file) {
@@ -605,7 +581,7 @@
     document.getElementById('closeIconModal').onclick = () => modal.classList.remove('active');
   }
 
-  // Slideshow manager (admin only)
+  // Slideshow manager
   async function showSlideshowManager() {
     const modal = document.getElementById('modalOverlay');
     const content = document.getElementById('modalContent');
@@ -647,14 +623,10 @@
     modal.classList.add('active');
   }
 
-  // Search filter for fixtures
+  // Fixture search listener
   document.getElementById('fixtureSearch')?.addEventListener('input', () => renderFixtures());
 
-  // Debug modal
-  document.getElementById('debugBtn').onclick = () => document.getElementById('debugModal').classList.add('active');
-  document.getElementById('closeDebugBtn').onclick = () => document.getElementById('debugModal').classList.remove('active');
-
-  // Initialization
+  // Initialize
   loadTeamIcons();
   loadSlideshow();
 </script>
