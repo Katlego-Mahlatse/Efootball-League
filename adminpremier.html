@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>Admin · Premier League</title>
+  <!-- Firebase SDKs (Compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <style>
@@ -118,9 +119,9 @@
     .season-controls {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.8rem;
       background: rgba(0,0,0,0.1);
-      padding: 0.2rem 0.6rem;
+      padding: 0.2rem 0.8rem;
       border-radius: 40px;
     }
     .season-arrow {
@@ -137,24 +138,15 @@
     }
     .season-arrow:hover { background: #0a0a0a; transform: scale(1.05); }
     .season-number-input {
-      width: 70px;
+      font-weight: bold;
+      font-size: 1.1rem;
+      width: 80px;
       text-align: center;
       background: #1a1a1a;
       border: 1px solid #f5d742;
-      color: #f5d742;
       border-radius: 30px;
+      color: #f5d742;
       padding: 0.2rem 0;
-      font-weight: bold;
-      font-size: 0.9rem;
-    }
-    .season-go-btn {
-      background: #1a1a1a;
-      border: 1px solid #f5d742;
-      color: #f5d742;
-      border-radius: 30px;
-      padding: 0.2rem 0.6rem;
-      cursor: pointer;
-      font-size: 0.7rem;
     }
     .season-admin-buttons {
       display: flex;
@@ -205,22 +197,12 @@
       width: 100%;
       border-collapse: collapse;
     }
-    .stats-table { min-width: 700px; }
+    .stats-table { min-width: 750px; }
     .inner-table { min-width: 300px; }
-    /* Compact table styling */
-    .stats-table th, .stats-table td {
-      padding: 0.5rem 0.4rem;
-      text-align: left;
-    }
-    .stats-table th:first-child, .stats-table td:first-child { padding-left: 0.8rem; }
-    .stats-table th:last-child, .stats-table td:last-child { padding-right: 0.8rem; }
-    .inner-table th, .inner-table td { padding: 0.6rem 0.5rem; }
-    .stats-table th, .inner-table th { background: #d4af37; border-bottom: 2px solid #1a1a1a; color: #1a1a1a; }
-    .stats-table td, .inner-table td { border-bottom: 1px solid rgba(0,0,0,0.2); color: #1a1a1a; vertical-align: middle; }
-    .team-icon-sm { width: 30px; height: 30px; object-fit: contain; vertical-align: middle; margin-right: 6px; }
-    .team-icon { width: 36px; height: 36px; object-fit: contain; vertical-align: middle; margin-right: 6px; display: inline-block; }
-    .inline-team-icon { width: 28px; height: 28px; object-fit: contain; vertical-align: middle; margin: 0 4px; display: inline-block; }
-    .rank-cell { font-weight: 700; width: 50px; }
+    .stats-table th, .inner-table th { text-align: left; padding: 0.8rem; background: #d4af37; border-bottom: 2px solid #1a1a1a; color: #1a1a1a; }
+    .stats-table td, .inner-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(0,0,0,0.2); color: #1a1a1a; vertical-align: middle; }
+    /* Position column align left */
+    .rank-cell { font-weight: 700; width: 50px; padding-left: 0.5rem !important; }
     .pos-with-bar { display: flex; align-items: center; gap: 4px; }
     .vertical-bar { width: 4px; height: 18px; border-radius: 2px; }
     .blue-bar-vertical { background: #3b82f6; }
@@ -230,9 +212,12 @@
     .dashed-separator-white { border-bottom: 2px dashed #ffffff !important; }
     .dashed-separator-red { border-bottom: 2px dashed #ef4444 !important; }
     .pts-cell { font-weight: 800; color: #1a1a1a; text-align: center; }
-    .team-name { display: flex; align-items: center; gap: 6px; font-weight: 700; }
-    .form-circles { display: flex; gap: 3px; align-items: center; flex-wrap: wrap; }
-    .circle-result { width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; }
+    .team-name { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+    .team-icon { width: 40px; height: 40px; object-fit: contain; vertical-align: middle; margin-right: 8px; display: inline-block; }
+    .inline-team-icon { width: 30px; height: 30px; object-fit: contain; vertical-align: middle; margin: 0 4px; display: inline-block; }
+    .team-icon-sm { width: 30px; height: 30px; object-fit: contain; vertical-align: middle; margin-right: 8px; }
+    .form-circles { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+    .circle-result { width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; }
     .circle-win { background: #22c55e; color: white; }
     .circle-loss { background: #ef4444; color: white; }
     .circle-draw { background: #6b7280; color: white; }
@@ -240,18 +225,18 @@
     .circle-forfeit-loss { background: #ef4444; color: white; }
     .circle-forfeit-grey { background: #6b7280; color: white; }
     .circle-blank { background: transparent; border: 1px solid #a0a0a0; }
-    .arrow-up { color: #22c55e; font-size: 1rem; display: inline-block; width: 20px; text-align: center; }
-    .arrow-down { color: #ef4444; font-size: 1rem; display: inline-block; width: 20px; text-align: center; }
-    .arrow-side { color: #f5d742; font-size: 1rem; display: inline-block; width: 20px; text-align: center; }
-    .legend-under-table { margin-top: 1rem; padding: 0.6rem 1rem; background: rgba(0,0,0,0.1); border-radius: 1rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; font-size: 0.7rem; }
-    .legend-item { display: inline-flex; align-items: center; gap: 4px; }
-    .legend-vertical-bar { width: 4px; height: 14px; border-radius: 2px; display: inline-block; }
+    .arrow-up { color: #22c55e; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
+    .arrow-down { color: #ef4444; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
+    .arrow-side { color: #f5d742; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
+    .legend-under-table { margin-top: 1rem; padding: 0.8rem 1.2rem; background: rgba(0,0,0,0.1); border-radius: 1rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; font-size: 0.7rem; }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .legend-vertical-bar { width: 4px; height: 16px; border-radius: 2px; display: inline-block; }
     .legend-blue { background: #3b82f6; }
     .legend-orange { background: #f97316; }
     .legend-green { background: #22c55e; }
-    .legend-dashed-white { display: inline-block; width: 16px; height: 2px; border-bottom: 2px dashed #ffffff; vertical-align: middle; }
-    .forfeit-text { font-size: 0.65rem; color: #1a1a1a; margin-top: 2px; background: rgba(0,0,0,0.1); display: inline-block; padding: 0 0.3rem; border-radius: 12px; }
-    .edit-btn, .delete-btn { background: #1a1a1a; border: none; color: #f5d742; margin: 0 0.15rem; cursor: pointer; font-size: 0.8rem; padding: 0.15rem 0.4rem; border-radius: 20px; transition: 0.2s; }
+    .legend-dashed-white { display: inline-block; width: 20px; height: 2px; border-bottom: 2px dashed #ffffff; vertical-align: middle; }
+    .forfeit-text { font-size: 0.7rem; color: #1a1a1a; margin-top: 4px; background: rgba(0,0,0,0.1); display: inline-block; padding: 0 0.3rem; border-radius: 12px; }
+    .edit-btn, .delete-btn { background: #1a1a1a; border: none; color: #f5d742; margin: 0 0.2rem; cursor: pointer; font-size: 0.9rem; padding: 0.2rem 0.5rem; border-radius: 20px; transition: 0.2s; }
     .edit-btn:hover, .delete-btn:hover { background: #0a0a0a; transform: scale(1.05); }
     .form-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85);
@@ -273,15 +258,14 @@
     .popup-menu div:hover { background: rgba(0,0,0,0.1); }
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
-      .stats-table th, .stats-table td { padding: 0.3rem 0.2rem; font-size: 0.7rem; }
-      .team-icon { width: 28px; height: 28px; margin-right: 4px; }
-      .inline-team-icon { width: 22px; height: 22px; }
-      .circle-result { width: 14px; height: 14px; font-size: 7px; }
+      .stats-table th, .stats-table td { padding: 0.4rem; font-size: 0.75rem; }
+      .team-icon { width: 30px; height: 30px; }
+      .inline-team-icon { width: 24px; height: 24px; }
+      .inner-table th, .inner-table td { padding: 0.4rem; font-size: 0.7rem; }
     }
     @media (max-width: 480px) {
-      .stats-table th, .stats-table td { padding: 0.25rem 0.15rem; font-size: 0.65rem; }
-      .team-name { gap: 3px; }
-      .rank-cell { width: 40px; }
+      .inner-table th, .inner-table td { padding: 0.3rem; font-size: 0.65rem; }
+      .circle-result { width: 16px; height: 16px; font-size: 8px; }
     }
   </style>
 </head>
@@ -305,12 +289,12 @@
         <h2>PREMIER LEAGUE</h2>
         <div class="season-controls">
           <button class="season-arrow" id="prevSeasonBtn">‹</button>
-          <input type="text" id="seasonNumberInput" class="season-number-input" value="1" inputmode="numeric">
+          <input type="text" id="seasonNumberInput" class="season-number-input" value="2" inputmode="numeric">
           <button class="season-arrow" id="nextSeasonBtn">›</button>
-          <button class="season-go-btn" id="goToSeasonBtn">Go</button>
         </div>
         <div id="seasonAdminButtons" class="season-admin-buttons" style="display:none;">
           <button class="season-admin-btn" id="addSeasonBtn">+ New Season</button>
+          <button class="season-admin-btn" id="renameSeasonBtn">Edit Season #</button>
           <button class="season-admin-btn" id="setActiveSeasonBtn">Set Active</button>
         </div>
         <button class="add-btn" id="addTeamBtn" style="display:none;">+ Add Team</button>
@@ -321,14 +305,13 @@
       <div class="league-table-wrapper">
         <table class="stats-table" id="leagueTable">
           <thead>
-            <tr>
-              <th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>W</th><th>L</th><th>Pts</th><th>Last 5</th><th id="actionHeader" style="display:none;">Actions</th>
+            <tr><th>Pos</th><th>Club</th><th>P</th><th>GD</th><th>W</th><th>L</th><th>Pts</th><th>Last 5</th><th id="actionHeader" style="display:none;">Actions</th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
         </table>
       </div>
-      <div class="legend-under-table"><div style="display:flex; flex-wrap:wrap; gap:0.8rem; justify-content:center;"><span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span>UEFA Champions League</span></span><span class="legend-item"><span class="legend-vertical-bar legend-orange"></span><span>Europa League</span></span><span class="legend-item"><span class="legend-vertical-bar legend-green"></span><span>UEFA Conference League</span></span><span class="legend-item"><span class="legend-dashed-white"></span><span>FIFA Club World Cup</span></span></div></div>
+      <div class="legend-under-table"><div style="display:flex; flex-wrap:wrap; gap:1rem; justify-content:center;"><span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span>UEFA Champions League</span></span><span class="legend-item"><span class="legend-vertical-bar legend-orange"></span><span>Europa League</span></span><span class="legend-item"><span class="legend-vertical-bar legend-green"></span><span>UEFA Conference League</span></span><span class="legend-item"><span class="legend-dashed-white"></span><span>FIFA Club World Cup</span></span></div></div>
     </div>
   </div>
 
@@ -374,19 +357,21 @@
   const database = firebase.database();
   const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
 
-  // ---------- Global State ----------
-  let currentSeasonId = 1;
-  let availableSeasons = [];
-  let activeSeasonId = 1;
+  // ---------- Season Management ----------
+  let currentSeasonId = 2;       // start with season 2 as default
+  let availableSeasons = [];     // list of season ids that exist (sorted)
+  let activeSeasonId = 2;
   let isAdminMode = false;
+
+  // Data for current season
   let teamsData = [], fixturesData = [], resultsData = [];
   let teamIconsCache = {};
   let slideshowImages = [], slideshowDuration = 3000, slideInterval = null, currentSlideIdx = 0;
 
   const teamList = ["Arsenal","AC Milan","PSG","Barcelona","Inter Milan","Atletico","Newcastle","Napoli","Chelsea","Dortmund","Real Madrid","Man City","Liverpool","Juventus"];
 
-  function getSeasonPath(subPath = "") {
-    return `seasons/season_${currentSeasonId}${subPath ? "/" + subPath : ""}`;
+  function getSeasonPath(seasonNum, subPath = "") {
+    return `seasons/season_${seasonNum}${subPath ? "/" + subPath : ""}`;
   }
 
   // Load all seasons metadata and set active season
@@ -401,23 +386,29 @@
         if (seasons[key].active === true) activeSeasonId = id;
       }
     }
-    if (availableSeasons.length === 0) {
-      const oldTable = await database.ref('premier_league/table').once('value');
+    // Ensure season 2 exists and has data (migrate old data if needed)
+    const season2Exists = availableSeasons.includes(2);
+    const oldTable = await database.ref('premier_league/table').once('value');
+    if (!season2Exists && (oldTable.exists() || true)) {
+      // Migrate existing data to season 2
       const oldFixtures = await database.ref('premier_league/fixtures').once('value');
       const oldResults = await database.ref('premier_league/results').once('value');
-      if (oldTable.exists() || oldFixtures.exists() || oldResults.exists()) {
-        await database.ref('seasons/season_1/table').set(oldTable.val() || {});
-        await database.ref('seasons/season_1/fixtures').set(oldFixtures.val() || {});
-        await database.ref('seasons/season_1/results').set(oldResults.val() || {});
-        await database.ref('seasons/season_1/active').set(true);
-        activeSeasonId = 1;
-        availableSeasons = [1];
-      } else {
-        await database.ref('seasons/season_1/active').set(true);
-        activeSeasonId = 1;
-        availableSeasons = [1];
-      }
+      await database.ref('seasons/season_2/table').set(oldTable.val() || {});
+      await database.ref('seasons/season_2/fixtures').set(oldFixtures.val() || {});
+      await database.ref('seasons/season_2/results').set(oldResults.val() || {});
+      await database.ref('seasons/season_2/active').set(true);
+      if (!availableSeasons.includes(2)) availableSeasons.push(2);
+      activeSeasonId = 2;
     }
+    // Ensure season 1 exists as empty
+    if (!availableSeasons.includes(1)) {
+      await database.ref('seasons/season_1/table').set({});
+      await database.ref('seasons/season_1/fixtures').set({});
+      await database.ref('seasons/season_1/results').set({});
+      await database.ref('seasons/season_1/active').set(false);
+      availableSeasons.push(1);
+    }
+    availableSeasons.sort((a,b)=>a-b);
     if (availableSeasons.indexOf(activeSeasonId) === -1 && availableSeasons.length) activeSeasonId = availableSeasons[0];
     // Set current season to active season
     currentSeasonId = activeSeasonId;
@@ -429,8 +420,9 @@
     document.getElementById('seasonNumberInput').value = currentSeasonId;
     const prevBtn = document.getElementById('prevSeasonBtn');
     const nextBtn = document.getElementById('nextSeasonBtn');
-    prevBtn.disabled = availableSeasons.length === 0 || currentSeasonId === Math.min(...availableSeasons);
-    nextBtn.disabled = availableSeasons.length === 0 || currentSeasonId === Math.max(...availableSeasons);
+    const idx = availableSeasons.indexOf(currentSeasonId);
+    prevBtn.disabled = availableSeasons.length === 0 || idx <= 0;
+    nextBtn.disabled = availableSeasons.length === 0 || idx >= availableSeasons.length-1;
     const adminDiv = document.getElementById('seasonAdminButtons');
     if (adminDiv) adminDiv.style.display = isAdminMode ? 'flex' : 'none';
   }
@@ -446,6 +438,8 @@
   }
 
   async function goToSeason(seasonNum) {
+    seasonNum = parseInt(seasonNum);
+    if (isNaN(seasonNum)) return;
     if (availableSeasons.includes(seasonNum)) {
       currentSeasonId = seasonNum;
       updateSeasonDisplay();
@@ -465,9 +459,9 @@
   }
 
   async function loadCurrentSeasonData() {
-    const tableSnap = await database.ref(getSeasonPath('table')).once('value');
-    const fixturesSnap = await database.ref(getSeasonPath('fixtures')).once('value');
-    const resultsSnap = await database.ref(getSeasonPath('results')).once('value');
+    const tableSnap = await database.ref(getSeasonPath(currentSeasonId, 'table')).once('value');
+    const fixturesSnap = await database.ref(getSeasonPath(currentSeasonId, 'fixtures')).once('value');
+    const resultsSnap = await database.ref(getSeasonPath(currentSeasonId, 'results')).once('value');
     teamsData = tableSnap.val() ? Object.entries(tableSnap.val()).map(([k,v])=>({key:k,...v})) : [];
     fixturesData = fixturesSnap.val() ? Object.entries(fixturesSnap.val()).map(([k,v])=>({key:k,...v})) : [];
     resultsData = resultsSnap.val() ? Object.entries(resultsSnap.val()).map(([k,v])=>({key:k,...v})) : [];
@@ -475,7 +469,11 @@
   }
 
   async function addNewSeason() {
-    const newId = availableSeasons.length ? Math.max(...availableSeasons) + 1 : 2;
+    let newId = prompt("Enter season number (e.g., 10):");
+    if (!newId) return;
+    newId = parseInt(newId);
+    if (isNaN(newId)) { alert("Invalid number"); return; }
+    if (availableSeasons.includes(newId)) { alert("Season already exists"); return; }
     await database.ref(`seasons/season_${newId}/table`).set({});
     await database.ref(`seasons/season_${newId}/fixtures`).set({});
     await database.ref(`seasons/season_${newId}/results`).set({});
@@ -484,6 +482,40 @@
     currentSeasonId = newId;
     updateSeasonDisplay();
     await loadCurrentSeasonData();
+  }
+
+  async function renameSeason() {
+    // Show dropdown of existing seasons (excluding current? allow any)
+    let seasonList = availableSeasons.map(s => `Season ${s}`).join(', ');
+    let oldNum = prompt(`Enter current season number to rename (existing: ${seasonList}):`);
+    if (!oldNum) return;
+    oldNum = parseInt(oldNum);
+    if (!availableSeasons.includes(oldNum)) { alert("Season not found"); return; }
+    let newNum = prompt(`Enter new season number for Season ${oldNum}:`);
+    if (!newNum) return;
+    newNum = parseInt(newNum);
+    if (isNaN(newNum)) { alert("Invalid number"); return; }
+    if (availableSeasons.includes(newNum) && newNum !== oldNum) { alert("A season with that number already exists"); return; }
+    // Move data from old to new
+    const oldTable = await database.ref(getSeasonPath(oldNum, 'table')).once('value');
+    const oldFixtures = await database.ref(getSeasonPath(oldNum, 'fixtures')).once('value');
+    const oldResults = await database.ref(getSeasonPath(oldNum, 'results')).once('value');
+    const wasActive = (activeSeasonId === oldNum);
+    await database.ref(getSeasonPath(newNum, 'table')).set(oldTable.val() || {});
+    await database.ref(getSeasonPath(newNum, 'fixtures')).set(oldFixtures.val() || {});
+    await database.ref(getSeasonPath(newNum, 'results')).set(oldResults.val() || {});
+    if (wasActive) await database.ref(`seasons/season_${newNum}/active`).set(true);
+    // Delete old
+    await database.ref(getSeasonPath(oldNum)).remove();
+    // Update arrays
+    availableSeasons = availableSeasons.filter(s => s !== oldNum);
+    availableSeasons.push(newNum);
+    availableSeasons.sort((a,b)=>a-b);
+    if (currentSeasonId === oldNum) currentSeasonId = newNum;
+    if (activeSeasonId === oldNum) activeSeasonId = newNum;
+    updateSeasonDisplay();
+    await loadCurrentSeasonData();
+    alert(`Season renamed from ${oldNum} to ${newNum}`);
   }
 
   async function setActiveSeason() {
@@ -496,7 +528,7 @@
     alert(`Season ${currentSeasonId} set as active.`);
   }
 
-  // Load team icons
+  // ---------- Existing functions (adapted to use current season paths) ----------
   async function loadTeamIcons() {
     const snapshot = await database.ref('teamIcons').once('value');
     const data = snapshot.val() || {};
@@ -626,7 +658,7 @@
       if(isAdminMode) {
         const actions = row.insertCell(8);
         const editBtn = document.createElement('button'); editBtn.innerText='✏️'; editBtn.className='edit-btn'; editBtn.onclick=()=>openTeamForm(team.key,team);
-        const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await database.ref(getSeasonPath(`table/${team.key}`)).remove(); };
+        const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await database.ref(getSeasonPath(currentSeasonId, `table/${team.key}`)).remove(); };
         actions.appendChild(editBtn); actions.appendChild(delBtn);
       }
     });
@@ -649,7 +681,7 @@
       if(isAdminMode) {
         const actions = row.insertCell(3);
         const editBtn = document.createElement('button'); editBtn.innerText='✏️'; editBtn.className='edit-btn'; editBtn.onclick=()=>openFixtureForm(f.key,f);
-        const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await database.ref(getSeasonPath(`fixtures/${f.key}`)).remove(); };
+        const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await database.ref(getSeasonPath(currentSeasonId, `fixtures/${f.key}`)).remove(); };
         actions.appendChild(editBtn); actions.appendChild(delBtn);
       }
     });
@@ -702,7 +734,7 @@
       if(isAdminMode) {
         const actions = row.insertCell(2);
         const editBtn = document.createElement('button'); editBtn.innerText='✏️'; editBtn.className='edit-btn'; editBtn.onclick=()=>openResultForm(r.key,r);
-        const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await database.ref(getSeasonPath(`results/${r.key}`)).remove(); };
+        const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await database.ref(getSeasonPath(currentSeasonId, `results/${r.key}`)).remove(); };
         actions.appendChild(editBtn); actions.appendChild(delBtn);
       }
     });
@@ -715,17 +747,17 @@
     else return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam}`;
   }
 
-  // CRUD forms
+  // CRUD forms (adapted)
   let editingTeamKey = null;
   function openTeamForm(key,data){ editingTeamKey=key; const sel=document.getElementById('teamNameSelect'); sel.innerHTML=teamList.map(t=>`<option value="${t}">${t}</option>`).join(''); if(data?.name) sel.value=data.name; document.getElementById('teamP').value=data?.p||''; document.getElementById('teamGD').value=data?.gd||''; document.getElementById('teamPts').value=data?.pts||''; document.getElementById('teamForm').classList.add('active'); }
   document.getElementById('addTeamBtn').onclick=()=>openTeamForm(null);
-  document.getElementById('saveTeamBtn').onclick=async()=>{ const name=document.getElementById('teamNameSelect').value; const p=parseInt(document.getElementById('teamP').value)||0; const gd=parseInt(document.getElementById('teamGD').value)||0; const pts=parseInt(document.getElementById('teamPts').value)||0; if(!name) return; if(editingTeamKey) await database.ref(getSeasonPath(`table/${editingTeamKey}`)).set({name,p,gd,pts}); else await database.ref(getSeasonPath('table')).push({name,p,gd,pts}); document.getElementById('teamForm').classList.remove('active'); };
+  document.getElementById('saveTeamBtn').onclick=async()=>{ const name=document.getElementById('teamNameSelect').value; const p=parseInt(document.getElementById('teamP').value)||0; const gd=parseInt(document.getElementById('teamGD').value)||0; const pts=parseInt(document.getElementById('teamPts').value)||0; if(!name) return; if(editingTeamKey) await database.ref(getSeasonPath(currentSeasonId, `table/${editingTeamKey}`)).set({name,p,gd,pts}); else await database.ref(getSeasonPath(currentSeasonId, 'table')).push({name,p,gd,pts}); document.getElementById('teamForm').classList.remove('active'); };
   document.getElementById('cancelTeamBtn').onclick=()=>document.getElementById('teamForm').classList.remove('active');
 
   let editingFixtureKey = null;
   function openFixtureForm(key,data){ editingFixtureKey=key; document.getElementById('fixtureDate').value=data?.date||''; const homeSel=document.getElementById('fixtureHome'), awaySel=document.getElementById('fixtureAway'); homeSel.innerHTML=teamList.map(t=>`<option>${t}</option>`); awaySel.innerHTML=teamList.map(t=>`<option>${t}</option>`); if(data?.home) homeSel.value=data.home; if(data?.away) awaySel.value=data.away; document.getElementById('fixtureMd').value=data?.md||''; document.getElementById('fixtureForm').classList.add('active'); }
   document.getElementById('addFixtureBtn').onclick=()=>openFixtureForm(null);
-  document.getElementById('saveFixtureBtn').onclick=async()=>{ const date=document.getElementById('fixtureDate').value; const home=document.getElementById('fixtureHome').value; const away=document.getElementById('fixtureAway').value; const md=parseInt(document.getElementById('fixtureMd').value); if(!date||!home||!away||!md) return; if(editingFixtureKey) await database.ref(getSeasonPath(`fixtures/${editingFixtureKey}`)).set({date,home,away,md}); else await database.ref(getSeasonPath('fixtures')).push({date,home,away,md}); document.getElementById('fixtureForm').classList.remove('active'); };
+  document.getElementById('saveFixtureBtn').onclick=async()=>{ const date=document.getElementById('fixtureDate').value; const home=document.getElementById('fixtureHome').value; const away=document.getElementById('fixtureAway').value; const md=parseInt(document.getElementById('fixtureMd').value); if(!date||!home||!away||!md) return; if(editingFixtureKey) await database.ref(getSeasonPath(currentSeasonId, `fixtures/${editingFixtureKey}`)).set({date,home,away,md}); else await database.ref(getSeasonPath(currentSeasonId, 'fixtures')).push({date,home,away,md}); document.getElementById('fixtureForm').classList.remove('active'); };
   document.getElementById('cancelFixtureBtn').onclick=()=>document.getElementById('fixtureForm').classList.remove('active');
 
   let editingResultKey = null;
@@ -785,8 +817,8 @@
       homeScore = "F"; awayScore = "F";
     }
     const matchText = formatResultText(homeTeam, homeScore, awayTeam, awayScore, forfeitType);
-    if (editingResultKey) await database.ref(getSeasonPath(`results/${editingResultKey}`)).set({ matchText, md });
-    else await database.ref(getSeasonPath('results')).push({ matchText, md });
+    if (editingResultKey) await database.ref(getSeasonPath(currentSeasonId, `results/${editingResultKey}`)).set({ matchText, md });
+    else await database.ref(getSeasonPath(currentSeasonId, 'results')).push({ matchText, md });
     document.getElementById('resultForm').classList.remove('active');
   };
   document.getElementById('cancelResultBtn').onclick = () => document.getElementById('resultForm').classList.remove('active');
@@ -962,32 +994,27 @@
 
   document.getElementById('fixtureSearch')?.addEventListener('input', () => renderFixtures());
 
-  // Season event listeners
+  // Season UI events
   document.getElementById('prevSeasonBtn').addEventListener('click', () => switchSeason(-1));
   document.getElementById('nextSeasonBtn').addEventListener('click', () => switchSeason(1));
-  document.getElementById('goToSeasonBtn').addEventListener('click', () => {
-    let val = parseInt(document.getElementById('seasonNumberInput').value);
-    if (isNaN(val)) val = currentSeasonId;
-    goToSeason(val);
-  });
-  document.getElementById('seasonNumberInput').addEventListener('keypress', (e) => {
+  const seasonInput = document.getElementById('seasonNumberInput');
+  seasonInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
-      let val = parseInt(e.target.value);
-      if (isNaN(val)) val = currentSeasonId;
-      goToSeason(val);
+      goToSeason(seasonInput.value);
     }
   });
   document.getElementById('addSeasonBtn').addEventListener('click', () => { if(isAdminMode) addNewSeason(); });
+  document.getElementById('renameSeasonBtn').addEventListener('click', () => { if(isAdminMode) renameSeason(); });
   document.getElementById('setActiveSeasonBtn').addEventListener('click', () => { if(isAdminMode) setActiveSeason(); });
 
-  // Initialize
+  // Initialize after loading metadata
   loadSlideshow();
   loadTeamIcons();
   loadSeasonsMetadata().then(() => {
     // Set up realtime listeners for current season paths
-    const tableRef = database.ref(getSeasonPath('table'));
-    const fixturesRef = database.ref(getSeasonPath('fixtures'));
-    const resultsRef = database.ref(getSeasonPath('results'));
+    const tableRef = database.ref(getSeasonPath(currentSeasonId, 'table'));
+    const fixturesRef = database.ref(getSeasonPath(currentSeasonId, 'fixtures'));
+    const resultsRef = database.ref(getSeasonPath(currentSeasonId, 'results'));
     tableRef.on('value', snap => {
       teamsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : [];
       renderLeagueTable();
