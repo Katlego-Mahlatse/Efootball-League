@@ -115,7 +115,48 @@
       cursor: pointer;
     }
     .card-header-left { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-    .card-header-left h2 { font-size: 1.4rem; color: #1a1a1a; }
+    .card-header-left h2 { font-size: 1.6rem; color: #1a1a1a; margin-right: 1rem; }
+    .season-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      background: rgba(0,0,0,0.1);
+      padding: 0.2rem 0.8rem;
+      border-radius: 40px;
+    }
+    .season-arrow {
+      background: #1a1a1a;
+      color: #f5d742;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+    .season-arrow:hover { background: #0a0a0a; transform: scale(1.05); }
+    .season-number {
+      font-weight: bold;
+      font-size: 1.1rem;
+      min-width: 80px;
+      text-align: center;
+    }
+    .season-admin-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-left: 0.5rem;
+    }
+    .season-admin-btn {
+      background: #1a1a1a;
+      border: 1px solid #f5d742;
+      border-radius: 30px;
+      padding: 0.2rem 0.7rem;
+      color: #f5d742;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
     .toggle-icon { font-size: 1.2rem; color: #1a1a1a; margin-left: 1rem; }
     .add-btn {
       background: #1a1a1a;
@@ -140,7 +181,6 @@
     .card-content.collapsed { max-height: 0; }
     .filter-container { padding: 1rem; background: rgba(0,0,0,0.1); border-bottom: 1px solid #1a1a1a; }
     .filter-input { background: #1a1a1a; border: 1px solid #f5d742; border-radius: 30px; padding: 0.5rem 1rem; color: #f5d742; width: 100%; max-width: 280px; }
-    /* Table wrappers: league table allows horizontal scroll, fixtures/results do NOT */
     .league-table-wrapper {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
@@ -216,7 +256,6 @@
       .team-icon { width: 30px; height: 30px; }
       .inline-team-icon { width: 24px; height: 24px; }
       .inner-table th, .inner-table td { padding: 0.4rem; font-size: 0.7rem; }
-      .fixture-icons, .result-match { gap: 4px; }
     }
     @media (max-width: 480px) {
       .inner-table th, .inner-table td { padding: 0.3rem; font-size: 0.65rem; }
@@ -241,7 +280,16 @@
   <div class="card">
     <div class="card-header" style="cursor:default;">
       <div class="card-header-left">
-        <h2>🏆 PREMIER LEAGUE TABLE</h2>
+        <h2>PREMIER LEAGUE</h2>
+        <div class="season-controls">
+          <button class="season-arrow" id="prevSeasonBtn">‹</button>
+          <span class="season-number" id="seasonNumber">Season 1</span>
+          <button class="season-arrow" id="nextSeasonBtn">›</button>
+        </div>
+        <div id="seasonAdminButtons" class="season-admin-buttons" style="display:none;">
+          <button class="season-admin-btn" id="addSeasonBtn">+ New Season</button>
+          <button class="season-admin-btn" id="setActiveSeasonBtn">Set Active</button>
+        </div>
         <button class="add-btn" id="addTeamBtn" style="display:none;">+ Add Team</button>
       </div>
       <button class="three-dot-menu" id="threeDotBtn">⋮</button>
@@ -264,11 +312,11 @@
   <div class="card-content" id="resultsContent"><div class="results-table-wrapper"><table class="inner-table" id="resultsTable"><thead><tr><th>Match</th><th>MD</th><th id="resultActionHeader" style="display:none;">Actions</th></tr></thead><tbody id="resultsBody"></tbody></table></div></div></div>
 </div>
 
-<!-- CRUD Forms -->
+<!-- CRUD Forms (same as before) -->
 <div id="teamForm" class="form-overlay"><div class="form-card"><h3>Add/Edit Team</h3><select id="teamNameSelect"></select><input type="number" id="teamP" placeholder="Played"><input type="number" id="teamGD" placeholder="Goal Difference"><input type="number" id="teamPts" placeholder="Points"><button id="saveTeamBtn">Save</button><button id="cancelTeamBtn">Cancel</button></div></div>
 <div id="fixtureForm" class="form-overlay"><div class="form-card"><h3>Add/Edit Fixture</h3><input type="text" id="fixtureDate" placeholder="Date (e.g., Apr 28)"><select id="fixtureHome"></select><select id="fixtureAway"></select><input type="number" id="fixtureMd" placeholder="Matchday"><button id="saveFixtureBtn">Save</button><button id="cancelFixtureBtn">Cancel</button></div></div>
 
-<!-- New Result Form with dropdowns and forfeit -->
+<!-- Result Form with dropdowns and forfeit -->
 <div id="resultForm" class="form-overlay"><div class="form-card"><h3 id="resultFormTitle">Add Result</h3>
   <select id="resultHomeTeam"><option value="">Select Home Team</option></select>
   <input type="number" id="resultHomeScore" placeholder="Home Score" value="0">
@@ -300,15 +348,117 @@
   const database = firebase.database();
   const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
 
-  // ---------- Global State ----------
+  // ---------- Season Management ----------
+  let currentSeasonId = 1;       // numeric, e.g. 1,2,3...
+  let availableSeasons = [];     // list of season ids that exist
+  let activeSeasonId = 1;
   let isAdminMode = false;
+
+  // Data for current season
   let teamsData = [], fixturesData = [], resultsData = [];
   let teamIconsCache = {};
   let slideshowImages = [], slideshowDuration = 3000, slideInterval = null, currentSlideIdx = 0;
 
   const teamList = ["Arsenal","AC Milan","PSG","Barcelona","Inter Milan","Atletico","Newcastle","Napoli","Chelsea","Dortmund","Real Madrid","Man City","Liverpool","Juventus"];
 
-  // Load team icons from Firebase
+  // Helper: get database path for current season
+  function getSeasonPath(subPath = "") {
+    return `seasons/season_${currentSeasonId}${subPath ? "/" + subPath : ""}`;
+  }
+
+  // Load all seasons metadata and set active season
+  async function loadSeasonsMetadata() {
+    const snapshot = await database.ref('seasons').once('value');
+    const seasons = snapshot.val() || {};
+    availableSeasons = [];
+    for (const key in seasons) {
+      if (key.startsWith('season_')) {
+        const id = parseInt(key.split('_')[1]);
+        if (!isNaN(id)) availableSeasons.push(id);
+        if (seasons[key].active === true) activeSeasonId = id;
+      }
+    }
+    if (availableSeasons.length === 0) {
+      // Migrate existing data (if any) to season 1
+      const oldTable = await database.ref('premier_league/table').once('value');
+      const oldFixtures = await database.ref('premier_league/fixtures').once('value');
+      const oldResults = await database.ref('premier_league/results').once('value');
+      if (oldTable.exists() || oldFixtures.exists() || oldResults.exists()) {
+        await database.ref('seasons/season_1/table').set(oldTable.val() || {});
+        await database.ref('seasons/season_1/fixtures').set(oldFixtures.val() || {});
+        await database.ref('seasons/season_1/results').set(oldResults.val() || {});
+        await database.ref('seasons/season_1/active').set(true);
+        activeSeasonId = 1;
+        availableSeasons = [1];
+      } else {
+        // Create empty season 1
+        await database.ref('seasons/season_1/active').set(true);
+        activeSeasonId = 1;
+        availableSeasons = [1];
+      }
+    }
+    if (availableSeasons.indexOf(activeSeasonId) === -1 && availableSeasons.length) activeSeasonId = availableSeasons[0];
+    updateSeasonDisplay();
+    if (!availableSeasons.includes(currentSeasonId)) currentSeasonId = activeSeasonId;
+    await loadCurrentSeasonData();
+  }
+
+  function updateSeasonDisplay() {
+    document.getElementById('seasonNumber').innerText = `Season ${currentSeasonId}`;
+    const prevBtn = document.getElementById('prevSeasonBtn');
+    const nextBtn = document.getElementById('nextSeasonBtn');
+    prevBtn.disabled = availableSeasons.length === 0 || currentSeasonId === Math.min(...availableSeasons);
+    nextBtn.disabled = availableSeasons.length === 0 || currentSeasonId === Math.max(...availableSeasons);
+    // Show/hide admin season buttons
+    const adminDiv = document.getElementById('seasonAdminButtons');
+    if (adminDiv) adminDiv.style.display = isAdminMode ? 'flex' : 'none';
+  }
+
+  async function switchSeason(delta) {
+    const idx = availableSeasons.indexOf(currentSeasonId);
+    const newIdx = idx + delta;
+    if (newIdx >= 0 && newIdx < availableSeasons.length) {
+      currentSeasonId = availableSeasons[newIdx];
+      updateSeasonDisplay();
+      await loadCurrentSeasonData();
+    }
+  }
+
+  async function loadCurrentSeasonData() {
+    // Load teams, fixtures, results for current season
+    const tableSnap = await database.ref(getSeasonPath('table')).once('value');
+    const fixturesSnap = await database.ref(getSeasonPath('fixtures')).once('value');
+    const resultsSnap = await database.ref(getSeasonPath('results')).once('value');
+    teamsData = tableSnap.val() ? Object.entries(tableSnap.val()).map(([k,v])=>({key:k,...v})) : [];
+    fixturesData = fixturesSnap.val() ? Object.entries(fixturesSnap.val()).map(([k,v])=>({key:k,...v})) : [];
+    resultsData = resultsSnap.val() ? Object.entries(resultsSnap.val()).map(([k,v])=>({key:k,...v})) : [];
+    renderLeagueTable(); renderFixtures(); renderResults();
+  }
+
+  // Admin functions: add new season, set active
+  async function addNewSeason() {
+    const newId = availableSeasons.length ? Math.max(...availableSeasons) + 1 : 2;
+    await database.ref(`seasons/season_${newId}/table`).set({});
+    await database.ref(`seasons/season_${newId}/fixtures`).set({});
+    await database.ref(`seasons/season_${newId}/results`).set({});
+    availableSeasons.push(newId);
+    availableSeasons.sort((a,b)=>a-b);
+    currentSeasonId = newId;
+    updateSeasonDisplay();
+    await loadCurrentSeasonData();
+  }
+
+  async function setActiveSeason() {
+    // Set active flag false for all seasons, then true for current
+    const updates = {};
+    for (let sid of availableSeasons) {
+      updates[`seasons/season_${sid}/active`] = (sid === currentSeasonId);
+    }
+    await database.ref().update(updates);
+    activeSeasonId = currentSeasonId;
+  }
+
+  // ---------- Existing functions (adapted to use current season paths) ----------
   async function loadTeamIcons() {
     const snapshot = await database.ref('teamIcons').once('value');
     const data = snapshot.val() || {};
@@ -323,10 +473,8 @@
     return url ? `<img class="${className}" src="${url}" alt="${team}" onerror="this.remove();">` : team;
   }
 
-  // Player mapping
   const playerMap = { "Barcelona":"~Rea🫡","Inter Milan":"Mali","Dortmund":"~Qhawe 🤍","Juventus":"Izu","Atletico":"~Stalker.","PSG":"~MJ","Napoli":"~PrettyBoy Tendancies. 👅","Real Madrid":"~Karabo","Arsenal":"Kath","AC Milan":"Tapz","Chelsea":"~Zazo","Man City":"gry","Liverpool":"🅿️","Newcastle":"~Oratile" };
 
-  // Last 5 & arrow helpers
   function getResultStatusForTeam(team, matchText) {
     const lower = matchText.toLowerCase();
     if (lower.includes("no contest") || lower.includes("f - f")) return "F";
@@ -342,12 +490,14 @@
     }
     return null;
   }
+
   function getTeamLast5(team) {
     const teamResults = resultsData.filter(r => r.matchText.includes(team)).sort((a,b) => (b.md||0) - (a.md||0));
     const last5 = teamResults.slice(0,5).map(r => getResultStatusForTeam(team, r.matchText)).filter(s => s);
     while(last5.length < 5) last5.push(null);
     return last5.reverse();
   }
+
   function getLatestArrow(team) {
     const teamResults = resultsData.filter(r => r.matchText.includes(team)).sort((a,b) => (b.md||0) - (a.md||0));
     if(!teamResults.length) return null;
@@ -359,7 +509,7 @@
     return null;
   }
 
-  let showFormArrows = false;   // hidden by default
+  let showFormArrows = false;
   let showLast5 = true;
   let currentView = "team";
   window.showFormArrows = showFormArrows;
@@ -423,13 +573,12 @@
       if(isAdminMode) {
         const actions = row.insertCell(6);
         const editBtn = document.createElement('button'); editBtn.innerText='✏️'; editBtn.className='edit-btn'; editBtn.onclick=()=>openTeamForm(team.key,team);
-        const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await database.ref(`premier_league/table/${team.key}`).remove(); };
+        const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await database.ref(getSeasonPath(`table/${team.key}`)).remove(); };
         actions.appendChild(editBtn); actions.appendChild(delBtn);
       }
     });
   }
 
-  // Fixtures: only icons, no team names, no horizontal scroll
   function renderFixtures() {
     const tbody = document.getElementById('fixturesBody'); if(!tbody) return;
     const actionHeader = document.getElementById('fixtureActionHeader');
@@ -447,21 +596,20 @@
       if(isAdminMode) {
         const actions = row.insertCell(3);
         const editBtn = document.createElement('button'); editBtn.innerText='✏️'; editBtn.className='edit-btn'; editBtn.onclick=()=>openFixtureForm(f.key,f);
-        const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await database.ref(`premier_league/fixtures/${f.key}`).remove(); };
+        const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await database.ref(getSeasonPath(`fixtures/${f.key}`)).remove(); };
         actions.appendChild(editBtn); actions.appendChild(delBtn);
       }
     });
     if(tbody.rows.length===0){ const r=tbody.insertRow(); r.insertCell(0).colSpan=4; r.cells[0].innerText="No fixtures"; }
   }
 
-  // Results: only icons + score, no team names, no horizontal scroll
   function renderResults() {
     const tbody = document.getElementById('resultsBody'); if(!tbody) return;
     const actionHeader = document.getElementById('resultActionHeader');
     if(actionHeader) actionHeader.style.display = isAdminMode ? 'table-cell' : 'none';
     tbody.innerHTML = '';
     resultsData.forEach(r => {
-      let homeTeam = "", awayTeam = "", homeScore = "", awayScore = "", isForfeit = false, forfeitType = "";
+      let homeTeam = "", awayTeam = "", homeScore = "", awayScore = "", isForfeit = false;
       const text = r.matchText;
       const lower = text.toLowerCase();
       if (lower.includes("no contest") || lower.includes("f - f")) isForfeit = true;
@@ -501,28 +649,34 @@
       if(isAdminMode) {
         const actions = row.insertCell(2);
         const editBtn = document.createElement('button'); editBtn.innerText='✏️'; editBtn.className='edit-btn'; editBtn.onclick=()=>openResultForm(r.key,r);
-        const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await database.ref(`premier_league/results/${r.key}`).remove(); };
+        const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn'; delBtn.onclick=async()=>{ await database.ref(getSeasonPath(`results/${r.key}`)).remove(); };
         actions.appendChild(editBtn); actions.appendChild(delBtn);
       }
     });
   }
 
-  // Helper to format result text from dropdowns
   function formatResultText(homeTeam, homeScore, awayTeam, awayScore, forfeitType) {
-    if (forfeitType === "no_contest") {
-      return `${homeTeam} F - F ${awayTeam} (No Contest)`;
-    } else if (forfeitType === "forfeit_no_reply") {
-      return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam} (Forfeited - No Reply)`;
-    } else if (forfeitType === "forfeit_agreement") {
-      return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam} (Forfeited on Agreement)`;
-    } else {
-      return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam}`;
-    }
+    if (forfeitType === "no_contest") return `${homeTeam} F - F ${awayTeam} (No Contest)`;
+    else if (forfeitType === "forfeit_no_reply") return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam} (Forfeited - No Reply)`;
+    else if (forfeitType === "forfeit_agreement") return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam} (Forfeited on Agreement)`;
+    else return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam}`;
   }
 
-  // Result CRUD with new form
+  // CRUD forms (adapted to use current season paths)
+  let editingTeamKey = null;
+  function openTeamForm(key,data){ editingTeamKey=key; const sel=document.getElementById('teamNameSelect'); sel.innerHTML=teamList.map(t=>`<option value="${t}">${t}</option>`).join(''); if(data?.name) sel.value=data.name; document.getElementById('teamP').value=data?.p||''; document.getElementById('teamGD').value=data?.gd||''; document.getElementById('teamPts').value=data?.pts||''; document.getElementById('teamForm').classList.add('active'); }
+  document.getElementById('addTeamBtn').onclick=()=>openTeamForm(null);
+  document.getElementById('saveTeamBtn').onclick=async()=>{ const name=document.getElementById('teamNameSelect').value; const p=parseInt(document.getElementById('teamP').value)||0; const gd=parseInt(document.getElementById('teamGD').value)||0; const pts=parseInt(document.getElementById('teamPts').value)||0; if(!name) return; if(editingTeamKey) await database.ref(getSeasonPath(`table/${editingTeamKey}`)).set({name,p,gd,pts}); else await database.ref(getSeasonPath('table')).push({name,p,gd,pts}); document.getElementById('teamForm').classList.remove('active'); };
+  document.getElementById('cancelTeamBtn').onclick=()=>document.getElementById('teamForm').classList.remove('active');
+
+  let editingFixtureKey = null;
+  function openFixtureForm(key,data){ editingFixtureKey=key; document.getElementById('fixtureDate').value=data?.date||''; const homeSel=document.getElementById('fixtureHome'), awaySel=document.getElementById('fixtureAway'); homeSel.innerHTML=teamList.map(t=>`<option>${t}</option>`); awaySel.innerHTML=teamList.map(t=>`<option>${t}</option>`); if(data?.home) homeSel.value=data.home; if(data?.away) awaySel.value=data.away; document.getElementById('fixtureMd').value=data?.md||''; document.getElementById('fixtureForm').classList.add('active'); }
+  document.getElementById('addFixtureBtn').onclick=()=>openFixtureForm(null);
+  document.getElementById('saveFixtureBtn').onclick=async()=>{ const date=document.getElementById('fixtureDate').value; const home=document.getElementById('fixtureHome').value; const away=document.getElementById('fixtureAway').value; const md=parseInt(document.getElementById('fixtureMd').value); if(!date||!home||!away||!md) return; if(editingFixtureKey) await database.ref(getSeasonPath(`fixtures/${editingFixtureKey}`)).set({date,home,away,md}); else await database.ref(getSeasonPath('fixtures')).push({date,home,away,md}); document.getElementById('fixtureForm').classList.remove('active'); };
+  document.getElementById('cancelFixtureBtn').onclick=()=>document.getElementById('fixtureForm').classList.remove('active');
+
   let editingResultKey = null;
-  function openResultForm(key, data) {
+  function openResultForm(key,data) {
     editingResultKey = key;
     const homeSel = document.getElementById('resultHomeTeam');
     const awaySel = document.getElementById('resultAwayTeam');
@@ -530,12 +684,9 @@
     const awayScoreInput = document.getElementById('resultAwayScore');
     const forfeitSel = document.getElementById('resultForfeitType');
     const mdInput = document.getElementById('resultMd');
-    // Populate team dropdowns
-    const teams = teamList;
-    homeSel.innerHTML = '<option value="">Select Home Team</option>' + teams.map(t => `<option value="${t}">${t}</option>`).join('');
-    awaySel.innerHTML = '<option value="">Select Away Team</option>' + teams.map(t => `<option value="${t}">${t}</option>`).join('');
+    homeSel.innerHTML = '<option value="">Select Home Team</option>' + teamList.map(t => `<option value="${t}">${t}</option>`).join('');
+    awaySel.innerHTML = '<option value="">Select Away Team</option>' + teamList.map(t => `<option value="${t}">${t}</option>`).join('');
     if (data) {
-      // Parse existing matchText to extract teams, scores, forfeit
       const text = data.matchText;
       const isForfeit = text.toLowerCase().includes("forfeit") || text.toLowerCase().includes("no contest");
       let homeTeam = "", awayTeam = "", homeScore = "", awayScore = "", forfeit = "none";
@@ -545,36 +696,23 @@
         if (match[1] && match[2]) {
           homeScore = match[1]; awayScore = match[2];
           const parts = text.split(/\s+\d+\s*-\s*\d+\s+/);
-          if (parts.length >= 2) {
-            homeTeam = parts[0].trim();
-            awayTeam = parts[1].trim();
-          }
+          if (parts.length >= 2) { homeTeam = parts[0].trim(); awayTeam = parts[1].trim(); }
         } else {
           homeScore = "F"; awayScore = "F";
           const parts = text.split(/\s*F\s*-\s*F\s*/);
-          if (parts.length >= 2) {
-            homeTeam = parts[0].trim();
-            awayTeam = parts[1].trim();
-          }
+          if (parts.length >= 2) { homeTeam = parts[0].trim(); awayTeam = parts[1].trim(); }
         }
       }
       if (text.includes("No Contest")) forfeit = "no_contest";
       else if (text.includes("Forfeited - No Reply")) forfeit = "forfeit_no_reply";
       else if (text.includes("Forfeited on Agreement")) forfeit = "forfeit_agreement";
-      else if (isForfeit && !text.includes("F - F")) forfeit = "forfeit_no_reply"; // fallback
-      homeSel.value = homeTeam || "";
-      awaySel.value = awayTeam || "";
-      homeScoreInput.value = homeScore || 0;
-      awayScoreInput.value = awayScore || 0;
-      forfeitSel.value = forfeit;
-      mdInput.value = data.md || "";
+      homeSel.value = homeTeam || ""; awaySel.value = awayTeam || "";
+      homeScoreInput.value = homeScore || 0; awayScoreInput.value = awayScore || 0;
+      forfeitSel.value = forfeit; mdInput.value = data.md || "";
     } else {
-      homeSel.value = "";
-      awaySel.value = "";
-      homeScoreInput.value = 0;
-      awayScoreInput.value = 0;
-      forfeitSel.value = "none";
-      mdInput.value = "";
+      homeSel.value = ""; awaySel.value = "";
+      homeScoreInput.value = 0; awayScoreInput.value = 0;
+      forfeitSel.value = "none"; mdInput.value = "";
     }
     document.getElementById('resultFormTitle').innerText = key ? "Edit Result" : "Add Result";
     document.getElementById('resultForm').classList.add('active');
@@ -590,41 +728,16 @@
     if (!homeTeam || !awayTeam || !md) { alert("Please fill all fields"); return; }
     if (homeTeam === awayTeam) { alert("Home and away teams cannot be the same"); return; }
     if (forfeitType !== "no_contest") {
-      if (homeScore === "" || awayScore === "") homeScore = 0, awayScore = 0;
-      homeScore = parseInt(homeScore); awayScore = parseInt(awayScore);
-      if (isNaN(homeScore)) homeScore = 0;
-      if (isNaN(awayScore)) awayScore = 0;
+      homeScore = parseInt(homeScore) || 0; awayScore = parseInt(awayScore) || 0;
     } else {
       homeScore = "F"; awayScore = "F";
     }
     const matchText = formatResultText(homeTeam, homeScore, awayTeam, awayScore, forfeitType);
-    if (editingResultKey) {
-      await database.ref(`premier_league/results/${editingResultKey}`).set({ matchText, md });
-    } else {
-      await database.ref('premier_league/results').push({ matchText, md });
-    }
+    if (editingResultKey) await database.ref(getSeasonPath(`results/${editingResultKey}`)).set({ matchText, md });
+    else await database.ref(getSeasonPath('results')).push({ matchText, md });
     document.getElementById('resultForm').classList.remove('active');
   };
   document.getElementById('cancelResultBtn').onclick = () => document.getElementById('resultForm').classList.remove('active');
-
-  // Team CRUD (unchanged)
-  let editingTeamKey = null;
-  function openTeamForm(key,data){ editingTeamKey=key; const sel=document.getElementById('teamNameSelect'); sel.innerHTML=teamList.map(t=>`<option value="${t}">${t}</option>`).join(''); if(data?.name) sel.value=data.name; document.getElementById('teamP').value=data?.p||''; document.getElementById('teamGD').value=data?.gd||''; document.getElementById('teamPts').value=data?.pts||''; document.getElementById('teamForm').classList.add('active'); }
-  document.getElementById('addTeamBtn').onclick=()=>openTeamForm(null);
-  document.getElementById('saveTeamBtn').onclick=async()=>{ const name=document.getElementById('teamNameSelect').value; const p=parseInt(document.getElementById('teamP').value)||0; const gd=parseInt(document.getElementById('teamGD').value)||0; const pts=parseInt(document.getElementById('teamPts').value)||0; if(!name) return; if(editingTeamKey) await database.ref(`premier_league/table/${editingTeamKey}`).set({name,p,gd,pts}); else await database.ref('premier_league/table').push({name,p,gd,pts}); document.getElementById('teamForm').classList.remove('active'); };
-  document.getElementById('cancelTeamBtn').onclick=()=>document.getElementById('teamForm').classList.remove('active');
-
-  // Fixture CRUD (unchanged)
-  let editingFixtureKey = null;
-  function openFixtureForm(key,data){ editingFixtureKey=key; document.getElementById('fixtureDate').value=data?.date||''; const homeSel=document.getElementById('fixtureHome'), awaySel=document.getElementById('fixtureAway'); homeSel.innerHTML=teamList.map(t=>`<option>${t}</option>`); awaySel.innerHTML=teamList.map(t=>`<option>${t}</option>`); if(data?.home) homeSel.value=data.home; if(data?.away) awaySel.value=data.away; document.getElementById('fixtureMd').value=data?.md||''; document.getElementById('fixtureForm').classList.add('active'); }
-  document.getElementById('addFixtureBtn').onclick=()=>openFixtureForm(null);
-  document.getElementById('saveFixtureBtn').onclick=async()=>{ const date=document.getElementById('fixtureDate').value; const home=document.getElementById('fixtureHome').value; const away=document.getElementById('fixtureAway').value; const md=parseInt(document.getElementById('fixtureMd').value); if(!date||!home||!away||!md) return; if(editingFixtureKey) await database.ref(`premier_league/fixtures/${editingFixtureKey}`).set({date,home,away,md}); else await database.ref('premier_league/fixtures').push({date,home,away,md}); document.getElementById('fixtureForm').classList.remove('active'); };
-  document.getElementById('cancelFixtureBtn').onclick=()=>document.getElementById('fixtureForm').classList.remove('active');
-
-  // Firebase listeners
-  database.ref('premier_league/table').on('value', snap => { teamsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderLeagueTable(); });
-  database.ref('premier_league/fixtures').on('value', snap => { fixturesData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderFixtures(); });
-  database.ref('premier_league/results').on('value', snap => { resultsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderResults(); renderLeagueTable(); });
 
   // Admin mode activation
   function activateAdminMode() {
@@ -635,6 +748,7 @@
       document.getElementById('addTeamBtn').style.display = 'inline-block';
       document.getElementById('addFixtureBtn').style.display = 'inline-block';
       document.getElementById('addResultBtn').style.display = 'inline-block';
+      document.getElementById('seasonAdminButtons').style.display = 'flex';
       renderLeagueTable(); renderFixtures(); renderResults();
       buildHamburgerModal();
     } else alert("Wrong key");
@@ -674,7 +788,7 @@
   document.getElementById('fixturesToggleIcon').innerHTML = '▶';
   document.getElementById('resultsToggleIcon').innerHTML = '▶';
 
-  // Slideshow functions
+  // Slideshow functions (unchanged)
   async function loadSlideshow() {
     const snap = await database.ref('slideshow/images').once('value');
     slideshowImages = snap.val() || [];
@@ -696,7 +810,7 @@
     slideshowImages.forEach((_,i) => { const dot = document.createElement('span'); dot.classList.add('dot'); if(i===currentSlideIdx) dot.classList.add('active'); dot.onclick = () => { currentSlideIdx = i; updateSlideImage(); if(slideInterval){ clearInterval(slideInterval); slideInterval = setInterval(()=>{ currentSlideIdx = (currentSlideIdx+1)%slideshowImages.length; updateSlideImage(); }, slideshowDuration); } }; container.appendChild(dot); });
   }
 
-  // Hamburger menu builder
+  // Hamburger menu builder (with admin options)
   function buildHamburgerModal() {
     const modalContent = document.getElementById('modalContent');
     let options = `<h3>TOURNAMENTS</h3><div class="modal-options">`;
@@ -796,8 +910,30 @@
 
   document.getElementById('fixtureSearch')?.addEventListener('input', () => renderFixtures());
 
-  loadTeamIcons();
+  // Season navigation buttons
+  document.getElementById('prevSeasonBtn').addEventListener('click', () => switchSeason(-1));
+  document.getElementById('nextSeasonBtn').addEventListener('click', () => switchSeason(1));
+  document.getElementById('addSeasonBtn').addEventListener('click', () => { if(isAdminMode) addNewSeason(); });
+  document.getElementById('setActiveSeasonBtn').addEventListener('click', () => { if(isAdminMode) setActiveSeason(); });
+
+  // Initialize
   loadSlideshow();
+  loadTeamIcons();
+  loadSeasonsMetadata().then(() => {
+    // After seasons loaded, listen for realtime updates on current season paths
+    database.ref(getSeasonPath('table')).on('value', snap => {
+      teamsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : [];
+      renderLeagueTable();
+    });
+    database.ref(getSeasonPath('fixtures')).on('value', snap => {
+      fixturesData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : [];
+      renderFixtures();
+    });
+    database.ref(getSeasonPath('results')).on('value', snap => {
+      resultsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : [];
+      renderResults(); renderLeagueTable();
+    });
+  });
 </script>
 </body>
 </html>
