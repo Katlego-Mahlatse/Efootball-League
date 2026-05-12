@@ -193,22 +193,73 @@
     .fixtures-table-wrapper, .results-table-wrapper {
       overflow-x: visible;
     }
-    .stats-table, .inner-table {
+    
+    /* ========= MODIFIED CSS: stats-table columns moved left ========= */
+    .stats-table {
       width: 100%;
       border-collapse: collapse;
     }
-    .stats-table { min-width: 700px; }
-    .inner-table { min-width: 300px; }
-    /* Restored original spacing: reduced padding to bring columns left */
-    .stats-table th, .stats-table td {
-      padding: 0.6rem 0.4rem;
+
+    /* Reduced padding to bring columns closer */
+    .stats-table th, 
+    .stats-table td {
+      padding: 0.75rem 0.3rem;
       text-align: left;
+      vertical-align: middle;
     }
-    .stats-table th:first-child, .stats-table td:first-child { padding-left: 0.8rem; }
-    .stats-table th:last-child, .stats-table td:last-child { padding-right: 0.8rem; }
+
+    /* Keep first column's left padding */
+    .stats-table th:first-child, 
+    .stats-table td:first-child { 
+      padding-left: 0.8rem; 
+    }
+
+    /* Keep last column's right padding */
+    .stats-table th:last-child, 
+    .stats-table td:last-child { 
+      padding-right: 0.8rem; 
+    }
+
+    /* Center numeric columns for quick scanning */
+    .stats-table td:nth-child(3), /* P */
+    .stats-table td:nth-child(4), /* GD */
+    .stats-table td:nth-child(5), /* W */
+    .stats-table td:nth-child(6), /* L */
+    .stats-table td:nth-child(7)  /* Pts */ {
+      text-align: center;
+    }
+
+    /* Header: center stats columns */
+    .stats-table th:nth-child(3),
+    .stats-table th:nth-child(4),
+    .stats-table th:nth-child(5),
+    .stats-table th:nth-child(6),
+    .stats-table th:nth-child(7) {
+      text-align: center;
+    }
+
+    /* Club name column left‑aligned, with right spacing */
+    .stats-table th:nth-child(2),
+    .stats-table td:nth-child(2) {
+      text-align: left;
+      padding-right: 1rem;
+    }
+
+    /* Actions column (if admin mode) center */
+    .stats-table th:last-child,
+    .stats-table td:last-child {
+      text-align: center;
+    }
+
+    /* Keep inner tables unchanged */
+    .inner-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
     .inner-table th, .inner-table td { padding: 0.6rem 0.5rem; }
     .stats-table th, .inner-table th { background: #d4af37; border-bottom: 2px solid #1a1a1a; color: #1a1a1a; }
     .stats-table td, .inner-table td { border-bottom: 1px solid rgba(0,0,0,0.2); color: #1a1a1a; vertical-align: middle; }
+    
     .team-icon-sm { width: 30px; height: 30px; object-fit: contain; vertical-align: middle; margin-right: 8px; }
     .team-icon { width: 40px; height: 40px; object-fit: contain; vertical-align: middle; margin-right: 8px; display: inline-block; }
     .inline-team-icon { width: 30px; height: 30px; object-fit: contain; vertical-align: middle; margin: 0 4px; display: inline-block; }
@@ -222,7 +273,13 @@
     .dashed-separator-white { border-bottom: 2px dashed #ffffff !important; }
     .dashed-separator-red { border-bottom: 2px dashed #ef4444 !important; }
     .pts-cell { font-weight: 800; color: #1a1a1a; text-align: center; }
-    .team-name { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+    .team-name {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
     .form-circles { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
     .circle-result { width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; }
     .circle-win { background: #22c55e; color: white; }
@@ -265,7 +322,7 @@
     .popup-menu div:hover { background: rgba(0,0,0,0.1); }
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
-      .stats-table th, .stats-table td { padding: 0.4rem 0.3rem; font-size: 0.75rem; }
+      .stats-table th, .stats-table td { padding: 0.4rem 0.2rem; font-size: 0.75rem; }
       .team-icon { width: 30px; height: 30px; }
       .inline-team-icon { width: 24px; height: 24px; }
       .inner-table th, .inner-table td { padding: 0.4rem; font-size: 0.7rem; }
@@ -1028,7 +1085,7 @@
     const resultsRef = database.ref(getSeasonPath(currentSeasonId, 'results'));
     tableRef.on('value', snap => { teamsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderLeagueTable(); });
     fixturesRef.on('value', snap => { fixturesData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderFixtures(); });
-    resultsRef.on('value', snap => { resultsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderResults(); renderLeagueTable(); }); // ensures table updates on result changes
+    resultsRef.on('value', snap => { resultsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderResults(); renderLeagueTable(); });
   });
 </script>
 </body>
