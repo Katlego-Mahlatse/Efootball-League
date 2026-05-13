@@ -181,6 +181,11 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 .fv-vs{font-family:'Orbitron',monospace;font-size:0.63rem;color:var(--gold);}
 .no-data{text-align:center;color:var(--text-dim);font-size:0.85rem;padding:1rem;}
 
+/* DEBUG PANEL */
+.debug-log{background:rgba(0,0,0,0.5);border-radius:0.8rem;padding:0.8rem;max-height:200px;overflow-y:auto;font-family:monospace;font-size:0.75rem;color:#ccc;margin:0.5rem 0;}
+.debug-log .error{color:var(--red);}
+.debug-log .info{color:var(--green);}
+
 /* TOAST */
 .toast{position:fixed;bottom:2rem;right:2rem;background:linear-gradient(135deg,var(--purple-card),var(--purple-mid));border-radius:1.1rem;padding:0.9rem 1.3rem;font-size:0.84rem;color:var(--text-primary);z-index:9998;box-shadow:0 10px 35px rgba(0,0,0,0.55);transform:translateY(80px);opacity:0;transition:all 0.38s cubic-bezier(0.22,1,0.36,1);border:1px solid var(--gold-border);max-width:300px;}
 .toast.show{transform:translateY(0);opacity:1;}
@@ -250,6 +255,7 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
       <a href="login.html" class="menu-link">🔑 LOGIN</a>
       <a href="player-titles.html" class="menu-link">🏆 MANAGER TITLES</a>
       <a href="user-calendar.html" class="menu-link">👁 USER VIEW</a>
+      <button class="menu-link" id="debugMenuBtn" style="width:100%;cursor:pointer;">🔍 DEBUG INFO</button>
     </div>
     <button class="btn btn-purple" style="width:100%;" data-close="menuOverlay">CLOSE</button>
   </div>
@@ -354,13 +360,45 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
   </div>
 </div>
 
+<!-- DEBUG INFO -->
+<div class="overlay" id="debugOverlay">
+  <div class="modal" style="max-width:500px;">
+    <button class="modal-close" data-close="debugOverlay">✕</button>
+    <div class="modal-title">🔍 DEBUG INFO</div>
+    <div class="form-group">
+      <label class="form-label">Firebase Connection</label>
+      <div id="debugConnection" class="debug-log">Checking...</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Active Months</label>
+      <div id="debugMonths" class="debug-log">-</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Calendar Events Count</label>
+      <div id="debugEventsCount" class="debug-log">0</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Last Error</label>
+      <div id="debugLastError" class="debug-log">None</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Raw Data (first 10 events)</label>
+      <div id="debugRawData" class="debug-log" style="max-height:150px;">-</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-green btn-sm" id="debugForceRefresh">🔄 FORCE REFRESH</button>
+      <button class="btn btn-purple btn-sm" data-close="debugOverlay">CLOSE</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+import { getDatabase, ref, set, remove, onValue, get } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
 
 const FB = { apiKey:"AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4", authDomain:"efootball-412.firebaseapp.com", projectId:"efootball-412", storageBucket:"efootball-412.firebasestorage.app", messagingSenderId:"596548424249", appId:"1:596548424249:web:4349f6e87a40a1590bf3e8", measurementId:"G-KHY86ZMPZH" };
 const app = initializeApp(FB);
-const db  = getFirestore(app);
+const db = getDatabase(app);
 const IMGBB = "81c24f30884ec6dda1dbd2b39739e0c9";
 const YEAR = 2026;
 
@@ -372,6 +410,52 @@ const ALL_MONTHS = [
 const ALL_TEAMS = ["Real Madrid","Liverpool","Dortmund","Man City","Barcelona","Arsenal","PSG","AC Milan","Chelsea","Napoli","Atletico","Juventus","Newcastle","Inter Milan"];
 
 let calData={}, activeMonths=[], selectedTeam=null, currentDate=null, tempTournaments=[];
+let lastError = null;
+
+/* ── Debug helper ── */
+function debugLog(msg, isError = false) {
+  lastError = isError ? msg : null;
+  const connEl = document.getElementById('debugConnection');
+  if (connEl) {
+    connEl.innerHTML = isError 
+      ? `<span class="error">❌ ${msg}</span>` 
+      : `<span class="info">✅ Connected</span>`;
+  }
+  if (isError) {
+    const errEl = document.getElementById('debugLastError');
+    if (errEl) errEl.innerHTML = `<span class="error">${msg}</span>`;
+  }
+  // Also log to console
+  if (isError) console.error(msg);
+  else console.log(msg);
+}
+
+function updateDebugInfo() {
+  // Months
+  const monthsEl = document.getElementById('debugMonths');
+  if (monthsEl) monthsEl.textContent = activeMonths.map(m => ALL_MONTHS.find(x=>x.month===m)?.label || m).join(', ') || 'None';
+  
+  // Events count
+  const countEl = document.getElementById('debugEventsCount');
+  if (countEl) countEl.textContent = Object.keys(calData).length;
+  
+  // Raw data (first 10)
+  const rawEl = document.getElementById('debugRawData');
+  if (rawEl) {
+    const entries = Object.entries(calData).slice(0, 10);
+    rawEl.innerHTML = entries.length === 0 ? 'No events' : entries.map(([date, ev]) => 
+      `<div><strong>${date}</strong>: ${ev.title || '(no title)'}</div>`
+    ).join('');
+  }
+}
+
+// Global error capture
+window.addEventListener('error', (e) => {
+  debugLog(`JS Error: ${e.message} at ${e.filename}:${e.lineno}`, true);
+});
+window.addEventListener('unhandledrejection', (e) => {
+  debugLog(`Promise rejection: ${e.reason}`, true);
+});
 
 /* ── ImgBB ── */
 async function uploadImg(file) {
@@ -389,7 +473,7 @@ function makeUploader(btnId,fileId,prevId,urlId,statusId) {
     const f=fi.files[0]; if(!f) return;
     st.classList.add("show"); btn.disabled=true;
     try { const u=await uploadImg(f); url.value=u; prev.src=u; prev.classList.add("show"); toast("Image uploaded ✓","success"); }
-    catch { toast("Upload failed","error"); }
+    catch(e) { debugLog("Image upload error: " + e.message, true); toast("Upload failed","error"); }
     st.classList.remove("show"); btn.disabled=false; fi.value="";
   };
 }
@@ -410,16 +494,38 @@ const closeOv=id=>document.getElementById(id).classList.remove("active");
 document.querySelectorAll("[data-close]").forEach(el=>el.addEventListener("click",()=>closeOv(el.dataset.close)));
 document.querySelectorAll(".overlay").forEach(ov=>ov.addEventListener("click",e=>{if(e.target===ov)closeOv(ov.id);}));
 
-/* ── Firebase ── */
-onSnapshot(doc(db,"settings","calendar"),snap=>{
-  activeMonths=snap.exists()?(snap.data().activeMonths||[3,4,5,6]):[3,4,5,6];
-  renderMonthChips(); renderCalendar();
-});
-onSnapshot(collection(db,"calendarEvents"),snap=>{
-  calData={};
-  snap.forEach(d=>calData[d.id]=d.data());
+/* ── Firebase Realtime Database listeners ── */
+// Settings
+const settingsRef = ref(db, 'settings/calendar');
+onValue(settingsRef, (snap) => {
+  const data = snap.val();
+  activeMonths = data?.activeMonths || [3,4,5,6];
+  renderMonthChips();
   renderCalendar();
+  updateDebugInfo();
+}, (error) => {
+  debugLog('Settings read error: ' + error.message, true);
+  activeMonths = [3,4,5,6];
+  renderMonthChips();
+  renderCalendar();
+  updateDebugInfo();
+});
+
+// Calendar events
+const eventsRef = ref(db, 'calendarEvents');
+onValue(eventsRef, (snap) => {
+  calData = snap.val() || {};
+  debugLog('Events loaded successfully');
+  renderCalendar();
+  updateDebugInfo();
   document.getElementById("loader").classList.add("hidden");
+}, (error) => {
+  debugLog('Events read error: ' + error.message, true);
+  calData = {};
+  renderCalendar();
+  updateDebugInfo();
+  document.getElementById("loader").classList.add("hidden");
+  toast("Failed to load events from database", "error");
 });
 
 /* ── Months ── */
@@ -435,14 +541,22 @@ function renderMonthChips() {
 }
 async function removeMonth(m) {
   if(!confirm("Remove this month?")) return;
-  await setDoc(doc(db,"settings","calendar"),{activeMonths:activeMonths.filter(x=>x!==m)},{merge:true});
-  toast("Month removed","success");
+  try {
+    await set(ref(db, 'settings/calendar/activeMonths'), activeMonths.filter(x=>x!==m));
+    toast("Month removed","success");
+  } catch(e) {
+    debugLog('Remove month error: ' + e.message, true);
+    toast("Failed to remove month", "error");
+  }
 }
 document.getElementById("addMonthBtn").onclick=()=>{
   const avail=ALL_MONTHS.filter(m=>!activeMonths.includes(m.month));
   if(!avail.length){toast("All months already added","error");return;}
   const next=avail[0];
-  setDoc(doc(db,"settings","calendar"),{activeMonths:[...activeMonths,next.month].sort((a,b)=>a-b)},{merge:true});
+  set(ref(db, 'settings/calendar/activeMonths'), [...activeMonths, next.month].sort((a,b)=>a-b)).catch(e => {
+    debugLog('Add month error: ' + e.message, true);
+    toast("Failed to add month", "error");
+  });
   toast(`${next.label} added ✓`,"success");
 };
 
@@ -562,7 +676,7 @@ document.getElementById("addTournBtn").onclick=()=>{
   document.getElementById("tournamentsContainer").appendChild(box);
   const ib=box.querySelector("#_tib"),ifile=box.querySelector("#_tif"),iprev=box.querySelector("#_tip"),iurl=box.querySelector("#_tiu"),ist=box.querySelector("#_tis");
   ib.onclick=()=>ifile.click();
-  ifile.onchange=async()=>{const f=ifile.files[0];if(!f)return;ist.classList.add("show");ib.disabled=true;try{const u=await uploadImg(f);iurl.value=u;iprev.src=u;iprev.classList.add("show");toast("Image uploaded ✓","success");}catch{toast("Upload failed","error");}ist.classList.remove("show");ib.disabled=false;ifile.value="";};
+  ifile.onchange=async()=>{const f=ifile.files[0];if(!f)return;ist.classList.add("show");ib.disabled=true;try{const u=await uploadImg(f);iurl.value=u;iprev.src=u;iprev.classList.add("show");toast("Image uploaded ✓","success");}catch(e){debugLog("Tournament icon upload error: "+e.message, true);toast("Upload failed","error");}ist.classList.remove("show");ib.disabled=false;ifile.value="";};
   box.querySelector("#_tOk").onclick=()=>{
     const name=box.querySelector("#_tn").value.trim();
     if(!name){toast("Enter a name","error");return;}
@@ -576,13 +690,27 @@ document.getElementById("addTournBtn").onclick=()=>{
 document.getElementById("saveEvBtn").onclick=async()=>{
   const title=document.getElementById("evTitle").value.trim();
   if(!title){toast("Enter an event title","error");return;}
-  await setDoc(doc(db,"calendarEvents",currentDate),{title,iconUrl:document.getElementById("evIconUrl").value,tournaments:tempTournaments});
-  closeOv("dayOverlay"); toast("Event saved ✓","success");
+  try {
+    await set(ref(db, 'calendarEvents/' + currentDate), {
+      title,
+      iconUrl: document.getElementById("evIconUrl").value,
+      tournaments: tempTournaments
+    });
+    closeOv("dayOverlay"); toast("Event saved ✓","success");
+  } catch(e) {
+    debugLog('Save event error: ' + e.message, true);
+    toast("Failed to save event", "error");
+  }
 };
 document.getElementById("delEvBtn").onclick=async()=>{
   if(!confirm("Delete this event?")) return;
-  await deleteDoc(doc(db,"calendarEvents",currentDate));
-  closeOv("dayOverlay"); toast("Event deleted","success");
+  try {
+    await remove(ref(db, 'calendarEvents/' + currentDate));
+    closeOv("dayOverlay"); toast("Event deleted","success");
+  } catch(e) {
+    debugLog('Delete event error: ' + e.message, true);
+    toast("Failed to delete event", "error");
+  }
 };
 
 /* ── Fixture Modal ── */
@@ -626,6 +754,31 @@ ALL_TEAMS.forEach(team=>{
 document.getElementById("clearFilterBtn").onclick=()=>{selectedTeam=null;teamGrid.querySelectorAll(".team-opt").forEach(x=>x.classList.remove("active"));closeOv("filterOverlay");renderCalendar();toast("Filter cleared","success");};
 document.getElementById("filterBtn").onclick=()=>openOv("filterOverlay");
 document.getElementById("menuBtn").onclick=()=>openOv("menuOverlay");
+
+/* ── Debug panel ── */
+document.getElementById("debugMenuBtn").addEventListener("click", () => {
+  closeOv("menuOverlay");
+  openOv("debugOverlay");
+  updateDebugInfo();
+});
+
+document.getElementById("debugForceRefresh").addEventListener("click", async () => {
+  try {
+    // Re-read data manually
+    const snap = await get(ref(db, 'calendarEvents'));
+    calData = snap.val() || {};
+    const settingsSnap = await get(ref(db, 'settings/calendar'));
+    activeMonths = settingsSnap.val()?.activeMonths || [3,4,5,6];
+    renderMonthChips();
+    renderCalendar();
+    updateDebugInfo();
+    debugLog('Manual refresh successful');
+    toast("Data refreshed ✓","success");
+  } catch(e) {
+    debugLog('Force refresh error: ' + e.message, true);
+    toast("Refresh failed", "error");
+  }
+});
 </script>
 </body>
 </html>
