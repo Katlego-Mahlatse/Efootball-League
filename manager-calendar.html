@@ -99,7 +99,7 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 .section-label{font-family:'Orbitron',monospace;font-size:0.6rem;font-weight:700;color:var(--gold);letter-spacing:0.15em;margin:1.4rem 0 0.8rem;display:flex;align-items:center;gap:0.5rem;}
 .section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--gold-border),transparent);}
 
-/* FORM (readonly fields) */
+/* FORM (readonly) */
 .form-group{margin-bottom:1rem;}
 .form-label{display:block;font-family:'Rajdhani',sans-serif;font-size:0.7rem;font-weight:700;color:var(--text-dim);margin-bottom:0.4rem;letter-spacing:0.1em;text-transform:uppercase;}
 .form-input{width:100%;background:rgba(5,2,12,0.85);border:1px solid var(--gold-border);border-radius:0.7rem;color:var(--text-primary);padding:0.65rem 0.9rem;font-size:0.9rem;font-family:'Exo 2',sans-serif;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
@@ -125,6 +125,7 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 .fix-team-icon{width:26px;height:26px;object-fit:contain;border-radius:4px;flex-shrink:0;}
 .fix-team-name{font-size:0.78rem;font-weight:600;color:var(--text-primary);}
 .fix-vs{font-size:0.63rem;color:var(--gold);font-family:'Orbitron',monospace;font-weight:700;}
+.no-data{text-align:center;color:var(--text-dim);font-size:0.85rem;padding:1rem;}
 
 /* BUTTONS */
 .btn{padding:0.55rem 1.3rem;border-radius:2rem;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.06em;cursor:pointer;transition:all 0.25s;border:none;display:inline-flex;align-items:center;gap:0.3rem;}
@@ -144,7 +145,6 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 .fv-icon{width:30px;height:30px;object-fit:contain;border-radius:5px;flex-shrink:0;}
 .fv-name{font-size:0.85rem;font-weight:600;color:var(--text-primary);}
 .fv-vs{font-family:'Orbitron',monospace;font-size:0.63rem;color:var(--gold);}
-.no-data{text-align:center;color:var(--text-dim);font-size:0.85rem;padding:1rem;}
 
 /* TOAST */
 .toast{position:fixed;bottom:2rem;right:2rem;background:linear-gradient(135deg,var(--purple-card),var(--purple-mid));border-radius:1.1rem;padding:0.9rem 1.3rem;font-size:0.84rem;color:var(--text-primary);z-index:9998;box-shadow:0 10px 35px rgba(0,0,0,0.55);transform:translateY(80px);opacity:0;transition:all 0.38s cubic-bezier(0.22,1,0.36,1);border:1px solid var(--gold-border);max-width:300px;}
@@ -262,11 +262,11 @@ body{background:var(--purple-deep);font-family:'Exo 2',sans-serif;color:var(--te
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
 
 const FB = { apiKey:"AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4", authDomain:"efootball-412.firebaseapp.com", projectId:"efootball-412", storageBucket:"efootball-412.firebasestorage.app", messagingSenderId:"596548424249", appId:"1:596548424249:web:4349f6e87a40a1590bf3e8", measurementId:"G-KHY86ZMPZH" };
 const app = initializeApp(FB);
-const db  = getFirestore(app);
+const db = getDatabase(app);
 const YEAR = 2026;
 
 const ALL_MONTHS = [
@@ -276,7 +276,7 @@ const ALL_MONTHS = [
 ];
 const ALL_TEAMS = ["Real Madrid","Liverpool","Dortmund","Man City","Barcelona","Arsenal","PSG","AC Milan","Chelsea","Napoli","Atletico","Juventus","Newcastle","Inter Milan"];
 
-let calData={}, activeMonths=[], selectedTeam=null, currentDate=null;
+let calData={}, activeMonths=[], selectedTeam=null;
 
 /* ── Toast ── */
 function toast(msg,type="") {
@@ -291,16 +291,25 @@ const closeOv=id=>document.getElementById(id).classList.remove("active");
 document.querySelectorAll("[data-close]").forEach(el=>el.addEventListener("click",()=>closeOv(el.dataset.close)));
 document.querySelectorAll(".overlay").forEach(ov=>ov.addEventListener("click",e=>{if(e.target===ov)closeOv(ov.id);}));
 
-/* ── Firebase read only ── */
-onSnapshot(doc(db,"settings","calendar"),snap=>{
-  activeMonths=snap.exists()?(snap.data().activeMonths||[3,4,5,6]):[3,4,5,6];
+/* ── Firebase Realtime Database listeners ── */
+// Settings
+onValue(ref(db, 'settings/calendar'), (snap) => {
+  const data = snap.val();
+  activeMonths = data?.activeMonths || [3,4,5,6];
   renderCalendar();
 });
-onSnapshot(collection(db,"calendarEvents"),snap=>{
-  calData={};
-  snap.forEach(d=>calData[d.id]=d.data());
+
+// Calendar events
+onValue(ref(db, 'calendarEvents'), (snap) => {
+  calData = snap.val() || {};
   renderCalendar();
   document.getElementById("loader").classList.add("hidden");
+}, (error) => {
+  console.error('Events read error:', error);
+  calData = {};
+  renderCalendar();
+  document.getElementById("loader").classList.add("hidden");
+  toast("Failed to load events", "error");
 });
 
 /* ── Calendar ── */
@@ -346,7 +355,7 @@ function renderCalendar() {
 
 /* ── Day Modal (read-only) ── */
 function openDayModal(ds,day,monthLabel){
-  currentDate=ds; const ev=calData[ds];
+  const ev=calData[ds];
   document.getElementById("dayTitle").textContent=`${day} ${monthLabel}`;
   document.getElementById("evTitle").value=ev?.title||"";
   const prev=document.getElementById("evIconPrev");
@@ -358,7 +367,7 @@ function openDayModal(ds,day,monthLabel){
 function renderTournamentsReadonly(tournaments){
   const c=document.getElementById("tournamentsContainer"); c.innerHTML="";
   if(!tournaments.length){c.innerHTML='<div class="no-data">No tournaments for this date.</div>';return;}
-  tournaments.forEach((t,ti)=>{
+  tournaments.forEach((t)=>{
     const card=document.createElement("div"); card.className="tournament-card";
     const hdr=document.createElement("div"); hdr.className="tc-header";
     if(t.iconUrl){const img=document.createElement("img");img.className="tc-icon";img.src=t.iconUrl;hdr.appendChild(img);}
@@ -371,7 +380,7 @@ function renderTournamentsReadonly(tournaments){
     card.appendChild(tog);
     const panel=document.createElement("div"); panel.className="fix-panel";
 
-    (t.fixtures||[]).forEach((f,fi)=>{
+    (t.fixtures||[]).forEach((f)=>{
       const row=document.createElement("div"); row.className="fix-row";
       if(f.homeIcon){const img=document.createElement("img");img.className="fix-team-icon";img.src=f.homeIcon;row.appendChild(img);}
       const hn=document.createElement("span");hn.className="fix-team-name";hn.textContent=f.home||"";row.appendChild(hn);
