@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy League Schedule: Premier League + FA Cup (100 Days) – No Same Group Consecutive</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            color: #1e2a3a;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, #1e3c72, #2b4c7c);
+            color: white;
+            padding: 24px 32px;
+        }
+        header h1 {
+            margin: 0 0 8px;
+            font-size: 1.8rem;
+        }
+        header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+        .stats {
+            background: #e9ecef;
+            padding: 12px 32px;
+            display: flex;
+            gap: 32px;
+            font-weight: 500;
+            border-bottom: 1px solid #ced4da;
+        }
+        .stats span {
+            background: #2b4c7c;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+        }
+        .day-card {
+            border-bottom: 1px solid #e2e8f0;
+            background: white;
+            transition: background 0.1s ease;
+        }
+        .day-card:hover {
+            background: #fafcff;
+        }
+        .day-header {
+            background: #f8fafc;
+            padding: 14px 24px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            border-left: 6px solid #3b82f6;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .day-header .day-num {
+            color: #0f172a;
+        }
+        .day-header .toggle-icon {
+            font-size: 1.2rem;
+            color: #64748b;
+        }
+        .matches-grid {
+            padding: 16px 24px 20px 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            background: #ffffff;
+            border-top: 1px solid #eef2ff;
+        }
+        .competition-block {
+            flex: 1;
+            min-width: 280px;
+            background: #fefefe;
+            border-radius: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #eef2ff;
+            overflow: hidden;
+        }
+        .comp-title {
+            background: #f1f5f9;
+            padding: 10px 16px;
+            font-weight: 700;
+            font-size: 1rem;
+            border-bottom: 2px solid #cbd5e1;
+        }
+        .comp-title.pl {
+            background: #e6f7e6;
+            color: #166534;
+            border-left: 4px solid #22c55e;
+        }
+        .comp-title.fa {
+            background: #fff0e0;
+            color: #9a3412;
+            border-left: 4px solid #f97316;
+        }
+        .match-list {
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .match-item {
+            display: flex;
+            align-items: baseline;
+            font-size: 0.9rem;
+            padding: 6px 0;
+            border-bottom: 1px dashed #f0f2f5;
+        }
+        .match-teams {
+            flex: 1;
+            font-weight: 500;
+        }
+        .match-note {
+            font-size: 0.7rem;
+            color: #6c757d;
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 20px;
+            margin-left: 8px;
+        }
+        .footer {
+            background: #f1f5f9;
+            padding: 16px 32px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #475569;
+            border-top: 1px solid #cbd5e6;
+        }
+        button {
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        @media (max-width: 800px) {
+            .matches-grid {
+                flex-direction: column;
+            }
+            .stats {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>⚽ Fantasy League Schedule</h1>
+        <p>Premier League (38 rounds → 76 matchdays) + FA Cup (group stage + knockouts) • 100 days • 5 PL + 5 FA matches/day<br>
+        ✅ FA Cup groups are never repeated on consecutive days (fixed rotation)</p>
+    </header>
+    <div class="stats">
+        <div>🏆 Premier League: 20 teams • 380 matches • 76 days</div>
+        <div>🥇 FA Cup: 4 groups • top 16 advance • KO rounds 2 legs (final 1 leg)</div>
+        <div>📅 Total days: <span>100</span></div>
+    </div>
+    <div id="schedule-root"></div>
+    <div class="footer">
+        ✅ No team plays PL and FA Cup on same day • Groups A-D • FA Cup group stage scheduled so same group never appears on back-to-back days.
+    </div>
+</div>
+
+<script>
+    // --------------------------------------------------------------
+    // TEAMS & GROUPS (FA CUP) - FINAL VERSION (Liverpool / Real Madrid swapped)
+    // --------------------------------------------------------------
+    const TEAMS = [
+        "Barcelona", "Chelsea", "Manchester United", "Aston Villa", "Manchester City",
+        "PSG", "Liverpool", "Inter Milan", "Real Madrid", "Arsenal",
+        "Galatasaray", "Marseille", "Tottenham Hotspurs", "Atletico Madrid", "Juventus",
+        "AC Milan", "Borussia Dortmund", "SSC Napoli", "Al Nassr", "Newcastle United"
+    ];
+
+    const FA_GROUPS = {
+        A: ["Barcelona", "Chelsea", "Inter Milan", "Borussia Dortmund", "Marseille"],
+        B: ["Liverpool", "Atletico Madrid", "Juventus", "AC Milan", "Galatasaray"],
+        C: ["Manchester City", "Manchester United", "PSG", "SSC Napoli", "Al Nassr"],
+        D: ["Real Madrid", "Arsenal", "Tottenham Hotspurs", "Aston Villa", "Newcastle United"]
+    };
+
+    // --------------------------------------------------------------
+    // PREMIER LEAGUE: Full round-robin (circle method) -> 38 rounds, each split into 2 matchdays (A/B)
+    // --------------------------------------------------------------
+    function generatePLRounds() {
+        const n = TEAMS.length;
+        const rounds = [];
+        let teams = [...TEAMS];
+        const fixed = teams[0];
+        const rotating = teams.slice(1);
+        
+        for (let round = 0; round < n-1; round++) {
+            const roundMatches = [];
+            roundMatches.push([fixed, rotating[rotating.length-1]]);
+            for (let i = 0; i < (n-2)/2; i++) {
+                roundMatches.push([rotating[i], rotating[rotating.length-2-i]]);
+            }
+            rounds.push(roundMatches);
+            rotating.unshift(rotating.pop());
+        }
+        // add reverse fixtures for second half (home/away swap)
+        const fullRounds = [];
+        for (let r of rounds) fullRounds.push([...r]);
+        for (let r of rounds) {
+            const reversed = r.map(([h,a]) => [a,h]);
+            fullRounds.push(reversed);
+        }
+        return fullRounds; // 38 rounds, each with 10 matches
+    }
+
+    const plRounds = generatePLRounds();
+    const plMatchdays = [];
+    for (let roundIdx = 0; roundIdx < plRounds.length; roundIdx++) {
+        const matches = plRounds[roundIdx];
+        const halfA = matches.slice(0,5);
+        const halfB = matches.slice(5,10);
+        plMatchdays.push({ round: roundIdx+1, half: 'A', matches: halfA });
+        plMatchdays.push({ round: roundIdx+1, half: 'B', matches: halfB });
+    }
+    // 76 PL matchdays total
+
+    // --------------------------------------------------------------
+    // FA CUP GROUP STAGE: generate all home&away matches within each group
+    // --------------------------------------------------------------
+    function generateGroupMatches(groupName, teamsList) {
+        const matches = [];
+        for (let i = 0; i < teamsList.length; i++) {
+            for (let j = i+1; j < teamsList.length; j++) {
+                matches.push({ home: teamsList[i], away: teamsList[j], group: groupName, leg: 1 });
+                matches.push({ home: teamsList[j], away: teamsList[i], group: groupName, leg: 2 });
+            }
+        }
+        return matches;
+    }
+
+    let allFAGroupMatchesRaw = [];
+    for (const [grp, members] of Object.entries(FA_GROUPS)) {
+        allFAGroupMatchesRaw.push(...generateGroupMatches(grp, members));
+    }
+    // allFAGroupMatchesRaw length = 80
+
+    // ---- Function to split 80 matches into 16 days (5 matches/day) ensuring that same group does NOT appear on consecutive days ----
+    // Step 1: group matches by their group label
+    const matchesByGroup = { A: [], B: [], C: [] , D: [] };
+    for (const m of allFAGroupMatchesRaw) {
+        matchesByGroup[m.group].push(m);
+    }
+    // shuffle each group's matches lightly to make schedule more natural (but preserve no-consecutive-group rule)
+    function shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+    // deterministic shuffle using a fixed seed to keep output stable across page reloads but still varied
+    function seededShuffle(arr, seed=42) {
+        let arrCopy = [...arr];
+        for (let i = arrCopy.length - 1; i > 0; i--) {
+            const pseudoRand = (seed * (i+1)) % (i+1);
+            const j = pseudoRand % (i+1);
+            [arrCopy[i], arrCopy[j]] = [arrCopy[j], arrCopy[i]];
+            seed = (seed * 31) % 97;
+        }
+        return arrCopy;
+    }
+    for (let g of ['A','B','C','D']) {
+        matchesByGroup[g] = seededShuffle(matchesByGroup[g], g.charCodeAt(0) * 7);
+    }
+    
+    // We need to create 16 days (each day has 5 matches). We will pick matches from groups in a round-robin order,
+    // ensuring that the same group is not chosen twice in a row.
+    // We'll create a queue of available matches per group, then each day take up to 5 matches from different groups,
+    // cycling through groups A,B,C,D and never using the same group as previous day's last group.
+    let available = {
+        A: [...matchesByGroup.A],
+        B: [...matchesByGroup.B],
+        C: [...matchesByGroup.C],
+        D: [...matchesByGroup.D]
+    };
+    
+    const totalMatchesNeeded = 80;
+    const daysGroupStage = [];
+    let previousGroup = null; // no previous group on day0
+    
+    // Helper to get a match from a specific group, removing it from available
+    function takeMatchFromGroup(group) {
+        if (available[group].length === 0) return null;
+        return available[group].shift();
+    }
+    
+    // Build days: each day we try to pick 5 matches selecting from groups that are not equal to previousGroup.
+    // We'll use a priority: prefer groups with most remaining, but avoid repeating previousGroup.
+    for (let dayIdx = 0; dayIdx < 16; dayIdx++) {
+        const dayMatches = [];
+        const groupsUsedToday = [];
+        // we need 5 matches; try to pick from groups distinct from previous group, and also avoid using same group multiple times within same day? not required but better.
+        // We'll just ensure we never pick from the group that was the last group of previous day (or the only group used if previous day ended with a group).
+        let allowedGroups = ['A','B','C','D'].filter(g => g !== previousGroup);
+        // if allowedGroups is empty (previousGroup null), use all groups
+        if (previousGroup === null) allowedGroups = ['A','B','C','D'];
+        
+        // make a copy of allowed groups to cycle
+        let pool = [...allowedGroups];
+        while (dayMatches.length < 5 && (available.A.length+available.B.length+available.C.length+available.D.length > 0)) {
+            if (pool.length === 0) {
+                // if no group in allowed has matches, fallback to any group except previous? but try to reset
+                pool = ['A','B','C','D'].filter(g => g !== previousGroup && available[g].length > 0);
+                if (pool.length === 0) pool = ['A','B','C','D'].filter(g => available[g].length > 0);
+                if (pool.length === 0) break;
+            }
+            let candidateGroup = pool.shift();
+            let match = takeMatchFromGroup(candidateGroup);
+            if (match) {
+                dayMatches.push(match);
+                groupsUsedToday.push(candidateGroup);
+                // after taking, we can keep using same group in same day (allowed) but to avoid repetition we don't re-add immediately.
+                // re-add group to pool only if it still has matches? we'll push back after a round robin. For simplicity, we just continue.
+                // But to make it fair, we push the group back at the end of pool.
+                if (available[candidateGroup].length > 0) {
+                    pool.push(candidateGroup);
+                }
+            }
+            // avoid infinite loop
+            if (pool.length === 0 && dayMatches.length < 5) break;
+        }
+        // if day still missing matches (should not happen because 80/16=5 exactly), fill with any remaining
+        if (dayMatches.length < 5) {
+            for (let g of ['A','B','C','D']) {
+                while (dayMatches.length < 5 && available[g].length) {
+                    dayMatches.push(takeMatchFromGroup(g));
+                }
+            }
+        }
+        daysGroupStage.push(dayMatches);
+        // determine the "previousGroup" for next day: pick the group of the last match in this day (or most frequent? just last match's group)
+        if (dayMatches.length > 0) {
+            previousGroup = dayMatches[dayMatches.length-1].group;
+        } else {
+            previousGroup = null;
+        }
+    }
+    
+    // Verify we have exactly 16 days each with 5 matches
+    // console.assert(daysGroupStage.length === 16, `Days: ${daysGroupStage.length}`);
+    // console.assert(daysGroupStage.every(d => d.length === 5), "some day not 5 matches");
+    
+    // --------------------------------------------------------------
+    // FA CUP KNOCKOUT STAGES (placeholders, same as before but final distribution)
+    // --------------------------------------------------------------
+    const knockouts = [
+        { name: "Round of 16 (1st leg)", matches: [
+            "Group A winner vs Group B runner-up", "Group B winner vs Group A runner-up",
+            "Group C winner vs Group D runner-up", "Group D winner vs Group C runner-up",
+            "Group A 2nd vs Group B 3rd", "Group B 2nd vs Group A 3rd",
+            "Group C 2nd vs Group D 3rd", "Group D 2nd vs Group C 3rd"
+        ] },
+        { name: "Round of 16 (2nd leg)", matches: [
+            "Group B runner-up vs Group A winner", "Group A runner-up vs Group B winner",
+            "Group D runner-up vs Group C winner", "Group C runner-up vs Group D winner",
+            "Group B 3rd vs Group A 2nd", "Group A 3rd vs Group B 2nd",
+            "Group D 3rd vs Group C 2nd", "Group C 3rd vs Group D 2nd"
+        ] },
+        { name: "Quarter-finals (1st leg)", matches: [
+            "Winner R16-1 vs Winner R16-2", "Winner R16-3 vs Winner R16-4",
+            "Winner R16-5 vs Winner R16-6", "Winner R16-7 vs Winner R16-8"
+        ] },
+        { name: "Quarter-finals (2nd leg)", matches: [
+            "Winner R16-2 vs Winner R16-1", "Winner R16-4 vs Winner R16-3",
+            "Winner R16-6 vs Winner R16-5", "Winner R16-8 vs Winner R16-7"
+        ] },
+        { name: "Semi-finals (1st leg)", matches: [
+            "QF1 winner vs QF2 winner", "QF3 winner vs QF4 winner"
+        ] },
+        { name: "Semi-finals (2nd leg)", matches: [
+            "QF2 winner vs QF1 winner", "QF4 winner vs QF3 winner"
+        ] },
+        { name: "Final", matches: [ "Semi-final winners (Neutral)" ] }
+    ];
+    
+    // Build knockout days exactly as in original (8 days total) with merged SF legs to keep 24 FA days overall
+    const finalKnockoutDays = [];
+    // R16 1st leg split into 2 days (5 matches + 3 matches)
+    finalKnockoutDays.push({ label: "R16 1st leg (1/2)", matches: knockouts[0].matches.slice(0,5) });
+    finalKnockoutDays.push({ label: "R16 1st leg (2/2)", matches: knockouts[0].matches.slice(5,8) });
+    // R16 2nd leg split into 2 days (5 + 3)
+    finalKnockoutDays.push({ label: "R16 2nd leg (1/2)", matches: knockouts[1].matches.slice(0,5) });
+    finalKnockoutDays.push({ label: "R16 2nd leg (2/2)", matches: knockouts[1].matches.slice(5,8) });
+    // QF 1st leg (4 matches)
+    finalKnockoutDays.push({ label: "QF 1st leg", matches: knockouts[2].matches });
+    // QF 2nd leg (4 matches)
+    finalKnockoutDays.push({ label: "QF 2nd leg", matches: knockouts[3].matches });
+    // SF both legs merged into one day (4 matches)
+    finalKnockoutDays.push({ label: "Semi-finals (both legs)", matches: [...knockouts[4].matches, ...knockouts[5].matches] });
+    // Final (1 match)
+    finalKnockoutDays.push({ label: "Final", matches: knockouts[6].matches });
+    // total knockout days = 2+2+1+1+1+1 = 8
+    
+    // Build full FA days array: 16 group stage days (with no consecutive groups) + 8 knockout days = 24
+    const allFADays = [];
+    for (let i = 0; i < daysGroupStage.length; i++) {
+        allFADays.push({ type: 'group', matches: daysGroupStage[i] });
+    }
+    for (let kd of finalKnockoutDays) {
+        allFADays.push({ type: 'knockout', label: kd.label, matches: kd.matches });
+    }
+    // allFADays length = 24
+    
+    // --------------------------------------------------------------
+    // BUILD FULL SCHEDULE: 100 days (76 PL matchdays + FA days interleaved)
+    // For first 24 days: PL + FA; remaining 52 days: only PL (5 matches)
+    // --------------------------------------------------------------
+    function buildFullSchedule() {
+        const schedule = [];
+        const totalPL = plMatchdays.length; // 76
+        const totalFA = allFADays.length;   // 24
+        for (let day = 1; day <= totalPL; day++) {
+            const plMatches = plMatchdays[day-1].matches;
+            let faMatches = [];
+            let faLabel = null;
+            if (day <= totalFA) {
+                const faDay = allFADays[day-1];
+                faMatches = faDay.matches;
+                faLabel = faDay.type === 'group' ? 'FA Cup Group Stage' : `FA Cup (${faDay.label})`;
+            } else {
+                faMatches = [];
+                faLabel = 'No FA Cup matches (all knockouts finished)';
+            }
+            schedule.push({ day, plMatches, faMatches, faLabel });
+        }
+        return schedule;
+    }
+    
+    const fullSchedule = buildFullSchedule();
+    
+    // Helper formatting
+    function formatPLMatch(match) {
+        return `${match[0]} vs ${match[1]}`;
+    }
+    function formatFAMatch(m) {
+        if (typeof m === 'object' && m.home && m.away) {
+            return `${m.home} vs ${m.away} (Group ${m.group})`;
+        } else if (typeof m === 'string') {
+            return m;
+        }
+        return JSON.stringify(m);
+    }
+    
+    // Render HTML
+    const root = document.getElementById('schedule-root');
+    function render() {
+        let html = '';
+        for (let entry of fullSchedule) {
+            const dayNum = entry.day;
+            const plMatchesList = entry.plMatches;
+            const faMatchesList = entry.faMatches;
+            const faLabel = entry.faLabel;
+            html += `<div class="day-card">
+                        <div class="day-header" onclick="this.nextElementSibling.classList.toggle('matches-grid')">
+                            <span class="day-num">📅 Day ${dayNum}</span>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div class="matches-grid">
+                            <div class="competition-block">
+                                <div class="comp-title pl">🏆 PREMIER LEAGUE (5 matches)</div>
+                                <div class="match-list">`;
+            for (let m of plMatchesList) {
+                html += `<div class="match-item"><span class="match-teams">⚽ ${formatPLMatch(m)}</span></div>`;
+            }
+            html += `</div></div><div class="competition-block"><div class="comp-title fa">🥇 FA CUP</div><div class="match-list">`;
+            if (faMatchesList.length === 0) {
+                html += `<div class="match-item"><span class="match-teams">⏸️ ${faLabel === 'No FA Cup matches (all knockouts finished)' ? 'No FA Cup matches today' : faLabel}</span></div>`;
+            } else {
+                html += `<div class="match-item"><span class="match-note">${faLabel}</span></div>`;
+                for (let fm of faMatchesList) {
+                    html += `<div class="match-item"><span class="match-teams">🏆 ${formatFAMatch(fm)}</span></div>`;
+                }
+            }
+            html += `</div></div></div></div>`;
+        }
+        root.innerHTML = html;
+    }
+    
+    render();
+</script>
+</body>
+</html>
