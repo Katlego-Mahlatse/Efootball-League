@@ -146,6 +146,8 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .btn-red:hover{background:var(--red);transform:translateY(-1px);}
 .btn-green{background:rgba(34,197,94,0.8);color:#fff;}
 .btn-green:hover{background:var(--green);}
+.btn-blue{background:rgba(59,130,246,0.8);color:#fff;}
+.btn-blue:hover{background:rgba(59,130,246,1);}
 .btn-sm{padding:0.3rem 0.75rem;font-size:0.7rem;border-radius:1.5rem;}
 .btn-row{display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:1.2rem;}
 
@@ -506,14 +508,12 @@ function updateDropdown(input, dropdown, iconUrlInputId, iconPreviewId) {
     item.className = 'autocomplete-item';
     const iconUrl = teamIconMap[team] || '';
     if (iconUrl) {
-      // Show only icon
       const img = document.createElement('img');
       img.src = iconUrl;
       img.alt = team;
-      img.title = team; // tooltip
+      img.title = team;
       item.appendChild(img);
     } else {
-      // Show only name
       const span = document.createElement('span');
       span.className = 'team-name-only';
       span.textContent = team;
@@ -523,7 +523,6 @@ function updateDropdown(input, dropdown, iconUrlInputId, iconPreviewId) {
       e.preventDefault();
       input.value = team;
       dropdown.classList.remove('open');
-      // Auto-fill icon if available
       if (iconUrl && iconUrlInputId) {
         document.getElementById(iconUrlInputId).value = iconUrl;
         const prev = document.getElementById(iconPreviewId);
@@ -748,6 +747,9 @@ function renderTourns(){
     if(t.description){const desc=document.createElement("div");desc.className="tc-desc";desc.textContent=t.description;infoDiv.appendChild(desc);}
     hdr.appendChild(infoDiv);
     const acts=document.createElement("div"); acts.className="tc-actions";
+    const edT=document.createElement("button"); edT.className="btn btn-purple btn-sm"; edT.textContent="✏️";
+    edT.onclick=()=>openEditTournament(ti);
+    acts.appendChild(edT);
     const delT=document.createElement("button"); delT.className="btn btn-red btn-sm"; delT.textContent="🗑";
     delT.onclick=()=>{tempTournaments.splice(ti,1);renderTourns();};
     acts.appendChild(delT); hdr.appendChild(acts); card.appendChild(hdr);
@@ -779,38 +781,65 @@ function renderTourns(){
   });
 }
 
-/* ── Add Tournament ── */
-document.getElementById("addTournBtn").onclick=()=>{
-  if(document.querySelector(".add-form-box")){document.querySelector(".add-form-box").remove();return;}
+// Shared function to build tournament form (add or edit)
+function buildTournamentForm(container, existingData, onSave) {
+  const isEdit = !!existingData;
   const box=document.createElement("div"); box.className="add-form-box";
+  const nameVal = existingData?.name || '';
+  const descVal = existingData?.description || '';
+  const iconVal = existingData?.iconUrl || '';
   box.innerHTML=`
-    <div class="form-group"><label class="form-label">Tournament Name</label><input class="form-input" id="_tn" type="text" placeholder="e.g. Champions League"></div>
-    <div class="form-group"><label class="form-label">Tournament Description</label><input class="form-input" id="_tdesc" type="text" placeholder="e.g. Semi Final, Matchday 5..."></div>
+    <div class="form-group"><label class="form-label">Tournament Name</label><input class="form-input" id="_tn" type="text" placeholder="e.g. Champions League" value="${nameVal.replace(/"/g,'&quot;')}"></div>
+    <div class="form-group"><label class="form-label">Tournament Description</label><input class="form-input" id="_tdesc" type="text" placeholder="e.g. Semi Final, Matchday 5..." value="${descVal.replace(/"/g,'&quot;')}"></div>
     <div class="form-group"><label class="form-label">Tournament Icon</label>
       <div class="img-upload-row">
         <button class="upload-btn" id="_tib">📁 SELECT IMAGE</button>
         <input type="file" class="file-hidden" id="_tif" accept="image/*">
-        <img class="img-preview" id="_tip" src="" alt="">
+        <img class="img-preview" id="_tip" src="${iconVal}" alt="" style="${iconVal ? 'display:block;' : ''}">
         <span class="upload-status" id="_tis">⏳ Uploading...</span>
       </div>
-      <input type="hidden" id="_tiu">
+      <input type="hidden" id="_tiu" value="${iconVal}">
     </div>
     <div class="btn-row">
-      <button class="btn btn-gold btn-sm" id="_tOk">ADD</button>
+      <button class="btn btn-gold btn-sm" id="_tOk">${isEdit ? 'UPDATE' : 'ADD'}</button>
       <button class="btn btn-purple btn-sm" id="_tCan">CANCEL</button>
     </div>`;
-  document.getElementById("tournamentsContainer").appendChild(box);
+  container.appendChild(box);
   const ib=box.querySelector("#_tib"),ifile=box.querySelector("#_tif"),iprev=box.querySelector("#_tip"),iurl=box.querySelector("#_tiu"),ist=box.querySelector("#_tis");
   ib.onclick=()=>ifile.click();
-  ifile.onchange=async()=>{const f=ifile.files[0];if(!f)return;ist.classList.add("show");ib.disabled=true;try{const u=await uploadImg(f);iurl.value=u;iprev.src=u;iprev.classList.add("show");toast("Image uploaded ✓","success");}catch(e){debugLog("Tournament icon upload error: "+e.message, true);toast("Upload failed","error");}ist.classList.remove("show");ib.disabled=false;ifile.value="";};
+  ifile.onchange=async()=>{const f=ifile.files[0];if(!f)return;ist.classList.add("show");ib.disabled=true;try{const u=await uploadImg(f);iurl.value=u;iprev.src=u;iprev.style.display='block';toast("Image uploaded ✓","success");}catch(e){debugLog("Tournament icon upload error: "+e.message, true);toast("Upload failed","error");}ist.classList.remove("show");ib.disabled=false;ifile.value="";};
   box.querySelector("#_tOk").onclick=()=>{
     const name=box.querySelector("#_tn").value.trim();
     if(!name){toast("Enter a name","error");return;}
     const desc=box.querySelector("#_tdesc").value.trim();
-    tempTournaments.push({name,description:desc||null,iconUrl:iurl.value,fixtures:[]});
-    box.remove(); renderTourns();
+    const data = {name, description: desc || null, iconUrl: iurl.value, fixtures: existingData?.fixtures || []};
+    box.remove();
+    onSave(data);
+    renderTourns();
   };
-  box.querySelector("#_tCan").onclick=()=>box.remove();
+  box.querySelector("#_tCan").onclick=()=>{box.remove();};
+}
+
+// Edit existing tournament
+function openEditTournament(ti) {
+  // Remove any existing form
+  const existingForm = document.querySelector(".add-form-box");
+  if (existingForm) existingForm.remove();
+  const container = document.getElementById("tournamentsContainer");
+  buildTournamentForm(container, tempTournaments[ti], (updatedData) => {
+    tempTournaments[ti] = { ...tempTournaments[ti], ...updatedData };
+  });
+}
+
+// Add new tournament
+document.getElementById("addTournBtn").onclick=()=>{
+  // If there's already a form, remove it (toggle behavior)
+  const existingForm = document.querySelector(".add-form-box");
+  if (existingForm) { existingForm.remove(); return; }
+  const container = document.getElementById("tournamentsContainer");
+  buildTournamentForm(container, null, (newData) => {
+    tempTournaments.push(newData);
+  });
 };
 
 /* ── Save/Delete Event ── */
