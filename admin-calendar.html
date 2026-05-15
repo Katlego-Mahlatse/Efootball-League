@@ -90,6 +90,7 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .event-icon{width:48px;height:48px;object-fit:contain;border-radius:8px;margin-top:2px;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.5));transition:transform 0.25s;}
 .day-cell:hover .event-icon{transform:scale(1.1);}
 .event-label{font-family:'Rajdhani',sans-serif;font-size:0.57rem;font-weight:700;color:var(--gold);letter-spacing:0.07em;text-transform:uppercase;margin-top:3px;text-align:center;line-height:1.2;}
+.event-desc{font-family:'Rajdhani',sans-serif;font-size:0.52rem;font-weight:600;color:var(--text-dim);text-align:center;line-height:1.1;margin-top:1px;}
 .add-hint{font-size:0.58rem;color:rgba(245,215,66,0.22);font-style:italic;margin-top:auto;padding-top:4px;transition:color 0.2s;}
 .day-cell:hover .add-hint{color:rgba(245,215,66,0.55);}
 .event-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;background:var(--gold);border-radius:50%;box-shadow:0 0 6px var(--gold);animation:dotPulse 2.2s ease-in-out infinite;}
@@ -126,6 +127,14 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 @keyframes fadeIn{from{opacity:0;transform:scale(0.8);}to{opacity:1;transform:scale(1);}}
 .upload-status{font-size:0.7rem;color:var(--gold);display:none;animation:glowPulse 1s ease-in-out infinite;}
 .upload-status.show{display:block;}
+
+/* AUTOCOMPLETE DROPDOWN */
+.autocomplete-wrap{position:relative;}
+.autocomplete-dropdown{position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:var(--black-card);border:1px solid var(--gold-border);border-radius:0.7rem;z-index:600;display:none;}
+.autocomplete-dropdown.open{display:block;}
+.autocomplete-item{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.8rem;cursor:pointer;font-size:0.85rem;color:var(--text-primary);transition:background 0.15s;}
+.autocomplete-item:hover{background:rgba(245,215,66,0.1);}
+.autocomplete-item img{width:24px;height:24px;object-fit:contain;border-radius:4px;}
 
 /* BUTTONS */
 .btn{padding:0.55rem 1.3rem;border-radius:2rem;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.06em;cursor:pointer;transition:all 0.25s;border:none;display:inline-flex;align-items:center;gap:0.3rem;}
@@ -285,6 +294,10 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
       <input class="form-input" id="evTitle" type="text" placeholder="e.g. UEFA, FIFA, Premier League...">
     </div>
     <div class="form-group">
+      <label class="form-label">Event Description</label>
+      <input class="form-input" id="evDesc" type="text" placeholder="e.g. Matchday 5, Semi Final, Quarter Final 1st Leg...">
+    </div>
+    <div class="form-group">
       <label class="form-label">Event Icon</label>
       <div class="img-upload-row">
         <button class="upload-btn" id="evIconBtn">📁 SELECT IMAGE</button>
@@ -312,7 +325,13 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
     <div class="modal-title" id="fixTitle">ADD FIXTURE</div>
     <div class="two-col">
       <div>
-        <div class="form-group"><label class="form-label">Home Team</label><input class="form-input" id="homeName" type="text" placeholder="Team A"></div>
+        <div class="form-group">
+          <label class="form-label">Home Team</label>
+          <div class="autocomplete-wrap" id="homeAutocompleteWrap">
+            <input class="form-input" id="homeName" type="text" placeholder="Team A" autocomplete="off">
+            <div class="autocomplete-dropdown" id="homeDropdown"></div>
+          </div>
+        </div>
         <div class="form-group">
           <label class="form-label">Home Icon</label>
           <div class="img-upload-row">
@@ -326,7 +345,13 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
       </div>
       <div class="vs-divider">VS</div>
       <div>
-        <div class="form-group"><label class="form-label">Away Team</label><input class="form-input" id="awayName" type="text" placeholder="Team B"></div>
+        <div class="form-group">
+          <label class="form-label">Away Team</label>
+          <div class="autocomplete-wrap" id="awayAutocompleteWrap">
+            <input class="form-input" id="awayName" type="text" placeholder="Team B" autocomplete="off">
+            <div class="autocomplete-dropdown" id="awayDropdown"></div>
+          </div>
+        </div>
         <div class="form-group">
           <label class="form-label">Away Icon</label>
           <div class="img-upload-row">
@@ -412,6 +437,112 @@ const ALL_TEAMS = ["Real Madrid","Liverpool","Dortmund","Man City","Barcelona","
 let calData={}, activeMonths=[], selectedTeam=null, currentDate=null, tempTournaments=[];
 let lastError = null;
 
+// Global team→icon mapping, rebuilt whenever calData changes
+let teamIconMap = {};
+function rebuildTeamIconMap() {
+  const map = {};
+  for (const date in calData) {
+    const ev = calData[date];
+    if (ev && ev.tournaments) {
+      for (const t of ev.tournaments) {
+        if (t.fixtures) {
+          for (const f of t.fixtures) {
+            if (f.home && f.homeIcon) map[f.home.trim()] = f.homeIcon;
+            if (f.away && f.awayIcon) map[f.away.trim()] = f.awayIcon;
+          }
+        }
+      }
+    }
+  }
+  // Merge with default team icons? No defaults, but we can keep existing
+  teamIconMap = map;
+}
+function getAllTeamNames() {
+  const set = new Set(ALL_TEAMS);
+  for (const date in calData) {
+    const ev = calData[date];
+    if (ev && ev.tournaments) {
+      for (const t of ev.tournaments) {
+        if (t.fixtures) {
+          for (const f of t.fixtures) {
+            if (f.home) set.add(f.home.trim());
+            if (f.away) set.add(f.away.trim());
+          }
+        }
+      }
+    }
+  }
+  return Array.from(set).sort();
+}
+
+// Autocomplete handler
+function setupAutocomplete(inputId, dropdownId, iconUrlInputId, iconPreviewId) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  const wrap = input.closest('.autocomplete-wrap');
+  if (!wrap) return;
+
+  input.addEventListener('focus', () => {
+    updateDropdown(input, dropdown, iconUrlInputId, iconPreviewId);
+    dropdown.classList.add('open');
+  });
+  input.addEventListener('input', () => {
+    updateDropdown(input, dropdown, iconUrlInputId, iconPreviewId);
+    dropdown.classList.add('open');
+  });
+  input.addEventListener('blur', () => {
+    // Delay to allow click on dropdown
+    setTimeout(() => dropdown.classList.remove('open'), 200);
+  });
+  // Close on click outside
+  document.addEventListener('click', (e) => {
+    if (!wrap.contains(e.target)) {
+      dropdown.classList.remove('open');
+    }
+  });
+}
+
+function updateDropdown(input, dropdown, iconUrlInputId, iconPreviewId) {
+  const filter = input.value.trim().toLowerCase();
+  const teams = getAllTeamNames();
+  const filtered = filter ? teams.filter(t => t.toLowerCase().includes(filter)) : teams;
+  dropdown.innerHTML = '';
+  filtered.forEach(team => {
+    const item = document.createElement('div');
+    item.className = 'autocomplete-item';
+    const iconUrl = teamIconMap[team] || '';
+    if (iconUrl) {
+      const img = document.createElement('img');
+      img.src = iconUrl;
+      item.appendChild(img);
+    }
+    const span = document.createElement('span');
+    span.textContent = team;
+    item.appendChild(span);
+    item.addEventListener('mousedown', (e) => {
+      e.preventDefault(); // prevent blur
+      input.value = team;
+      dropdown.classList.remove('open');
+      // Auto-fill icon
+      if (iconUrl && iconUrlInputId) {
+        document.getElementById(iconUrlInputId).value = iconUrl;
+        const prev = document.getElementById(iconPreviewId);
+        if (prev) {
+          prev.src = iconUrl;
+          prev.classList.add('show');
+        }
+      }
+    });
+    dropdown.appendChild(item);
+  });
+}
+
+// Initialize autocomplete on both home and away
+setTimeout(() => {
+  setupAutocomplete('homeName', 'homeDropdown', 'homeIconUrl', 'homeIconPrev');
+  setupAutocomplete('awayName', 'awayDropdown', 'awayIconUrl', 'awayIconPrev');
+}, 500);
+
 /* ── Debug helper ── */
 function debugLog(msg, isError = false) {
   lastError = isError ? msg : null;
@@ -437,7 +568,7 @@ function updateDebugInfo() {
   if (rawEl) {
     const entries = Object.entries(calData).slice(0, 10);
     rawEl.innerHTML = entries.length === 0 ? 'No events' : entries.map(([date, ev]) => 
-      `<div><strong>${date}</strong>: ${ev.title || '(no title)'}</div>`
+      `<div><strong>${date}</strong>: ${ev.title || '(no title)'}${ev.description ? ' - ' + ev.description : ''}</div>`
     ).join('');
   }
 }
@@ -505,6 +636,7 @@ onValue(settingsRef, (snap) => {
 const eventsRef = ref(db, 'calendarEvents');
 onValue(eventsRef, (snap) => {
   calData = snap.val() || {};
+  rebuildTeamIconMap(); // Update team→icon mapping
   debugLog('Events loaded successfully');
   renderCalendar();
   updateDebugInfo();
@@ -579,6 +711,7 @@ function renderCalendar() {
         } else {
           if(ev.iconUrl){const img=document.createElement("img");img.className="event-icon";img.src=ev.iconUrl;img.alt=ev.title||"";cell.appendChild(img);}
           if(ev.title){const lbl=document.createElement("div");lbl.className="event-label";lbl.textContent=ev.title;cell.appendChild(lbl);}
+          if(ev.description){const desc=document.createElement("div");desc.className="event-desc";desc.textContent=ev.description;cell.appendChild(desc);}
         }
         const dot=document.createElement("div");dot.className="event-dot";cell.appendChild(dot);
       } else {
@@ -596,6 +729,7 @@ function openDayModal(ds,day,monthLabel){
   currentDate=ds; const ev=calData[ds];
   document.getElementById("dayTitle").textContent=`${day} ${monthLabel}`;
   document.getElementById("evTitle").value=ev?.title||"";
+  document.getElementById("evDesc").value=ev?.description||"";
   document.getElementById("evIconUrl").value=ev?.iconUrl||"";
   const prev=document.getElementById("evIconPrev");
   if(ev?.iconUrl){prev.src=ev.iconUrl;prev.classList.add("show");}else{prev.src="";prev.classList.remove("show");}
@@ -680,9 +814,11 @@ document.getElementById("addTournBtn").onclick=()=>{
 document.getElementById("saveEvBtn").onclick=async()=>{
   const title=document.getElementById("evTitle").value.trim();
   if(!title){toast("Enter an event title","error");return;}
+  const description = document.getElementById("evDesc").value.trim();
   try {
     await set(ref(db, 'calendarEvents/' + currentDate), {
       title,
+      description: description || null,
       iconUrl: document.getElementById("evIconUrl").value,
       tournaments: tempTournaments
     });
@@ -718,6 +854,9 @@ function openFixModal(ti,fi){
   if(f.awayIcon){ap.src=f.awayIcon;ap.classList.add("show");}else{ap.src="";ap.classList.remove("show");}
   document.getElementById("homeIconFile").value="";
   document.getElementById("awayIconFile").value="";
+  // Clear dropdowns
+  document.getElementById("homeDropdown").classList.remove("open");
+  document.getElementById("awayDropdown").classList.remove("open");
   openOv("fixOverlay");
 }
 document.getElementById("saveFixBtn").onclick=()=>{
@@ -756,6 +895,7 @@ document.getElementById("debugForceRefresh").addEventListener("click", async () 
   try {
     const snap = await get(ref(db, 'calendarEvents'));
     calData = snap.val() || {};
+    rebuildTeamIconMap();
     const settingsSnap = await get(ref(db, 'settings/calendar'));
     activeMonths = settingsSnap.val()?.activeMonths || [3,4,5,6];
     renderMonthChips();
