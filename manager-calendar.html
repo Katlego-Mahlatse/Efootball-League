@@ -115,7 +115,8 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .tournament-card:hover{border-color:rgba(245,215,66,0.28);}
 .tc-header{display:flex;align-items:center;gap:0.7rem;}
 .tc-icon{width:38px;height:38px;object-fit:contain;border-radius:6px;flex-shrink:0;}
-.tc-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;color:var(--text-primary);flex:1;}
+.tc-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;color:var(--text-primary);}
+.tc-desc{font-family:'Rajdhani',sans-serif;font-size:0.72rem;color:var(--gold);margin-top:0.2rem;}
 .fix-toggle{background:none;border:1px solid rgba(245,215,66,0.18);color:var(--text-dim);padding:0.25rem 0.65rem;border-radius:1.5rem;font-size:0.67rem;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:0.06em;cursor:pointer;margin-top:0.6rem;transition:all 0.2s;}
 .fix-toggle:hover{border-color:var(--gold-border);color:var(--gold);}
 .fix-panel{display:none;margin-top:0.7rem;background:rgba(0,0,0,0.65);border-radius:0.8rem;border:1px solid rgba(245,215,66,0.07);padding:0.7rem;animation:fadeIn 0.2s ease;}
@@ -278,6 +279,30 @@ const ALL_TEAMS = ["Real Madrid","Liverpool","Dortmund","Man City","Barcelona","
 
 let calData={}, activeMonths=[], selectedTeam=null;
 
+// Global team→icon mapping
+let teamIconMap = {};
+function rebuildTeamIconMap() {
+  const map = {};
+  for (const date in calData) {
+    const ev = calData[date];
+    if (ev && ev.tournaments) {
+      for (const t of ev.tournaments) {
+        if (t.fixtures) {
+          for (const f of t.fixtures) {
+            if (f.home && f.homeIcon) map[f.home.trim()] = f.homeIcon;
+            if (f.away && f.awayIcon) map[f.away.trim()] = f.awayIcon;
+          }
+        }
+      }
+    }
+  }
+  teamIconMap = map;
+}
+function getTeamIcon(teamName) {
+  if (!teamName) return null;
+  return teamIconMap[teamName.trim()] || null;
+}
+
 /* ── Toast ── */
 function toast(msg,type="") {
   const t=document.getElementById("toast");
@@ -300,6 +325,7 @@ onValue(ref(db, 'settings/calendar'), (snap) => {
 
 onValue(ref(db, 'calendarEvents'), (snap) => {
   calData = snap.val() || {};
+  rebuildTeamIconMap();
   renderCalendar();
   document.getElementById("loader").classList.add("hidden");
 }, (error) => {
@@ -313,7 +339,22 @@ onValue(ref(db, 'calendarEvents'), (snap) => {
 /* ── Calendar ── */
 function fmtYMD(y,m,d){ return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
 function evHasTeam(ev,team){ return ev?.tournaments?.some(t=>(t.fixtures||[]).some(f=>(f.home||"").toLowerCase().includes(team.toLowerCase())||(f.away||"").toLowerCase().includes(team.toLowerCase())))||false; }
-function oppIcon(ev,team){ const tl=team.toLowerCase(); for(const t of ev?.tournaments||[]){for(const f of t.fixtures||[]){if((f.home||"").toLowerCase().includes(tl))return f.awayIcon||null;if((f.away||"").toLowerCase().includes(tl))return f.homeIcon||null;}}return null; }
+function oppIcon(ev,team){ 
+  const tl=team.toLowerCase(); 
+  for(const t of ev?.tournaments||[]){
+    for(const f of t.fixtures||[]){
+      const home = f.home || "";
+      const away = f.away || "";
+      if(home.toLowerCase().includes(tl)) {
+        return getTeamIcon(away) || f.awayIcon || null;
+      }
+      if(away.toLowerCase().includes(tl)) {
+        return getTeamIcon(home) || f.homeIcon || null;
+      }
+    }
+  }
+  return null; 
+}
 
 function renderCalendar() {
   const root=document.getElementById("calendarRoot"); root.innerHTML="";
@@ -334,7 +375,15 @@ function renderCalendar() {
       const dn=document.createElement("div"); dn.className="day-number"; dn.textContent=d; cell.appendChild(dn);
       if(ev){
         if(selectedTeam){
-          if(evHasTeam(ev,selectedTeam)){const oi=oppIcon(ev,selectedTeam);if(oi){const img=document.createElement("img");img.className="event-icon";img.src=oi;cell.appendChild(img);}}
+          if(evHasTeam(ev,selectedTeam)){
+            const oi=oppIcon(ev,selectedTeam);
+            if(oi){
+              const img=document.createElement("img");
+              img.className="event-icon";
+              img.src=oi;
+              cell.appendChild(img);
+            }
+          }
           else{cell.classList.remove("has-event");}
         } else {
           if(ev.iconUrl){const img=document.createElement("img");img.className="event-icon";img.src=ev.iconUrl;img.alt=ev.title||"";cell.appendChild(img);}
@@ -369,7 +418,10 @@ function renderTournamentsReadonly(tournaments){
     const card=document.createElement("div"); card.className="tournament-card";
     const hdr=document.createElement("div"); hdr.className="tc-header";
     if(t.iconUrl){const img=document.createElement("img");img.className="tc-icon";img.src=t.iconUrl;hdr.appendChild(img);}
-    const nm=document.createElement("div"); nm.className="tc-name"; nm.textContent=t.name||"Untitled"; hdr.appendChild(nm);
+    const infoDiv = document.createElement("div");
+    const nm=document.createElement("div"); nm.className="tc-name"; nm.textContent=t.name||"Untitled"; infoDiv.appendChild(nm);
+    if(t.description){const desc=document.createElement("div");desc.className="tc-desc";desc.textContent=t.description;infoDiv.appendChild(desc);}
+    hdr.appendChild(infoDiv);
     card.appendChild(hdr);
 
     const tog=document.createElement("button"); tog.className="fix-toggle";
@@ -380,11 +432,37 @@ function renderTournamentsReadonly(tournaments){
 
     (t.fixtures||[]).forEach((f)=>{
       const row=document.createElement("div"); row.className="fix-row";
-      if(f.homeIcon){const img=document.createElement("img");img.className="fix-team-icon";img.src=f.homeIcon;row.appendChild(img);}
-      const hn=document.createElement("span");hn.className="fix-team-name";hn.textContent=f.home||"";row.appendChild(hn);
+
+      // Home team - icon from teamIconMap if available, otherwise name
+      const homeIcon = getTeamIcon(f.home) || f.homeIcon;
+      if(homeIcon){
+        const img=document.createElement("img");
+        img.className="fix-team-icon";
+        img.src=homeIcon;
+        row.appendChild(img);
+      } else if(f.home) {
+        const hn=document.createElement("span");
+        hn.className="fix-team-name";
+        hn.textContent=f.home;
+        row.appendChild(hn);
+      }
+
       const vs=document.createElement("span");vs.className="fix-vs";vs.textContent="vs";row.appendChild(vs);
-      if(f.awayIcon){const img=document.createElement("img");img.className="fix-team-icon";img.src=f.awayIcon;row.appendChild(img);}
-      const an=document.createElement("span");an.className="fix-team-name";an.textContent=f.away||"";row.appendChild(an);
+
+      // Away team - icon from teamIconMap if available, otherwise name
+      const awayIcon = getTeamIcon(f.away) || f.awayIcon;
+      if(awayIcon){
+        const img=document.createElement("img");
+        img.className="fix-team-icon";
+        img.src=awayIcon;
+        row.appendChild(img);
+      } else if(f.away) {
+        const an=document.createElement("span");
+        an.className="fix-team-name";
+        an.textContent=f.away;
+        row.appendChild(an);
+      }
+
       panel.appendChild(row);
     });
     if(fixtureCount===0){
