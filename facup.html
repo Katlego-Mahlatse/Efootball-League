@@ -165,10 +165,10 @@
       padding: 1.5rem;
     }
 
-    /* Slideshow */
+    /* Slideshow - reduced margin-bottom (space between slideshow and groups) */
     .slideshow-container {
       text-align: center;
-      margin-bottom: 2rem;
+      margin-bottom: 1rem;  /* was 2rem, made 2x smaller => 1rem */
     }
     .slideshow-img {
       max-width: 100%;
@@ -194,10 +194,10 @@
     .dot.active { background: #b91c1c; opacity: 1; transform: scale(1.2); }
     .dot:hover { transform: scale(1.1); }
 
-    /* Emirates Animation Section - Smaller & Transparent */
+    /* Emirates Animation Section - Smaller & Transparent with reduced margins */
     .emirates-section {
       perspective: 1000px;
-      margin: 3rem auto;
+      margin: 1rem auto;  /* was 3rem, reduced drastically to tighten space */
       display: flex;
       justify-content: center;
       align-items: center;
@@ -232,7 +232,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      /* Removed white background, border, box-shadow */
       background: transparent;
       border: none;
       box-shadow: none;
@@ -314,7 +313,7 @@
       box-shadow: 0 12px 30px rgba(0,0,0,0.3);
     }
 
-    /* No corner animation anymore, just a static image placed in header-right */
+    /* Static corner image in header-right */
     .group-corner-static {
       width: 50px;
       height: 50px;
@@ -649,7 +648,7 @@
       </div>
     </div>
 
-    <!-- FIXTURES TAB - direct redirect removed card content -->
+    <!-- FIXTURES TAB - direct redirect (no inner content needed) -->
     <div id="fixturesTab" class="tab-content"></div>
 
     <!-- RESULTS TAB (group stage results) -->
@@ -840,7 +839,6 @@
         const row = tbody.insertRow();
         const pos = idx + 1;
         
-        // Position with qualification indicator
         const posCell = row.insertCell(0);
         posCell.className = "rank-cell";
         let barClass = "";
@@ -1207,48 +1205,56 @@
     return data.data.url;
   }
 
-  // Hamburger menu
+  // Hamburger menu - fixed to show modal properly
   function buildHamburgerModal(){
-    const mc=document.getElementById('modalContent'); 
-    let html=`<h3>FA CUP MENU</h3><div class="modal-option" id="adminModeOption">ADMIN MODE</div>`;
+    const modalOverlay = document.getElementById('modalOverlay');
+    const mc = document.getElementById('modalContent'); 
+    let html = `<h3>⚽ FA CUP MENU</h3><div class="modal-option" id="adminModeOption">🔐 ADMIN MODE</div>`;
     if(isAdmin) {
-      html+=`<div class="modal-option" id="addIconBtn">ADD TEAM ICON</div>`;
-      html+=`<div class="modal-option" id="addSlideBtn">MANAGE SLIDESHOW</div>`;
-      html+=`<div class="modal-option" id="manageNavbarLogoBtn">MANAGE NAVBAR LOGO</div>`;
-      html+=`<div class="modal-option" id="manageEmiratesBtn">MANAGE EMIRATES ANIMATION</div>`;
-      html+=`<div class="modal-option" id="manageCornerBtn">MANAGE GROUP CORNER IMAGE</div>`;
+      html += `<div class="modal-option" id="addIconBtn">🖼️ ADD TEAM ICON</div>`;
+      html += `<div class="modal-option" id="addSlideBtn">🎞️ MANAGE SLIDESHOW</div>`;
+      html += `<div class="modal-option" id="manageNavbarLogoBtn">🏷️ MANAGE NAVBAR LOGO</div>`;
+      html += `<div class="modal-option" id="manageEmiratesBtn">✈️ MANAGE EMIRATES ANIMATION</div>`;
+      html += `<div class="modal-option" id="manageCornerBtn">🖼️ MANAGE GROUP CORNER IMAGE</div>`;
     }
-    html+=`<div class="modal-option" id="rulesBtn">RULES</div><div class="modal-option" id="homeBtn">HOME</div><button class="close-modal" id="closeModalBtn">CLOSE</button>`;
-    mc.innerHTML=html; 
+    html += `<div class="modal-option" id="rulesBtn">📜 RULES</div><div class="modal-option" id="homeBtn">🏠 HOME</div><button class="close-modal" id="closeModalBtn">CLOSE</button>`;
+    mc.innerHTML = html; 
     
-    document.getElementById('adminModeOption').onclick=()=>{ 
-      let p=prompt('Admin key:'); 
+    document.getElementById('adminModeOption').onclick = () => { 
+      let p = prompt('Admin key:'); 
       activateAdminMode(p); 
-      document.getElementById('modalOverlay').classList.remove('active'); 
+      modalOverlay.classList.remove('active'); 
     };
     
     if(isAdmin){ 
-      document.getElementById('addIconBtn').onclick=()=>{ 
-        document.getElementById('modalOverlay').classList.remove('active'); 
+      document.getElementById('addIconBtn').onclick = () => { 
+        modalOverlay.classList.remove('active'); 
         showUploadIconModal(); 
       }; 
-      document.getElementById('addSlideBtn').onclick=()=>{ 
+      document.getElementById('addSlideBtn').onclick = () => { 
+        modalOverlay.classList.remove('active');
         showSlideshowManager(); 
       };
-      document.getElementById('manageNavbarLogoBtn').onclick=()=>{ 
+      document.getElementById('manageNavbarLogoBtn').onclick = () => { 
+        modalOverlay.classList.remove('active');
         showNavbarLogoManager(); 
       };
-      document.getElementById('manageEmiratesBtn').onclick=()=>{ 
+      document.getElementById('manageEmiratesBtn').onclick = () => { 
+        modalOverlay.classList.remove('active');
         showEmiratesManager(); 
       };
-      document.getElementById('manageCornerBtn').onclick=()=>{ 
+      document.getElementById('manageCornerBtn').onclick = () => { 
+        modalOverlay.classList.remove('active');
         showCornerImageManager(); 
       };
     }
     
-    document.getElementById('rulesBtn').onclick=()=>alert('FA Cup Rules: Standard knockout + groups'); 
-    document.getElementById('homeBtn').onclick=()=>location.reload(); 
-    document.getElementById('closeModalBtn').onclick=()=>document.getElementById('modalOverlay').classList.remove('active');
+    document.getElementById('rulesBtn').onclick = () => alert('🏆 FA Cup Rules: Group stage → top 4 qualify for knockout R16, 5th+ relegated. Knockout matches are single elimination.'); 
+    document.getElementById('homeBtn').onclick = () => location.reload(); 
+    document.getElementById('closeModalBtn').onclick = () => modalOverlay.classList.remove('active');
+    
+    // Show the modal
+    modalOverlay.classList.add('active');
   }
 
   // Team icon upload modal
@@ -1565,6 +1571,11 @@
   document.getElementById('globalAddResultBtn').onclick = () => { 
     if(isAdmin) openResultForm(''); 
     else alert('Admin only'); 
+  };
+  
+  // Hamburger button click handler (fixed)
+  document.getElementById('hamburgerBtn').onclick = () => {
+    buildHamburgerModal();
   };
 
   // Initialize
