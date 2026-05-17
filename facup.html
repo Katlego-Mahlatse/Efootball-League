@@ -194,19 +194,19 @@
     .dot.active { background: #b91c1c; opacity: 1; transform: scale(1.2); }
     .dot:hover { transform: scale(1.1); }
 
-    /* Emirates Animation Section */
+    /* Emirates Animation Section - Smaller & Transparent */
     .emirates-section {
       perspective: 1000px;
       margin: 3rem auto;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 200px;
+      min-height: 120px;
     }
 
     .flip-container {
-      width: 400px;
-      height: 200px;
+      width: 200px;
+      height: 100px;
       position: relative;
       transform-style: preserve-3d;
       animation: verticalFlip 4s ease-in-out infinite;
@@ -232,10 +232,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 1.5rem;
-      background: white;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      border: 3px solid #b91c1c;
+      /* Removed white background, border, box-shadow */
+      background: transparent;
+      border: none;
+      box-shadow: none;
     }
 
     .flip-card-front {
@@ -248,17 +248,19 @@
 
     .emirates-logo-placeholder,
     .emirates-slogan-placeholder {
-      max-width: 90%;
-      max-height: 90%;
+      max-width: 100%;
+      max-height: 100%;
       object-fit: contain;
     }
 
     .placeholder-text {
-      color: #b91c1c;
+      color: white;
       font-weight: bold;
-      font-size: 1.2rem;
+      font-size: 0.8rem;
       text-align: center;
-      padding: 2rem;
+      padding: 0.5rem;
+      background: rgba(0,0,0,0.4);
+      border-radius: 8px;
     }
 
     /* Tabs at bottom */
@@ -312,44 +314,18 @@
       box-shadow: 0 12px 30px rgba(0,0,0,0.3);
     }
 
-    /* Group card corner animation */
-    .group-corner-animation {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      width: 80px;
-      height: 80px;
-      z-index: 10;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      border: 2px solid white;
-    }
-
-    .corner-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      position: absolute;
-      top: 0;
-      left: 0;
-      opacity: 0;
-      animation: cornerFade 9s infinite;
-    }
-
-    .corner-image:nth-child(1) { animation-delay: 0s; }
-    .corner-image:nth-child(2) { animation-delay: 3s; }
-    .corner-image:nth-child(3) { animation-delay: 6s; }
-
-    @keyframes cornerFade {
-      0%, 30% { opacity: 1; }
-      33%, 100% { opacity: 0; }
+    /* No corner animation anymore, just a static image placed in header-right */
+    .group-corner-static {
+      width: 50px;
+      height: 50px;
+      object-fit: contain;
+      border-radius: 8px;
+      margin-left: 10px;
     }
 
     .card-header {
       background: #b91c1c;
       padding: 1rem 1.5rem;
-      padding-top: 100px; /* Space for corner animation */
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -360,6 +336,7 @@
     }
     .card-header h2, .card-header h3 { color: white; margin: 0; }
     .card-header-left { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .card-header-right { display: flex; align-items: center; gap: 0.8rem; }
     .add-btn {
       background: white;
       border: none;
@@ -610,10 +587,10 @@
 
     @media (max-width: 700px) {
       .group-table th, .group-table td { font-size: 0.7rem; padding: 0.4rem; }
-      .flip-container { width: 300px; height: 150px; }
-      .group-corner-animation { width: 60px; height: 60px; }
-      .card-header { padding-top: 80px; }
+      .flip-container { width: 150px; height: 75px; }
+      .group-corner-static { width: 35px; height: 35px; }
       .navbar-logo-placeholder { width: 100px; height: 35px; font-size: 0.6rem; }
+      .card-header { padding: 0.8rem 1rem; }
     }
   </style>
 </head>
@@ -632,7 +609,7 @@
     <div class="dots-container" id="dotsContainer"></div>
   </div>
 
-  <!-- Emirates Animation Section -->
+  <!-- Emirates Animation Section (smaller, transparent) -->
   <div class="emirates-section">
     <div class="flip-container">
       <div class="flip-card-face flip-card-front">
@@ -672,14 +649,8 @@
       </div>
     </div>
 
-    <!-- FIXTURES TAB (redirect) -->
-    <div id="fixturesTab" class="tab-content">
-      <div class="card" style="text-align:center; padding:2rem;">
-        <h2 style="color:#b91c1c;">📅 Full Fixtures Calendar</h2>
-        <a href="fa-cup-calendar.html" class="add-btn" style="display:inline-block; margin-top:1rem; text-decoration:none;">VIEW MATCHES →</a>
-        <p style="margin-top:1rem; color:#b91c1c;">(Redirects to calendar page)</p>
-      </div>
-    </div>
+    <!-- FIXTURES TAB - direct redirect removed card content -->
+    <div id="fixturesTab" class="tab-content"></div>
 
     <!-- RESULTS TAB (group stage results) -->
     <div id="resultsTab" class="tab-content">
@@ -740,7 +711,7 @@
   let navbarLogoUrl = '';
   let emiratesLogoUrl = '';
   let emiratesSloganUrl = '';
-  let groupCornerImages = [];
+  let groupCornerImageUrl = ''; // single image URL
 
   const basePath = 'fa_cup';
   function getGroupPath(groupId) { return `${basePath}/groups/${groupId}`; }
@@ -787,10 +758,10 @@
     }
   }
 
-  // Load group corner images
-  async function loadGroupCornerImages() {
-    const snap = await db.ref(`${basePath}/group_corner_images`).once('value');
-    groupCornerImages = snap.val() || [];
+  // Load single group corner image
+  async function loadGroupCornerImage() {
+    const snap = await db.ref(`${basePath}/group_corner_image`).once('value');
+    groupCornerImageUrl = snap.val() || '';
     renderAllGroups();
   }
 
@@ -822,7 +793,7 @@
     return url ? `<img class="${cls}" src="${url}" onerror="this.style.display='none';">` : '';
   }
 
-  // Render all groups with corner animation and legends
+  // Render all groups with static corner image on right side
   function renderAllGroups() {
     const container = document.getElementById('groupsContainer');
     if(!container) return;
@@ -837,21 +808,22 @@
       const groupCard = document.createElement('div'); 
       groupCard.className = 'card';
       
-      // Build corner animation HTML
+      // Build header with optional static corner image on right
       let cornerHtml = '';
-      if (groupCornerImages.length > 0) {
-        cornerHtml = '<div class="group-corner-animation">';
-        groupCornerImages.forEach((url, idx) => {
-          cornerHtml += `<img src="${url}" class="corner-image" alt="Corner ${idx}">`;
-        });
-        cornerHtml += '</div>';
+      if (groupCornerImageUrl) {
+        cornerHtml = `<img src="${groupCornerImageUrl}" class="group-corner-static" alt="Corner">`;
       }
       
       groupCard.innerHTML = `
-        ${cornerHtml}
         <div class="card-header">
-          <div class="card-header-left"><h3>${groupName}</h3> ${isAdmin ? `<button class="add-btn edit-group-name" data-gid="${gid}">✏️ Rename</button><button class="add-btn delete-group" data-gid="${gid}">🗑️ Delete</button>` : ''}</div>
-          ${isAdmin ? `<button class="add-btn add-team-to-group" data-gid="${gid}">+ Add Team</button>` : ''}
+          <div class="card-header-left">
+            <h3>${groupName}</h3>
+            ${isAdmin ? `<button class="add-btn edit-group-name" data-gid="${gid}">✏️ Rename</button><button class="add-btn delete-group" data-gid="${gid}">🗑️ Delete</button>` : ''}
+          </div>
+          <div class="card-header-right">
+            ${cornerHtml}
+            ${isAdmin ? `<button class="add-btn add-team-to-group" data-gid="${gid}">+ Add Team</button>` : ''}
+          </div>
         </div>
         <div class="card-content"><div class="group-table-wrapper"><table class="group-table"><thead><tr><th>Pos</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GS</th><th>GC</th><th>GD</th><th>Pts</th><th>Last 5</th>${isAdmin ? '<th>Actions</th>' : ''}</tr></thead><tbody id="group-${gid}-body"></tbody></table></div>
         <div class="legend-under-table">
@@ -1244,7 +1216,7 @@
       html+=`<div class="modal-option" id="addSlideBtn">MANAGE SLIDESHOW</div>`;
       html+=`<div class="modal-option" id="manageNavbarLogoBtn">MANAGE NAVBAR LOGO</div>`;
       html+=`<div class="modal-option" id="manageEmiratesBtn">MANAGE EMIRATES ANIMATION</div>`;
-      html+=`<div class="modal-option" id="manageCornerBtn">MANAGE GROUP CORNER IMAGES</div>`;
+      html+=`<div class="modal-option" id="manageCornerBtn">MANAGE GROUP CORNER IMAGE</div>`;
     }
     html+=`<div class="modal-option" id="rulesBtn">RULES</div><div class="modal-option" id="homeBtn">HOME</div><button class="close-modal" id="closeModalBtn">CLOSE</button>`;
     mc.innerHTML=html; 
@@ -1270,7 +1242,7 @@
         showEmiratesManager(); 
       };
       document.getElementById('manageCornerBtn').onclick=()=>{ 
-        showCornerImagesManager(); 
+        showCornerImageManager(); 
       };
     }
     
@@ -1524,78 +1496,65 @@
     modal.classList.add('active');
   }
 
-  // Group corner images manager
-  async function showCornerImagesManager() {
+  // Single group corner image manager
+  async function showCornerImageManager() {
     const modal = document.getElementById('modalOverlay');
     const content = document.getElementById('modalContent');
     
     content.innerHTML = `
-      <h3>Manage Group Corner Images</h3>
-      <p style="margin: 1rem 0; font-size: 0.9rem;">These images will appear in the top-left corner of all group cards.</p>
-      <div id="cornerPreviewList" class="image-preview-grid"></div>
-      <input type="file" id="newCornerFile" accept="image/*" 
+      <h3>Manage Group Corner Image</h3>
+      <p style="margin: 1rem 0; font-size: 0.9rem;">This image will appear in the top-right corner of all group cards.</p>
+      <div style="background: #fef2f2; padding: 1rem; border-radius: 1rem; margin-bottom: 1rem; text-align:center;">
+        ${groupCornerImageUrl ? `<img src="${groupCornerImageUrl}" style="max-width: 100px; max-height: 100px; border-radius: 8px;">` : '<p>No image set</p>'}
+      </div>
+      <input type="file" id="cornerImageFile" accept="image/*" 
              style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;">
-      <button class="modal-option" id="uploadCornerBtn">Add Image</button>
+      <button class="modal-option" id="uploadCornerBtn">Upload / Replace Image</button>
+      ${groupCornerImageUrl ? '<button class="modal-option" id="removeCornerBtn">Remove Image</button>' : ''}
       <button class="close-modal" id="closeCornerModal">Close</button>
       <div id="cornerStatus"></div>
     `;
     
-    const previewDiv = document.getElementById('cornerPreviewList');
-    
-    function refreshPreviews() {
-      previewDiv.innerHTML = groupCornerImages.map((url, idx) => `
-        <div class="image-preview-item">
-          <img src="${url}">
-          <button class="delete-preview-btn" data-idx="${idx}">✕</button>
-        </div>
-      `).join('');
-      
-      previewDiv.querySelectorAll('.delete-preview-btn').forEach(btn => {
-        btn.onclick = async () => {
-          const idx = parseInt(btn.dataset.idx);
-          groupCornerImages.splice(idx, 1);
-          await db.ref(`${basePath}/group_corner_images`).set(groupCornerImages);
-          loadGroupCornerImages();
-          refreshPreviews();
-        };
-      });
-    }
-    
-    refreshPreviews();
-    
     document.getElementById('uploadCornerBtn').onclick = async () => {
-      const file = document.getElementById('newCornerFile').files[0];
+      const file = document.getElementById('cornerImageFile').files[0];
       const statusDiv = document.getElementById('cornerStatus');
       if(!file) { 
-        statusDiv.innerHTML = '<div class="status-message status-error">Select file</div>'; 
+        statusDiv.innerHTML = '<div class="status-message status-error">Select an image</div>'; 
         return; 
       }
       try {
         statusDiv.innerHTML = '<div class="status-message status-loading">Uploading...</div>';
         const url = await uploadToImgBB(file);
-        groupCornerImages.push(url);
-        await db.ref(`${basePath}/group_corner_images`).set(groupCornerImages);
-        loadGroupCornerImages();
-        refreshPreviews();
-        statusDiv.innerHTML = '<div class="status-message status-success">✓ Added</div>';
-        document.getElementById('newCornerFile').value = '';
+        await db.ref(`${basePath}/group_corner_image`).set(url);
+        groupCornerImageUrl = url;
+        loadGroupCornerImage();
+        statusDiv.innerHTML = '<div class="status-message status-success">✓ Corner image updated</div>';
+        setTimeout(() => modal.classList.remove('active'), 1500);
       } catch(e) { 
         statusDiv.innerHTML = '<div class="status-message status-error">Error: ' + e.message + '</div>'; 
       }
     };
     
+    if (groupCornerImageUrl) {
+      document.getElementById('removeCornerBtn')?.addEventListener('click', async () => {
+        await db.ref(`${basePath}/group_corner_image`).remove();
+        groupCornerImageUrl = '';
+        loadGroupCornerImage();
+        modal.classList.remove('active');
+      });
+    }
+    
     document.getElementById('closeCornerModal').onclick = () => modal.classList.remove('active');
     modal.classList.add('active');
   }
 
-  document.getElementById('hamburgerBtn').onclick=()=>{ 
-    buildHamburgerModal(); 
-    document.getElementById('modalOverlay').classList.add('active'); 
-  };
-
-  // Tab switching
+  // Tab switching: Fixtures tab immediately redirects
   document.querySelectorAll('.tab-btn').forEach(btn=>{ 
     btn.addEventListener('click',()=>{ 
+      if(btn.dataset.tab === 'fixtures') {
+        window.location.href = 'manager-calendar.html';
+        return;
+      }
       document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); 
       btn.classList.add('active'); 
       document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active-tab')); 
@@ -1617,7 +1576,7 @@
     await loadTeamIcons(); 
     await loadSlideshow(); 
     await loadAllResults();
-    await loadGroupCornerImages();
+    await loadGroupCornerImage();
     document.getElementById('globalAddGroupBtn').style.display = 'none'; 
     document.getElementById('globalAddResultBtn').style.display = 'none'; 
     document.getElementById('addKnockoutMatchBtn').style.display = 'none';
