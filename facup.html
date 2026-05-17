@@ -15,14 +15,13 @@
     }
 
     body {
-      background: #b91c1c;  /* deep red background */
+      background: #b91c1c;
       background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
       font-family: 'Segoe UI', 'Poppins', system-ui, 'Inter', sans-serif;
       padding-bottom: 2rem;
       min-height: 100vh;
     }
 
-    /* red/white theme animations */
     @keyframes redGlow {
       0%, 100% { box-shadow: 0 0 8px rgba(220, 38, 38, 0.5), 0 0 16px rgba(255, 255, 255, 0.3); }
       50% { box-shadow: 0 0 16px rgba(220, 38, 38, 0.8), 0 0 28px rgba(255, 255, 255, 0.5); }
@@ -33,12 +32,17 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* navbar white/red */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Navbar with Emirates logo */
     .fa-navbar {
       background: white;
       padding: 0.4rem 1.2rem;
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       align-items: center;
       gap: 0.8rem;
       position: sticky;
@@ -46,6 +50,32 @@
       z-index: 100;
       border-bottom: 3px solid #b91c1c;
       box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .navbar-logo {
+      height: 40px;
+      max-width: 150px;
+      object-fit: contain;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .navbar-logo:hover {
+      transform: scale(1.05);
+    }
+
+    .navbar-logo-placeholder {
+      height: 40px;
+      width: 120px;
+      background: linear-gradient(135deg, #b91c1c, #dc2626);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: bold;
+      border: 2px solid white;
     }
 
     .hamburger-btn {
@@ -75,7 +105,6 @@
       border-radius: 2px;
     }
 
-    /* modal overlay */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -99,6 +128,9 @@
       border-radius: 1.5rem;
       padding: 1.5rem;
       min-width: 280px;
+      max-width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
       text-align: center;
       color: #b91c1c;
       animation: slideIn 0.3s ease;
@@ -127,14 +159,13 @@
       margin-top: 1rem;
     }
 
-    /* dashboard container */
     .dashboard {
       max-width: 1400px;
       margin: 0 auto;
       padding: 1.5rem;
     }
 
-    /* slideshow */
+    /* Slideshow */
     .slideshow-container {
       text-align: center;
       margin-bottom: 2rem;
@@ -144,6 +175,10 @@
       border-radius: 1.5rem;
       box-shadow: 0 10px 25px rgba(0,0,0,0.3);
       border: 3px solid white;
+      transition: transform 0.3s ease;
+    }
+    .slideshow-img:hover {
+      transform: scale(1.02);
     }
     .dot {
       display: inline-block;
@@ -154,10 +189,83 @@
       margin: 0 4px;
       cursor: pointer;
       opacity: 0.6;
+      transition: all 0.3s ease;
     }
     .dot.active { background: #b91c1c; opacity: 1; transform: scale(1.2); }
+    .dot:hover { transform: scale(1.1); }
 
-    /* tabs */
+    /* Emirates Animation Section */
+    .emirates-section {
+      perspective: 1000px;
+      margin: 3rem auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 200px;
+    }
+
+    .flip-container {
+      width: 400px;
+      height: 200px;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: verticalFlip 4s ease-in-out infinite;
+    }
+
+    @keyframes verticalFlip {
+      0%, 45% {
+        transform: rotateX(0deg);
+      }
+      50%, 95% {
+        transform: rotateX(180deg);
+      }
+      100% {
+        transform: rotateX(360deg);
+      }
+    }
+
+    .flip-card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 1.5rem;
+      background: white;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      border: 3px solid #b91c1c;
+    }
+
+    .flip-card-front {
+      transform: rotateX(0deg);
+    }
+
+    .flip-card-back {
+      transform: rotateX(180deg);
+    }
+
+    .emirates-logo-placeholder,
+    .emirates-slogan-placeholder {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+    }
+
+    .placeholder-text {
+      color: #b91c1c;
+      font-weight: bold;
+      font-size: 1.2rem;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    /* Tabs at bottom */
+    .tabs-section {
+      margin-top: 3rem;
+    }
+
     .tabs-container {
       display: flex;
       gap: 0.5rem;
@@ -187,9 +295,8 @@
       animation: fadeIn 0.3s;
     }
     .tab-content.active-tab { display: block; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    /* cards (white background, red text) */
+    /* Cards */
     .card {
       background: white;
       border-radius: 1.8rem;
@@ -197,16 +304,59 @@
       overflow: hidden;
       box-shadow: 0 8px 20px rgba(0,0,0,0.2);
       border: 1px solid rgba(185,28,28,0.3);
+      position: relative;
+      animation: slideIn 0.5s ease;
     }
+
+    .card:hover {
+      box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+    }
+
+    /* Group card corner animation */
+    .group-corner-animation {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 80px;
+      height: 80px;
+      z-index: 10;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border: 2px solid white;
+    }
+
+    .corner-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      animation: cornerFade 9s infinite;
+    }
+
+    .corner-image:nth-child(1) { animation-delay: 0s; }
+    .corner-image:nth-child(2) { animation-delay: 3s; }
+    .corner-image:nth-child(3) { animation-delay: 6s; }
+
+    @keyframes cornerFade {
+      0%, 30% { opacity: 1; }
+      33%, 100% { opacity: 0; }
+    }
+
     .card-header {
       background: #b91c1c;
       padding: 1rem 1.5rem;
+      padding-top: 100px; /* Space for corner animation */
       display: flex;
       justify-content: space-between;
       align-items: center;
       color: white;
       cursor: pointer;
       transition: 0.2s;
+      position: relative;
     }
     .card-header h2, .card-header h3 { color: white; margin: 0; }
     .card-header-left { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
@@ -229,7 +379,7 @@
     .card-content.collapsed { max-height: 0; }
     .toggle-icon { font-size: 1.2rem; transition: transform 0.2s; color: white; }
 
-    /* tables */
+    /* Tables */
     .group-table-wrapper { overflow-x: auto; padding: 0.5rem; }
     .group-table {
       width: 100%;
@@ -249,18 +399,46 @@
     .group-table td {
       color: #7f1d1d;
     }
-    .team-icon-sm { width: 28px; height: 28px; object-fit: contain; margin-right: 8px; vertical-align: middle; }
+
+    /* Position indicators */
+    .rank-cell { 
+      font-weight: 700; 
+      width: 50px; 
+    }
+    
+    .pos-with-bar { 
+      display: flex; 
+      align-items: center; 
+      gap: 4px; 
+    }
+    
+    .vertical-bar { 
+      width: 4px; 
+      height: 18px; 
+      border-radius: 2px;
+    }
+    
+    .blue-bar-vertical { background: #3b82f6; }
+    .red-bar-vertical { background: #ef4444; }
+    
+    .dashed-separator-blue { border-bottom: 2px dashed #3b82f6 !important; }
+    .dashed-separator-red { border-bottom: 2px dashed #ef4444 !important; }
+
+    .team-icon-sm { width: 28px; height: 28px; object-fit: contain; margin-right: 8px; vertical-align: middle; transition: transform 0.3s ease; }
+    .team-icon-sm:hover { transform: scale(1.15); }
+    
     .form-circles { display: flex; gap: 4px; flex-wrap: wrap; }
     .circle-result {
       width: 22px; height: 22px; border-radius: 50%; display: inline-flex;
       align-items: center; justify-content: center; font-size: 11px; font-weight: bold;
+      transition: transform 0.2s ease;
     }
+    .circle-result:hover { transform: scale(1.2); }
     .circle-win { background: #22c55e; color: white; }
     .circle-loss { background: #ef4444; color: white; }
     .circle-draw { background: #6b7280; color: white; }
     .circle-blank { background: #e5e7eb; }
 
-    /* admin buttons */
     .edit-btn, .delete-btn {
       background: #b91c1c;
       border: none;
@@ -269,10 +447,47 @@
       border-radius: 20px;
       margin: 0 0.2rem;
       cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .edit-btn:hover, .delete-btn:hover {
+      background: #7f1d1d;
+      transform: scale(1.1);
     }
     .flex-between { display: flex; justify-content: space-between; align-items: center; }
 
-    /* forms */
+    /* Legend */
+    .legend-under-table {
+      background: #fef2f2; 
+      padding: 0.8rem 1.2rem; 
+      border-radius: 1rem; 
+      margin-top: 1rem;
+      display: flex; 
+      gap: 1.5rem; 
+      justify-content: center; 
+      flex-wrap: wrap;
+      font-size: 0.75rem;
+      border: 1px solid rgba(185,28,28,0.2);
+    }
+    
+    .legend-item { 
+      display: inline-flex; 
+      align-items: center; 
+      gap: 6px;
+      color: #7f1d1d;
+      font-weight: 600;
+    }
+    
+    .legend-vertical-bar { 
+      width: 4px; 
+      height: 16px; 
+      border-radius: 2px; 
+      display: inline-block; 
+    }
+    
+    .legend-blue { background: #3b82f6; }
+    .legend-red { background: #ef4444; }
+
+    /* Forms */
     .form-overlay {
       position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9);
       display: flex; align-items: center; justify-content: center; visibility: hidden; opacity:0;
@@ -282,14 +497,31 @@
     .form-card {
       background: white; border-radius: 2rem; padding: 1.5rem; width: 90%; max-width: 500px;
       color: #b91c1c; border: 2px solid #b91c1c;
+      animation: slideIn 0.4s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .form-card h3 {
+      margin-bottom: 1rem;
+      font-size: 1.4rem;
     }
     .form-card input, .form-card select {
       width: 100%; padding: 0.6rem; margin: 0.5rem 0;
       background: #fef2f2; border: 1px solid #b91c1c; border-radius: 2rem;
+      transition: all 0.3s ease;
+    }
+    .form-card input:focus, .form-card select:focus {
+      outline: none;
+      box-shadow: 0 0 10px rgba(185,28,28,0.3);
     }
     .form-card button {
       background: #b91c1c; color: white; border: none; border-radius: 2rem;
-      padding: 0.5rem 1.2rem; margin-top: 0.5rem; cursor: pointer;
+      padding: 0.5rem 1.2rem; margin-top: 0.5rem; margin-right: 0.5rem; cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .form-card button:hover {
+      background: #7f1d1d;
+      transform: translateY(-2px);
     }
     .knockout-list {
       padding: 1rem;
@@ -303,39 +535,117 @@
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
+      border: 1px solid rgba(185,28,28,0.2);
     }
-    .legend-under-table {
-      background: #fef2f2; padding: 0.6rem; border-radius: 1rem; margin-top: 1rem;
-      display: flex; gap: 1rem; justify-content: center; font-size: 0.7rem;
+
+    /* Image preview styles for admin */
+    .image-preview-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 1rem 0;
+      justify-content: center;
     }
+
+    .image-preview-item {
+      position: relative;
+      width: 100px;
+      height: 100px;
+    }
+
+    .image-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #b91c1c;
+    }
+
+    .delete-preview-btn {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .delete-preview-btn:hover {
+      background: #dc2626;
+      transform: scale(1.1);
+    }
+
+    .status-message {
+      margin-top: 1rem;
+      padding: 0.5rem;
+      border-radius: 8px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .status-success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .status-loading {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
     @media (max-width: 700px) {
       .group-table th, .group-table td { font-size: 0.7rem; padding: 0.4rem; }
+      .flip-container { width: 300px; height: 150px; }
+      .group-corner-animation { width: 60px; height: 60px; }
+      .card-header { padding-top: 80px; }
+      .navbar-logo-placeholder { width: 100px; height: 35px; font-size: 0.6rem; }
     }
   </style>
 </head>
 <body>
 
 <div class="fa-navbar">
+  <div id="navbarLogoContainer"></div>
   <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
 </div>
 <div class="modal-overlay" id="modalOverlay"><div class="modal-content" id="modalContent"></div></div>
 
 <div class="dashboard">
+  <!-- Slideshow -->
   <div class="slideshow-container">
     <img id="slideshow-img" class="slideshow-img" alt="FA Cup Slideshow">
     <div class="dots-container" id="dotsContainer"></div>
   </div>
 
-  <!-- Tabs -->
-  <div class="tabs-container">
-    <button class="tab-btn active" data-tab="groups">🏆 GROUPS</button>
-    <button class="tab-btn" data-tab="knockout">🥇 KNOCKOUT</button>
-    <button class="tab-btn" data-tab="fixtures">📅 FIXTURES</button>
-    <button class="tab-btn" data-tab="results">📋 RESULTS</button>
+  <!-- Emirates Animation Section -->
+  <div class="emirates-section">
+    <div class="flip-container">
+      <div class="flip-card-face flip-card-front">
+        <div id="emiratesLogoContainer"></div>
+      </div>
+      <div class="flip-card-face flip-card-back">
+        <div id="emiratesSloganContainer"></div>
+      </div>
+    </div>
   </div>
 
-  <!-- GROUPS TAB -->
-  <div id="groupsTab" class="tab-content active-tab">
+  <!-- Groups Stage -->
+  <div id="groupsSection">
     <div class="flex-between" style="margin-bottom: 1rem;">
       <h2 style="color:white;">Groups Stage</h2>
       <button id="globalAddGroupBtn" class="add-btn" style="display:none;">+ New Group</button>
@@ -343,34 +653,43 @@
     <div id="groupsContainer"></div>
   </div>
 
-  <!-- KNOCKOUT TAB -->
-  <div id="knockoutTab" class="tab-content">
-    <div class="card">
-      <div class="card-header">
-        <h3>🏆 Knockout Matches</h3>
-        <button id="addKnockoutMatchBtn" class="add-btn" style="display:none;">+ Add Match</button>
-      </div>
-      <div class="card-content" id="knockoutList"></div>
+  <!-- Tabs Section (Moved to Bottom) -->
+  <div class="tabs-section">
+    <div class="tabs-container">
+      <button class="tab-btn active" data-tab="knockout">🥇 KNOCKOUT</button>
+      <button class="tab-btn" data-tab="fixtures">📅 FIXTURES</button>
+      <button class="tab-btn" data-tab="results">📋 RESULTS</button>
     </div>
-  </div>
 
-  <!-- FIXTURES TAB (redirect) -->
-  <div id="fixturesTab" class="tab-content">
-    <div class="card" style="text-align:center; padding:2rem;">
-      <h2 style="color:#b91c1c;">📅 Full Fixtures Calendar</h2>
-      <a href="fa-cup-calendar.html" class="add-btn" style="display:inline-block; margin-top:1rem; text-decoration:none;">VIEW MATCHES →</a>
-      <p style="margin-top:1rem; color:#b91c1c;">(Redirects to calendar page)</p>
-    </div>
-  </div>
-
-  <!-- RESULTS TAB (group stage results) -->
-  <div id="resultsTab" class="tab-content">
-    <div class="card">
-      <div class="card-header">
-        <h3>📝 Group Stage Results</h3>
-        <button id="globalAddResultBtn" class="add-btn" style="display:none;">+ Add Result</button>
+    <!-- KNOCKOUT TAB -->
+    <div id="knockoutTab" class="tab-content active-tab">
+      <div class="card">
+        <div class="card-header">
+          <h3>🏆 Knockout Matches</h3>
+          <button id="addKnockoutMatchBtn" class="add-btn" style="display:none;">+ Add Match</button>
+        </div>
+        <div class="card-content" id="knockoutList"></div>
       </div>
-      <div class="card-content" id="globalResultsList"></div>
+    </div>
+
+    <!-- FIXTURES TAB (redirect) -->
+    <div id="fixturesTab" class="tab-content">
+      <div class="card" style="text-align:center; padding:2rem;">
+        <h2 style="color:#b91c1c;">📅 Full Fixtures Calendar</h2>
+        <a href="fa-cup-calendar.html" class="add-btn" style="display:inline-block; margin-top:1rem; text-decoration:none;">VIEW MATCHES →</a>
+        <p style="margin-top:1rem; color:#b91c1c;">(Redirects to calendar page)</p>
+      </div>
+    </div>
+
+    <!-- RESULTS TAB (group stage results) -->
+    <div id="resultsTab" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h3>📝 Group Stage Results</h3>
+          <button id="globalAddResultBtn" class="add-btn" style="display:none;">+ Add Result</button>
+        </div>
+        <div class="card-content" id="globalResultsList"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -399,7 +718,7 @@
 </div></div>
 
 <script>
-  // Firebase config (same)
+  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
     authDomain: "efootball-412.firebaseapp.com",
@@ -414,14 +733,66 @@
   const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
 
   let isAdmin = false;
-  let groupsData = {};          // { groupId: { name, teams: {teamKey:{name, p,w,d,l,gs,gc,gd,pts}}, results:[] } }
+  let groupsData = {};
   let knockoutMatches = [];
   let teamIconsCache = {};
   let slideshowImages = [], slideshowDuration = 3000, slideInterval = null, currentSlideIdx = 0;
+  let navbarLogoUrl = '';
+  let emiratesLogoUrl = '';
+  let emiratesSloganUrl = '';
+  let groupCornerImages = [];
 
-  // Helper paths
   const basePath = 'fa_cup';
   function getGroupPath(groupId) { return `${basePath}/groups/${groupId}`; }
+
+  // Load navbar logo
+  async function loadNavbarLogo() {
+    const snap = await db.ref(`${basePath}/navbar_logo`).once('value');
+    navbarLogoUrl = snap.val() || '';
+    renderNavbarLogo();
+  }
+
+  function renderNavbarLogo() {
+    const container = document.getElementById('navbarLogoContainer');
+    if (navbarLogoUrl) {
+      container.innerHTML = `<img src="${navbarLogoUrl}" class="navbar-logo" alt="Emirates Logo">`;
+    } else {
+      container.innerHTML = '<div class="navbar-logo-placeholder">EMIRATES LOGO</div>';
+    }
+  }
+
+  // Load Emirates animation images
+  async function loadEmiratesAnimation() {
+    const logoSnap = await db.ref(`${basePath}/emirates_logo`).once('value');
+    const sloganSnap = await db.ref(`${basePath}/emirates_slogan`).once('value');
+    emiratesLogoUrl = logoSnap.val() || '';
+    emiratesSloganUrl = sloganSnap.val() || '';
+    renderEmiratesAnimation();
+  }
+
+  function renderEmiratesAnimation() {
+    const logoContainer = document.getElementById('emiratesLogoContainer');
+    const sloganContainer = document.getElementById('emiratesSloganContainer');
+    
+    if (emiratesLogoUrl) {
+      logoContainer.innerHTML = `<img src="${emiratesLogoUrl}" class="emirates-logo-placeholder" alt="Emirates Logo">`;
+    } else {
+      logoContainer.innerHTML = '<div class="placeholder-text">EMIRATES LOGO<br>(Upload in Admin)</div>';
+    }
+    
+    if (emiratesSloganUrl) {
+      sloganContainer.innerHTML = `<img src="${emiratesSloganUrl}" class="emirates-slogan-placeholder" alt="Fly Better">`;
+    } else {
+      sloganContainer.innerHTML = '<div class="placeholder-text">FLY BETTER<br>(Upload in Admin)</div>';
+    }
+  }
+
+  // Load group corner images
+  async function loadGroupCornerImages() {
+    const snap = await db.ref(`${basePath}/group_corner_images`).once('value');
+    groupCornerImages = snap.val() || [];
+    renderAllGroups();
+  }
 
   // Load all groups
   async function loadGroups() {
@@ -439,7 +810,10 @@
 
   async function loadTeamIcons() {
     const snap = await db.ref(`${basePath}/teamIcons`).once('value');
-    teamIconsCache = snap.val() || {};
+    const data = snap.val() || {};
+    for (const [team, value] of Object.entries(data)) {
+      if (value.imageUrl) teamIconsCache[team] = value.imageUrl;
+    }
     renderAllGroups();
   }
 
@@ -448,7 +822,7 @@
     return url ? `<img class="${cls}" src="${url}" onerror="this.style.display='none';">` : '';
   }
 
-  // Render all groups
+  // Render all groups with corner animation and legends
   function renderAllGroups() {
     const container = document.getElementById('groupsContainer');
     if(!container) return;
@@ -459,20 +833,58 @@
       const teamsObj = group.teams || {};
       const teams = Object.entries(teamsObj).map(([key,val])=>({key, ...val}));
       const sorted = [...teams].sort((a,b)=>(b.pts||0)-(a.pts||0) || (b.gd||0)-(a.gd||0));
-      const groupCard = document.createElement('div'); groupCard.className = 'card';
+      
+      const groupCard = document.createElement('div'); 
+      groupCard.className = 'card';
+      
+      // Build corner animation HTML
+      let cornerHtml = '';
+      if (groupCornerImages.length > 0) {
+        cornerHtml = '<div class="group-corner-animation">';
+        groupCornerImages.forEach((url, idx) => {
+          cornerHtml += `<img src="${url}" class="corner-image" alt="Corner ${idx}">`;
+        });
+        cornerHtml += '</div>';
+      }
+      
       groupCard.innerHTML = `
+        ${cornerHtml}
         <div class="card-header">
           <div class="card-header-left"><h3>${groupName}</h3> ${isAdmin ? `<button class="add-btn edit-group-name" data-gid="${gid}">✏️ Rename</button><button class="add-btn delete-group" data-gid="${gid}">🗑️ Delete</button>` : ''}</div>
           ${isAdmin ? `<button class="add-btn add-team-to-group" data-gid="${gid}">+ Add Team</button>` : ''}
         </div>
-        <div class="card-content"><div class="group-table-wrapper"><table class="group-table"><thead><tr><th>Pos</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GS</th><th>GC</th><th>GD</th><th>Pts</th><th>Last 5</th>${isAdmin ? '<th>Actions</th>' : ''}</tr></thead><tbody id="group-${gid}-body"></tbody></table></div></div>
+        <div class="card-content"><div class="group-table-wrapper"><table class="group-table"><thead><tr><th>Pos</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GS</th><th>GC</th><th>GD</th><th>Pts</th><th>Last 5</th>${isAdmin ? '<th>Actions</th>' : ''}</tr></thead><tbody id="group-${gid}-body"></tbody></table></div>
+        <div class="legend-under-table">
+          <span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span>Top 4 - Qualify for R16</span></span>
+          <span class="legend-item"><span class="legend-vertical-bar legend-red"></span><span>5th+ - Relegated</span></span>
+        </div>
+        </div>
       `;
       container.appendChild(groupCard);
+      
       const tbody = document.getElementById(`group-${gid}-body`);
       tbody.innerHTML = '';
       sorted.forEach((team, idx) => {
         const row = tbody.insertRow();
-        row.insertCell(0).innerText = idx+1;
+        const pos = idx + 1;
+        
+        // Position with qualification indicator
+        const posCell = row.insertCell(0);
+        posCell.className = "rank-cell";
+        let barClass = "";
+        if (pos <= 4) {
+          barClass = "blue-bar-vertical";
+          if (pos === 4) row.classList.add("dashed-separator-blue");
+        } else {
+          barClass = "red-bar-vertical";
+        }
+        
+        if (barClass) {
+          posCell.innerHTML = `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${pos}</div>`;
+        } else {
+          posCell.innerText = pos;
+        }
+        
         const iconHtml = getTeamIconHtml(team.name);
         row.insertCell(1).innerHTML = `<div style="display:flex;align-items:center;">${iconHtml} ${team.name}</div>`;
         row.insertCell(2).innerText = team.p || 0;
@@ -483,8 +895,8 @@
         row.insertCell(7).innerText = team.gc || 0;
         row.insertCell(8).innerText = (team.gd || 0) > 0 ? `+${team.gd||0}` : `${team.gd||0}`;
         row.insertCell(9).innerText = team.pts || 0;
-        // last5 placeholder (simplified)
         row.insertCell(10).innerHTML = `<div class="form-circles"><span class="circle-blank">—</span></div>`;
+        
         if(isAdmin) {
           const actions = row.insertCell(11);
           const editBtn = document.createElement('button'); editBtn.innerText='✏️'; editBtn.className='edit-btn';
@@ -494,7 +906,7 @@
           actions.appendChild(editBtn); actions.appendChild(delBtn);
         }
       });
-      // attach group header listeners
+      
       groupCard.querySelectorAll('.edit-group-name').forEach(btn => btn.addEventListener('click',()=>renameGroup(gid)));
       groupCard.querySelectorAll('.delete-group').forEach(btn => btn.addEventListener('click',()=>deleteGroup(gid)));
       groupCard.querySelectorAll('.add-team-to-group').forEach(btn => btn.addEventListener('click',()=>openTeamForm(gid, null)));
@@ -506,7 +918,13 @@
     if(newName) await db.ref(`${basePath}/groups/${gid}/name`).set(newName);
     loadGroups();
   }
-  async function deleteGroup(gid) { if(confirm('Delete group and all its data?')) await db.ref(`${basePath}/groups/${gid}`).remove(); loadGroups(); }
+  
+  async function deleteGroup(gid) { 
+    if(confirm('Delete group and all its data?')) {
+      await db.ref(`${basePath}/groups/${gid}`).remove(); 
+      loadGroups(); 
+    }
+  }
 
   let currentGroupForTeam = null, currentTeamKey = null;
   function openTeamForm(groupId, teamKey, teamData=null) {
@@ -523,6 +941,7 @@
     document.getElementById('teamPts').value = teamData?.pts || 0;
     document.getElementById('teamFormModal').classList.add('active');
   }
+  
   document.getElementById('saveTeamBtn').onclick = async () => {
     const name = document.getElementById('teamName').value.trim();
     if(!name) return alert('Team name required');
@@ -536,9 +955,9 @@
     document.getElementById('teamFormModal').classList.remove('active');
     loadGroups();
   };
+  
   document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamFormModal').classList.remove('active');
 
-  // Group results management
   async function addNewGroup() {
     let name = prompt('Group name (e.g. Group A)');
     if(!name) return;
@@ -551,17 +970,20 @@
     const sel = document.getElementById('resultGroupSelect');
     if(!sel) return;
     sel.innerHTML = '<option value="">Select Group</option>';
-    for(let gid in groupsData) { let opt = document.createElement('option'); opt.value = gid; opt.innerText = groupsData[gid].name || gid; sel.appendChild(opt); }
+    for(let gid in groupsData) { 
+      let opt = document.createElement('option'); 
+      opt.value = gid; 
+      opt.innerText = groupsData[gid].name || gid; 
+      sel.appendChild(opt); 
+    }
   }
 
   let editingResultKey = null, editingResultGroup = null;
   async function openResultForm(groupId, resultKey=null, resultData=null) {
-    editingResultKey = resultKey; editingResultGroup = groupId;
+    editingResultKey = resultKey; 
+    editingResultGroup = groupId;
     await populateTeamsInGroup(groupId);
     if(resultData) {
-      // parse match text
-      let parts = resultData.matchText.split(' ');
-      // quick parse - simplified
       document.getElementById('resultHomeTeam').value = resultData.homeTeam || '';
       document.getElementById('resultAwayTeam').value = resultData.awayTeam || '';
       document.getElementById('resultHomeScore').value = resultData.homeScore || 0;
@@ -569,21 +991,35 @@
       document.getElementById('resultForfeitType').value = resultData.forfeitType || 'none';
       document.getElementById('resultMd').value = resultData.md || 1;
     } else {
-      document.getElementById('resultHomeTeam').value = ''; document.getElementById('resultAwayTeam').value = ''; 
-      document.getElementById('resultHomeScore').value = 0; document.getElementById('resultAwayScore').value = 0;
-      document.getElementById('resultForfeitType').value = 'none'; document.getElementById('resultMd').value = 1;
+      document.getElementById('resultHomeTeam').value = ''; 
+      document.getElementById('resultAwayTeam').value = ''; 
+      document.getElementById('resultHomeScore').value = 0; 
+      document.getElementById('resultAwayScore').value = 0;
+      document.getElementById('resultForfeitType').value = 'none'; 
+      document.getElementById('resultMd').value = 1;
     }
     document.getElementById('resultFormModal').classList.add('active');
   }
+  
   async function populateTeamsInGroup(groupId) {
-    const group = groupsData[groupId]; if(!group) return;
+    const group = groupsData[groupId]; 
+    if(!group) return;
     const teams = group.teams || {};
     const teamNames = Object.values(teams).map(t=>t.name);
-    const homeSel = document.getElementById('resultHomeTeam'); const awaySel = document.getElementById('resultAwayTeam');
-    homeSel.innerHTML = '<option value="">Home</option>'; awaySel.innerHTML = '<option value="">Away</option>';
-    teamNames.forEach(t => { homeSel.innerHTML += `<option value="${t}">${t}</option>`; awaySel.innerHTML += `<option value="${t}">${t}</option>`; });
+    const homeSel = document.getElementById('resultHomeTeam'); 
+    const awaySel = document.getElementById('resultAwayTeam');
+    homeSel.innerHTML = '<option value="">Home</option>'; 
+    awaySel.innerHTML = '<option value="">Away</option>';
+    teamNames.forEach(t => { 
+      homeSel.innerHTML += `<option value="${t}">${t}</option>`; 
+      awaySel.innerHTML += `<option value="${t}">${t}</option>`; 
+    });
   }
-  document.getElementById('resultGroupSelect').addEventListener('change', (e) => { if(e.target.value) populateTeamsInGroup(e.target.value); });
+  
+  document.getElementById('resultGroupSelect').addEventListener('change', (e) => { 
+    if(e.target.value) populateTeamsInGroup(e.target.value); 
+  });
+  
   document.getElementById('saveResultBtn').onclick = async () => {
     const groupId = document.getElementById('resultGroupSelect').value;
     if(!groupId) return alert('Select group');
@@ -596,12 +1032,12 @@
     const resultObj = { matchText, homeTeam: home, awayTeam: away, homeScore: hScore, awayScore: aScore, forfeitType: forfeit, md };
     if(editingResultKey) await db.ref(`${getGroupPath(groupId)}/results/${editingResultKey}`).set(resultObj);
     else await db.ref(`${getGroupPath(groupId)}/results`).push(resultObj);
-    // update team stats
     await updateGroupTeamStats(groupId, home, away, hScore, aScore, forfeit);
     document.getElementById('resultFormModal').classList.remove('active');
     loadGroups();
     loadAllResults();
   };
+  
   document.getElementById('cancelResultBtn').onclick = () => document.getElementById('resultFormModal').classList.remove('active');
 
   async function updateGroupTeamStats(groupId, homeTeam, awayTeam, hScore, aScore, forfeit) {
@@ -609,12 +1045,19 @@
     const snap = await groupRef.child('teams').once('value');
     let teams = snap.val() || {};
     let homeKey = null, awayKey = null, homeData=null, awayData=null;
-    for(let [k,v] of Object.entries(teams)) { if(v.name===homeTeam) { homeKey=k; homeData=v; } if(v.name===awayTeam) { awayKey=k; awayData=v; } }
+    for(let [k,v] of Object.entries(teams)) { 
+      if(v.name===homeTeam) { homeKey=k; homeData=v; } 
+      if(v.name===awayTeam) { awayKey=k; awayData=v; } 
+    }
     if(!homeData) homeData = { name: homeTeam, p:0,w:0,d:0,l:0,gs:0,gc:0,gd:0,pts:0 };
     if(!awayData) awayData = { name: awayTeam, p:0,w:0,d:0,l:0,gs:0,gc:0,gd:0,pts:0 };
-    homeData.p = (homeData.p||0)+1; awayData.p = (awayData.p||0)+1;
-    if(forfeit === 'no_contest') { /* no change */ }
-    else if(forfeit === 'forfeit') { if(hScore>aScore) { homeData.pts+=3; homeData.w++; awayData.l++; } else if(aScore>hScore) { awayData.pts+=3; awayData.w++; homeData.l++; } }
+    homeData.p = (homeData.p||0)+1; 
+    awayData.p = (awayData.p||0)+1;
+    if(forfeit === 'no_contest') { }
+    else if(forfeit === 'forfeit') { 
+      if(hScore>aScore) { homeData.pts+=3; homeData.w++; awayData.l++; } 
+      else if(aScore>hScore) { awayData.pts+=3; awayData.w++; homeData.l++; } 
+    }
     else {
       homeData.gs+=hScore; homeData.gc+=aScore; awayData.gs+=aScore; awayData.gc+=hScore;
       homeData.gd = homeData.gs-homeData.gc; awayData.gd = awayData.gs-awayData.gc;
@@ -622,6 +1065,8 @@
       else if(aScore>hScore) { awayData.pts+=3; awayData.w++; homeData.l++; }
       else { homeData.pts+=1; awayData.pts+=1; homeData.d++; awayData.d++; }
     }
+    if(!homeKey) homeKey = groupRef.child('teams').push().key;
+    if(!awayKey) awayKey = groupRef.child('teams').push().key;
     await groupRef.child(`teams/${homeKey}`).set(homeData);
     await groupRef.child(`teams/${awayKey}`).set(awayData);
   }
@@ -634,12 +1079,19 @@
       const resultsSnap = await db.ref(`${getGroupPath(gid)}/results`).once('value');
       const results = resultsSnap.val() ? Object.entries(resultsSnap.val()).map(([k,v])=>({key:k, groupId:gid, ...v})) : [];
       for(let r of results) {
-        const div = document.createElement('div'); div.className = 'knockout-match';
+        const div = document.createElement('div'); 
+        div.className = 'knockout-match';
         div.innerHTML = `<span><strong>${r.matchText}</strong> (MD${r.md})</span>${isAdmin? `<div><button class="edit-btn" data-g="${r.groupId}" data-key="${r.key}">✏️</button><button class="delete-btn" data-g="${r.groupId}" data-key="${r.key}">🗑️</button></div>`:''}`;
         container.appendChild(div);
         if(isAdmin) {
           div.querySelector('.edit-btn')?.addEventListener('click',()=> openResultForm(r.groupId, r.key, r));
-          div.querySelector('.delete-btn')?.addEventListener('click', async ()=> { if(confirm('Delete result?')) await db.ref(`${getGroupPath(r.groupId)}/results/${r.key}`).remove(); loadAllResults(); loadGroups(); });
+          div.querySelector('.delete-btn')?.addEventListener('click', async ()=> { 
+            if(confirm('Delete result?')) {
+              await db.ref(`${getGroupPath(r.groupId)}/results/${r.key}`).remove(); 
+              loadAllResults(); 
+              loadGroups(); 
+            }
+          });
         }
       }
     }
@@ -647,26 +1099,42 @@
 
   // Knockout management
   function renderKnockout() {
-    const container = document.getElementById('knockoutList'); if(!container) return;
+    const container = document.getElementById('knockoutList'); 
+    if(!container) return;
     container.innerHTML = '';
     knockoutMatches.forEach(m => {
-      const div = document.createElement('div'); div.className = 'knockout-match';
+      const div = document.createElement('div'); 
+      div.className = 'knockout-match';
       div.innerHTML = `<span><strong>${m.round || 'KO'}</strong> ${m.homeTeam} ${m.score || '?'} ${m.awayTeam}</span>${isAdmin? `<div><button class="edit-ko" data-key="${m.key}">✏️</button><button class="delete-ko" data-key="${m.key}">🗑️</button></div>`:''}`;
       container.appendChild(div);
       if(isAdmin) {
         div.querySelector('.edit-ko')?.addEventListener('click',()=>openKoForm(m.key,m));
-        div.querySelector('.delete-ko')?.addEventListener('click',async()=>{ if(confirm('Delete?')) await db.ref(`${basePath}/knockout_matches/${m.key}`).remove(); loadKnockout(); });
+        div.querySelector('.delete-ko')?.addEventListener('click',async()=>{ 
+          if(confirm('Delete?')) {
+            await db.ref(`${basePath}/knockout_matches/${m.key}`).remove(); 
+            loadKnockout(); 
+          }
+        });
       }
     });
   }
+  
   let editingKoKey = null;
   async function openKoForm(key=null, data=null) {
     editingKoKey = key;
     const teamsList = [];
-    for(let gid in groupsData) { let teams = groupsData[gid].teams || {}; Object.values(teams).forEach(t=>teamsList.push(t.name)); }
-    const homeSel = document.getElementById('koHomeTeam'); const awaySel = document.getElementById('koAwayTeam');
-    homeSel.innerHTML = '<option value="">Home</option>'; awaySel.innerHTML = '<option value="">Away</option>';
-    teamsList.forEach(t=>{ homeSel.innerHTML+=`<option value="${t}">${t}</option>`; awaySel.innerHTML+=`<option value="${t}">${t}</option>`; });
+    for(let gid in groupsData) { 
+      let teams = groupsData[gid].teams || {}; 
+      Object.values(teams).forEach(t=>teamsList.push(t.name)); 
+    }
+    const homeSel = document.getElementById('koHomeTeam'); 
+    const awaySel = document.getElementById('koAwayTeam');
+    homeSel.innerHTML = '<option value="">Home</option>'; 
+    awaySel.innerHTML = '<option value="">Away</option>';
+    teamsList.forEach(t=>{ 
+      homeSel.innerHTML+=`<option value="${t}">${t}</option>`; 
+      awaySel.innerHTML+=`<option value="${t}">${t}</option>`; 
+    });
     if(data) {
       document.getElementById('koRound').value = data.round||'';
       document.getElementById('koHomeTeam').value = data.homeTeam||'';
@@ -674,13 +1142,18 @@
       document.getElementById('koScore').value = data.score||'';
       document.getElementById('koForfeit').value = data.forfeit||'none';
     } else {
-      document.getElementById('koRound').value=''; document.getElementById('koScore').value='';
+      document.getElementById('koRound').value=''; 
+      document.getElementById('koScore').value='';
     }
     document.getElementById('koFormModal').classList.add('active');
   }
+  
   document.getElementById('saveKoBtn').onclick = async () => {
-    const round = document.getElementById('koRound').value; const home = document.getElementById('koHomeTeam').value; const away = document.getElementById('koAwayTeam').value;
-    const score = document.getElementById('koScore').value; const forfeit = document.getElementById('koForfeit').value;
+    const round = document.getElementById('koRound').value; 
+    const home = document.getElementById('koHomeTeam').value; 
+    const away = document.getElementById('koAwayTeam').value;
+    const score = document.getElementById('koScore').value; 
+    const forfeit = document.getElementById('koForfeit').value;
     if(!round||!home||!away) return alert('Fill all');
     const koObj = { round, homeTeam: home, awayTeam: away, score, forfeit };
     if(editingKoKey) await db.ref(`${basePath}/knockout_matches/${editingKoKey}`).set(koObj);
@@ -688,47 +1161,466 @@
     document.getElementById('koFormModal').classList.remove('active');
     loadKnockout();
   };
+  
   document.getElementById('cancelKoBtn').onclick = () => document.getElementById('koFormModal').classList.remove('active');
   document.getElementById('addKnockoutMatchBtn').onclick = () => openKoForm();
 
   // Admin mode
-  function activateAdminMode(pwd) { if(pwd==='admin@100'){ isAdmin=true; document.querySelectorAll('.add-btn').forEach(b=>b.style.display='inline-block'); renderAllGroups(); loadAllResults(); renderKnockout(); alert('Admin active'); } else alert('Wrong key'); }
+  function activateAdminMode(pwd) { 
+    if(pwd==='admin@100'){ 
+      isAdmin=true; 
+      document.querySelectorAll('.add-btn').forEach(b=>b.style.display='inline-block'); 
+      renderAllGroups(); 
+      loadAllResults(); 
+      renderKnockout(); 
+      alert('Admin active'); 
+    } else alert('Wrong key'); 
+  }
 
-  // Slideshow (same as before)
-  async function loadSlideshow() { const snap = await db.ref(`${basePath}/slideshow/images`).once('value'); slideshowImages=snap.val()||[]; const dur=await db.ref(`${basePath}/slideshow/duration`).once('value'); slideshowDuration=dur.val()||3000; startSlideshow(); }
-  function startSlideshow() { if(slideInterval) clearInterval(slideInterval); if(!slideshowImages.length) return; currentSlideIdx=0; updateSlide(); slideInterval=setInterval(()=>{ currentSlideIdx=(currentSlideIdx+1)%slideshowImages.length; updateSlide(); }, slideshowDuration); }
-  function updateSlide(){ document.getElementById('slideshow-img').src=slideshowImages[currentSlideIdx]||''; updateDots();}
-  function updateDots(){ const c=document.getElementById('dotsContainer'); if(!c) return; c.innerHTML=''; slideshowImages.forEach((_,i)=>{ let d=document.createElement('span'); d.classList.add('dot'); if(i===currentSlideIdx) d.classList.add('active'); d.onclick=()=>{ currentSlideIdx=i; updateSlide(); if(slideInterval){clearInterval(slideInterval); slideInterval=setInterval(()=>{ currentSlideIdx=(currentSlideIdx+1)%slideshowImages.length; updateSlide();},slideshowDuration);}}; c.appendChild(d);});}
-  // hamburger menu
+  // Slideshow functions
+  async function loadSlideshow() { 
+    const snap = await db.ref(`${basePath}/slideshow/images`).once('value'); 
+    slideshowImages=snap.val()||[]; 
+    const dur=await db.ref(`${basePath}/slideshow/duration`).once('value'); 
+    slideshowDuration=dur.val()||3000; 
+    startSlideshow(); 
+  }
+  
+  function startSlideshow() { 
+    if(slideInterval) clearInterval(slideInterval); 
+    if(!slideshowImages.length) return; 
+    currentSlideIdx=0; 
+    updateSlide(); 
+    slideInterval=setInterval(()=>{ 
+      currentSlideIdx=(currentSlideIdx+1)%slideshowImages.length; 
+      updateSlide(); 
+    }, slideshowDuration); 
+  }
+  
+  function updateSlide(){ 
+    document.getElementById('slideshow-img').src=slideshowImages[currentSlideIdx]||''; 
+    updateDots();
+  }
+  
+  function updateDots(){ 
+    const c=document.getElementById('dotsContainer'); 
+    if(!c) return; 
+    c.innerHTML=''; 
+    slideshowImages.forEach((_,i)=>{ 
+      let d=document.createElement('span'); 
+      d.classList.add('dot'); 
+      if(i===currentSlideIdx) d.classList.add('active'); 
+      d.onclick=()=>{ 
+        currentSlideIdx=i; 
+        updateSlide(); 
+        if(slideInterval){
+          clearInterval(slideInterval); 
+          slideInterval=setInterval(()=>{ 
+            currentSlideIdx=(currentSlideIdx+1)%slideshowImages.length; 
+            updateSlide();
+          },slideshowDuration);
+        }
+      }; 
+      c.appendChild(d);
+    });
+  }
+
+  // ImgBB upload helper
+  async function uploadToImgBB(file) {
+    const fd = new FormData();
+    fd.append('image', file);
+    const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: fd });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error?.message || 'Upload failed');
+    return data.data.url;
+  }
+
+  // Hamburger menu
   function buildHamburgerModal(){
-    const mc=document.getElementById('modalContent'); let html=`<h3>FA CUP MENU</h3><div class="modal-option" id="adminModeOption">ADMIN MODE</div>`;
-    if(isAdmin) html+=`<div class="modal-option" id="addIconBtn">ADD TEAM ICON</div><div class="modal-option" id="addSlideBtn">MANAGE SLIDESHOW</div>`;
+    const mc=document.getElementById('modalContent'); 
+    let html=`<h3>FA CUP MENU</h3><div class="modal-option" id="adminModeOption">ADMIN MODE</div>`;
+    if(isAdmin) {
+      html+=`<div class="modal-option" id="addIconBtn">ADD TEAM ICON</div>`;
+      html+=`<div class="modal-option" id="addSlideBtn">MANAGE SLIDESHOW</div>`;
+      html+=`<div class="modal-option" id="manageNavbarLogoBtn">MANAGE NAVBAR LOGO</div>`;
+      html+=`<div class="modal-option" id="manageEmiratesBtn">MANAGE EMIRATES ANIMATION</div>`;
+      html+=`<div class="modal-option" id="manageCornerBtn">MANAGE GROUP CORNER IMAGES</div>`;
+    }
     html+=`<div class="modal-option" id="rulesBtn">RULES</div><div class="modal-option" id="homeBtn">HOME</div><button class="close-modal" id="closeModalBtn">CLOSE</button>`;
-    mc.innerHTML=html; document.getElementById('adminModeOption').onclick=()=>{ let p=prompt('Admin key:'); activateAdminMode(p); document.getElementById('modalOverlay').classList.remove('active'); };
-    if(isAdmin){ document.getElementById('addIconBtn').onclick=()=>{ document.getElementById('modalOverlay').classList.remove('active'); showUploadIconModal(); }; document.getElementById('addSlideBtn').onclick=()=>{ showSlideshowManager(); }; }
-    document.getElementById('rulesBtn').onclick=()=>alert('FA Cup Rules: Standard knockout + groups'); document.getElementById('homeBtn').onclick=()=>location.reload(); document.getElementById('closeModalBtn').onclick=()=>document.getElementById('modalOverlay').classList.remove('active');
+    mc.innerHTML=html; 
+    
+    document.getElementById('adminModeOption').onclick=()=>{ 
+      let p=prompt('Admin key:'); 
+      activateAdminMode(p); 
+      document.getElementById('modalOverlay').classList.remove('active'); 
+    };
+    
+    if(isAdmin){ 
+      document.getElementById('addIconBtn').onclick=()=>{ 
+        document.getElementById('modalOverlay').classList.remove('active'); 
+        showUploadIconModal(); 
+      }; 
+      document.getElementById('addSlideBtn').onclick=()=>{ 
+        showSlideshowManager(); 
+      };
+      document.getElementById('manageNavbarLogoBtn').onclick=()=>{ 
+        showNavbarLogoManager(); 
+      };
+      document.getElementById('manageEmiratesBtn').onclick=()=>{ 
+        showEmiratesManager(); 
+      };
+      document.getElementById('manageCornerBtn').onclick=()=>{ 
+        showCornerImagesManager(); 
+      };
+    }
+    
+    document.getElementById('rulesBtn').onclick=()=>alert('FA Cup Rules: Standard knockout + groups'); 
+    document.getElementById('homeBtn').onclick=()=>location.reload(); 
+    document.getElementById('closeModalBtn').onclick=()=>document.getElementById('modalOverlay').classList.remove('active');
   }
+
+  // Team icon upload modal
   async function showUploadIconModal(){
-    // simplified icon upload
-    const teamName = prompt('Team name:'); if(!teamName) return;
-    const fileInput = document.createElement('input'); fileInput.type='file'; fileInput.accept='image/*'; fileInput.onchange=async(e)=>{
-      const file=e.target.files[0]; if(!file) return; const fd=new FormData(); fd.append('image',file);
-      const res=await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,{method:'POST',body:fd}); const data=await res.json();
-      if(data.success){ await db.ref(`${basePath}/teamIcons/${teamName}`).set(data.data.url); loadTeamIcons(); alert('Icon added'); }
-      else alert('upload failed');
-    }; fileInput.click();
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+      <h3>Add Team Icon</h3>
+      <input type="text" id="iconTeamName" placeholder="Team Name (exact match)" 
+             style="width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: #fef2f2; 
+                    border: 1px solid #b91c1c; border-radius: 2rem; color: #b91c1c;">
+      <input type="file" id="iconFile" accept="image/*" 
+             style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;">
+      <button class="modal-option" id="uploadIconSave">UPLOAD</button>
+      <button class="close-modal" id="closeIconModal">Cancel</button>
+      <div id="iconStatus"></div>
+    `;
+    
+    document.getElementById('uploadIconSave').onclick = async () => {
+      const teamName = document.getElementById('iconTeamName').value.trim();
+      const file = document.getElementById('iconFile').files[0];
+      const statusDiv = document.getElementById('iconStatus');
+      
+      if(!teamName) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Enter team name</div>'; 
+        return; 
+      }
+      if(!file) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Select an image</div>'; 
+        return; 
+      }
+      
+      try {
+        statusDiv.innerHTML = '<div class="status-message status-loading">Uploading...</div>';
+        const url = await uploadToImgBB(file);
+        await db.ref(`${basePath}/teamIcons/${teamName}`).set({ imageUrl: url, updatedAt: Date.now() });
+        teamIconsCache[teamName] = url;
+        renderAllGroups();
+        statusDiv.innerHTML = '<div class="status-message status-success">✓ Icon saved for ' + teamName + '</div>';
+        setTimeout(() => modal.classList.remove('active'), 1500);
+      } catch(err) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Error: ' + err.message + '</div>'; 
+      }
+    };
+    
+    document.getElementById('closeIconModal').onclick = () => modal.classList.remove('active');
+    modal.classList.add('active');
   }
-  async function showSlideshowManager(){
-    let url=prompt('Image URL:'); if(url) { slideshowImages.push(url); await db.ref(`${basePath}/slideshow/images`).set(slideshowImages); loadSlideshow(); }
+
+  // Slideshow manager
+  async function showSlideshowManager() {
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    const currentDurSec = slideshowDuration / 1000;
+    
+    content.innerHTML = `
+      <h3>Manage Slideshow</h3>
+      <div id="slidePreviewList" class="image-preview-grid"></div>
+      <input type="file" id="newSlideFile" accept="image/*" 
+             style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;">
+      <button class="modal-option" id="uploadSlideBtn">Add Slide</button>
+      <div style="margin: 10px 0;">
+        <label style="font-weight: bold;">Duration (seconds):</label>
+        <input type="number" id="slideDurationSec" min="1" max="10" step="0.5" value="${currentDurSec}" 
+               style="width: 80px; padding: 0.4rem; background: #fef2f2; color: #b91c1c; 
+                      border: 1px solid #b91c1c; border-radius: 1rem; margin-left: 0.5rem;">
+      </div>
+      <button class="modal-option" id="saveDurBtn">Set Duration</button>
+      <button class="close-modal" id="closeSlideModal">Close</button>
+      <div id="slideStatus"></div>
+    `;
+    
+    const previewDiv = document.getElementById('slidePreviewList');
+    
+    function refreshPreviews() {
+      previewDiv.innerHTML = slideshowImages.map((url, idx) => `
+        <div class="image-preview-item">
+          <img src="${url}">
+          <button class="delete-preview-btn" data-idx="${idx}">✕</button>
+        </div>
+      `).join('');
+      
+      previewDiv.querySelectorAll('.delete-preview-btn').forEach(btn => {
+        btn.onclick = async () => {
+          const idx = parseInt(btn.dataset.idx);
+          slideshowImages.splice(idx, 1);
+          await db.ref(`${basePath}/slideshow/images`).set(slideshowImages);
+          loadSlideshow();
+          refreshPreviews();
+        };
+      });
+    }
+    
+    refreshPreviews();
+    
+    document.getElementById('uploadSlideBtn').onclick = async () => {
+      const file = document.getElementById('newSlideFile').files[0];
+      const statusDiv = document.getElementById('slideStatus');
+      if(!file) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Select file</div>'; 
+        return; 
+      }
+      try {
+        statusDiv.innerHTML = '<div class="status-message status-loading">Uploading...</div>';
+        const url = await uploadToImgBB(file);
+        slideshowImages.push(url);
+        await db.ref(`${basePath}/slideshow/images`).set(slideshowImages);
+        loadSlideshow();
+        refreshPreviews();
+        statusDiv.innerHTML = '<div class="status-message status-success">✓ Added</div>';
+        document.getElementById('newSlideFile').value = '';
+      } catch(e) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Error: ' + e.message + '</div>'; 
+      }
+    };
+    
+    document.getElementById('saveDurBtn').onclick = async () => {
+      let sec = parseFloat(document.getElementById('slideDurationSec').value);
+      if(isNaN(sec)) sec = 3;
+      sec = Math.min(10, Math.max(1, sec));
+      await db.ref(`${basePath}/slideshow/duration`).set(sec * 1000);
+      slideshowDuration = sec * 1000;
+      startSlideshow();
+      document.getElementById('slideStatus').innerHTML = '<div class="status-message status-success">Duration set to ' + sec + 's</div>';
+    };
+    
+    document.getElementById('closeSlideModal').onclick = () => modal.classList.remove('active');
+    modal.classList.add('active');
   }
-  document.getElementById('hamburgerBtn').onclick=()=>{ buildHamburgerModal(); document.getElementById('modalOverlay').classList.add('active'); };
+
+  // Navbar logo manager
+  async function showNavbarLogoManager() {
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+      <h3>Manage Navbar Logo</h3>
+      <p style="margin: 1rem 0;">Current logo:</p>
+      <div style="background: #fef2f2; padding: 1rem; border-radius: 1rem; margin: 1rem 0;">
+        ${navbarLogoUrl ? `<img src="${navbarLogoUrl}" style="max-width: 150px; max-height: 50px;">` : '<p>No logo set</p>'}
+      </div>
+      <input type="file" id="navbarLogoFile" accept="image/*" 
+             style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;">
+      <button class="modal-option" id="uploadNavbarLogoBtn">Upload New Logo</button>
+      <button class="close-modal" id="closeNavbarModal">Close</button>
+      <div id="navbarStatus"></div>
+    `;
+    
+    document.getElementById('uploadNavbarLogoBtn').onclick = async () => {
+      const file = document.getElementById('navbarLogoFile').files[0];
+      const statusDiv = document.getElementById('navbarStatus');
+      if(!file) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Select an image</div>'; 
+        return; 
+      }
+      try {
+        statusDiv.innerHTML = '<div class="status-message status-loading">Uploading...</div>';
+        const url = await uploadToImgBB(file);
+        await db.ref(`${basePath}/navbar_logo`).set(url);
+        navbarLogoUrl = url;
+        renderNavbarLogo();
+        statusDiv.innerHTML = '<div class="status-message status-success">✓ Logo updated</div>';
+        setTimeout(() => modal.classList.remove('active'), 1500);
+      } catch(e) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Error: ' + e.message + '</div>'; 
+      }
+    };
+    
+    document.getElementById('closeNavbarModal').onclick = () => modal.classList.remove('active');
+    modal.classList.add('active');
+  }
+
+  // Emirates animation manager
+  async function showEmiratesManager() {
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+      <h3>Manage Emirates Animation</h3>
+      
+      <div style="margin: 1rem 0;">
+        <p style="font-weight: bold; margin-bottom: 0.5rem;">Emirates Logo (Front):</p>
+        <div style="background: #fef2f2; padding: 1rem; border-radius: 1rem; margin-bottom: 0.5rem;">
+          ${emiratesLogoUrl ? `<img src="${emiratesLogoUrl}" style="max-width: 200px; max-height: 100px;">` : '<p>No logo set</p>'}
+        </div>
+        <input type="file" id="emiratesLogoFile" accept="image/*" 
+               style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;">
+        <button class="modal-option" id="uploadEmiratesLogoBtn">Upload Logo</button>
+      </div>
+      
+      <div style="margin: 1rem 0;">
+        <p style="font-weight: bold; margin-bottom: 0.5rem;">Fly Better Slogan (Back):</p>
+        <div style="background: #fef2f2; padding: 1rem; border-radius: 1rem; margin-bottom: 0.5rem;">
+          ${emiratesSloganUrl ? `<img src="${emiratesSloganUrl}" style="max-width: 200px; max-height: 100px;">` : '<p>No slogan set</p>'}
+        </div>
+        <input type="file" id="emiratesSloganFile" accept="image/*" 
+               style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;">
+        <button class="modal-option" id="uploadEmiratesSloganBtn">Upload Slogan</button>
+      </div>
+      
+      <button class="close-modal" id="closeEmiratesModal">Close</button>
+      <div id="emiratesStatus"></div>
+    `;
+    
+    document.getElementById('uploadEmiratesLogoBtn').onclick = async () => {
+      const file = document.getElementById('emiratesLogoFile').files[0];
+      const statusDiv = document.getElementById('emiratesStatus');
+      if(!file) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Select an image</div>'; 
+        return; 
+      }
+      try {
+        statusDiv.innerHTML = '<div class="status-message status-loading">Uploading logo...</div>';
+        const url = await uploadToImgBB(file);
+        await db.ref(`${basePath}/emirates_logo`).set(url);
+        emiratesLogoUrl = url;
+        renderEmiratesAnimation();
+        statusDiv.innerHTML = '<div class="status-message status-success">✓ Logo updated</div>';
+      } catch(e) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Error: ' + e.message + '</div>'; 
+      }
+    };
+    
+    document.getElementById('uploadEmiratesSloganBtn').onclick = async () => {
+      const file = document.getElementById('emiratesSloganFile').files[0];
+      const statusDiv = document.getElementById('emiratesStatus');
+      if(!file) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Select an image</div>'; 
+        return; 
+      }
+      try {
+        statusDiv.innerHTML = '<div class="status-message status-loading">Uploading slogan...</div>';
+        const url = await uploadToImgBB(file);
+        await db.ref(`${basePath}/emirates_slogan`).set(url);
+        emiratesSloganUrl = url;
+        renderEmiratesAnimation();
+        statusDiv.innerHTML = '<div class="status-message status-success">✓ Slogan updated</div>';
+      } catch(e) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Error: ' + e.message + '</div>'; 
+      }
+    };
+    
+    document.getElementById('closeEmiratesModal').onclick = () => modal.classList.remove('active');
+    modal.classList.add('active');
+  }
+
+  // Group corner images manager
+  async function showCornerImagesManager() {
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+      <h3>Manage Group Corner Images</h3>
+      <p style="margin: 1rem 0; font-size: 0.9rem;">These images will appear in the top-left corner of all group cards.</p>
+      <div id="cornerPreviewList" class="image-preview-grid"></div>
+      <input type="file" id="newCornerFile" accept="image/*" 
+             style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;">
+      <button class="modal-option" id="uploadCornerBtn">Add Image</button>
+      <button class="close-modal" id="closeCornerModal">Close</button>
+      <div id="cornerStatus"></div>
+    `;
+    
+    const previewDiv = document.getElementById('cornerPreviewList');
+    
+    function refreshPreviews() {
+      previewDiv.innerHTML = groupCornerImages.map((url, idx) => `
+        <div class="image-preview-item">
+          <img src="${url}">
+          <button class="delete-preview-btn" data-idx="${idx}">✕</button>
+        </div>
+      `).join('');
+      
+      previewDiv.querySelectorAll('.delete-preview-btn').forEach(btn => {
+        btn.onclick = async () => {
+          const idx = parseInt(btn.dataset.idx);
+          groupCornerImages.splice(idx, 1);
+          await db.ref(`${basePath}/group_corner_images`).set(groupCornerImages);
+          loadGroupCornerImages();
+          refreshPreviews();
+        };
+      });
+    }
+    
+    refreshPreviews();
+    
+    document.getElementById('uploadCornerBtn').onclick = async () => {
+      const file = document.getElementById('newCornerFile').files[0];
+      const statusDiv = document.getElementById('cornerStatus');
+      if(!file) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Select file</div>'; 
+        return; 
+      }
+      try {
+        statusDiv.innerHTML = '<div class="status-message status-loading">Uploading...</div>';
+        const url = await uploadToImgBB(file);
+        groupCornerImages.push(url);
+        await db.ref(`${basePath}/group_corner_images`).set(groupCornerImages);
+        loadGroupCornerImages();
+        refreshPreviews();
+        statusDiv.innerHTML = '<div class="status-message status-success">✓ Added</div>';
+        document.getElementById('newCornerFile').value = '';
+      } catch(e) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Error: ' + e.message + '</div>'; 
+      }
+    };
+    
+    document.getElementById('closeCornerModal').onclick = () => modal.classList.remove('active');
+    modal.classList.add('active');
+  }
+
+  document.getElementById('hamburgerBtn').onclick=()=>{ 
+    buildHamburgerModal(); 
+    document.getElementById('modalOverlay').classList.add('active'); 
+  };
+
   // Tab switching
-  document.querySelectorAll('.tab-btn').forEach(btn=>{ btn.addEventListener('click',()=>{ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active-tab')); document.getElementById(btn.dataset.tab+'Tab').classList.add('active-tab'); }); });
-  document.getElementById('globalAddResultBtn').onclick = () => { if(isAdmin) openResultForm(''); else alert('Admin only'); };
-  // init
+  document.querySelectorAll('.tab-btn').forEach(btn=>{ 
+    btn.addEventListener('click',()=>{ 
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); 
+      btn.classList.add('active'); 
+      document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active-tab')); 
+      document.getElementById(btn.dataset.tab+'Tab').classList.add('active-tab'); 
+    }); 
+  });
+
+  document.getElementById('globalAddResultBtn').onclick = () => { 
+    if(isAdmin) openResultForm(''); 
+    else alert('Admin only'); 
+  };
+
+  // Initialize
   (async ()=>{
-    await loadGroups(); await loadKnockout(); await loadTeamIcons(); await loadSlideshow(); await loadAllResults();
-    document.getElementById('globalAddGroupBtn').style.display = 'none'; document.getElementById('globalAddResultBtn').style.display = 'none'; document.getElementById('addKnockoutMatchBtn').style.display = 'none';
+    await loadNavbarLogo();
+    await loadEmiratesAnimation();
+    await loadGroups(); 
+    await loadKnockout(); 
+    await loadTeamIcons(); 
+    await loadSlideshow(); 
+    await loadAllResults();
+    await loadGroupCornerImages();
+    document.getElementById('globalAddGroupBtn').style.display = 'none'; 
+    document.getElementById('globalAddResultBtn').style.display = 'none'; 
+    document.getElementById('addKnockoutMatchBtn').style.display = 'none';
   })();
 </script>
 </body>
