@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Emirates FA Cup · Admin</title>
+  <!-- Firebase SDKs (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #b91c1c;  /* deep red background */
+      background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+      font-family: 'Segoe UI', 'Poppins', system-ui, 'Inter', sans-serif;
+      padding-bottom: 2rem;
+      min-height: 100vh;
+    }
+
+    /* red/white theme animations */
+    @keyframes redGlow {
+      0%, 100% { box-shadow: 0 0 8px rgba(220, 38, 38, 0.5), 0 0 16px rgba(255, 255, 255, 0.3); }
+      50% { box-shadow: 0 0 16px rgba(220, 38, 38, 0.8), 0 0 28px rgba(255, 255, 255, 0.5); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* navbar white/red */
+    .fa-navbar {
+      background: white;
+      padding: 0.4rem 1.2rem;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 0.8rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 3px solid #b91c1c;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .hamburger-btn {
+      background: #b91c1c;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      border: 1.5px solid white;
+      transition: transform 0.3s ease, background 0.3s ease;
+    }
+
+    .hamburger-btn:hover {
+      transform: scale(1.1) rotate(90deg);
+      background: #7f1d1d;
+    }
+
+    .hamburger-btn span {
+      width: 18px;
+      height: 2.5px;
+      background: white;
+      border-radius: 2px;
+    }
+
+    /* modal overlay */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 200;
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.3s ease;
+    }
+    .modal-overlay.active { visibility: visible; opacity: 1; pointer-events: auto; }
+    .modal-content {
+      background: white;
+      border: 2px solid #b91c1c;
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+      min-width: 280px;
+      text-align: center;
+      color: #b91c1c;
+      animation: slideIn 0.3s ease;
+    }
+    .modal-option {
+      background: #b91c1c;
+      padding: 0.6rem 1rem;
+      border-radius: 40px;
+      color: white;
+      font-weight: bold;
+      display: block;
+      margin: 0.6rem 0;
+      border: 1px solid white;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .modal-option:hover { background: #7f1d1d; transform: translateX(5px); }
+    .close-modal {
+      background: #b91c1c;
+      color: white;
+      border: none;
+      padding: 0.5rem 1.2rem;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+
+    /* dashboard container */
+    .dashboard {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    /* slideshow */
+    .slideshow-container {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .slideshow-img {
+      max-width: 100%;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      border: 3px solid white;
+    }
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: white;
+      margin: 0 4px;
+      cursor: pointer;
+      opacity: 0.6;
+    }
+    .dot.active { background: #b91c1c; opacity: 1; transform: scale(1.2); }
+
+    /* tabs */
+    .tabs-container {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .tab-btn {
+      background: white;
+      border: none;
+      padding: 0.7rem 1.8rem;
+      border-radius: 40px;
+      font-weight: bold;
+      font-size: 1rem;
+      color: #b91c1c;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .tab-btn.active {
+      background: #b91c1c;
+      color: white;
+      box-shadow: 0 4px 12px rgba(220,38,38,0.5);
+    }
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s;
+    }
+    .tab-content.active-tab { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* cards (white background, red text) */
+    .card {
+      background: white;
+      border-radius: 1.8rem;
+      margin-bottom: 2rem;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      border: 1px solid rgba(185,28,28,0.3);
+    }
+    .card-header {
+      background: #b91c1c;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .card-header h2, .card-header h3 { color: white; margin: 0; }
+    .card-header-left { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .add-btn {
+      background: white;
+      border: none;
+      border-radius: 2rem;
+      padding: 0.4rem 1.2rem;
+      color: #b91c1c;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .add-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    .card-content {
+      transition: max-height 0.3s ease;
+      max-height: 3000px;
+      overflow: hidden;
+    }
+    .card-content.collapsed { max-height: 0; }
+    .toggle-icon { font-size: 1.2rem; transition: transform 0.2s; color: white; }
+
+    /* tables */
+    .group-table-wrapper { overflow-x: auto; padding: 0.5rem; }
+    .group-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .group-table th, .group-table td {
+      padding: 0.7rem 0.5rem;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .group-table th {
+      background: #fef2f2;
+      color: #b91c1c;
+      font-weight: 700;
+    }
+    .group-table td {
+      color: #7f1d1d;
+    }
+    .team-icon-sm { width: 28px; height: 28px; object-fit: contain; margin-right: 8px; vertical-align: middle; }
+    .form-circles { display: flex; gap: 4px; flex-wrap: wrap; }
+    .circle-result {
+      width: 22px; height: 22px; border-radius: 50%; display: inline-flex;
+      align-items: center; justify-content: center; font-size: 11px; font-weight: bold;
+    }
+    .circle-win { background: #22c55e; color: white; }
+    .circle-loss { background: #ef4444; color: white; }
+    .circle-draw { background: #6b7280; color: white; }
+    .circle-blank { background: #e5e7eb; }
+
+    /* admin buttons */
+    .edit-btn, .delete-btn {
+      background: #b91c1c;
+      border: none;
+      color: white;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      margin: 0 0.2rem;
+      cursor: pointer;
+    }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+    /* forms */
+    .form-overlay {
+      position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9);
+      display: flex; align-items: center; justify-content: center; visibility: hidden; opacity:0;
+      z-index: 300; transition: 0.2s;
+    }
+    .form-overlay.active { visibility: visible; opacity:1; }
+    .form-card {
+      background: white; border-radius: 2rem; padding: 1.5rem; width: 90%; max-width: 500px;
+      color: #b91c1c; border: 2px solid #b91c1c;
+    }
+    .form-card input, .form-card select {
+      width: 100%; padding: 0.6rem; margin: 0.5rem 0;
+      background: #fef2f2; border: 1px solid #b91c1c; border-radius: 2rem;
+    }
+    .form-card button {
+      background: #b91c1c; color: white; border: none; border-radius: 2rem;
+      padding: 0.5rem 1.2rem; margin-top: 0.5rem; cursor: pointer;
+    }
+    .knockout-list {
+      padding: 1rem;
+    }
+    .knockout-match {
+      background: #fef2f2;
+      margin: 0.8rem;
+      padding: 0.8rem;
+      border-radius: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .legend-under-table {
+      background: #fef2f2; padding: 0.6rem; border-radius: 1rem; margin-top: 1rem;
+      display: flex; gap: 1rem; justify-content: center; font-size: 0.7rem;
+    }
+    @media (max-width: 700px) {
+      .group-table th, .group-table td { font-size: 0.7rem; padding: 0.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="fa-navbar">
+  <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
+</div>
+<div class="modal-overlay" id="modalOverlay"><div class="modal-content" id="modalContent"></div></div>
+
+<div class="dashboard">
+  <div class="slideshow-container">
+    <img id="slideshow-img" class="slideshow-img" alt="FA Cup Slideshow">
+    <div class="dots-container" id="dotsContainer"></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <button class="tab-btn active" data-tab="groups">🏆 GROUPS</button>
+    <button class="tab-btn" data-tab="knockout">🥇 KNOCKOUT</button>
+    <button class="tab-btn" data-tab="fixtures">📅 FIXTURES</button>
+    <button class="tab-btn" data-tab="results">📋 RESULTS</button>
+  </div>
+
+  <!-- GROUPS TAB -->
+  <div id="groupsTab" class="tab-content active-tab">
+    <div class="flex-between" style="margin-bottom: 1rem;">
+      <h2 style="color:white;">Groups Stage</h2>
+      <button id="globalAddGroupBtn" class="add-btn" style="display:none;">+ New Group</button>
+    </div>
+    <div id="groupsContainer"></div>
+  </div>
+
+  <!-- KNOCKOUT TAB -->
+  <div id="knockoutTab" class="tab-content">
+    <div class="card">
+      <div class="card-header">
+        <h3>🏆 Knockout Matches</h3>
+        <button id="addKnockoutMatchBtn" class="add-btn" style="display:none;">+ Add Match</button>
+      </div>
+      <div class="card-content" id="knockoutList"></div>
+    </div>
+  </div>
+
+  <!-- FIXTURES TAB (redirect) -->
+  <div id="fixturesTab" class="tab-content">
+    <div class="card" style="text-align:center; padding:2rem;">
+      <h2 style="color:#b91c1c;">📅 Full Fixtures Calendar</h2>
+      <a href="fa-cup-calendar.html" class="add-btn" style="display:inline-block; margin-top:1rem; text-decoration:none;">VIEW MATCHES →</a>
+      <p style="margin-top:1rem; color:#b91c1c;">(Redirects to calendar page)</p>
+    </div>
+  </div>
+
+  <!-- RESULTS TAB (group stage results) -->
+  <div id="resultsTab" class="tab-content">
+    <div class="card">
+      <div class="card-header">
+        <h3>📝 Group Stage Results</h3>
+        <button id="globalAddResultBtn" class="add-btn" style="display:none;">+ Add Result</button>
+      </div>
+      <div class="card-content" id="globalResultsList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Team Form (add/edit team inside group) -->
+<div id="teamFormModal" class="form-overlay"><div class="form-card"><h3>Add / Edit Team</h3>
+  <input type="text" id="teamName" placeholder="Team name"><input type="number" id="teamP" placeholder="P"><input type="number" id="teamW" placeholder="W"><input type="number" id="teamD" placeholder="D"><input type="number" id="teamL" placeholder="L"><input type="number" id="teamGS" placeholder="GS"><input type="number" id="teamGC" placeholder="GC"><input type="number" id="teamGD" placeholder="GD"><input type="number" id="teamPts" placeholder="Pts"><button id="saveTeamBtn">Save</button><button id="cancelTeamBtn">Cancel</button>
+</div></div>
+
+<!-- Result Form (group match) -->
+<div id="resultFormModal" class="form-overlay"><div class="form-card"><h3>Add / Edit Group Result</h3>
+  <select id="resultGroupSelect"><option value="">Select Group</option></select>
+  <select id="resultHomeTeam"><option value="">Home Team</option></select>
+  <input type="number" id="resultHomeScore" placeholder="Home Score" value="0">
+  <select id="resultAwayTeam"><option value="">Away Team</option></select>
+  <input type="number" id="resultAwayScore" placeholder="Away Score" value="0">
+  <select id="resultForfeitType"><option value="none">Normal</option><option value="no_contest">No Contest</option><option value="forfeit">Forfeit</option></select>
+  <input type="number" id="resultMd" placeholder="Matchday"><button id="saveResultBtn">Save</button><button id="cancelResultBtn">Cancel</button>
+</div></div>
+
+<!-- Knockout Match Form -->
+<div id="koFormModal" class="form-overlay"><div class="form-card"><h3>Knockout Match</h3>
+  <input type="text" id="koRound" placeholder="Round (R16, QF, SF, Final)"><select id="koHomeTeam"><option value="">Home Team</option></select><select id="koAwayTeam"><option value="">Away Team</option></select>
+  <input type="text" id="koScore" placeholder="Score (e.g. 2-1)"><select id="koForfeit"><option value="none">Normal</option><option value="forfeit">Forfeit</option></select>
+  <button id="saveKoBtn">Save</button><button id="cancelKoBtn">Cancel</button>
+</div></div>
+
+<script>
+  // Firebase config (same)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
+    authDomain: "efootball-412.firebaseapp.com",
+    databaseURL: "https://efootball-412-default-rtdb.firebaseio.com",
+    projectId: "efootball-412",
+    storageBucket: "efootball-412.firebasestorage.app",
+    messagingSenderId: "596548424249",
+    appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
+
+  let isAdmin = false;
+  let groupsData = {};          // { groupId: { name, teams: {teamKey:{name, p,w,d,l,gs,gc,gd,pts}}, results:[] } }
+  let knockoutMatches = [];
+  let teamIconsCache = {};
+  let slideshowImages = [], slideshowDuration = 3000, slideInterval = null, currentSlideIdx = 0;
+
+  // Helper paths
+  const basePath = 'fa_cup';
+  function getGroupPath(groupId) { return `${basePath}/groups/${groupId}`; }
+
+  // Load all groups
+  async function loadGroups() {
+    const snap = await db.ref(`${basePath}/groups`).once('value');
+    groupsData = snap.val() || {};
+    renderAllGroups();
+    populateGroupSelects();
+  }
+
+  async function loadKnockout() {
+    const snap = await db.ref(`${basePath}/knockout_matches`).once('value');
+    knockoutMatches = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k, ...v})) : [];
+    renderKnockout();
+  }
+
+  async function loadTeamIcons() {
+    const snap = await db.ref(`${basePath}/teamIcons`).once('value');
+    teamIconsCache = snap.val() || {};
+    renderAllGroups();
+  }
+
+  function getTeamIconHtml(team, cls="team-icon-sm") {
+    let url = teamIconsCache[team];
+    return url ? `<img class="${cls}" src="${url}" onerror="this.style.display='none';">` : '';
+  }
+
+  // Render all groups
+  function renderAllGroups() {
+    const container = document.getElementById('groupsContainer');
+    if(!container) return;
+    container.innerHTML = '';
+    for(let gid in groupsData) {
+      const group = groupsData[gid];
+      const groupName = group.name || gid;
+      const teamsObj = group.teams || {};
+      const teams = Object.entries(teamsObj).map(([key,val])=>({key, ...val}));
+      const sorted = [...teams].sort((a,b)=>(b.pts||0)-(a.pts||0) || (b.gd||0)-(a.gd||0));
+      const groupCard = document.createElement('div'); groupCard.className = 'card';
+      groupCard.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-left"><h3>${groupName}</h3> ${isAdmin ? `<button class="add-btn edit-group-name" data-gid="${gid}">✏️ Rename</button><button class="add-btn delete-group" data-gid="${gid}">🗑️ Delete</button>` : ''}</div>
+          ${isAdmin ? `<button class="add-btn add-team-to-group" data-gid="${gid}">+ Add Team</button>` : ''}
+        </div>
+        <div class="card-content"><div class="group-table-wrapper"><table class="group-table"><thead><tr><th>Pos</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GS</th><th>GC</th><th>GD</th><th>Pts</th><th>Last 5</th>${isAdmin ? '<th>Actions</th>' : ''}</tr></thead><tbody id="group-${gid}-body"></tbody></table></div></div>
+      `;
+      container.appendChild(groupCard);
+      const tbody = document.getElementById(`group-${gid}-body`);
+      tbody.innerHTML = '';
+      sorted.forEach((team, idx) => {
+        const row = tbody.insertRow();
+        row.insertCell(0).innerText = idx+1;
+        const iconHtml = getTeamIconHtml(team.name);
+        row.insertCell(1).innerHTML = `<div style="display:flex;align-items:center;">${iconHtml} ${team.name}</div>`;
+        row.insertCell(2).innerText = team.p || 0;
+        row.insertCell(3).innerText = team.w || 0;
+        row.insertCell(4).innerText = team.d || 0;
+        row.insertCell(5).innerText = team.l || 0;
+        row.insertCell(6).innerText = team.gs || 0;
+        row.insertCell(7).innerText = team.gc || 0;
+        row.insertCell(8).innerText = (team.gd || 0) > 0 ? `+${team.gd||0}` : `${team.gd||0}`;
+        row.insertCell(9).innerText = team.pts || 0;
+        // last5 placeholder (simplified)
+        row.insertCell(10).innerHTML = `<div class="form-circles"><span class="circle-blank">—</span></div>`;
+        if(isAdmin) {
+          const actions = row.insertCell(11);
+          const editBtn = document.createElement('button'); editBtn.innerText='✏️'; editBtn.className='edit-btn';
+          editBtn.onclick = () => openTeamForm(gid, team.key, team);
+          const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn';
+          delBtn.onclick = async () => { if(confirm('Delete team?')) await db.ref(`${getGroupPath(gid)}/teams/${team.key}`).remove(); };
+          actions.appendChild(editBtn); actions.appendChild(delBtn);
+        }
+      });
+      // attach group header listeners
+      groupCard.querySelectorAll('.edit-group-name').forEach(btn => btn.addEventListener('click',()=>renameGroup(gid)));
+      groupCard.querySelectorAll('.delete-group').forEach(btn => btn.addEventListener('click',()=>deleteGroup(gid)));
+      groupCard.querySelectorAll('.add-team-to-group').forEach(btn => btn.addEventListener('click',()=>openTeamForm(gid, null)));
+    }
+  }
+
+  async function renameGroup(gid) {
+    let newName = prompt('New group name', groupsData[gid]?.name || gid);
+    if(newName) await db.ref(`${basePath}/groups/${gid}/name`).set(newName);
+    loadGroups();
+  }
+  async function deleteGroup(gid) { if(confirm('Delete group and all its data?')) await db.ref(`${basePath}/groups/${gid}`).remove(); loadGroups(); }
+
+  let currentGroupForTeam = null, currentTeamKey = null;
+  function openTeamForm(groupId, teamKey, teamData=null) {
+    currentGroupForTeam = groupId;
+    currentTeamKey = teamKey;
+    document.getElementById('teamName').value = teamData?.name || '';
+    document.getElementById('teamP').value = teamData?.p || 0;
+    document.getElementById('teamW').value = teamData?.w || 0;
+    document.getElementById('teamD').value = teamData?.d || 0;
+    document.getElementById('teamL').value = teamData?.l || 0;
+    document.getElementById('teamGS').value = teamData?.gs || 0;
+    document.getElementById('teamGC').value = teamData?.gc || 0;
+    document.getElementById('teamGD').value = teamData?.gd || 0;
+    document.getElementById('teamPts').value = teamData?.pts || 0;
+    document.getElementById('teamFormModal').classList.add('active');
+  }
+  document.getElementById('saveTeamBtn').onclick = async () => {
+    const name = document.getElementById('teamName').value.trim();
+    if(!name) return alert('Team name required');
+    const data = {
+      name, p: +document.getElementById('teamP').value, w: +document.getElementById('teamW').value, d: +document.getElementById('teamD').value,
+      l: +document.getElementById('teamL').value, gs: +document.getElementById('teamGS').value, gc: +document.getElementById('teamGC').value,
+      gd: +document.getElementById('teamGD').value, pts: +document.getElementById('teamPts').value
+    };
+    if(currentTeamKey) await db.ref(`${getGroupPath(currentGroupForTeam)}/teams/${currentTeamKey}`).set(data);
+    else await db.ref(`${getGroupPath(currentGroupForTeam)}/teams`).push(data);
+    document.getElementById('teamFormModal').classList.remove('active');
+    loadGroups();
+  };
+  document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamFormModal').classList.remove('active');
+
+  // Group results management
+  async function addNewGroup() {
+    let name = prompt('Group name (e.g. Group A)');
+    if(!name) return;
+    await db.ref(`${basePath}/groups`).push({ name, teams:{}, results:{} });
+    loadGroups();
+  }
+  document.getElementById('globalAddGroupBtn').onclick = addNewGroup;
+
+  function populateGroupSelects() {
+    const sel = document.getElementById('resultGroupSelect');
+    if(!sel) return;
+    sel.innerHTML = '<option value="">Select Group</option>';
+    for(let gid in groupsData) { let opt = document.createElement('option'); opt.value = gid; opt.innerText = groupsData[gid].name || gid; sel.appendChild(opt); }
+  }
+
+  let editingResultKey = null, editingResultGroup = null;
+  async function openResultForm(groupId, resultKey=null, resultData=null) {
+    editingResultKey = resultKey; editingResultGroup = groupId;
+    await populateTeamsInGroup(groupId);
+    if(resultData) {
+      // parse match text
+      let parts = resultData.matchText.split(' ');
+      // quick parse - simplified
+      document.getElementById('resultHomeTeam').value = resultData.homeTeam || '';
+      document.getElementById('resultAwayTeam').value = resultData.awayTeam || '';
+      document.getElementById('resultHomeScore').value = resultData.homeScore || 0;
+      document.getElementById('resultAwayScore').value = resultData.awayScore || 0;
+      document.getElementById('resultForfeitType').value = resultData.forfeitType || 'none';
+      document.getElementById('resultMd').value = resultData.md || 1;
+    } else {
+      document.getElementById('resultHomeTeam').value = ''; document.getElementById('resultAwayTeam').value = ''; 
+      document.getElementById('resultHomeScore').value = 0; document.getElementById('resultAwayScore').value = 0;
+      document.getElementById('resultForfeitType').value = 'none'; document.getElementById('resultMd').value = 1;
+    }
+    document.getElementById('resultFormModal').classList.add('active');
+  }
+  async function populateTeamsInGroup(groupId) {
+    const group = groupsData[groupId]; if(!group) return;
+    const teams = group.teams || {};
+    const teamNames = Object.values(teams).map(t=>t.name);
+    const homeSel = document.getElementById('resultHomeTeam'); const awaySel = document.getElementById('resultAwayTeam');
+    homeSel.innerHTML = '<option value="">Home</option>'; awaySel.innerHTML = '<option value="">Away</option>';
+    teamNames.forEach(t => { homeSel.innerHTML += `<option value="${t}">${t}</option>`; awaySel.innerHTML += `<option value="${t}">${t}</option>`; });
+  }
+  document.getElementById('resultGroupSelect').addEventListener('change', (e) => { if(e.target.value) populateTeamsInGroup(e.target.value); });
+  document.getElementById('saveResultBtn').onclick = async () => {
+    const groupId = document.getElementById('resultGroupSelect').value;
+    if(!groupId) return alert('Select group');
+    const home = document.getElementById('resultHomeTeam').value, away = document.getElementById('resultAwayTeam').value;
+    const hScore = parseInt(document.getElementById('resultHomeScore').value)||0, aScore = parseInt(document.getElementById('resultAwayScore').value)||0;
+    const forfeit = document.getElementById('resultForfeitType').value;
+    const md = parseInt(document.getElementById('resultMd').value)||1;
+    if(!home || !away) return alert('Select teams');
+    const matchText = `${home} ${hScore} - ${aScore} ${away}${forfeit!=='none'? ' ('+forfeit+')':''}`;
+    const resultObj = { matchText, homeTeam: home, awayTeam: away, homeScore: hScore, awayScore: aScore, forfeitType: forfeit, md };
+    if(editingResultKey) await db.ref(`${getGroupPath(groupId)}/results/${editingResultKey}`).set(resultObj);
+    else await db.ref(`${getGroupPath(groupId)}/results`).push(resultObj);
+    // update team stats
+    await updateGroupTeamStats(groupId, home, away, hScore, aScore, forfeit);
+    document.getElementById('resultFormModal').classList.remove('active');
+    loadGroups();
+    loadAllResults();
+  };
+  document.getElementById('cancelResultBtn').onclick = () => document.getElementById('resultFormModal').classList.remove('active');
+
+  async function updateGroupTeamStats(groupId, homeTeam, awayTeam, hScore, aScore, forfeit) {
+    const groupRef = db.ref(getGroupPath(groupId));
+    const snap = await groupRef.child('teams').once('value');
+    let teams = snap.val() || {};
+    let homeKey = null, awayKey = null, homeData=null, awayData=null;
+    for(let [k,v] of Object.entries(teams)) { if(v.name===homeTeam) { homeKey=k; homeData=v; } if(v.name===awayTeam) { awayKey=k; awayData=v; } }
+    if(!homeData) homeData = { name: homeTeam, p:0,w:0,d:0,l:0,gs:0,gc:0,gd:0,pts:0 };
+    if(!awayData) awayData = { name: awayTeam, p:0,w:0,d:0,l:0,gs:0,gc:0,gd:0,pts:0 };
+    homeData.p = (homeData.p||0)+1; awayData.p = (awayData.p||0)+1;
+    if(forfeit === 'no_contest') { /* no change */ }
+    else if(forfeit === 'forfeit') { if(hScore>aScore) { homeData.pts+=3; homeData.w++; awayData.l++; } else if(aScore>hScore) { awayData.pts+=3; awayData.w++; homeData.l++; } }
+    else {
+      homeData.gs+=hScore; homeData.gc+=aScore; awayData.gs+=aScore; awayData.gc+=hScore;
+      homeData.gd = homeData.gs-homeData.gc; awayData.gd = awayData.gs-awayData.gc;
+      if(hScore>aScore) { homeData.pts+=3; homeData.w++; awayData.l++; }
+      else if(aScore>hScore) { awayData.pts+=3; awayData.w++; homeData.l++; }
+      else { homeData.pts+=1; awayData.pts+=1; homeData.d++; awayData.d++; }
+    }
+    await groupRef.child(`teams/${homeKey}`).set(homeData);
+    await groupRef.child(`teams/${awayKey}`).set(awayData);
+  }
+
+  async function loadAllResults() {
+    const container = document.getElementById('globalResultsList');
+    if(!container) return;
+    container.innerHTML = '';
+    for(let gid in groupsData) {
+      const resultsSnap = await db.ref(`${getGroupPath(gid)}/results`).once('value');
+      const results = resultsSnap.val() ? Object.entries(resultsSnap.val()).map(([k,v])=>({key:k, groupId:gid, ...v})) : [];
+      for(let r of results) {
+        const div = document.createElement('div'); div.className = 'knockout-match';
+        div.innerHTML = `<span><strong>${r.matchText}</strong> (MD${r.md})</span>${isAdmin? `<div><button class="edit-btn" data-g="${r.groupId}" data-key="${r.key}">✏️</button><button class="delete-btn" data-g="${r.groupId}" data-key="${r.key}">🗑️</button></div>`:''}`;
+        container.appendChild(div);
+        if(isAdmin) {
+          div.querySelector('.edit-btn')?.addEventListener('click',()=> openResultForm(r.groupId, r.key, r));
+          div.querySelector('.delete-btn')?.addEventListener('click', async ()=> { if(confirm('Delete result?')) await db.ref(`${getGroupPath(r.groupId)}/results/${r.key}`).remove(); loadAllResults(); loadGroups(); });
+        }
+      }
+    }
+  }
+
+  // Knockout management
+  function renderKnockout() {
+    const container = document.getElementById('knockoutList'); if(!container) return;
+    container.innerHTML = '';
+    knockoutMatches.forEach(m => {
+      const div = document.createElement('div'); div.className = 'knockout-match';
+      div.innerHTML = `<span><strong>${m.round || 'KO'}</strong> ${m.homeTeam} ${m.score || '?'} ${m.awayTeam}</span>${isAdmin? `<div><button class="edit-ko" data-key="${m.key}">✏️</button><button class="delete-ko" data-key="${m.key}">🗑️</button></div>`:''}`;
+      container.appendChild(div);
+      if(isAdmin) {
+        div.querySelector('.edit-ko')?.addEventListener('click',()=>openKoForm(m.key,m));
+        div.querySelector('.delete-ko')?.addEventListener('click',async()=>{ if(confirm('Delete?')) await db.ref(`${basePath}/knockout_matches/${m.key}`).remove(); loadKnockout(); });
+      }
+    });
+  }
+  let editingKoKey = null;
+  async function openKoForm(key=null, data=null) {
+    editingKoKey = key;
+    const teamsList = [];
+    for(let gid in groupsData) { let teams = groupsData[gid].teams || {}; Object.values(teams).forEach(t=>teamsList.push(t.name)); }
+    const homeSel = document.getElementById('koHomeTeam'); const awaySel = document.getElementById('koAwayTeam');
+    homeSel.innerHTML = '<option value="">Home</option>'; awaySel.innerHTML = '<option value="">Away</option>';
+    teamsList.forEach(t=>{ homeSel.innerHTML+=`<option value="${t}">${t}</option>`; awaySel.innerHTML+=`<option value="${t}">${t}</option>`; });
+    if(data) {
+      document.getElementById('koRound').value = data.round||'';
+      document.getElementById('koHomeTeam').value = data.homeTeam||'';
+      document.getElementById('koAwayTeam').value = data.awayTeam||'';
+      document.getElementById('koScore').value = data.score||'';
+      document.getElementById('koForfeit').value = data.forfeit||'none';
+    } else {
+      document.getElementById('koRound').value=''; document.getElementById('koScore').value='';
+    }
+    document.getElementById('koFormModal').classList.add('active');
+  }
+  document.getElementById('saveKoBtn').onclick = async () => {
+    const round = document.getElementById('koRound').value; const home = document.getElementById('koHomeTeam').value; const away = document.getElementById('koAwayTeam').value;
+    const score = document.getElementById('koScore').value; const forfeit = document.getElementById('koForfeit').value;
+    if(!round||!home||!away) return alert('Fill all');
+    const koObj = { round, homeTeam: home, awayTeam: away, score, forfeit };
+    if(editingKoKey) await db.ref(`${basePath}/knockout_matches/${editingKoKey}`).set(koObj);
+    else await db.ref(`${basePath}/knockout_matches`).push(koObj);
+    document.getElementById('koFormModal').classList.remove('active');
+    loadKnockout();
+  };
+  document.getElementById('cancelKoBtn').onclick = () => document.getElementById('koFormModal').classList.remove('active');
+  document.getElementById('addKnockoutMatchBtn').onclick = () => openKoForm();
+
+  // Admin mode
+  function activateAdminMode(pwd) { if(pwd==='admin@100'){ isAdmin=true; document.querySelectorAll('.add-btn').forEach(b=>b.style.display='inline-block'); renderAllGroups(); loadAllResults(); renderKnockout(); alert('Admin active'); } else alert('Wrong key'); }
+
+  // Slideshow (same as before)
+  async function loadSlideshow() { const snap = await db.ref(`${basePath}/slideshow/images`).once('value'); slideshowImages=snap.val()||[]; const dur=await db.ref(`${basePath}/slideshow/duration`).once('value'); slideshowDuration=dur.val()||3000; startSlideshow(); }
+  function startSlideshow() { if(slideInterval) clearInterval(slideInterval); if(!slideshowImages.length) return; currentSlideIdx=0; updateSlide(); slideInterval=setInterval(()=>{ currentSlideIdx=(currentSlideIdx+1)%slideshowImages.length; updateSlide(); }, slideshowDuration); }
+  function updateSlide(){ document.getElementById('slideshow-img').src=slideshowImages[currentSlideIdx]||''; updateDots();}
+  function updateDots(){ const c=document.getElementById('dotsContainer'); if(!c) return; c.innerHTML=''; slideshowImages.forEach((_,i)=>{ let d=document.createElement('span'); d.classList.add('dot'); if(i===currentSlideIdx) d.classList.add('active'); d.onclick=()=>{ currentSlideIdx=i; updateSlide(); if(slideInterval){clearInterval(slideInterval); slideInterval=setInterval(()=>{ currentSlideIdx=(currentSlideIdx+1)%slideshowImages.length; updateSlide();},slideshowDuration);}}; c.appendChild(d);});}
+  // hamburger menu
+  function buildHamburgerModal(){
+    const mc=document.getElementById('modalContent'); let html=`<h3>FA CUP MENU</h3><div class="modal-option" id="adminModeOption">ADMIN MODE</div>`;
+    if(isAdmin) html+=`<div class="modal-option" id="addIconBtn">ADD TEAM ICON</div><div class="modal-option" id="addSlideBtn">MANAGE SLIDESHOW</div>`;
+    html+=`<div class="modal-option" id="rulesBtn">RULES</div><div class="modal-option" id="homeBtn">HOME</div><button class="close-modal" id="closeModalBtn">CLOSE</button>`;
+    mc.innerHTML=html; document.getElementById('adminModeOption').onclick=()=>{ let p=prompt('Admin key:'); activateAdminMode(p); document.getElementById('modalOverlay').classList.remove('active'); };
+    if(isAdmin){ document.getElementById('addIconBtn').onclick=()=>{ document.getElementById('modalOverlay').classList.remove('active'); showUploadIconModal(); }; document.getElementById('addSlideBtn').onclick=()=>{ showSlideshowManager(); }; }
+    document.getElementById('rulesBtn').onclick=()=>alert('FA Cup Rules: Standard knockout + groups'); document.getElementById('homeBtn').onclick=()=>location.reload(); document.getElementById('closeModalBtn').onclick=()=>document.getElementById('modalOverlay').classList.remove('active');
+  }
+  async function showUploadIconModal(){
+    // simplified icon upload
+    const teamName = prompt('Team name:'); if(!teamName) return;
+    const fileInput = document.createElement('input'); fileInput.type='file'; fileInput.accept='image/*'; fileInput.onchange=async(e)=>{
+      const file=e.target.files[0]; if(!file) return; const fd=new FormData(); fd.append('image',file);
+      const res=await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,{method:'POST',body:fd}); const data=await res.json();
+      if(data.success){ await db.ref(`${basePath}/teamIcons/${teamName}`).set(data.data.url); loadTeamIcons(); alert('Icon added'); }
+      else alert('upload failed');
+    }; fileInput.click();
+  }
+  async function showSlideshowManager(){
+    let url=prompt('Image URL:'); if(url) { slideshowImages.push(url); await db.ref(`${basePath}/slideshow/images`).set(slideshowImages); loadSlideshow(); }
+  }
+  document.getElementById('hamburgerBtn').onclick=()=>{ buildHamburgerModal(); document.getElementById('modalOverlay').classList.add('active'); };
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn=>{ btn.addEventListener('click',()=>{ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active-tab')); document.getElementById(btn.dataset.tab+'Tab').classList.add('active-tab'); }); });
+  document.getElementById('globalAddResultBtn').onclick = () => { if(isAdmin) openResultForm(''); else alert('Admin only'); };
+  // init
+  (async ()=>{
+    await loadGroups(); await loadKnockout(); await loadTeamIcons(); await loadSlideshow(); await loadAllResults();
+    document.getElementById('globalAddGroupBtn').style.display = 'none'; document.getElementById('globalAddResultBtn').style.display = 'none'; document.getElementById('addKnockoutMatchBtn').style.display = 'none';
+  })();
+</script>
+</body>
+</html>
