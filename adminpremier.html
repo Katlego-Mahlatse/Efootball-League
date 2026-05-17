@@ -35,13 +35,39 @@
       background: linear-gradient(135deg, #f5d742, #d4af37);
       padding: 0.4rem 1.2rem;
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       align-items: center;
       gap: 0.8rem;
       position: sticky;
       top: 0;
       z-index: 100;
       animation: goldGlow 3s ease-in-out infinite;
+    }
+
+    .navbar-logo {
+      height: 40px;
+      max-width: 150px;
+      object-fit: contain;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .navbar-logo:hover {
+      transform: scale(1.05);
+    }
+
+    .navbar-logo-placeholder {
+      height: 40px;
+      width: 120px;
+      background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f5d742;
+      font-size: 0.7rem;
+      font-weight: bold;
+      border: 2px solid #f5d742;
     }
     
     .hamburger-btn {
@@ -102,6 +128,9 @@
       border-radius: 1.2rem;
       padding: 1.5rem;
       min-width: 250px;
+      max-width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
       text-align: center;
       box-shadow: 0 10px 40px rgba(245, 215, 66, 0.4);
       color: #1a1a1a;
@@ -209,14 +238,36 @@
       color: #1a1a1a;
       transition: all 0.3s ease;
       animation: slideIn 0.5s ease;
+      position: relative;
     }
     
     .card:hover {
       box-shadow: 0 0 25px rgba(245, 215, 66, 0.4);
     }
+
+    /* Table corner image */
+    .table-corner-image {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 80px;
+      height: 80px;
+      z-index: 10;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border: 2px solid #1a1a1a;
+    }
+
+    .table-corner-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
     
     .card-header {
       padding: 1rem 1.5rem;
+      padding-top: 100px; /* Space for corner image */
       background: #d4af37;
       border-bottom: 2px solid #1a1a1a;
       display: flex;
@@ -224,6 +275,7 @@
       align-items: center;
       cursor: pointer;
       transition: background 0.3s ease;
+      position: relative;
     }
     
     .card-header:hover {
@@ -413,9 +465,9 @@
     .stats-table { min-width: 700px; }
     .inner-table { min-width: 300px; }
     
-    /* Adjusted spacing - moved left */
+    /* Updated spacing to match FA Cup */
     .stats-table th, .stats-table td {
-      padding: 0.7rem 0.3rem;
+      padding: 0.7rem 0.5rem;
       text-align: left;
     }
     
@@ -496,6 +548,7 @@
     .blue-bar-vertical { background: #3b82f6; }
     .orange-bar-vertical { background: #f97316; }
     .green-bar-vertical { background: #22c55e; }
+    .red-bar-vertical { background: #ef4444; }
     
     .dashed-separator-gold { border-bottom: 2px dashed #d4af37 !important; }
     .dashed-separator-white { border-bottom: 2px dashed #ffffff !important; }
@@ -507,7 +560,10 @@
       display: flex; 
       align-items: center; 
       gap: 8px; 
-      font-weight: 700; 
+      font-weight: 700;
+      max-width: 200px;
+      word-wrap: break-word;
+      white-space: normal;
     }
     
     .form-circles { 
@@ -562,6 +618,7 @@
     .legend-blue { background: #3b82f6; }
     .legend-orange { background: #f97316; }
     .legend-green { background: #22c55e; }
+    .legend-red { background: #ef4444; }
     .legend-dashed-white { display: inline-block; width: 20px; height: 2px; border-bottom: 2px dashed #ffffff; vertical-align: middle; }
     
     .forfeit-text { 
@@ -706,6 +763,75 @@
       transform: translateY(-3px) scale(1.05);
       box-shadow: 0 8px 25px rgba(245, 215, 66, 0.6);
     }
+
+    .image-preview-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 1rem 0;
+      justify-content: center;
+    }
+
+    .image-preview-item {
+      position: relative;
+      width: 100px;
+      height: 100px;
+    }
+
+    .image-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #1a1a1a;
+    }
+
+    .delete-preview-btn {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .delete-preview-btn:hover {
+      background: #dc2626;
+      transform: scale(1.1);
+    }
+
+    .status-message {
+      margin-top: 1rem;
+      padding: 0.5rem;
+      border-radius: 8px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .status-success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .status-loading {
+      background: #fef3c7;
+      color: #92400e;
+    }
     
     @media (max-width: 780px) {
       .dashboard { padding: 1rem; }
@@ -713,6 +839,9 @@
       .team-icon { width: 30px; height: 30px; }
       .inline-team-icon { width: 24px; height: 24px; }
       .inner-table th, .inner-table td { padding: 0.4rem; font-size: 0.7rem; }
+      .table-corner-image { width: 60px; height: 60px; }
+      .card-header { padding-top: 80px; }
+      .navbar-logo-placeholder { width: 100px; height: 35px; font-size: 0.6rem; }
     }
     
     @media (max-width: 480px) {
@@ -724,6 +853,7 @@
 <body>
 
 <div class="gold-navbar">
+  <div id="navbarLogoContainer"></div>
   <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
 </div>
 
@@ -736,6 +866,7 @@
   </div>
 
   <div class="card">
+    <div id="tableCornerImageContainer"></div>
     <div class="card-header" style="cursor:default;">
       <div class="card-header-left">
         <h2>PREMIER LEAGUE</h2>
@@ -775,14 +906,7 @@
           <tbody id="tableBody"></tbody>
         </table>
       </div>
-      <div class="legend-under-table">
-        <div style="display:flex; flex-wrap:wrap; gap:1rem; justify-content:center;">
-          <span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span>UEFA Champions League</span></span>
-          <span class="legend-item"><span class="legend-vertical-bar legend-orange"></span><span>Europa League</span></span>
-          <span class="legend-item"><span class="legend-vertical-bar legend-green"></span><span>UEFA Conference League</span></span>
-          <span class="legend-item"><span class="legend-dashed-white"></span><span>FIFA Club World Cup</span></span>
-        </div>
-      </div>
+      <div class="legend-under-table" id="legendContainer"></div>
     </div>
   </div>
 
@@ -878,8 +1002,8 @@
   let teamsData = [], resultsData = [];
   let teamIconsCache = {};
   let slideshowImages = [], slideshowDuration = 3000, slideInterval = null, currentSlideIdx = 0;
-
-  const teamList = ["Arsenal","AC Milan","PSG","Barcelona","Inter Milan","Atletico","Newcastle","Napoli","Chelsea","Dortmund","Real Madrid","Man City","Liverpool","Juventus"];
+  let navbarLogoUrl = '';
+  let tableCornerImageUrl = '';
 
   let playerMap = { 
     "Barcelona":"~Rea🫡",
@@ -900,6 +1024,38 @@
 
   function getSeasonPath(seasonNum, subPath = "") {
     return `seasons/season_${seasonNum}${subPath ? "/" + subPath : ""}`;
+  }
+
+  // Load navbar logo
+  async function loadNavbarLogo() {
+    const snap = await database.ref('premier_league_navbar_logo').once('value');
+    navbarLogoUrl = snap.val() || '';
+    renderNavbarLogo();
+  }
+
+  function renderNavbarLogo() {
+    const container = document.getElementById('navbarLogoContainer');
+    if (navbarLogoUrl) {
+      container.innerHTML = `<img src="${navbarLogoUrl}" class="navbar-logo" alt="Premier League Logo">`;
+    } else {
+      container.innerHTML = '<div class="navbar-logo-placeholder">PL LOGO</div>';
+    }
+  }
+
+  // Load table corner image
+  async function loadTableCornerImage() {
+    const snap = await database.ref('premier_league_table_corner').once('value');
+    tableCornerImageUrl = snap.val() || '';
+    renderTableCornerImage();
+  }
+
+  function renderTableCornerImage() {
+    const container = document.getElementById('tableCornerImageContainer');
+    if (tableCornerImageUrl) {
+      container.innerHTML = `<div class="table-corner-image"><img src="${tableCornerImageUrl}" alt="Corner Image"></div>`;
+    } else {
+      container.innerHTML = '';
+    }
   }
 
   async function loadSeasonsMetadata() {
@@ -1096,6 +1252,34 @@
   window.showLast5 = showLast5;
   window.currentView = currentView;
 
+  function renderLegend() {
+    const container = document.getElementById('legendContainer');
+    if (!container) return;
+    
+    let legendHtml = '<div style="display:flex; flex-wrap:wrap; gap:1rem; justify-content:center;">';
+    
+    if (currentSeasonId === 1) {
+      // Season 1: Only Champions League
+      legendHtml += '<span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span>UEFA Champions League</span></span>';
+    } else if (currentSeasonId === 2) {
+      // Season 2: CL, EL, ECL, Club World Cup
+      legendHtml += '<span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span>UEFA Champions League</span></span>';
+      legendHtml += '<span class="legend-item"><span class="legend-vertical-bar legend-orange"></span><span>Europa League</span></span>';
+      legendHtml += '<span class="legend-item"><span class="legend-dashed-white"></span><span>FIFA Club World Cup</span></span>';
+      legendHtml += '<span class="legend-item"><span class="legend-vertical-bar legend-green"></span><span>UEFA Conference League</span></span>';
+    } else {
+      // Season 3+: All including Relegation
+      legendHtml += '<span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span>UEFA Champions League</span></span>';
+      legendHtml += '<span class="legend-item"><span class="legend-vertical-bar legend-orange"></span><span>Europa League</span></span>';
+      legendHtml += '<span class="legend-item"><span class="legend-dashed-white"></span><span>FIFA Club World Cup</span></span>';
+      legendHtml += '<span class="legend-item"><span class="legend-vertical-bar legend-green"></span><span>UEFA Conference League</span></span>';
+      legendHtml += '<span class="legend-item"><span class="legend-vertical-bar legend-red"></span><span>Relegation</span></span>';
+    }
+    
+    legendHtml += '</div>';
+    container.innerHTML = legendHtml;
+  }
+
   function renderLeagueTable() {
     const tbody = document.getElementById('tableBody'); 
     if(!tbody) return;
@@ -1108,12 +1292,28 @@
       const row = tbody.insertRow();
       const pos = idx+1;
       let barClass = "";
-      if(pos <=4) barClass = "blue-bar-vertical";
-      else if(pos <=8) barClass = "orange-bar-vertical";
-      else if(pos <=12) barClass = "green-bar-vertical";
-      if(pos ===1) row.classList.add("dashed-separator-gold");
-      else if(pos ===8) row.classList.add("dashed-separator-white");
-      else if(pos ===12) row.classList.add("dashed-separator-red");
+      
+      // Season-specific qualification zones
+      if (currentSeasonId === 1) {
+        // Season 1: Only Champions League (1-4)
+        if (pos <= 4) barClass = "blue-bar-vertical";
+      } else if (currentSeasonId === 2) {
+        // Season 2: CL(1-4), EL(5-8), ECL(9-12)
+        if (pos <= 4) barClass = "blue-bar-vertical";
+        else if (pos <= 8) barClass = "orange-bar-vertical";
+        else if (pos <= 12) barClass = "green-bar-vertical";
+        
+        if (pos === 8) row.classList.add("dashed-separator-white"); // FIFA Club World Cup line
+      } else {
+        // Season 3+: CL(1-4), EL(5-8), ECL(9-12), Relegation(18-20)
+        if (pos <= 4) barClass = "blue-bar-vertical";
+        else if (pos <= 8) barClass = "orange-bar-vertical";
+        else if (pos <= 12) barClass = "green-bar-vertical";
+        else if (pos >= 18 && pos <= 20) barClass = "red-bar-vertical";
+        
+        if (pos === 8) row.classList.add("dashed-separator-white"); // FIFA Club World Cup line
+        if (pos === 17) row.classList.add("dashed-separator-red"); // Relegation line
+      }
       
       const posCell = row.insertCell(0);
       posCell.className = "rank-cell";
@@ -1212,6 +1412,8 @@
         actions.appendChild(delBtn);
       }
     });
+    
+    renderLegend();
   }
 
   function renderResults() {
@@ -1424,9 +1626,9 @@
   
   document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamForm').classList.remove('active');
 
-  // Result CRUD
+  // Result CRUD - Season-specific teams
   let editingResultKey = null;
-  function openResultForm(key, data) {
+  async function openResultForm(key, data) {
     editingResultKey = key;
     const homeSel = document.getElementById('resultHomeTeam');
     const awaySel = document.getElementById('resultAwayTeam');
@@ -1435,8 +1637,11 @@
     const forfeitSel = document.getElementById('resultForfeitType');
     const mdInput = document.getElementById('resultMd');
     
-    homeSel.innerHTML = '<option value="">Select Home Team</option>' + teamList.map(t => `<option value="${t}">${t}</option>`).join('');
-    awaySel.innerHTML = '<option value="">Select Away Team</option>' + teamList.map(t => `<option value="${t}">${t}</option>`).join('');
+    // Get teams from current season's table
+    const currentSeasonTeams = teamsData.map(t => t.name).sort();
+    
+    homeSel.innerHTML = '<option value="">Select Home Team</option>' + currentSeasonTeams.map(t => `<option value="${t}">${t}</option>`).join('');
+    awaySel.innerHTML = '<option value="">Select Away Team</option>' + currentSeasonTeams.map(t => `<option value="${t}">${t}</option>`).join('');
     
     if (data) {
       const text = data.matchText;
@@ -1601,7 +1806,6 @@
       closePopup(); 
     };
     
-    // NEW: View Schedule option
     const scheduleOpt = document.createElement('div'); 
     scheduleOpt.innerText = '📅 View Schedule'; 
     scheduleOpt.onclick = () => { 
@@ -1624,7 +1828,7 @@
     popup.appendChild(last5Opt); 
     popup.appendChild(calendarOpt); 
     popup.appendChild(rulesOpt);
-    popup.appendChild(scheduleOpt);   // <-- added here
+    popup.appendChild(scheduleOpt);
     
     document.body.appendChild(popup);
   });
@@ -1638,10 +1842,12 @@
     const modal = document.getElementById('modalOverlay');
     const content = document.getElementById('modalContent');
     
+    const currentSeasonTeams = teamsData.map(t => t.name).sort();
+    
     let html = '<h3>Edit Manager Names</h3>';
     html += '<div style="max-height: 400px; overflow-y: auto; margin: 1rem 0;">';
     
-    for (const team of teamList) {
+    for (const team of currentSeasonTeams) {
       const manager = playerMap[team] || '';
       html += `
         <div style="margin: 0.5rem 0;">
@@ -1660,7 +1866,7 @@
     content.innerHTML = html;
     
     document.getElementById('saveManagersBtn').onclick = async () => {
-      for (const team of teamList) {
+      for (const team of currentSeasonTeams) {
         const inputId = `manager_${team.replace(/\s/g, '_')}`;
         const value = document.getElementById(inputId).value.trim();
         if (value) {
@@ -1761,6 +1967,16 @@
     });
   }
 
+  // ImgBB upload helper
+  async function uploadToImgBB(file) {
+    const fd = new FormData();
+    fd.append('image', file);
+    const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: fd });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error?.message || 'Upload failed');
+    return data.data.url;
+  }
+
   // Hamburger menu builder
   function buildHamburgerModal() {
     const modalContent = document.getElementById('modalContent');
@@ -1771,11 +1987,13 @@
     if(isAdminMode) {
       options += `<div class="modal-option" id="addIconBtn">ADD TEAM ICON</div>`;
       options += `<div class="modal-option" id="addSlideBtn">MANAGE SLIDESHOW</div>`;
+      options += `<div class="modal-option" id="manageNavbarLogoBtn">MANAGE NAVBAR LOGO</div>`;
+      options += `<div class="modal-option" id="manageCornerBtn">MANAGE TABLE CORNER</div>`;
     }
     
     options += `<div class="modal-option" id="rulesBtn">RULES</div>`;
     options += `<div class="modal-option" id="homeBtn">HOME</div>`;
-    options += `<div class="modal-option" id="scheduleBtn">📅 VIEW SCHEDULE</div>`;   // ADDED
+    options += `<div class="modal-option" id="scheduleBtn">📅 VIEW SCHEDULE</div>`;
     options += `</div><button class="close-modal" id="closeModalBtn">CLOSE</button>`;
     
     modalContent.innerHTML = options;
@@ -1794,11 +2012,17 @@
         document.getElementById('modalOverlay').classList.remove('active'); 
         showSlideshowManager(); 
       };
+      document.getElementById('manageNavbarLogoBtn').onclick = () => { 
+        showNavbarLogoManager(); 
+      };
+      document.getElementById('manageCornerBtn').onclick = () => { 
+        showTableCornerManager(); 
+      };
     }
     
     document.getElementById('rulesBtn').onclick = () => window.location.href = 'rules.html';
     document.getElementById('homeBtn').onclick = () => window.location.href = 'feed.html';
-    document.getElementById('scheduleBtn').onclick = () => window.location.href = 'schedule.html';  // redirect
+    document.getElementById('scheduleBtn').onclick = () => window.location.href = 'schedule.html';
     document.getElementById('closeModalBtn').onclick = () => document.getElementById('modalOverlay').classList.remove('active');
   }
 
@@ -1814,58 +2038,48 @@
     if(e.target === modalOverlayElem) modalOverlayElem.classList.remove('active'); 
   });
 
-  async function uploadToImgBB(file) {
-    const fd = new FormData(); 
-    fd.append('image', file);
-    const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: fd });
-    const data = await resp.json();
-    if(!data.success) throw new Error(data.error?.message);
-    return data.data.url;
-  }
-  
+  // Team icon upload
   function showUploadIconModal() {
     const modal = document.getElementById('modalOverlay');
     const content = document.getElementById('modalContent');
     
     content.innerHTML = `
-      <div class="modal-content" style="background:#f5d742;">
-        <h3>Add Team Icon</h3>
-        <input type="text" id="iconTeamName" placeholder="Team Name (exact match)" 
-               style="width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: #1a1a1a; 
-                      border: 1px solid #f5d742; border-radius: 2rem; color: #f5d742;">
-        <input type="file" id="iconFile" accept="image/*" 
-               style="width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: #1a1a1a; 
-                      border: 1px solid #f5d742; border-radius: 2rem; color: #f5d742;">
-        <button id="uploadIconSave" class="modal-option">UPLOAD</button>
-        <button id="closeIconModal" class="close-modal">Cancel</button>
-        <div id="iconStatus" style="margin-top: 1rem; font-weight: bold;"></div>
-      </div>
+      <h3>Add Team Icon</h3>
+      <input type="text" id="iconTeamName" placeholder="Team Name (exact match)" 
+             style="width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: #1a1a1a; 
+                    border: 1px solid #f5d742; border-radius: 2rem; color: #f5d742;">
+      <input type="file" id="iconFile" accept="image/*" 
+             style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;">
+      <button class="modal-option" id="uploadIconSave">UPLOAD</button>
+      <button class="close-modal" id="closeIconModal">Cancel</button>
+      <div id="iconStatus"></div>
     `;
     
     document.getElementById('uploadIconSave').onclick = async () => {
       const teamName = document.getElementById('iconTeamName').value.trim();
       const file = document.getElementById('iconFile').files[0];
+      const statusDiv = document.getElementById('iconStatus');
       
       if(!teamName) { 
-        document.getElementById('iconStatus').innerText = 'Enter team name'; 
+        statusDiv.innerHTML = '<div class="status-message status-error">Enter team name</div>'; 
         return; 
       }
       if(!file) { 
-        document.getElementById('iconStatus').innerText = 'Select an image'; 
+        statusDiv.innerHTML = '<div class="status-message status-error">Select an image</div>'; 
         return; 
       }
       
       try {
-        document.getElementById('iconStatus').innerText = 'Uploading...';
+        statusDiv.innerHTML = '<div class="status-message status-loading">Uploading...</div>';
         const url = await uploadToImgBB(file);
         await database.ref(`teamIcons/${teamName}`).set({ imageUrl: url, updatedAt: Date.now() });
         teamIconsCache[teamName] = url;
         renderLeagueTable(); 
         renderResults();
-        document.getElementById('iconStatus').innerText = '✓ Icon saved for ' + teamName;
+        statusDiv.innerHTML = '<div class="status-message status-success">✓ Icon saved for ' + teamName + '</div>';
         setTimeout(() => modal.classList.remove('active'), 1500);
       } catch(err) { 
-        document.getElementById('iconStatus').innerText = 'Error: '+err.message; 
+        statusDiv.innerHTML = '<div class="status-message status-error">Error: ' + err.message + '</div>'; 
       }
     };
     
@@ -1873,83 +2087,168 @@
     modal.classList.add('active');
   }
 
+  // Slideshow manager
   async function showSlideshowManager() {
     const modal = document.getElementById('modalOverlay');
     const content = document.getElementById('modalContent');
     const currentDurSec = slideshowDuration/1000;
     
     content.innerHTML = `
-      <div class="modal-content" style="min-width:300px;">
-        <h3>Manage Slideshow</h3>
-        <div id="slidePreviewList" style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;"></div>
-        <input type="file" id="newSlideFile" accept="image/*" 
-               style="width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: #1a1a1a; 
-                      border: 1px solid #f5d742; border-radius: 2rem; color: #f5d742;">
-        <button id="uploadSlideBtn" class="modal-option">Add Slide</button>
-        <div style="margin:10px 0;">
-          <label>Duration (seconds):</label>
-          <input type="number" id="slideDurationSec" min="1" max="10" step="0.5" value="${currentDurSec}" 
-                 style="width:80px; padding: 0.4rem; background: #1a1a1a; color: #f5d742; 
-                        border: 1px solid #f5d742; border-radius: 1rem;">
-        </div>
-        <button id="saveDurBtn" class="modal-option">Set Duration</button>
-        <button id="closeSlideModal" class="close-modal">Close</button>
-        <div id="slideStatus" style="margin-top: 1rem; font-weight: bold;"></div>
+      <h3>Manage Slideshow</h3>
+      <div id="slidePreviewList" class="image-preview-grid"></div>
+      <input type="file" id="newSlideFile" accept="image/*" 
+             style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;">
+      <button class="modal-option" id="uploadSlideBtn">Add Slide</button>
+      <div style="margin: 10px 0;">
+        <label style="font-weight: bold;">Duration (seconds):</label>
+        <input type="number" id="slideDurationSec" min="1" max="10" step="0.5" value="${currentDurSec}" 
+               style="width: 80px; padding: 0.4rem; background: #1a1a1a; color: #f5d742; 
+                      border: 1px solid #f5d742; border-radius: 1rem; margin-left: 0.5rem;">
       </div>
+      <button class="modal-option" id="saveDurBtn">Set Duration</button>
+      <button class="close-modal" id="closeSlideModal">Close</button>
+      <div id="slideStatus"></div>
     `;
     
     const previewDiv = document.getElementById('slidePreviewList');
     
     function refreshPreviews() {
       previewDiv.innerHTML = slideshowImages.map((url, idx) => `
-        <div style="position:relative;">
-          <img src="${url}" style="width:80px;height:60px;object-fit:cover;border:1px solid black;">
-          <button onclick="window.deleteSlide(${idx})" 
-                  style="position:absolute;top:-5px;right:-5px;background:#ef4444;color:white;
-                         border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;">✕</button>
+        <div class="image-preview-item">
+          <img src="${url}">
+          <button class="delete-preview-btn" data-idx="${idx}">✕</button>
         </div>
       `).join('');
+      
+      previewDiv.querySelectorAll('.delete-preview-btn').forEach(btn => {
+        btn.onclick = async () => {
+          const idx = parseInt(btn.dataset.idx);
+          slideshowImages.splice(idx, 1);
+          await database.ref('slideshow/images').set(slideshowImages);
+          loadSlideshow();
+          refreshPreviews();
+        };
+      });
     }
     
     refreshPreviews();
     
-    window.deleteSlide = async (idx) => {
-      slideshowImages.splice(idx,1);
-      await database.ref('slideshow/images').set(slideshowImages);
-      loadSlideshow();
-      refreshPreviews();
-    };
-    
     document.getElementById('uploadSlideBtn').onclick = async () => {
       const file = document.getElementById('newSlideFile').files[0];
+      const statusDiv = document.getElementById('slideStatus');
       if(!file) { 
-        document.getElementById('slideStatus').innerText = 'Select file'; 
+        statusDiv.innerHTML = '<div class="status-message status-error">Select file</div>'; 
         return; 
       }
       try {
-        document.getElementById('slideStatus').innerText = 'Uploading...';
+        statusDiv.innerHTML = '<div class="status-message status-loading">Uploading...</div>';
         const url = await uploadToImgBB(file);
         slideshowImages.push(url);
         await database.ref('slideshow/images').set(slideshowImages);
         loadSlideshow();
         refreshPreviews();
-        document.getElementById('slideStatus').innerText = '✓ Added';
+        statusDiv.innerHTML = '<div class="status-message status-success">✓ Added</div>';
+        document.getElementById('newSlideFile').value = '';
       } catch(e) { 
-        document.getElementById('slideStatus').innerText = 'Error'; 
+        statusDiv.innerHTML = '<div class="status-message status-error">Error: ' + e.message + '</div>'; 
       }
     };
     
     document.getElementById('saveDurBtn').onclick = async () => {
       let sec = parseFloat(document.getElementById('slideDurationSec').value);
-      if(isNaN(sec)) sec=3;
+      if(isNaN(sec)) sec = 3;
       sec = Math.min(10, Math.max(1, sec));
-      await database.ref('slideshow/duration').set(sec*1000);
-      slideshowDuration = sec*1000;
+      await database.ref('slideshow/duration').set(sec * 1000);
+      slideshowDuration = sec * 1000;
       startSlideshow();
-      document.getElementById('slideStatus').innerText = `Duration set to ${sec}s`;
+      document.getElementById('slideStatus').innerHTML = '<div class="status-message status-success">Duration set to ' + sec + 's</div>';
     };
     
     document.getElementById('closeSlideModal').onclick = () => modal.classList.remove('active');
+    modal.classList.add('active');
+  }
+
+  // Navbar logo manager
+  async function showNavbarLogoManager() {
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+      <h3>Manage Navbar Logo</h3>
+      <p style="margin: 1rem 0;">Current logo:</p>
+      <div style="background: rgba(0,0,0,0.1); padding: 1rem; border-radius: 1rem; margin: 1rem 0;">
+        ${navbarLogoUrl ? `<img src="${navbarLogoUrl}" style="max-width: 150px; max-height: 50px;">` : '<p>No logo set</p>'}
+      </div>
+      <input type="file" id="navbarLogoFile" accept="image/*" 
+             style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;">
+      <button class="modal-option" id="uploadNavbarLogoBtn">Upload New Logo</button>
+      <button class="close-modal" id="closeNavbarModal">Close</button>
+      <div id="navbarStatus"></div>
+    `;
+    
+    document.getElementById('uploadNavbarLogoBtn').onclick = async () => {
+      const file = document.getElementById('navbarLogoFile').files[0];
+      const statusDiv = document.getElementById('navbarStatus');
+      if(!file) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Select an image</div>'; 
+        return; 
+      }
+      try {
+        statusDiv.innerHTML = '<div class="status-message status-loading">Uploading...</div>';
+        const url = await uploadToImgBB(file);
+        await database.ref('premier_league_navbar_logo').set(url);
+        navbarLogoUrl = url;
+        renderNavbarLogo();
+        statusDiv.innerHTML = '<div class="status-message status-success">✓ Logo updated</div>';
+        setTimeout(() => modal.classList.remove('active'), 1500);
+      } catch(e) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Error: ' + e.message + '</div>'; 
+      }
+    };
+    
+    document.getElementById('closeNavbarModal').onclick = () => modal.classList.remove('active');
+    modal.classList.add('active');
+  }
+
+  // Table corner image manager
+  async function showTableCornerManager() {
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+      <h3>Manage Table Corner Image</h3>
+      <p style="margin: 1rem 0;">Current image:</p>
+      <div style="background: rgba(0,0,0,0.1); padding: 1rem; border-radius: 1rem; margin: 1rem 0;">
+        ${tableCornerImageUrl ? `<img src="${tableCornerImageUrl}" style="max-width: 100px; max-height: 100px;">` : '<p>No image set</p>'}
+      </div>
+      <input type="file" id="cornerImageFile" accept="image/*" 
+             style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;">
+      <button class="modal-option" id="uploadCornerBtn">Upload Image</button>
+      <button class="close-modal" id="closeCornerModal">Close</button>
+      <div id="cornerStatus"></div>
+    `;
+    
+    document.getElementById('uploadCornerBtn').onclick = async () => {
+      const file = document.getElementById('cornerImageFile').files[0];
+      const statusDiv = document.getElementById('cornerStatus');
+      if(!file) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Select an image</div>'; 
+        return; 
+      }
+      try {
+        statusDiv.innerHTML = '<div class="status-message status-loading">Uploading...</div>';
+        const url = await uploadToImgBB(file);
+        await database.ref('premier_league_table_corner').set(url);
+        tableCornerImageUrl = url;
+        renderTableCornerImage();
+        statusDiv.innerHTML = '<div class="status-message status-success">✓ Image updated</div>';
+        setTimeout(() => modal.classList.remove('active'), 1500);
+      } catch(e) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Error: ' + e.message + '</div>'; 
+      }
+    };
+    
+    document.getElementById('closeCornerModal').onclick = () => modal.classList.remove('active');
     modal.classList.add('active');
   }
 
@@ -1971,6 +2270,8 @@
   loadSlideshow();
   loadTeamIcons();
   loadManagerNames();
+  loadNavbarLogo();
+  loadTableCornerImage();
   
   loadSeasonsMetadata().then(() => {
     const tableRef = database.ref(getSeasonPath(currentSeasonId, 'table'));
