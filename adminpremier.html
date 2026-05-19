@@ -449,46 +449,62 @@
       position: relative;
     }
     
-    /* STICKY FIRST COLUMN */
+    /* STICKY FIRST TWO COLUMNS (Pos + Club) with divider after Club column */
     .stats-table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 900px;
+      min-width: 800px;
     }
     
+    /* Pos column sticky */
     .stats-table th:first-child,
     .stats-table td:first-child {
       position: sticky;
       left: 0;
       background: #f5d742;
       z-index: 10;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
     }
     
-    .stats-table th:first-child::after,
-    .stats-table td:first-child::after {
+    /* Club column sticky */
+    .stats-table th:nth-child(2),
+    .stats-table td:nth-child(2) {
+      position: sticky;
+      left: 50px; /* width of Pos column approx */
+      background: #f5d742;
+      z-index: 10;
+    }
+    
+    /* Vertical divider line after Club column (between Club and P) */
+    .stats-table th:nth-child(2)::after,
+    .stats-table td:nth-child(2)::after {
       content: '';
       position: absolute;
-      right: 0;
+      right: -2px;
       top: 0;
       bottom: 0;
-      width: 2px;
+      width: 3px;
       background: #1a1a1a;
-      opacity: 0.3;
+      z-index: 15;
     }
     
-    .results-table-wrapper {
-      overflow-x: visible;
-    }
-    
+    /* Make sure cells have relative positioning for the pseudo-element */
     .stats-table th, .stats-table td {
+      position: relative;
       padding: 0.7rem 0.5rem;
       text-align: left;
       border-bottom: 1px solid #e5e7eb;
       background-color: #f5d742;
     }
     
-    .stats-table th:first-child, .stats-table td:first-child { padding-left: 0.5rem; }
+    /* Reduce gap between Club column and P column - bring stats close */
+    .stats-table th:nth-child(2), .stats-table td:nth-child(2) {
+      padding-right: 0.3rem;
+    }
+    .stats-table th:nth-child(3), .stats-table td:nth-child(3) {
+      padding-left: 0.3rem;
+    }
+    
+    .stats-table th:first-child, .stats-table td:first-child { padding-left: 0.5rem; width: 50px; }
     .stats-table th:last-child, .stats-table td:last-child { padding-right: 0.5rem; }
     .inner-table th, .inner-table td { padding: 0.7rem 0.5rem; }
     
@@ -983,6 +999,10 @@
       .navbar-logo-placeholder { width: 100px; height: 35px; font-size: 0.6rem; }
       .result-score-text { font-size: 1.4rem; }
       .stats-popup { width: 95%; }
+      /* Adjust sticky left positions for mobile */
+      .stats-table th:nth-child(2), .stats-table td:nth-child(2) {
+        left: 40px;
+      }
     }
     
     @media (max-width: 480px) {
@@ -990,6 +1010,9 @@
       .circle-result { width: 18px; height: 18px; font-size: 9px; }
       .inline-team-icon { width: 40px; height: 40px; }
       .result-score-text { font-size: 1.2rem; }
+      .stats-table th:nth-child(2), .stats-table td:nth-child(2) {
+        left: 35px;
+      }
     }
   </style>
 </head>
@@ -1127,7 +1150,7 @@
   </div>
 </div>
 
-<!-- Popup for Top Scorer / Assistant (dynamic) -->
+<!-- Popup for Top Scorer / Assistant -->
 <div id="statsPopupOverlay" class="modal-overlay" style="z-index: 400;">
   <div class="stats-popup" id="statsPopupContent">
     <div class="stats-popup-header">
@@ -1564,14 +1587,20 @@
     const actionHeader = document.getElementById('resultActionHeader');
     if(actionHeader) actionHeader.style.display = isAdminMode ? 'table-cell' : 'none';
     tbody.innerHTML = '';
+    // Sort results - LATEST FIRST (newest on top) - exactly as original
     const sortedResults = [...resultsData].sort((a,b) => (b.md||0) - (a.md||0));
+    
     sortedResults.forEach(r => {
       let homeTeam = "", awayTeam = "", homeScore = "", awayScore = "", isForfeit = false;
       const text = r.matchText;
       const lower = text.toLowerCase();
+      
       if (lower.includes("no contest") || lower.includes("f - f")) isForfeit = true;
       else if (lower.includes("forfeit")) isForfeit = true;
+      
+      // Improved parsing for both normal and forfeit matches
       if (isForfeit && text.includes("F - F")) {
+        // Parse forfeit matches: "TeamA F - F TeamB"
         const forfeitParts = text.split(/\s*F\s*-\s*F\s*/i);
         if (forfeitParts.length >= 2) {
           homeTeam = forfeitParts[0].trim().replace(/\(.*\)/g, '').trim();
@@ -1580,8 +1609,10 @@
           awayScore = "F";
         }
       } else {
+        // Parse normal matches: "TeamA 3 - 1 TeamB"
         const scoreRegex = /(\d+)\s*-\s*(\d+)/;
         const match = text.match(scoreRegex);
+        
         if (match) {
           homeScore = match[1]; 
           awayScore = match[2];
@@ -1592,9 +1623,12 @@
           }
         }
       }
+      
       const homeIcon = homeTeam ? getTeamIconHtml(homeTeam, "inline-team-icon") : "";
       const awayIcon = awayTeam ? getTeamIconHtml(awayTeam, "inline-team-icon") : "";
+      
       let matchHtml = `<div class="result-match-display">${homeIcon} <span class="result-score-text">${homeScore} - ${awayScore}</span> ${awayIcon}</div>`;
+      
       if (isForfeit) {
         let ft = "Forfeit";
         if (text.includes("No Contest")) ft = "No Contest";
@@ -1602,9 +1636,11 @@
         else if (text.includes("Forfeited on Agreement")) ft = "Forfeited on Agreement";
         matchHtml = `<div class="result-with-forfeit">${matchHtml}<div class="forfeit-text">${ft}</div></div>`;
       }
+      
       const row = tbody.insertRow();
       row.insertCell(0).innerHTML = matchHtml;
       row.insertCell(1).innerHTML = `<span style="background:#1a1a1a; padding:0.3rem 0.7rem; border-radius:30px; color:#f5d742; font-size:0.85rem; font-weight:bold;">MD${r.md}</span>`;
+      
       if(isAdminMode) {
         const actions = row.insertCell(2);
         const editBtn = document.createElement('button'); 
@@ -1914,11 +1950,11 @@
     const title = type === 'scorer' ? 'TOP SCORERS' : 'TOP ASSISTANTS';
     const inner = document.getElementById('statsPopupInner');
     let slideshowHtml = `<div class="stats-popup-slideshow"><img id="statsPopupSlideshowImg" src="${images[0] || ''}" style="max-width:100%; max-height:200px; border-radius:1rem;"></div><div class="dots-container" id="statsPopupDots"></div>`;
-    let listHtml = `<table class="stats-list"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>${type === 'scorer' ? 'Goals' : 'Assists'}</th>${isAdminMode ? '<th>Actions</th>' : ''}</tr></thead><tbody>`;
+    let listHtml = `<table class="stats-list"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>${type === 'scorer' ? 'Goals' : 'Assists'}</th>${isAdminMode ? '<th>Actions</th>' : ''}</thead><tbody>`;
     list.sort((a,b) => (b.count||0) - (a.count||0)).forEach((item, idx) => {
       listHtml += `<tr><td>${idx+1}</td><td>${item.name || ''}</td><td>${item.team || ''}</td><td>${item.count || 0}</td>${isAdminMode ? `<td><button class="edit-btn" data-key="${item.key}">✏️</button> <button class="delete-btn" data-key="${item.key}">🗑️</button></td>` : ''}</tr>`;
     });
-    listHtml += `</tbody></table>`;
+    listHtml += `</tbody>}</div>`;
     let adminControls = '';
     if (isAdminMode) {
       adminControls = `<div class="admin-stats-controls"><button id="addStatsEntryBtn" class="add-btn">+ Add Entry</button>
