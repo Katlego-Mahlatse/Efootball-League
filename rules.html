@@ -1,323 +1,549 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>eFootball 412 · Rules</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>eFootball Fan Hub - Rules</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    body {
-      background: linear-gradient(145deg, #1a0a2e 0%, #2d1b4e 100%);
-      font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
-      padding: 0;
-      color: #f5f0ff;
-      min-height: 100vh;
-    }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
 
-    .gold-navbar {
-      background: linear-gradient(135deg, #d4af37, #f5d742);
-      padding: 0.4rem 1.2rem;
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 0.8rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
+        /* Navbar - black & gold */
+        .navbar {
+            background: linear-gradient(135deg, #f5d742, #d4af37);
+            padding: 0.5rem 1.2rem;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(245, 215, 66, 0.3);
+        }
 
-    .nav-icon-btn {
-      background: #6a3bb5;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      transition: transform 0.2s, background 0.2s;
-      border: 1.5px solid #f5d742;
-      text-decoration: none;
-    }
-    .nav-icon-btn:hover {
-      transform: scale(1.05);
-      background: #7e4acf;
-    }
-    .chat-svg {
-      width: 20px;
-      height: 20px;
-      display: block;
-    }
+        .menu-icon {
+            background: #1a1a1a;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            border: 1.5px solid #f5d742;
+        }
 
-    .hamburger-btn {
-      background: #6a3bb5;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 4px;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      transition: transform 0.2s, background 0.2s;
-      border: 1.5px solid #f5d742;
-    }
+        .menu-icon span {
+            display: block;
+            width: 18px;
+            height: 2.5px;
+            background-color: #f5d742;
+            border-radius: 2px;
+        }
 
-    .hamburger-btn:hover {
-      transform: scale(1.05);
-      background: #7e4acf;
-    }
+        .menu-icon:hover {
+            transform: scale(1.05);
+            background: #0a0a0a;
+        }
 
-    .hamburger-btn span {
-      display: block;
-      width: 18px;
-      height: 2.5px;
-      background-color: #f5d742;
-      border-radius: 2px;
-    }
+        /* Overlay & popup menu */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1999;
+            display: none;
+        }
+        .overlay.active { display: block; }
 
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: transparent;
-      z-index: 200;
-      visibility: hidden;
-      pointer-events: none;
-    }
-    .modal-overlay.active {
-      visibility: visible;
-      pointer-events: auto;
-    }
+        .popup-menu {
+            position: fixed;
+            top: 0;
+            right: -280px;
+            width: 280px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a1a 0%, #000 100%);
+            z-index: 2000;
+            padding: 30px 20px;
+            transition: right 0.3s ease;
+            border-left: 2px solid #f5d742;
+        }
+        .popup-menu.active { right: 0; }
+        .close-menu {
+            color: #f5d742;
+            font-size: 28px;
+            cursor: pointer;
+            text-align: right;
+            margin-bottom: 30px;
+        }
+        .menu-item {
+            padding: 15px 20px;
+            margin: 10px 0;
+            background: rgba(255, 215, 0, 0.08);
+            border-radius: 12px;
+            cursor: pointer;
+            border-left: 5px solid #f5d742;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+        .menu-item:hover {
+            background: rgba(255, 215, 0, 0.2);
+            transform: translateX(5px);
+        }
 
-    .modal-content {
-      position: absolute;
-      top: 60px;
-      right: 20px;
-      background: linear-gradient(135deg, #f5d742, #e6c42c);
-      border-radius: 1.2rem;
-      padding: 1rem 1.2rem;
-      width: auto;
-      min-width: 200px;
-      text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-      animation: fadeInDown 0.2s ease;
-      border: 1px solid #6a3bb5;
-    }
+        /* Rules content */
+        .rules-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        .rules-card {
+            background: rgba(10, 10, 10, 0.9);
+            border-radius: 2rem;
+            border: 1px solid rgba(245, 215, 66, 0.4);
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .article {
+            margin-bottom: 2rem;
+        }
+        .article-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #f5d742;
+            margin-bottom: 1rem;
+            border-left: 4px solid #f5d742;
+            padding-left: 1rem;
+        }
+        .article-content {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #e0e0e0;
+            white-space: pre-line;
+        }
+        .signature {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px dashed #f5d742;
+            font-size: 1rem;
+            color: #f5d742;
+            font-style: italic;
+        }
 
-    @keyframes fadeInDown {
-      from {
-        transform: translateY(-15px);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
+        /* Admin controls */
+        .admin-bar {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255,215,0,0.05);
+            border-bottom: 1px solid rgba(255,215,0,0.2);
+            display: none;
+        }
+        .admin-btn {
+            background: linear-gradient(135deg, #f5d742, #d4af37);
+            color: #000;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0 5px;
+            transition: 0.2s;
+        }
+        .admin-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245,215,66,0.4);
+        }
+        .edit-icon {
+            background: #333;
+            color: #f5d742;
+            border: none;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 15px;
+        }
+        .edit-icon:hover { background: #f5d742; color: #000; }
 
-    .modal-content h3 {
-      font-size: 1.1rem;
-      color: #4a1d8c;
-      margin-bottom: 0.8rem;
-      font-weight: 800;
-      border-bottom: 1px solid #6a3bb5;
-      display: inline-block;
-      padding-bottom: 0.2rem;
-    }
-
-    .modal-options {
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-      margin: 0.8rem 0;
-    }
-
-    .modal-option {
-      background: rgba(106, 59, 181, 0.15);
-      padding: 0.4rem 0.8rem;
-      border-radius: 40px;
-      text-decoration: none;
-      color: #3c1a70;
-      font-weight: 700;
-      font-size: 0.8rem;
-      transition: all 0.2s;
-      border: 1px solid #6a3bb5;
-      display: block;
-    }
-
-    .modal-option:hover {
-      background: #6a3bb5;
-      color: #f5d742;
-      transform: translateX(3px);
-    }
-
-    .close-modal {
-      background: #4a1d8c;
-      color: #f5d742;
-      border: none;
-      padding: 0.3rem 0.9rem;
-      border-radius: 30px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 0.5rem;
-      font-size: 0.7rem;
-    }
-
-    .close-modal:hover {
-      background: #2d0f5a;
-    }
-
-    .rules-container {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 2rem 1.5rem;
-    }
-
-    .rules-card {
-      background: rgba(45, 25, 75, 0.85);
-      backdrop-filter: blur(10px);
-      border-radius: 2rem;
-      border: 1px solid rgba(245, 215, 66, 0.4);
-      overflow: hidden;
-      padding: 2rem;
-    }
-
-    .article-title {
-      font-size: 2rem;
-      font-weight: 800;
-      color: #f5d742;
-      text-align: center;
-      margin: 1.5rem 0 1rem 0;
-      letter-spacing: 1px;
-    }
-
-    .article-title:first-of-type {
-      margin-top: 0;
-    }
-
-    .rule-text {
-      font-size: 1rem;
-      line-height: 1.6;
-      color: #f0eaff;
-      margin-bottom: 0.75rem;
-      text-align: left;
-    }
-
-    .rule-sub {
-      margin-left: 1.5rem;
-      margin-bottom: 0.5rem;
-      color: #e6d5ff;
-    }
-
-    .signature {
-      text-align: center;
-      margin-top: 2.5rem;
-      padding-top: 1.5rem;
-      border-top: 1px dashed #f5d742;
-      font-size: 1rem;
-      color: #f5d742;
-      font-style: italic;
-    }
-
-    @media (max-width: 780px) {
-      .rules-container { padding: 1rem; }
-      .rules-card { padding: 1.2rem; }
-      .article-title { font-size: 1.5rem; }
-      .rule-text { font-size: 0.85rem; }
-    }
-  </style>
+        /* Modal for editing */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            backdrop-filter: blur(8px);
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a1a, #000);
+            padding: 25px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            border: 2px solid #f5d742;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-content h2 { color: #f5d742; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #f5d742; font-weight: 600; }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            background: #222;
+            border: 1px solid #f5d742;
+            color: white;
+            border-radius: 8px;
+        }
+        .form-group textarea { min-height: 150px; }
+        .form-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-primary { background: #f5d742; color: #000; padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1; }
+        .btn-secondary { background: #333; color: white; flex: 1; border: none; border-radius: 8px; cursor: pointer; }
+        .article-list-item {
+            background: #111;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 3px solid #f5d742;
+        }
+        .reorder-btns button {
+            background: #333;
+            border: none;
+            color: #f5d742;
+            padding: 4px 10px;
+            margin: 0 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #f5d742;
+        }
+        .empty-rules {
+            text-align: center;
+            padding: 50px;
+            color: #888;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
 </head>
 <body>
-
-  <div class="gold-navbar">
-    <!-- CHAT ICON REMOVED as requested -->
-    <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
-  </div>
-
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal-content">
-      <h3>TOURNAMENTS</h3>
-      <div class="modal-options">
-        <a href="fifa-club-world-cup.html" class="modal-option">FIFA CLUB WORLD CUP</a>
-        <a href="uefa-champions-league.html" class="modal-option">UEFA CHAMPIONS LEAGUE</a>
-        <a href="uefa-europa-league.html" class="modal-option">UEFA EUROPA LEAGUE</a>
-        <a href="uefa-super-league.html" class="modal-option">UEFA SUPER LEAGUE</a>
-        <a href="uefa-conference-league.html" class="modal-option">UEFA CONFERENCE LEAGUE</a>
-        <a href="player-titles.html" class="modal-option">PLAYER TITLES</a>
-        <a href="rules.html" class="modal-option">RULES</a>
-        <a href="calendar.html" class="modal-option">CALENDAR</a>
-      </div>
-      <button class="close-modal" id="closeModalBtn">CLOSE</button>
+    <div class="navbar">
+        <div class="menu-icon" onclick="toggleMenu()">
+            <span></span><span></span><span></span>
+        </div>
     </div>
-  </div>
-
-  <div class="rules-container">
-    <div class="rules-card">
-      <div class="article-title">ARTICLE 1. LEAGUE STRUCTURE</div>
-      <div class="rule-text">1.1 The league shall consist of ten (14) teams.</div>
-      <div class="rule-text">1.2 The competition shall be conducted in a double round-robin format.</div>
-      <div class="rule-text">1.3 Each team shall play every other team twice — once home and once away — resulting in twenty six (26) matches per team.</div>
-      <div class="rule-text">1.4 The official fixture list shall be provided to all participants and shall serve as the binding schedule.</div>
-
-      <div class="article-title">ARTICLE 2. MATCH SCHEDULING AND COMPLETION</div>
-      <div class="rule-text">2.1 Participants are responsible for arranging their matches through the official group chat.</div>
-      <div class="rule-text">2.2 Every match must be completed and the final result posted in the group chat no later than 23:00 (11:00 PM) on the scheduled matchday.</div>
-      <div class="rule-text">2.3 No-Show and Forfeit Procedure</div>
-      <div class="rule-text rule-sub">a) If one participant actively attempts to communicate and arrange the match but the opponent fails to respond or appear by the 23:00 deadline, the match shall be awarded as a 3-0 victory to the communicating participant. The winning participant shall receive 3 points, and the defaulting participant shall receive 0 points and a 0-3 defeat.</div>
-      <div class="rule-text rule-sub">b) If neither participant initiates communication or makes any effort to schedule or play the match by 23:00 on the scheduled day, the match shall be recorded as a 0-0 result with no points awarded to either team. Both teams receive 0 points.</div>
-      <!-- Added 2.4 as requested -->
-      <div class="rule-text">2.4 If a participant forfeits consecutively, they might be sacked from their club.</div>
-
-      <div class="article-title">ARTICLE 3. POINTS SYSTEM</div>
-      <div class="rule-text">3.1 A win shall award three (3) points to the victorious team.</div>
-      <div class="rule-text">3.2 A draw shall award one (1) point to each team.</div>
-      <div class="rule-text">3.3 A loss shall award zero (0) points.</div>
-
-      <div class="article-title">ARTICLE 4. TIEBREAKER RULES</div>
-      <div class="rule-text">In the event two or more teams finish with the same number of points, the following tiebreakers shall be applied in this order:</div>
-      <div class="rule-text rule-sub">4.1 Goal Difference (GD)</div>
-      <div class="rule-text rule-sub">4.2 Total Goals Scored (GF)</div>
-      <div class="rule-text rule-sub">4.3 Head-to-head points earned in matches between the tied teams</div>
-      <div class="rule-text rule-sub">4.4 Head-to-head Goal Difference</div>
-      <div class="rule-text rule-sub">4.5 Final decision by the CEOs.</div>
-
-      <div class="article-title">ARTICLE 5. TEAM SELECTION AND ELIGIBILITY</div>
-      <div class="rule-text">5.1 Participants may select any official real-world club team for the duration of the season.</div>
-      <div class="rule-text">5.2 The use of Dream Teams, fantasy squads, Icon teams, or any squads containing custom or created players is strictly prohibited.</div>
-      <div class="rule-text">5.3 Only authentic, official real-world club squads are permitted.</div>
-      <div class="rule-text">5.4 Once a team is selected, it cannot be changed or swapped for the remainder of the season. Doing so forcefully may result in Point Deductions</div>
-
-      <div class="article-title">ARTICLE 6. RESPECT & FAIR PLAY</div>
-      <div class="rule-text">6.1 Use appropriate language at all times.</div>
-      <div class="rule-text">6.2 Match settings should be made fair for both teams.</div>
-
-      <div class="signature">If you object with any of the rules kindly state your objection in the group and it will be addressed. Visca Barça</div>
+    <div class="overlay" id="overlay" onclick="closeAll()"></div>
+    <div class="popup-menu" id="popupMenu">
+        <div class="close-menu" onclick="closeMenu()">✕</div>
+        <div class="menu-item" onclick="goHome()">🏠 Home</div>
+        <div class="menu-item" onclick="promptAdminKey()">🔑 Admin Mode</div>
+        <div class="menu-item" onclick="openLoginModal()">👤 Login</div>
+        <div class="menu-item" onclick="window.location.href='calendar.html'">📅 Calendar</div>
     </div>
-  </div>
 
-  <script>
-    // Modal functionality (same as home page)
-    const hamburger = document.getElementById("hamburgerBtn");
-    const modalOverlay = document.getElementById("modalOverlay");
-    const closeBtn = document.getElementById("closeModalBtn");
-    function openModal() { modalOverlay.classList.add("active"); }
-    function closeModal() { modalOverlay.classList.remove("active"); }
-    if (hamburger) hamburger.addEventListener("click", openModal);
-    if (closeBtn) closeBtn.addEventListener("click", closeModal);
-    modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
-  </script>
+    <!-- Admin bar (hidden until admin mode) -->
+    <div class="admin-bar" id="adminBar">
+        <button class="admin-btn" onclick="showAddArticleModal()">➕ Add Article</button>
+        <button class="admin-btn" onclick="editSignature()">✏️ Edit Signature</button>
+        <button class="admin-btn" onclick="reorderArticlesMode()">🔄 Reorder Articles</button>
+    </div>
+
+    <div class="rules-container">
+        <div class="rules-card" id="rulesCard">
+            <div id="rulesContent">
+                <div class="loading">Loading rules...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Article Modal -->
+    <div class="modal" id="editArticleModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Edit Article</h2>
+            <input type="hidden" id="editArticleId">
+            <div class="form-group">
+                <label>Article Title (e.g., "ARTICLE 1. LEAGUE STRUCTURE")</label>
+                <input type="text" id="articleTitle" placeholder="ARTICLE X. TITLE">
+            </div>
+            <div class="form-group">
+                <label>Content (use line breaks for 1.1, 1.2, etc.)</label>
+                <textarea id="articleContent" placeholder="1.1 First rule&#10;1.2 Second rule&#10;a) Sub-rule"></textarea>
+            </div>
+            <div class="form-buttons">
+                <button class="btn-primary" id="saveArticleBtn">Save</button>
+                <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Signature Modal -->
+    <div class="modal" id="editSignatureModal">
+        <div class="modal-content">
+            <h2>Edit Signature</h2>
+            <div class="form-group">
+                <label>Signature Text</label>
+                <textarea id="signatureText" rows="4" placeholder="If you object with any of the rules..."></textarea>
+            </div>
+            <div class="form-buttons">
+                <button class="btn-primary" id="saveSignatureBtn">Save</button>
+                <button class="btn-secondary" onclick="closeSignatureModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reorder Modal -->
+    <div class="modal" id="reorderModal">
+        <div class="modal-content">
+            <h2>Reorder Articles</h2>
+            <div id="reorderList"></div>
+            <div class="form-buttons">
+                <button class="btn-primary" id="saveReorderBtn">Save Order</button>
+                <button class="btn-secondary" onclick="closeReorderModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal (simple for rules page) -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <h2>Login / Profile</h2>
+            <div class="form-group">
+                <label>Your Name</label>
+                <input type="text" id="loginName" placeholder="Enter your name">
+            </div>
+            <div class="form-buttons">
+                <button class="btn-primary" onclick="saveLogin()">Save</button>
+                <button class="btn-secondary" onclick="closeLoginModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const FIREBASE_URL = 'https://efootball-412-default-rtdb.firebaseio.com';
+        let isAdmin = false;
+        let articles = [];     // array of { id, title, content, order }
+        let signature = "If you object with any of the rules kindly state your objection in the group and it will be addressed. Visca Barça";
+        let tempReorderList = [];
+
+        // Helper: fetch rules from Firebase
+        async function loadRules() {
+            try {
+                const res = await fetch(`${FIREBASE_URL}/rules.json`);
+                const data = await res.json();
+                if (data) {
+                    articles = data.articles ? Object.keys(data.articles).map(key => ({ id: key, ...data.articles[key] })) : [];
+                    // sort by order
+                    articles.sort((a,b) => (a.order || 0) - (b.order || 0));
+                    signature = data.signature || signature;
+                } else {
+                    articles = [];
+                }
+                renderRules();
+            } catch(e) {
+                console.error(e);
+                document.getElementById('rulesContent').innerHTML = '<div class="empty-rules">Failed to load rules. Check connection.</div>';
+            }
+        }
+
+        function renderRules() {
+            const container = document.getElementById('rulesContent');
+            if (!articles.length) {
+                container.innerHTML = `<div class="empty-rules">📜 No rules yet. ${isAdmin ? 'Click "Add Article" to create one.' : 'Check back later.'}</div>`;
+                if (signature) {
+                    container.innerHTML += `<div class="signature">${escapeHtml(signature)}</div>`;
+                }
+                return;
+            }
+            let html = '';
+            articles.forEach(article => {
+                html += `<div class="article" data-id="${article.id}">
+                            <div class="article-title">${escapeHtml(article.title)} 
+                                ${isAdmin ? `<button class="edit-icon" onclick="editArticle('${article.id}')">✏️ Edit</button>
+                                             <button class="edit-icon" style="background:#a00;" onclick="deleteArticle('${article.id}')">🗑️ Delete</button>` : ''}
+                            </div>
+                            <div class="article-content">${escapeHtml(article.content)}</div>
+                         </div>`;
+            });
+            if (signature) {
+                html += `<div class="signature">${escapeHtml(signature)} 
+                            ${isAdmin ? `<button class="edit-icon" onclick="editSignature()">✏️ Edit Signature</button>` : ''}
+                         </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        // Admin functions
+        function promptAdminKey() {
+            const key = prompt("Enter Admin Key:");
+            if (key === "admin@rules") {
+                isAdmin = true;
+                document.getElementById('adminBar').style.display = 'block';
+                renderRules();
+                closeMenu();
+                alert("Admin mode activated – you can now edit rules.");
+            } else if (key !== null) alert("Invalid admin key.");
+        }
+
+        function showAddArticleModal() {
+            if (!isAdmin) return;
+            document.getElementById('modalTitle').innerText = 'Add New Article';
+            document.getElementById('editArticleId').value = '';
+            document.getElementById('articleTitle').value = '';
+            document.getElementById('articleContent').value = '';
+            document.getElementById('editArticleModal').classList.add('active');
+        }
+
+        async function editArticle(id) {
+            if (!isAdmin) return;
+            const article = articles.find(a => a.id === id);
+            if (!article) return;
+            document.getElementById('modalTitle').innerText = 'Edit Article';
+            document.getElementById('editArticleId').value = id;
+            document.getElementById('articleTitle').value = article.title;
+            document.getElementById('articleContent').value = article.content;
+            document.getElementById('editArticleModal').classList.add('active');
+        }
+
+        async function deleteArticle(id) {
+            if (!isAdmin || !confirm('Delete this article permanently?')) return;
+            try {
+                await fetch(`${FIREBASE_URL}/rules/articles/${id}.json`, { method: 'DELETE' });
+                articles = articles.filter(a => a.id !== id);
+                renderRules();
+            } catch(e) { alert("Delete failed"); }
+        }
+
+        document.getElementById('saveArticleBtn').onclick = async () => {
+            if (!isAdmin) return;
+            const id = document.getElementById('editArticleId').value;
+            const title = document.getElementById('articleTitle').value.trim();
+            const content = document.getElementById('articleContent').value.trim();
+            if (!title || !content) { alert("Title and content required"); return; }
+            const newOrder = articles.length;
+            const articleData = { title, content, order: id ? articles.find(a=>a.id===id)?.order || newOrder : newOrder };
+            try {
+                if (id) {
+                    await fetch(`${FIREBASE_URL}/rules/articles/${id}.json`, { method: 'PATCH', body: JSON.stringify(articleData) });
+                    const idx = articles.findIndex(a=>a.id===id);
+                    if (idx !== -1) { articles[idx].title = title; articles[idx].content = content; }
+                } else {
+                    const res = await fetch(`${FIREBASE_URL}/rules/articles.json`, { method: 'POST', body: JSON.stringify(articleData) });
+                    const result = await res.json();
+                    articles.push({ id: result.name, title, content, order: newOrder });
+                }
+                renderRules();
+                closeEditModal();
+            } catch(e) { alert("Save failed"); }
+        };
+
+        function closeEditModal() { document.getElementById('editArticleModal').classList.remove('active'); }
+
+        // Signature editing
+        async function editSignature() {
+            if (!isAdmin) return;
+            document.getElementById('signatureText').value = signature;
+            document.getElementById('editSignatureModal').classList.add('active');
+        }
+        document.getElementById('saveSignatureBtn').onclick = async () => {
+            if (!isAdmin) return;
+            const newSig = document.getElementById('signatureText').value.trim();
+            if (!newSig) { alert("Signature cannot be empty"); return; }
+            try {
+                await fetch(`${FIREBASE_URL}/rules/signature.json`, { method: 'PUT', body: JSON.stringify(newSig) });
+                signature = newSig;
+                renderRules();
+                closeSignatureModal();
+            } catch(e) { alert("Save failed"); }
+        };
+        function closeSignatureModal() { document.getElementById('editSignatureModal').classList.remove('active'); }
+
+        // Reorder functionality
+        function reorderArticlesMode() {
+            if (!isAdmin) return;
+            tempReorderList = [...articles];
+            renderReorderList();
+            document.getElementById('reorderModal').classList.add('active');
+        }
+        function renderReorderList() {
+            const container = document.getElementById('reorderList');
+            container.innerHTML = '';
+            tempReorderList.forEach((article, idx) => {
+                const div = document.createElement('div');
+                div.className = 'article-list-item';
+                div.innerHTML = `<span><strong>${idx+1}.</strong> ${escapeHtml(article.title)}</span>
+                                 <div class="reorder-btns">
+                                    <button ${idx===0?'disabled':''} onclick="moveReorderItem(${idx}, -1)">▲</button>
+                                    <button ${idx===tempReorderList.length-1?'disabled':''} onclick="moveReorderItem(${idx}, 1)">▼</button>
+                                 </div>`;
+                container.appendChild(div);
+            });
+        }
+        function moveReorderItem(index, delta) {
+            const newIndex = index + delta;
+            if (newIndex < 0 || newIndex >= tempReorderList.length) return;
+            [tempReorderList[index], tempReorderList[newIndex]] = [tempReorderList[newIndex], tempReorderList[index]];
+            renderReorderList();
+        }
+        document.getElementById('saveReorderBtn').onclick = async () => {
+            if (!isAdmin) return;
+            for (let i=0; i<tempReorderList.length; i++) {
+                const article = tempReorderList[i];
+                await fetch(`${FIREBASE_URL}/rules/articles/${article.id}.json`, { method: 'PATCH', body: JSON.stringify({ order: i }) });
+                article.order = i;
+            }
+            articles.sort((a,b)=> a.order - b.order);
+            renderRules();
+            closeReorderModal();
+        };
+        function closeReorderModal() { document.getElementById('reorderModal').classList.remove('active'); }
+
+        // Menu / UI
+        function toggleMenu() { document.getElementById('popupMenu').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); }
+        function closeMenu() { document.getElementById('popupMenu').classList.remove('active'); document.getElementById('overlay').classList.remove('active'); }
+        function closeAll() { closeMenu(); }
+        function goHome() { window.location.href = 'feed.html'; }
+
+        // Login (simple local storage for name)
+        function openLoginModal() { document.getElementById('loginModal').classList.add('active'); }
+        function closeLoginModal() { document.getElementById('loginModal').classList.remove('active'); }
+        function saveLogin() {
+            const name = document.getElementById('loginName').value.trim();
+            if (name) {
+                localStorage.setItem('rules_user_name', name);
+                alert(`Logged in as ${name}`);
+            } else { alert("Enter a name"); }
+            closeLoginModal();
+        }
+
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+        loadRules();
+    </script>
 </body>
 </html>
