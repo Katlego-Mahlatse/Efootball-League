@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <meta name="viewport" content="width=1200, initial-scale=1.0, user-scalable=yes">
   <title>Admin · Premier League</title>
   <!-- Firebase SDKs (Compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -14,15 +14,24 @@
       background: linear-gradient(145deg, #0a0a0a 0%, #1a1a1a 100%);
       font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
       padding-bottom: 2rem;
+      font-size: 32px; /* base font size doubled */
+      min-width: 1200px;
+      width: 1200px;
+      margin: 0 auto;
+    }
+    
+    /* scale down inner elements that are not text to keep layout consistent but larger */
+    .gold-navbar, .card, .dashboard, .slideshow-container, .results-card-compact {
+      font-size: 1rem;
     }
     
     @keyframes goldGlow {
-      0%, 100% { box-shadow: 0 0 10px rgba(245, 215, 66, 0.3), 0 0 20px rgba(245, 215, 66, 0.2); }
-      50% { box-shadow: 0 0 20px rgba(245, 215, 66, 0.5), 0 0 30px rgba(245, 215, 66, 0.3); }
+      0%, 100% { box-shadow: 0 0 20px rgba(245, 215, 66, 0.3), 0 0 40px rgba(245, 215, 66, 0.2); }
+      50% { box-shadow: 0 0 40px rgba(245, 215, 66, 0.5), 0 0 60px rgba(245, 215, 66, 0.3); }
     }
     
     @keyframes slideIn {
-      from { opacity: 0; transform: translateY(-10px); }
+      from { opacity: 0; transform: translateY(-20px); }
       to { opacity: 1; transform: translateY(0); }
     }
     
@@ -33,11 +42,11 @@
     
     .gold-navbar {
       background: linear-gradient(135deg, #f5d742, #d4af37);
-      padding: 0.4rem 1.2rem;
+      padding: 0.8rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 0.8rem;
+      gap: 1.5rem;
       position: sticky;
       top: 0;
       z-index: 100;
@@ -45,8 +54,8 @@
     }
 
     .navbar-logo {
-      height: 40px;
-      max-width: 150px;
+      height: 80px;
+      max-width: 300px;
       object-fit: contain;
       cursor: pointer;
       transition: transform 0.3s ease;
@@ -57,45 +66,45 @@
     }
 
     .navbar-logo-placeholder {
-      height: 40px;
-      width: 120px;
+      height: 80px;
+      width: 240px;
       background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
-      border-radius: 8px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #f5d742;
-      font-size: 0.7rem;
+      font-size: 1.4rem;
       font-weight: bold;
       border: 2px solid #f5d742;
     }
     
     .hamburger-btn {
       background: #1a1a1a;
-      width: 36px;
-      height: 36px;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 4px;
+      gap: 8px;
       cursor: pointer;
-      border: 1.5px solid #f5d742;
+      border: 3px solid #f5d742;
       transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
     }
     
     .hamburger-btn:hover { 
       transform: scale(1.1) rotate(90deg); 
       background: #0a0a0a;
-      box-shadow: 0 0 15px rgba(245, 215, 66, 0.6);
+      box-shadow: 0 0 30px rgba(245, 215, 66, 0.6);
     }
     
     .hamburger-btn span { 
-      width: 18px; 
-      height: 2.5px; 
+      width: 36px; 
+      height: 5px; 
       background: #f5d742; 
-      border-radius: 2px;
+      border-radius: 4px;
       transition: all 0.3s ease;
     }
     
@@ -125,34 +134,34 @@
     .modal-content {
       background: #f5d742;
       border: 2px solid #1a1a1a;
-      border-radius: 1.2rem;
-      padding: 1.5rem;
-      min-width: 250px;
+      border-radius: 2rem;
+      padding: 2rem;
+      min-width: 500px;
       max-width: 90%;
       max-height: 80vh;
       overflow-y: auto;
       text-align: center;
-      box-shadow: 0 10px 40px rgba(245, 215, 66, 0.4);
+      box-shadow: 0 20px 80px rgba(245, 215, 66, 0.4);
       color: #1a1a1a;
       animation: slideIn 0.4s ease;
     }
     
     .modal-content h3 {
-      margin-bottom: 1rem;
-      font-size: 1.4rem;
+      margin-bottom: 1.5rem;
+      font-size: 2rem;
     }
     
     .modal-option {
       background: rgba(0,0,0,0.1);
-      padding: 0.6rem 1rem;
-      border-radius: 40px;
+      padding: 1rem 2rem;
+      border-radius: 60px;
       text-decoration: none;
       color: #1a1a1a;
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 1.2rem;
       display: block;
-      margin: 0.6rem 0;
-      border: 1px solid #1a1a1a;
+      margin: 1rem 0;
+      border: 2px solid #1a1a1a;
       cursor: pointer;
       transition: all 0.3s ease;
     }
@@ -160,61 +169,65 @@
     .modal-option:hover { 
       background: #1a1a1a; 
       color: #f5d742;
-      transform: translateX(5px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transform: translateX(10px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
     }
     
     .close-modal {
       background: #1a1a1a;
       color: #f5d742;
       border: none;
-      padding: 0.5rem 1.2rem;
-      border-radius: 30px;
+      padding: 0.8rem 2rem;
+      border-radius: 60px;
       cursor: pointer;
       font-weight: bold;
-      margin-top: 1rem;
+      margin-top: 1.5rem;
+      font-size: 1.2rem;
       transition: all 0.3s ease;
     }
     
     .close-modal:hover {
       transform: scale(1.05);
-      box-shadow: 0 0 15px rgba(245, 215, 66, 0.5);
+      box-shadow: 0 0 30px rgba(245, 215, 66, 0.5);
     }
     
     .dashboard { 
       max-width: 1400px; 
       margin: 0 auto; 
-      padding: 2rem 1.5rem;
+      padding: 3rem 2rem;
       animation: fadeIn 0.6s ease;
     }
     
     .slideshow-container { 
       text-align: center; 
-      margin-bottom: 2rem; 
+      margin-bottom: 3rem; 
       position: relative;
     }
     
     .slideshow-img { 
-      max-width: 100%; 
-      border-radius: 1.5rem; 
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3); 
-      border: 2px solid #f5d742;
+      max-width: 90%; 
+      border-radius: 2rem; 
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3); 
+      border: 3px solid #f5d742;
       transition: transform 0.3s ease;
+      max-height: 600px;
+      object-fit: contain;
+      width: auto;
     }
     
     .slideshow-img:hover {
       transform: scale(1.02);
     }
     
-    .dots-container { margin-top: 0.8rem; }
+    .dots-container { margin-top: 1.5rem; }
     
     .dot { 
       display: inline-block; 
-      width: 8px; 
-      height: 8px; 
+      width: 16px; 
+      height: 16px; 
       border-radius: 50%; 
       background: #1a1a1a; 
-      margin: 0 4px; 
+      margin: 0 8px; 
       cursor: pointer;
       transition: all 0.3s ease;
     }
@@ -222,7 +235,7 @@
     .dot.active { 
       background: #f5d742;
       transform: scale(1.3);
-      box-shadow: 0 0 10px rgba(245, 215, 66, 0.6);
+      box-shadow: 0 0 20px rgba(245, 215, 66, 0.6);
     }
     
     .dot:hover {
@@ -231,9 +244,9 @@
     
     .card {
       background: #f5d742;
-      border-radius: 2rem;
-      border: 2px solid #1a1a1a;
-      margin-bottom: 2rem;
+      border-radius: 3rem;
+      border: 3px solid #1a1a1a;
+      margin-bottom: 3rem;
       overflow: hidden;
       color: #1a1a1a;
       transition: all 0.3s ease;
@@ -242,20 +255,20 @@
     }
     
     .card:hover {
-      box-shadow: 0 0 25px rgba(245, 215, 66, 0.4);
+      box-shadow: 0 0 50px rgba(245, 215, 66, 0.4);
     }
 
     .table-corner-image {
-      width: 50px;
-      height: 50px;
+      width: 100px;
+      height: 100px;
       object-fit: contain;
-      border-radius: 12px;
+      border-radius: 24px;
     }
     
     .card-header {
-      padding: 1rem 1.5rem;
+      padding: 1.5rem 2rem;
       background: #d4af37;
-      border-bottom: 2px solid #1a1a1a;
+      border-bottom: 3px solid #1a1a1a;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -270,7 +283,7 @@
     .card-header-left { 
       display: flex; 
       align-items: center; 
-      gap: 1rem; 
+      gap: 1.5rem; 
       flex-wrap: wrap; 
       flex: 1;
     }
@@ -278,41 +291,41 @@
     .card-header-right {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 1.5rem;
     }
     
     .card-header-left h2 { 
-      font-size: 1.6rem; 
+      font-size: 2.5rem; 
       color: #1a1a1a; 
-      margin-right: 0.5rem;
+      margin-right: 1rem;
       display: inline-flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 1rem;
     }
     
     .season-controls {
       display: flex;
       align-items: center;
-      gap: 0.8rem;
+      gap: 1rem;
       background: rgba(0,0,0,0.1);
-      padding: 0.2rem 0.8rem;
-      border-radius: 40px;
+      padding: 0.5rem 1.2rem;
+      border-radius: 60px;
       transition: all 0.3s ease;
     }
     
     .season-controls:hover {
       background: rgba(0,0,0,0.15);
-      box-shadow: 0 0 10px rgba(245, 215, 66, 0.3);
+      box-shadow: 0 0 20px rgba(245, 215, 66, 0.3);
     }
     
     .season-arrow {
       background: #1a1a1a;
       color: #f5d742;
       border: none;
-      width: 28px;
-      height: 28px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
-      font-size: 1.2rem;
+      font-size: 2rem;
       cursor: pointer;
       font-weight: bold;
       transition: all 0.3s ease;
@@ -321,7 +334,7 @@
     .season-arrow:hover { 
       background: #0a0a0a; 
       transform: scale(1.15);
-      box-shadow: 0 0 10px rgba(245, 215, 66, 0.5);
+      box-shadow: 0 0 20px rgba(245, 215, 66, 0.5);
     }
     
     .season-arrow:disabled {
@@ -331,76 +344,77 @@
     
     .season-number-input {
       font-weight: bold;
-      font-size: 1.1rem;
-      width: 110px;
+      font-size: 1.6rem;
+      width: 180px;
       text-align: center;
       background: #1a1a1a;
-      border: 1px solid #f5d742;
-      border-radius: 30px;
+      border: 2px solid #f5d742;
+      border-radius: 60px;
       color: #f5d742;
-      padding: 0.3rem 0.5rem;
+      padding: 0.5rem 1rem;
       transition: all 0.3s ease;
     }
     
     .season-number-input:focus {
       outline: none;
-      box-shadow: 0 0 15px rgba(245, 215, 66, 0.6);
+      box-shadow: 0 0 30px rgba(245, 215, 66, 0.6);
     }
     
     .season-admin-buttons {
       display: flex;
-      gap: 0.5rem;
-      margin-left: 0.5rem;
+      gap: 1rem;
+      margin-left: 1rem;
     }
     
     .season-admin-btn {
       background: #1a1a1a;
-      border: 1px solid #f5d742;
-      border-radius: 30px;
-      padding: 0.3rem 0.8rem;
+      border: 2px solid #f5d742;
+      border-radius: 60px;
+      padding: 0.5rem 1.2rem;
       color: #f5d742;
-      font-size: 0.7rem;
+      font-size: 1rem;
       cursor: pointer;
       transition: all 0.3s ease;
     }
     
     .season-admin-btn:hover {
       background: #0a0a0a;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(245, 215, 66, 0.4);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(245, 215, 66, 0.4);
     }
     
     .toggle-icon { 
-      font-size: 1.2rem; 
+      font-size: 1.8rem; 
       color: #1a1a1a; 
-      margin-left: 1rem;
+      margin-left: 1.5rem;
       transition: transform 0.3s ease;
     }
     
     .add-btn {
       background: #1a1a1a;
-      border: 1px solid #f5d742;
-      border-radius: 2rem;
-      padding: 0.4rem 1.2rem;
+      border: 2px solid #f5d742;
+      border-radius: 3rem;
+      padding: 0.7rem 2rem;
       color: #f5d742;
       font-weight: bold;
+      font-size: 1.2rem;
       cursor: pointer;
       transition: all 0.3s ease;
     }
     
     .add-btn:hover { 
       background: #0a0a0a; 
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(245, 215, 66, 0.5);
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(245, 215, 66, 0.5);
     }
     
     .three-dot-menu {
       background: none;
       border: none;
       color: #1a1a1a;
-      font-size: 1.8rem;
+      font-size: 3rem;
       cursor: pointer;
-      padding: 0 0.5rem;
+      padding: 0 1rem;
       transition: all 0.3s ease;
     }
     
@@ -411,7 +425,7 @@
     
     .card-content { 
       transition: max-height 0.4s ease, opacity 0.3s ease; 
-      max-height: 3000px; 
+      max-height: 6000px; 
       overflow: hidden;
       opacity: 1;
     }
@@ -422,25 +436,26 @@
     }
     
     .filter-container { 
-      padding: 1rem; 
+      padding: 1.5rem; 
       background: rgba(0,0,0,0.1); 
-      border-bottom: 1px solid #1a1a1a; 
+      border-bottom: 2px solid #1a1a1a; 
     }
     
     .filter-input { 
       background: #1a1a1a; 
-      border: 1px solid #f5d742; 
-      border-radius: 30px; 
-      padding: 0.5rem 1rem; 
+      border: 2px solid #f5d742; 
+      border-radius: 60px; 
+      padding: 1rem 1.5rem; 
       color: #f5d742; 
       width: 100%; 
-      max-width: 280px;
+      max-width: 560px;
+      font-size: 1.2rem;
       transition: all 0.3s ease;
     }
     
     .filter-input:focus {
       outline: none;
-      box-shadow: 0 0 15px rgba(245, 215, 66, 0.5);
+      box-shadow: 0 0 30px rgba(245, 215, 66, 0.5);
     }
     
     .league-table-wrapper {
@@ -453,7 +468,8 @@
     .stats-table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 700px; /* ensure horizontal scroll */
+      min-width: 1400px; /* ensure horizontal scroll */
+      font-size: 1.2rem;
     }
     
     /* Pos column sticky */
@@ -463,17 +479,17 @@
       left: 0;
       background: #f5d742;
       z-index: 10;
-      padding-right: 6px;
+      padding-right: 12px;
     }
     
     /* Club column sticky - immediately after Pos */
     .stats-table th:nth-child(2),
     .stats-table td:nth-child(2) {
       position: sticky;
-      left: 50px; /* approximate width of Pos column */
+      left: 80px; /* increased for larger font */
       background: #f5d742;
       z-index: 10;
-      padding-right: 6px;
+      padding-right: 12px;
     }
     
     /* Vertical divider line after Club column (between Club and P) */
@@ -481,10 +497,10 @@
     .stats-table td:nth-child(2)::after {
       content: '';
       position: absolute;
-      right: -2px;
+      right: -3px;
       top: 0;
       bottom: 0;
-      width: 3px;
+      width: 4px;
       background: #1a1a1a;
       z-index: 15;
     }
@@ -492,36 +508,38 @@
     /* Ensure cells have relative positioning for pseudo-element */
     .stats-table th, .stats-table td {
       position: relative;
-      padding: 0.7rem 0.5rem;
+      padding: 1rem 0.8rem;
       text-align: left;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 2px solid #e5e7eb;
       background-color: #f5d742;
     }
     
     /* Reduce gap after Club column and before P column - stats start very close */
     .stats-table th:nth-child(2), .stats-table td:nth-child(2) {
-      padding-right: 2px;
+      padding-right: 4px;
     }
     .stats-table th:nth-child(3), .stats-table td:nth-child(3) {
-      padding-left: 4px;
+      padding-left: 8px;
     }
     
-    .stats-table th:first-child, .stats-table td:first-child { padding-left: 0.5rem; width: 50px; }
-    .stats-table th:last-child, .stats-table td:last-child { padding-right: 0.5rem; }
-    .inner-table th, .inner-table td { padding: 0.7rem 0.5rem; }
+    .stats-table th:first-child, .stats-table td:first-child { padding-left: 1rem; width: 80px; }
+    .stats-table th:last-child, .stats-table td:last-child { padding-right: 1rem; }
+    .inner-table th, .inner-table td { padding: 1rem 0.8rem; font-size: 1.1rem; }
     
     .stats-table th, .inner-table th { 
       background: #d4af37; 
-      border-bottom: 2px solid #1a1a1a; 
+      border-bottom: 3px solid #1a1a1a; 
       color: #1a1a1a;
       font-weight: 700;
+      font-size: 1.2rem;
     }
     
     .stats-table td, .inner-table td { 
-      border-bottom: 1px solid rgba(0,0,0,0.2); 
+      border-bottom: 2px solid rgba(0,0,0,0.2); 
       color: #1a1a1a; 
       vertical-align: middle;
       transition: background 0.2s ease;
+      font-size: 1.1rem;
     }
     
     .stats-table tbody tr:hover td {
@@ -529,11 +547,11 @@
     }
     
     .team-icon-sm { 
-      width: 28px; 
-      height: 28px; 
+      width: 56px; 
+      height: 56px; 
       object-fit: contain; 
       vertical-align: middle; 
-      margin-right: 8px;
+      margin-right: 16px;
       transition: transform 0.3s ease;
     }
     
@@ -542,11 +560,11 @@
     }
     
     .team-icon { 
-      width: 28px; 
-      height: 28px; 
+      width: 56px; 
+      height: 56px; 
       object-fit: contain; 
       vertical-align: middle; 
-      margin-right: 8px; 
+      margin-right: 16px; 
       display: inline-block;
       transition: transform 0.3s ease;
     }
@@ -556,11 +574,11 @@
     }
     
     .inline-team-icon { 
-      width: 60px; 
-      height: 60px; 
+      width: 100px; 
+      height: 100px; 
       object-fit: contain; 
       vertical-align: middle; 
-      margin: 0 8px; 
+      margin: 0 16px; 
       display: inline-block;
       transition: transform 0.3s ease;
     }
@@ -569,14 +587,14 @@
       transform: scale(1.1);
     }
     
-    .rank-cell { font-weight: 700; width: 50px; }
+    .rank-cell { font-weight: 700; width: 80px; font-size: 1.2rem; }
     
-    .pos-with-bar { display: flex; align-items: center; gap: 4px; }
+    .pos-with-bar { display: flex; align-items: center; gap: 8px; }
     
     .vertical-bar { 
-      width: 4px; 
-      height: 18px; 
-      border-radius: 2px;
+      width: 8px; 
+      height: 32px; 
+      border-radius: 4px;
       transition: all 0.3s ease;
     }
     
@@ -585,37 +603,38 @@
     .green-bar-vertical { background: #22c55e; }
     .red-bar-vertical { background: #ef4444; }
     
-    .dashed-separator-gold { border-bottom: 2px dashed #d4af37 !important; }
-    .dashed-separator-white { border-bottom: 2px dashed #ffffff !important; }
-    .dashed-separator-red { border-bottom: 2px dashed #ef4444 !important; }
+    .dashed-separator-gold { border-bottom: 4px dashed #d4af37 !important; }
+    .dashed-separator-white { border-bottom: 4px dashed #ffffff !important; }
+    .dashed-separator-red { border-bottom: 4px dashed #ef4444 !important; }
     
-    .pts-cell { font-weight: 800; color: #1a1a1a; text-align: center; }
+    .pts-cell { font-weight: 800; color: #1a1a1a; text-align: center; font-size: 1.3rem; }
     
     .team-name { 
       display: flex; 
       align-items: center; 
-      gap: 8px; 
+      gap: 16px; 
       font-weight: 700;
-      max-width: 200px;
+      max-width: 400px;
       word-wrap: break-word;
       white-space: normal;
+      font-size: 1.2rem;
     }
     
     .form-circles { 
       display: flex; 
-      gap: 4px; 
+      gap: 8px; 
       align-items: center; 
       flex-wrap: wrap; 
     }
     
     .circle-result { 
-      width: 22px; 
-      height: 22px; 
+      width: 36px; 
+      height: 36px; 
       border-radius: 50%; 
       display: inline-flex; 
       align-items: center; 
       justify-content: center; 
-      font-size: 11px; 
+      font-size: 18px; 
       font-weight: bold;
       transition: transform 0.2s ease;
     }
@@ -632,56 +651,56 @@
     .circle-forfeit-grey { background: #6b7280; color: white; }
     .circle-blank { background: #e5e7eb; }
     
-    .arrow-up { color: #22c55e; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
-    .arrow-down { color: #ef4444; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
-    .arrow-side { color: #f5d742; font-size: 1.2rem; display: inline-block; width: 24px; text-align: center; }
+    .arrow-up { color: #22c55e; font-size: 2rem; display: inline-block; width: 40px; text-align: center; }
+    .arrow-down { color: #ef4444; font-size: 2rem; display: inline-block; width: 40px; text-align: center; }
+    .arrow-side { color: #f5d742; font-size: 2rem; display: inline-block; width: 40px; text-align: center; }
     
     .legend-under-table { 
-      margin-top: 1rem; 
-      padding: 0.8rem 1.2rem; 
+      margin-top: 1.5rem; 
+      padding: 1.2rem 2rem; 
       background: rgba(0,0,0,0.1); 
-      border-radius: 1rem; 
+      border-radius: 2rem; 
       display: flex; 
-      gap: 1rem; 
+      gap: 2rem; 
       justify-content: center; 
       flex-wrap: wrap; 
-      font-size: 0.7rem; 
+      font-size: 1rem; 
     }
     
-    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
-    .legend-vertical-bar { width: 4px; height: 16px; border-radius: 2px; display: inline-block; }
+    .legend-item { display: inline-flex; align-items: center; gap: 10px; }
+    .legend-vertical-bar { width: 8px; height: 24px; border-radius: 4px; display: inline-block; }
     .legend-blue { background: #3b82f6; }
     .legend-orange { background: #f97316; }
     .legend-green { background: #22c55e; }
     .legend-red { background: #ef4444; }
-    .legend-dashed-white { display: inline-block; width: 20px; height: 2px; border-bottom: 2px dashed #ffffff; vertical-align: middle; }
+    .legend-dashed-white { display: inline-block; width: 30px; height: 3px; border-bottom: 3px dashed #ffffff; vertical-align: middle; }
     
     .forfeit-text { 
-      font-size: 0.7rem; 
+      font-size: 1rem; 
       color: #1a1a1a; 
-      margin-top: 4px; 
+      margin-top: 8px; 
       background: rgba(0,0,0,0.1); 
       display: inline-block; 
-      padding: 0 0.3rem; 
-      border-radius: 12px; 
+      padding: 0 0.6rem; 
+      border-radius: 24px; 
     }
     
     .edit-btn, .delete-btn { 
       background: #1a1a1a; 
       border: none; 
       color: #f5d742; 
-      margin: 0 0.2rem; 
+      margin: 0 0.4rem; 
       cursor: pointer; 
-      font-size: 0.9rem; 
-      padding: 0.3rem 0.6rem; 
-      border-radius: 20px; 
+      font-size: 1.2rem; 
+      padding: 0.5rem 1rem; 
+      border-radius: 40px; 
       transition: all 0.3s ease; 
     }
     
     .edit-btn:hover, .delete-btn:hover { 
       background: #0a0a0a; 
       transform: scale(1.1);
-      box-shadow: 0 4px 12px rgba(245, 215, 66, 0.4);
+      box-shadow: 0 8px 24px rgba(245, 215, 66, 0.4);
     }
     
     .form-overlay {
@@ -707,65 +726,69 @@
     
     .form-card { 
       background: #f5d742; 
-      border: 2px solid #1a1a1a; 
-      border-radius: 2rem; 
-      padding: 1.5rem; 
+      border: 3px solid #1a1a1a; 
+      border-radius: 3rem; 
+      padding: 2rem; 
       width: 90%; 
-      max-width: 500px; 
+      max-width: 800px; 
       color: #1a1a1a;
       animation: slideIn 0.4s ease;
-      box-shadow: 0 10px 40px rgba(245, 215, 66, 0.5);
+      box-shadow: 0 20px 80px rgba(245, 215, 66, 0.5);
     }
     
     .form-card h3 {
-      margin-bottom: 1rem;
-      font-size: 1.4rem;
+      margin-bottom: 1.5rem;
+      font-size: 2rem;
     }
     
     .form-card input, .form-card select { 
       width: 100%; 
-      padding: 0.6rem; 
-      margin: 0.5rem 0; 
+      padding: 1rem; 
+      margin: 1rem 0; 
       background: #1a1a1a; 
-      border: 1px solid #f5d742; 
-      border-radius: 2rem; 
+      border: 2px solid #f5d742; 
+      border-radius: 3rem; 
       color: #f5d742;
+      font-size: 1.2rem;
       transition: all 0.3s ease;
     }
     
     .form-card input:focus, .form-card select:focus {
       outline: none;
-      box-shadow: 0 0 15px rgba(245, 215, 66, 0.6);
+      box-shadow: 0 0 30px rgba(245, 215, 66, 0.6);
     }
     
     .form-card button { 
       background: #1a1a1a; 
       border: none; 
-      border-radius: 2rem; 
-      padding: 0.6rem 1.2rem; 
+      border-radius: 3rem; 
+      padding: 1rem 2rem; 
       color: #f5d742; 
-      margin: 0.5rem 0.5rem 0 0; 
+      margin: 1rem 1rem 0 0; 
       cursor: pointer;
+      font-size: 1.2rem;
       transition: all 0.3s ease;
     }
     
     .form-card button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(245, 215, 66, 0.5);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(245, 215, 66, 0.5);
     }
     
     .popup-menu {
       background: #f5d742;
-      border: 1px solid #1a1a1a;
-      border-radius: 1rem;
-      padding: 0.5rem 0;
+      border: 2px solid #1a1a1a;
+      border-radius: 2rem;
+      padding: 1rem 0;
       z-index: 150;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
       animation: slideIn 0.3s ease;
+      font-size: 1.2rem;
+      min-width: 220px;
     }
     
     .popup-menu div { 
-      padding: 0.5rem 1rem; 
+      padding: 1rem 1.5rem; 
       cursor: pointer; 
       color: #1a1a1a; 
       transition: all 0.2s ease; 
@@ -773,26 +796,26 @@
     
     .popup-menu div:hover { 
       background: rgba(0,0,0,0.1);
-      transform: translateX(5px);
+      transform: translateX(10px);
     }
     
     .view-matches-link {
       text-align: center;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
       display: flex;
       justify-content: center;
-      gap: 2rem;
+      gap: 3rem;
       flex-wrap: wrap;
     }
 
     .view-matches-link a, .view-matches-link .link-btn {
       color: #f5d742;
-      font-size: 1.1rem;
+      font-size: 1.6rem;
       font-weight: bold;
       text-decoration: none;
       transition: all 0.3s ease;
-      border-bottom: 2px solid transparent;
+      border-bottom: 3px solid transparent;
       cursor: pointer;
       background: none;
       border: none;
@@ -801,38 +824,38 @@
 
     .view-matches-link a:hover, .view-matches-link .link-btn:hover {
       color: #d4af37;
-      border-bottom: 2px solid #f5d742;
+      border-bottom: 3px solid #f5d742;
     }
 
     .results-card-compact {
-      max-width: 900px;
-      margin: 0 auto 2rem;
+      max-width: 1200px;
+      margin: 0 auto 3rem;
     }
 
     .results-card-compact .card-header {
-      padding: 0.8rem 1.2rem;
+      padding: 1.2rem 2rem;
     }
 
     .results-card-compact .card-header h2 {
-      font-size: 1.3rem;
+      font-size: 2rem;
     }
 
     .result-match-display {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
+      gap: 24px;
       flex-wrap: wrap;
-      padding: 0.5rem 0;
+      padding: 0.8rem 0;
     }
 
     .result-score-text {
-      font-size: 1.8rem;
+      font-size: 2.8rem;
       font-weight: bold;
       color: #1a1a1a;
     }
 
-    /* NEW: results table column stretching when no admin mode */
+    /* results table column stretching when no admin mode */
     .results-table.no-admin-mode {
       width: 100%;
       table-layout: fixed;
@@ -851,42 +874,42 @@
     .image-preview-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      margin: 1rem 0;
+      gap: 20px;
+      margin: 1.5rem 0;
       justify-content: center;
     }
 
     .image-preview-item {
       position: relative;
-      width: 100px;
-      height: 100px;
+      width: 200px;
+      height: 200px;
     }
 
     .image-preview-item img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      border-radius: 8px;
-      border: 2px solid #1a1a1a;
+      border-radius: 16px;
+      border: 3px solid #1a1a1a;
     }
 
     .delete-preview-btn {
       position: absolute;
-      top: -8px;
-      right: -8px;
+      top: -12px;
+      right: -12px;
       background: #ef4444;
       color: white;
       border: none;
       border-radius: 50%;
-      width: 24px;
-      height: 24px;
+      width: 36px;
+      height: 36px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 18px;
       font-weight: bold;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
     }
 
     .delete-preview-btn:hover {
@@ -895,11 +918,12 @@
     }
 
     .status-message {
-      margin-top: 1rem;
-      padding: 0.5rem;
-      border-radius: 8px;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 16px;
       font-weight: bold;
       text-align: center;
+      font-size: 1rem;
     }
 
     .status-success {
@@ -920,15 +944,15 @@
     /* Popup for top scorer/assistant */
     .stats-popup {
       background: #f5d742;
-      border: 2px solid #1a1a1a;
-      border-radius: 2rem;
+      border: 3px solid #1a1a1a;
+      border-radius: 3rem;
       width: 85%;
-      max-width: 800px;
+      max-width: 1200px;
       max-height: 85vh;
       overflow-y: auto;
       position: relative;
       animation: slideIn 0.4s ease;
-      box-shadow: 0 10px 40px rgba(245, 215, 66, 0.5);
+      box-shadow: 0 20px 80px rgba(245, 215, 66, 0.5);
       display: flex;
       flex-direction: column;
     }
@@ -936,8 +960,8 @@
     .stats-popup-header {
       display: flex;
       justify-content: flex-end;
-      padding: 0.8rem 1rem;
-      border-bottom: 2px solid #1a1a1a;
+      padding: 1rem 1.5rem;
+      border-bottom: 3px solid #1a1a1a;
       position: sticky;
       top: 0;
       background: #f5d742;
@@ -948,10 +972,10 @@
       background: #1a1a1a;
       color: #f5d742;
       border: none;
-      width: 32px;
-      height: 32px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
-      font-size: 1.2rem;
+      font-size: 1.8rem;
       cursor: pointer;
       transition: all 0.3s ease;
     }
@@ -962,25 +986,25 @@
     }
 
     .stats-popup-content {
-      padding: 1rem 1.5rem 1.5rem;
+      padding: 1.5rem 2rem 2rem;
     }
 
     .stats-popup-slideshow {
       text-align: center;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
     }
 
     .stats-popup-slideshow img {
       max-width: 100%;
-      max-height: 200px;
-      border-radius: 1rem;
-      border: 2px solid #1a1a1a;
+      max-height: 400px;
+      border-radius: 2rem;
+      border: 3px solid #1a1a1a;
     }
 
     .stats-popup h2 {
       text-align: center;
-      margin: 1rem 0;
-      font-size: 1.8rem;
+      margin: 1.5rem 0;
+      font-size: 2.5rem;
     }
 
     .stats-list {
@@ -989,49 +1013,27 @@
     }
 
     .stats-list th, .stats-list td {
-      padding: 0.6rem;
-      border-bottom: 1px solid rgba(0,0,0,0.2);
+      padding: 1rem;
+      border-bottom: 2px solid rgba(0,0,0,0.2);
       text-align: left;
+      font-size: 1.1rem;
     }
 
     .stats-list th {
       background: #d4af37;
       font-weight: bold;
+      font-size: 1.2rem;
     }
 
     .admin-stats-controls {
-      margin-top: 1rem;
+      margin-top: 1.5rem;
       display: flex;
-      gap: 0.5rem;
+      gap: 1rem;
       justify-content: center;
       flex-wrap: wrap;
     }
     
-    @media (max-width: 780px) {
-      .dashboard { padding: 1rem; }
-      .stats-table th, .stats-table td { padding: 0.4rem 0.3rem; font-size: 0.75rem; }
-      .team-icon { width: 24px; height: 24px; }
-      .inline-team-icon { width: 48px; height: 48px; }
-      .inner-table th, .inner-table td { padding: 0.4rem; font-size: 0.7rem; }
-      .table-corner-image { width: 40px; height: 40px; }
-      .navbar-logo-placeholder { width: 100px; height: 35px; font-size: 0.6rem; }
-      .result-score-text { font-size: 1.4rem; }
-      .stats-popup { width: 95%; }
-      /* Adjust sticky left positions for mobile */
-      .stats-table th:nth-child(2), .stats-table td:nth-child(2) {
-        left: 40px;
-      }
-    }
-    
-    @media (max-width: 480px) {
-      .inner-table th, .inner-table td { padding: 0.3rem; font-size: 0.65rem; }
-      .circle-result { width: 18px; height: 18px; font-size: 9px; }
-      .inline-team-icon { width: 40px; height: 40px; }
-      .result-score-text { font-size: 1.2rem; }
-      .stats-table th:nth-child(2), .stats-table td:nth-child(2) {
-        left: 35px;
-      }
-    }
+    /* No mobile media queries because we force desktop view */
   </style>
 </head>
 <body>
@@ -1463,7 +1465,7 @@
   function renderLegend() {
     const container = document.getElementById('legendContainer');
     if (!container) return;
-    let legendHtml = '<div style="display:flex; flex-wrap:wrap; gap:1rem; justify-content:center;">';
+    let legendHtml = '<div style="display:flex; flex-wrap:wrap; gap:1.5rem; justify-content:center;">';
     if (currentSeasonId === 1) {
       legendHtml += '<span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span>UEFA Champions League</span></span>';
     } else if (currentSeasonId === 2) {
@@ -1666,7 +1668,7 @@
       
       const row = tbody.insertRow();
       row.insertCell(0).innerHTML = matchHtml;
-      row.insertCell(1).innerHTML = `<span style="background:#1a1a1a; padding:0.3rem 0.7rem; border-radius:30px; color:#f5d742; font-size:0.85rem; font-weight:bold;">MD${r.md}</span>`;
+      row.insertCell(1).innerHTML = `<span style="background:#1a1a1a; padding:0.5rem 1rem; border-radius:60px; color:#f5d742; font-size:1.2rem; font-weight:bold;">MD${r.md}</span>`;
       
       if(isAdminMode) {
         const actions = row.insertCell(2);
@@ -1886,7 +1888,7 @@
     if(popup) { closePopup(); return; }
     const rect = threeDot.getBoundingClientRect();
     popup = document.createElement('div'); popup.className = 'popup-menu';
-    popup.style.position = 'absolute'; popup.style.top = (rect.bottom + window.scrollY + 5) + 'px'; popup.style.left = (rect.left + window.scrollX - 60) + 'px';
+    popup.style.position = 'absolute'; popup.style.top = (rect.bottom + window.scrollY + 5) + 'px'; popup.style.left = (rect.left + window.scrollX - 80) + 'px';
     const playersOpt = document.createElement('div'); playersOpt.innerText = currentView === "team" ? "Manager names" : "Team View"; playersOpt.onclick = () => { currentView = currentView === "team" ? "player" : "team"; window.currentView = currentView; renderLeagueTable(); closePopup(); };
     const formOpt = document.createElement('div'); formOpt.innerText = showFormArrows ? "Hide Form arrows" : "Show Form arrows"; formOpt.onclick = () => { showFormArrows = !showFormArrows; window.showFormArrows = showFormArrows; renderLeagueTable(); closePopup(); };
     const last5Opt = document.createElement('div'); last5Opt.innerText = showLast5 ? "Hide Last 5" : "Show Last 5"; last5Opt.onclick = () => { showLast5 = !showLast5; window.showLast5 = showLast5; renderLeagueTable(); closePopup(); };
@@ -1909,7 +1911,7 @@
     html += '<div style="max-height: 400px; overflow-y: auto; margin: 1rem 0;">';
     for (const team of currentSeasonTeams) {
       const manager = playerMap[team] || '';
-      html += `<div style="margin: 0.5rem 0;"><label style="display: block; font-weight: bold; margin-bottom: 0.2rem;">${team}</label><input type="text" id="manager_${team.replace(/\s/g, '_')}" value="${manager.replace(/"/g, '&quot;')}" style="width: 100%; padding: 0.4rem; background: #1a1a1a; color: #f5d742; border: 1px solid #f5d742; border-radius: 1rem;"></div>`;
+      html += `<div style="margin: 0.8rem 0;"><label style="display: block; font-weight: bold; margin-bottom: 0.4rem; font-size:1.1rem;">${team}</label><input type="text" id="manager_${team.replace(/\s/g, '_')}" value="${manager.replace(/"/g, '&quot;')}" style="width: 100%; padding: 0.8rem; background: #1a1a1a; color: #f5d742; border: 2px solid #f5d742; border-radius: 2rem; font-size:1rem;"></div>`;
     }
     html += '</div><button id="saveManagersBtn" class="modal-option">SAVE</button><button id="closeManagerModal" class="close-modal">CANCEL</button>';
     content.innerHTML = html;
@@ -1976,18 +1978,18 @@
     const images = type === 'scorer' ? topScorerSlideshowImages : topAssistantSlideshowImages;
     const title = type === 'scorer' ? 'TOP SCORERS' : 'TOP ASSISTANTS';
     const inner = document.getElementById('statsPopupInner');
-    let slideshowHtml = `<div class="stats-popup-slideshow"><img id="statsPopupSlideshowImg" src="${images[0] || ''}" style="max-width:100%; max-height:200px; border-radius:1rem;"></div><div class="dots-container" id="statsPopupDots"></div>`;
-    let listHtml = `<table class="stats-list"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>${type === 'scorer' ? 'Goals' : 'Assists'}</th>${isAdminMode ? '<th>Actions</th>' : ''}</tr></thead><tbody>`;
+    let slideshowHtml = `<div class="stats-popup-slideshow"><img id="statsPopupSlideshowImg" src="${images[0] || ''}" style="max-width:100%; max-height:400px; border-radius:2rem;"></div><div class="dots-container" id="statsPopupDots"></div>`;
+    let listHtml = `<table class="stats-list"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>${type === 'scorer' ? 'Goals' : 'Assists'}</th>${isAdminMode ? '<th>Actions</th>' : ''}</thead><tbody>`;
     list.sort((a,b) => (b.count||0) - (a.count||0)).forEach((item, idx) => {
       // Team icon instead of team name
       let teamDisplay = '';
       const iconUrl = teamIconsCache[item.team];
       if (iconUrl) {
-        teamDisplay = `<img src="${iconUrl}" style="width: 30px; height: 30px; object-fit: contain; vertical-align: middle;" title="${item.team}">`;
+        teamDisplay = `<img src="${iconUrl}" style="width: 48px; height: 48px; object-fit: contain; vertical-align: middle;" title="${item.team}">`;
       } else {
         teamDisplay = item.team || '';
       }
-      listHtml += `<tr><td>${idx+1}</td><td>${item.name || ''}</td><td>${teamDisplay}</td><td>${item.count || 0}</td>${isAdminMode ? `<td><button class="edit-btn" data-key="${item.key}">✏️</button> <button class="delete-btn" data-key="${item.key}">🗑️</button></td>` : ''}</tr>`;
+      listHtml += `<tr><td style="font-size:1.1rem;">${idx+1}</td><td style="font-size:1.1rem;">${item.name || ''}</td><td style="font-size:1.1rem;">${teamDisplay}</td><td style="font-size:1.1rem;">${item.count || 0}</td>${isAdminMode ? `<td style="font-size:1.1rem;"><button class="edit-btn" data-key="${item.key}">✏️</button> <button class="delete-btn" data-key="${item.key}">🗑️</button></td>` : ''}</tr>`;
     });
     listHtml += `</tbody></table>`;
     let adminControls = '';
@@ -2026,7 +2028,7 @@
     const content = document.getElementById('modalContent');
     // Create team dropdown from current season teams
     const teamOptions = teamsData.map(t => t.name).sort();
-    let teamSelectHtml = `<select id="entryTeam" style="width:100%; margin:0.5rem 0; padding:0.5rem;">`;
+    let teamSelectHtml = `<select id="entryTeam" style="width:100%; margin:0.8rem 0; padding:0.8rem; font-size:1rem;">`;
     teamSelectHtml += `<option value="">Select Team</option>`;
     teamOptions.forEach(team => {
       const selected = (entry && entry.team === team) ? 'selected' : '';
@@ -2034,9 +2036,9 @@
     });
     teamSelectHtml += `</select>`;
     content.innerHTML = `<h3>${entry ? 'Edit' : 'Add'} ${type === 'scorer' ? 'Top Scorer' : 'Top Assistant'}</h3>
-      <input type="text" id="entryName" placeholder="Player Name" value="${entry?.name || ''}" style="width:100%; margin:0.5rem 0; padding:0.5rem;">
+      <input type="text" id="entryName" placeholder="Player Name" value="${entry?.name || ''}" style="width:100%; margin:0.8rem 0; padding:0.8rem; font-size:1rem;">
       ${teamSelectHtml}
-      <input type="number" id="entryCount" placeholder="${type === 'scorer' ? 'Goals' : 'Assists'}" value="${entry?.count || 0}" style="width:100%; margin:0.5rem 0; padding:0.5rem;">
+      <input type="number" id="entryCount" placeholder="${type === 'scorer' ? 'Goals' : 'Assists'}" value="${entry?.count || 0}" style="width:100%; margin:0.8rem 0; padding:0.8rem; font-size:1rem;">
       <button id="saveStatsEntryBtn" class="modal-option">Save</button>
       <button id="closeStatsEntry" class="close-modal">Cancel</button>`;
     modal.classList.add('active');
@@ -2071,9 +2073,9 @@
       previewHtml += '</div>';
       content.innerHTML = `<h3>Manage ${type === 'scorer' ? 'Top Scorer' : 'Top Assistant'} Slideshow</h3>
         ${previewHtml}
-        <input type="file" id="newSlideFile" accept="image/*" style="width:100%; margin:0.5rem 0;">
+        <input type="file" id="newSlideFile" accept="image/*" style="width:100%; margin:0.8rem 0; font-size:1rem;">
         <button id="uploadSlideBtn" class="modal-option">Add Slide</button>
-        <div style="margin:10px 0;"><label>Duration (seconds):</label><input type="number" id="slideDurationSec" min="1" max="10" step="0.5" value="${duration}" style="width:80px; margin-left:0.5rem;"></div>
+        <div style="margin:15px 0;"><label style="font-size:1rem;">Duration (seconds):</label><input type="number" id="slideDurationSec" min="1" max="10" step="0.5" value="${duration}" style="width:100px; margin-left:1rem; font-size:1rem; padding:0.4rem;"></div>
         <button id="saveDurBtn" class="modal-option">Set Duration</button>
         <button id="closeSlideManager" class="close-modal">Close</button>
         <div id="slideStatus"></div>`;
@@ -2196,7 +2198,7 @@
   function showUploadIconModal() {
     const modal = document.getElementById('modalOverlay');
     const content = document.getElementById('modalContent');
-    content.innerHTML = `<h3>Add Team Icon</h3><input type="text" id="iconTeamName" placeholder="Team Name" style="width:100%; padding:0.5rem; margin:0.5rem 0;"><input type="file" id="iconFile" accept="image/*" style="width:100%; padding:0.5rem; margin:0.5rem 0;"><button class="modal-option" id="uploadIconSave">UPLOAD</button><button class="close-modal" id="closeIconModal">Cancel</button><div id="iconStatus"></div>`;
+    content.innerHTML = `<h3>Add Team Icon</h3><input type="text" id="iconTeamName" placeholder="Team Name" style="width:100%; padding:0.8rem; margin:0.8rem 0; font-size:1rem;"><input type="file" id="iconFile" accept="image/*" style="width:100%; padding:0.8rem; margin:0.8rem 0; font-size:1rem;"><button class="modal-option" id="uploadIconSave">UPLOAD</button><button class="close-modal" id="closeIconModal">Cancel</button><div id="iconStatus"></div>`;
     document.getElementById('uploadIconSave').onclick = async () => {
       const teamName = document.getElementById('iconTeamName').value.trim();
       const file = document.getElementById('iconFile').files[0];
@@ -2220,7 +2222,7 @@
     const modal = document.getElementById('modalOverlay');
     const content = document.getElementById('modalContent');
     const currentDurSec = slideshowDuration/1000;
-    content.innerHTML = `<h3>Manage Slideshow</h3><div id="slidePreviewList" class="image-preview-grid"></div><input type="file" id="newSlideFile" accept="image/*" style="width:100%;"><button class="modal-option" id="uploadSlideBtn">Add Slide</button><div><label>Duration (seconds):</label><input type="number" id="slideDurationSec" min="1" max="10" step="0.5" value="${currentDurSec}"></div><button class="modal-option" id="saveDurBtn">Set Duration</button><button class="close-modal" id="closeSlideModal">Close</button><div id="slideStatus"></div>`;
+    content.innerHTML = `<h3>Manage Slideshow</h3><div id="slidePreviewList" class="image-preview-grid"></div><input type="file" id="newSlideFile" accept="image/*" style="width:100%; font-size:1rem;"><button class="modal-option" id="uploadSlideBtn">Add Slide</button><div><label style="font-size:1rem;">Duration (seconds):</label><input type="number" id="slideDurationSec" min="1" max="10" step="0.5" value="${currentDurSec}" style="width:100px; margin-left:1rem; font-size:1rem; padding:0.4rem;"></div><button class="modal-option" id="saveDurBtn">Set Duration</button><button class="close-modal" id="closeSlideModal">Close</button><div id="slideStatus"></div>`;
     const previewDiv = document.getElementById('slidePreviewList');
     function refreshPreviews() {
       previewDiv.innerHTML = slideshowImages.map((url, idx) => `<div class="image-preview-item"><img src="${url}"><button class="delete-preview-btn" data-idx="${idx}">✕</button></div>`).join('');
@@ -2258,7 +2260,7 @@
   async function showNavbarLogoManager() {
     const modal = document.getElementById('modalOverlay');
     const content = document.getElementById('modalContent');
-    content.innerHTML = `<h3>Manage Navbar Logo</h3><div style="margin:1rem 0;">${navbarLogoUrl ? `<img src="${navbarLogoUrl}" style="max-width:150px;">` : '<p>No logo set</p>'}</div><input type="file" id="navbarLogoFile" accept="image/*"><button class="modal-option" id="uploadNavbarLogoBtn">Upload New Logo</button><button class="close-modal" id="closeNavbarModal">Close</button><div id="navbarStatus"></div>`;
+    content.innerHTML = `<h3>Manage Navbar Logo</h3><div style="margin:1.5rem 0;">${navbarLogoUrl ? `<img src="${navbarLogoUrl}" style="max-width:300px;">` : '<p>No logo set</p>'}</div><input type="file" id="navbarLogoFile" accept="image/*" style="font-size:1rem;"><button class="modal-option" id="uploadNavbarLogoBtn">Upload New Logo</button><button class="close-modal" id="closeNavbarModal">Close</button><div id="navbarStatus"></div>`;
     document.getElementById('uploadNavbarLogoBtn').onclick = async () => {
       const file = document.getElementById('navbarLogoFile').files[0];
       const statusDiv = document.getElementById('navbarStatus');
@@ -2280,7 +2282,7 @@
   async function showTableCornerManager() {
     const modal = document.getElementById('modalOverlay');
     const content = document.getElementById('modalContent');
-    content.innerHTML = `<h3>Manage Table Corner Image</h3><div style="margin:1rem 0;">${tableCornerImageUrl ? `<img src="${tableCornerImageUrl}" style="max-width:100px;">` : '<p>No image set</p>'}</div><input type="file" id="cornerImageFile" accept="image/*"><button class="modal-option" id="uploadCornerBtn">Upload Image</button><button class="close-modal" id="closeCornerModal">Close</button><div id="cornerStatus"></div>`;
+    content.innerHTML = `<h3>Manage Table Corner Image</h3><div style="margin:1.5rem 0;">${tableCornerImageUrl ? `<img src="${tableCornerImageUrl}" style="max-width:200px;">` : '<p>No image set</p>'}</div><input type="file" id="cornerImageFile" accept="image/*" style="font-size:1rem;"><button class="modal-option" id="uploadCornerBtn">Upload Image</button><button class="close-modal" id="closeCornerModal">Close</button><div id="cornerStatus"></div>`;
     document.getElementById('uploadCornerBtn').onclick = async () => {
       const file = document.getElementById('cornerImageFile').files[0];
       const statusDiv = document.getElementById('cornerStatus');
