@@ -388,6 +388,7 @@
             scroll-behavior: smooth;
             scrollbar-width: none;
             -ms-overflow-style: none;
+            position: relative; /* added to make it the offsetParent for slide positioning */
         }
 
         .carousel-track::-webkit-scrollbar {
@@ -2054,9 +2055,22 @@
         function viewStory(index) {
             const track = document.getElementById('carouselTrack');
             const slides = track.querySelectorAll('.story-slide');
-            if (slides[index]) {
-                slides[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }
+            if (!slides[index]) return;
+            
+            // Calculate target scrollLeft to center the slide horizontally in the track
+            const slide = slides[index];
+            const trackRect = track.getBoundingClientRect();
+            const slideRect = slide.getBoundingClientRect();
+            
+            // Compute desired scrollLeft: slide's left edge relative to track minus half track width plus half slide width
+            const targetScrollLeft = slide.offsetLeft - (track.clientWidth / 2) + (slide.clientWidth / 2);
+            
+            // Smoothly scroll only the track horizontally
+            track.scrollTo({
+                left: Math.max(0, targetScrollLeft),
+                behavior: 'smooth'
+            });
+            
             currentStoryIndex = index;
         }
 
