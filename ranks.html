@@ -1,1 +1,1784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>eFootball Fan Hub - Manager Ranks</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(145deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        @keyframes goldGlow {
+            0%, 100% { box-shadow: 0 0 10px rgba(245, 215, 66, 0.3), 0 0 20px rgba(245, 215, 66, 0.2); }
+            50% { box-shadow: 0 0 20px rgba(245, 215, 66, 0.5), 0 0 30px rgba(245, 215, 66, 0.3); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Navbar */
+        .navbar {
+            background: linear-gradient(135deg, #f5d742, #d4af37);
+            padding: 0.5rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            animation: goldGlow 3s ease-in-out infinite;
+        }
+
+        .menu-icon {
+            background: #1a1a1a;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            border: 1.5px solid #f5d742;
+        }
+
+        .menu-icon span {
+            display: block;
+            width: 18px;
+            height: 2.5px;
+            background-color: #f5d742;
+            border-radius: 2px;
+        }
+
+        .menu-icon:hover {
+            transform: scale(1.05);
+            background: #0a0a0a;
+        }
+
+        /* Overlay & Side Menu */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1999;
+            display: none;
+        }
+        .overlay.active { display: block; }
+
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: -320px;
+            width: 320px;
+            height: 100vh;
+            background: linear-gradient(135deg, #f5d742 0%, #d4af37 100%);
+            z-index: 2000;
+            padding: 30px;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+        }
+        .side-menu.active { right: 0; }
+        .close-menu {
+            cursor: pointer;
+            color: #000;
+            float: right;
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .menu-items { margin-top: 60px; }
+        .menu-item {
+            padding: 18px 20px;
+            margin: 12px 0;
+            background: #000;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: 500;
+            color: #FFD700;
+            text-align: center;
+        }
+        .menu-item:hover {
+            transform: translateX(10px);
+            background: #1a1a1a;
+        }
+
+        /* Main container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 16px;
+            animation: fadeIn 0.6s ease;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .search-box {
+            flex: 1;
+            min-width: 180px;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 10px 16px;
+            border-radius: 40px;
+            border: 1px solid #f5d742;
+            background: #111;
+            color: #fff;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .search-box input:focus {
+            outline: none;
+            box-shadow: 0 0 15px rgba(245, 215, 66, 0.5);
+        }
+        .btn-gold {
+            background: linear-gradient(135deg, #f5d742, #d4af37);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-gold:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 12px rgba(245,215,66,0.4); 
+        }
+
+        /* Card grid */
+        .cards-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Manager Card */
+        .manager-card {
+            background: linear-gradient(135deg, #f5d742, #d4af37);
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+            color: #000;
+            animation: slideIn 0.5s ease;
+        }
+        .manager-card:hover { 
+            transform: translateY(-4px); 
+            box-shadow: 0 12px 30px rgba(245,215,66,0.5);
+        }
+
+        .card-rank {
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #1a1a1a;
+        }
+        .card-avatar {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        .card-avatar img {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #000;
+            background: #222;
+        }
+        .manager-name {
+            text-align: center;
+            font-size: 1.6rem;
+            font-weight: bold;
+            margin-bottom: 16px;
+            color: #000;
+        }
+        .current-team {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .team-logo-sm {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            background: #fff;
+            border-radius: 8px;
+            padding: 4px;
+        }
+        .prev-teams {
+            font-size: 12px;
+            color: #1a1a1a;
+            text-align: center;
+            margin-bottom: 16px;
+            word-break: break-word;
+        }
+        .manager-score {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: rgba(0,0,0,0.15);
+            padding: 12px;
+            border-radius: 40px;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+        .score-breakdown {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .score-breakdown span {
+            background: rgba(0,0,0,0.1);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+            background: rgba(0,0,0,0.1);
+            padding: 12px;
+            border-radius: 20px;
+        }
+        .stat-item {
+            text-align: center;
+            font-weight: bold;
+        }
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .view-more-btn {
+            width: 100%;
+            background: #000;
+            border: none;
+            color: #f5d742;
+            padding: 12px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+        }
+        .view-more-btn:hover {
+            background: #1a1a1a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .admin-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 12px;
+        }
+        .admin-buttons button {
+            background: #000;
+            border: none;
+            color: #f5d742;
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .admin-buttons button:hover {
+            background: #1a1a1a;
+            transform: translateY(-2px);
+        }
+
+        /* Modals */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            backdrop-filter: blur(8px);
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #0a0a0a;
+            border: 2px solid #f5d742;
+            border-radius: 28px;
+            max-width: 550px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+            color: #fff;
+            animation: slideIn 0.4s ease;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            color: #f5d742;
+        }
+        .modal-header h2 {
+            font-size: 1.5rem;
+        }
+        .close-modal {
+            font-size: 28px;
+            cursor: pointer;
+            color: #f5d742;
+            background: none;
+            border: none;
+            transition: transform 0.2s;
+        }
+        .close-modal:hover {
+            transform: scale(1.2);
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #f5d742;
+            font-weight: 600;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 16px;
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #f5d742;
+            box-shadow: 0 0 10px rgba(245, 215, 66, 0.3);
+        }
+        .file-upload-label {
+            background: #222;
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            color: #f5d742;
+            transition: all 0.3s ease;
+        }
+        .file-upload-label:hover {
+            background: #333;
+        }
+        .preview-img {
+            max-width: 80px;
+            margin-top: 8px;
+            border-radius: 12px;
+        }
+        .flex-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .stats-mini-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .team-block {
+            background: #111;
+            padding: 10px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .team-block button {
+            background: #ef4444;
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .empty-row { 
+            text-align: center; 
+            padding: 40px; 
+            color: #888; 
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #f5d742;
+            color: #f5d742;
+            padding: 8px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-outline:hover {
+            background: #f5d742;
+            color: #000;
+        }
+
+        /* Stats Popup */
+        .stats-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 4000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .stats-popup-overlay.active { display: flex; }
+        
+        .stats-popup {
+            background: linear-gradient(135deg, #f5d742, #d4af37);
+            border-radius: 28px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            color: #000;
+            animation: slideIn 0.4s ease;
+        }
+        .stats-popup-header {
+            padding: 20px;
+            border-bottom: 2px solid #000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: #f5d742;
+            z-index: 10;
+        }
+        .stats-popup-header h2 {
+            font-size: 1.8rem;
+        }
+        .stats-popup-content {
+            padding: 20px;
+        }
+        .stats-section {
+            margin-bottom: 24px;
+            background: rgba(0,0,0,0.1);
+            padding: 16px;
+            border-radius: 16px;
+        }
+        .stats-section h3 {
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .record-item, .medal-item, .trophy-item {
+            background: rgba(0,0,0,0.05);
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .medal-gold { border-left: 4px solid #FFD700; }
+        .medal-silver { border-left: 4px solid #C0C0C0; }
+        .medal-bronze { border-left: 4px solid #CD7F32; }
+        
+        .medal-icon {
+            font-size: 1.5rem;
+            margin-right: 8px;
+        }
+        .item-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .item-actions button {
+            background: #000;
+            border: none;
+            color: #f5d742;
+            padding: 4px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .add-item-btn {
+            width: 100%;
+            background: #000;
+            border: none;
+            color: #f5d742;
+            padding: 10px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 780px) {
+            .container { padding: 1rem; }
+            .manager-name { font-size: 1.3rem; }
+            .manager-score { font-size: 1.5rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 480px) {
+            .card-rank { font-size: 1.1rem; }
+            .manager-name { font-size: 1.2rem; }
+            .manager-score { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div></div>
+        <div class="menu-icon" onclick="toggleMenu()">
+            <span></span><span></span><span></span>
+        </div>
+    </div>
+    
+    <div class="overlay" id="overlay" onclick="closeMenu()"></div>
+    <div class="side-menu" id="sideMenu">
+        <span class="close-menu" onclick="closeMenu()">✕</span>
+        <div class="menu-items">
+            <div class="menu-item" onclick="window.location.href='feed.html'">🏠 Home</div>
+            <div class="menu-item" onclick="window.location.href='admin.html'">📊 League Table</div>
+            <div class="menu-item" id="adminModeMenuItem" onclick="promptAdminKey()">🔑 Admin Mode</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header-actions">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Search manager or team..." onkeyup="filterManagers()">
+            </div>
+            <div id="adminTopBtn" style="display: none;">
+                <button class="btn-gold" onclick="openAddManagerModal()">➕ Add Manager</button>
+            </div>
+        </div>
+        <div id="cardsContainer" class="cards-grid"></div>
+    </div>
+
+    <!-- Manager Modal -->
+    <div id="managerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Manager</h2>
+                <button class="close-modal" onclick="closeManagerModal()">✕</button>
+            </div>
+            <input type="hidden" id="editManagerId">
+            
+            <div class="form-group">
+                <label>Type</label>
+                <select id="managerType" onchange="toggleTypeFields()">
+                    <option value="standalone">Standalone (no login)</option>
+                    <option value="linked">Link to existing user</option>
+                </select>
+            </div>
+            
+            <div id="linkedSection" style="display:none;">
+                <div class="form-group">
+                    <label>Search User</label>
+                    <input type="text" id="linkedSearch" placeholder="Username" oninput="searchUsers()">
+                    <div id="userResults"></div>
+                </div>
+            </div>
+            
+            <div id="standaloneSection">
+                <div class="form-group">
+                    <label>Manager Name</label>
+                    <input type="text" id="standaloneName" placeholder="Full name">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Current Team</label>
+                <select id="currentTeamSelect">
+                    <option value="">Select Team</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Current Season</label>
+                <select id="currentSeasonSelect">
+                    <option value="">Select Season</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Team Logo (Optional)</label>
+                <input type="file" id="teamLogoFile" accept="image/*">
+                <div id="teamLogoPreview"></div>
+            </div>
+            
+            <div class="form-group">
+                <label>Previous Teams</label>
+                <div id="prevTeamsList"></div>
+                <button type="button" class="btn-outline" onclick="addPrevTeamField()">+ Add Previous Team</button>
+            </div>
+            
+            <div class="form-group">
+                <label>Trophies</label>
+                <div id="trophiesList"></div>
+                <button type="button" class="btn-outline" onclick="openTrophyModal()">🏆 Add Trophy</button>
+            </div>
+            
+            <div class="form-group">
+                <label>Medals</label>
+                <div id="medalsList"></div>
+                <button type="button" class="btn-outline" onclick="openMedalModal()">🥇 Add Medal</button>
+            </div>
+            
+            <div class="flex-row">
+                <button class="btn-gold" onclick="saveManager()">Save</button>
+                <button class="btn-outline" onclick="closeManagerModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trophy Modal -->
+    <div id="trophyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Trophy</h2>
+                <button class="close-modal" onclick="closeTrophyModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Competition</label>
+                <select id="trophyComp"></select>
+            </div>
+            <div class="form-group">
+                <label>Season (e.g., 2023/24)</label>
+                <input type="text" id="trophySeason" placeholder="2023/24">
+            </div>
+            <button class="btn-gold" onclick="addTrophyItem()">Add</button>
+        </div>
+    </div>
+
+    <!-- Medal Modal -->
+    <div id="medalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Medal</h2>
+                <button class="close-modal" onclick="closeMedalModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Competition</label>
+                <select id="medalComp"></select>
+            </div>
+            <div class="form-group">
+                <label>Medal Type</label>
+                <select id="medalType">
+                    <option value="gold">🥇 Gold (1st Place)</option>
+                    <option value="silver">🥈 Silver (2nd Place)</option>
+                    <option value="bronze">🥉 Bronze (3rd Place)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Season (e.g., 2023/24)</label>
+                <input type="text" id="medalSeason" placeholder="2023/24">
+            </div>
+            <button class="btn-gold" onclick="addMedalItem()">Add</button>
+        </div>
+    </div>
+
+    <!-- Stats Popup -->
+    <div id="statsPopup" class="stats-popup-overlay">
+        <div class="stats-popup">
+            <div class="stats-popup-header">
+                <h2 id="statsPopupTitle">Manager Statistics</h2>
+                <button class="close-modal" onclick="closeStatsPopup()">✕</button>
+            </div>
+            <div class="stats-popup-content" id="statsPopupContent">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Record Modal -->
+    <div id="recordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="recordModalTitle">Add Record</h2>
+                <button class="close-modal" onclick="closeRecordModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Record Name</label>
+                <input type="text" id="recordName" placeholder="e.g., Most Wins in a Row">
+            </div>
+            <div class="form-group">
+                <label>Value</label>
+                <input type="text" id="recordValue" placeholder="e.g., 10">
+            </div>
+            <div class="form-group">
+                <label>Description (Optional)</label>
+                <textarea id="recordDesc" rows="3" placeholder="Additional details..."></textarea>
+            </div>
+            <button class="btn-gold" onclick="saveRecord()">Save</button>
+        </div>
+    </div>
+
+    <script>
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
+            authDomain: "efootball-412.firebaseapp.com",
+            databaseURL: "https://efootball-412-default-rtdb.firebaseio.com",
+            projectId: "efootball-412",
+            storageBucket: "efootball-412.firebasestorage.app",
+            messagingSenderId: "596548424249",
+            appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
+
+        let isAdmin = false;
+        let managers = [];
+        let allProfiles = [];
+        let selectedLinkedUser = null;
+        let tempTeamLogo = null;
+        let tempPrevTeams = [];
+        let tempTrophies = [];
+        let tempMedals = [];
+        let defaultAvatarUrl = 'https://via.placeholder.com/90/333/f5d742?text=⚽';
+        let availableSeasons = [];
+        let currentStatsManagerId = null;
+        let editingRecordKey = null;
+
+        // Trophy hierarchy with medal calculations
+        const trophyList = [
+            { id: "wc", name: "FIFA World Cup", points: 100 },
+            { id: "ucl", name: "UEFA Champions League", points: 90 },
+            { id: "cwc", name: "FIFA Club World Cup", points: 80 },
+            { id: "uel", name: "UEFA Europa League", points: 70 },
+            { id: "pl", name: "Premier League", points: 60 },
+            { id: "nations", name: "UEFA Nations League", points: 55 },
+            { id: "uecl", name: "UEFA Conference League", points: 50 },
+            { id: "facup", name: "FA Cup", points: 45 },
+            { id: "supercup", name: "UEFA Super Cup", points: 40 },
+            { id: "cs", name: "Community Shield", points: 30 }
+        ];
+
+        function calculateMedalPoints(trophyPoints, medalType) {
+            if (medalType === 'gold') return trophyPoints / 2;
+            if (medalType === 'silver') return (trophyPoints / 2) / 2;
+            if (medalType === 'bronze') return ((trophyPoints / 2) / 2) / 2;
+            return 0;
+        }
+
+        // Helper: upload imgBB
+        async function uploadToImgBB(file) {
+            const fd = new FormData();
+            fd.append("image", file);
+            const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { 
+                method: "POST", 
+                body: fd 
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error("Upload failed");
+            return data.data.url;
+        }
+
+        // Load available seasons
+        async function loadAvailableSeasons() {
+            const snapshot = await database.ref('seasons').once('value');
+            const seasons = snapshot.val() || {};
+            availableSeasons = [];
+            for (const key in seasons) {
+                if (key.startsWith('season_')) {
+                    const id = parseInt(key.split('_')[1]);
+                    if (!isNaN(id) && id >= 3) { // Only seasons 3+
+                        availableSeasons.push(id);
+                    }
+                }
+            }
+            availableSeasons.sort((a, b) => a - b);
+        }
+
+        // Get all teams from a season
+        async function getTeamsFromSeason(seasonNum) {
+            const snapshot = await database.ref(`seasons/season_${seasonNum}/table`).once('value');
+            const data = snapshot.val() || {};
+            return Object.values(data).map(team => team.name).filter(Boolean);
+        }
+
+        // Calculate manager stats from results
+        async function calculateManagerStats(currentTeam, currentSeason, previousTeams) {
+            let totalW = 0, totalD = 0, totalL = 0, totalGS = 0, totalGC = 0;
+
+            // Helper function to get stats for a team in a season
+            const getTeamStats = async (teamName, seasonNum) => {
+                if (seasonNum < 3) return { w: 0, d: 0, l: 0, gs: 0, gc: 0 }; // Ignore seasons 1 & 2
+
+                const resultsSnap = await database.ref(`seasons/season_${seasonNum}/results`).once('value');
+                const results = resultsSnap.val() || {};
+                
+                let w = 0, d = 0, l = 0, gs = 0, gc = 0;
+
+                Object.values(results).forEach(result => {
+                    const matchText = result.matchText || '';
+                    if (!matchText.includes(teamName)) return;
+
+                    // Parse match
+                    const lower = matchText.toLowerCase();
+                    const isForfeit = lower.includes('forfeit') || lower.includes('f - f') || lower.includes('no contest');
+
+                    if (isForfeit && matchText.includes('F - F')) {
+                        // No contest - no stats
+                        return;
+                    }
+
+                    // Parse normal match: "TeamA 3 - 1 TeamB"
+                    const scoreRegex = /(\d+)\s*-\s*(\d+)/;
+                    const match = matchText.match(scoreRegex);
+                    
+                    if (match) {
+                        const score1 = parseInt(match[1]);
+                        const score2 = parseInt(match[2]);
+                        const parts = matchText.split(/\s+\d+\s*-\s*\d+\s+/);
+                        
+                        if (parts.length >= 2) {
+                            const homeTeam = parts[0].trim();
+                            const awayTeam = parts[1].trim().replace(/\(.*\)/g, '').trim();
+                            
+                            const isHome = homeTeam === teamName;
+                            const isAway = awayTeam === teamName;
+                            
+                            if (isHome) {
+                                gs += score1;
+                                gc += score2;
+                                if (score1 > score2) w++;
+                                else if (score1 === score2) d++;
+                                else l++;
+                            } else if (isAway) {
+                                gs += score2;
+                                gc += score1;
+                                if (score2 > score1) w++;
+                                else if (score1 === score2) d++;
+                                else l++;
+                            }
+                        }
+                    }
+                });
+
+                return { w, d, l, gs, gc };
+            };
+
+            // Get current team stats
+            if (currentTeam && currentSeason) {
+                const stats = await getTeamStats(currentTeam, currentSeason);
+                totalW += stats.w;
+                totalD += stats.d;
+                totalL += stats.l;
+                totalGS += stats.gs;
+                totalGC += stats.gc;
+            }
+
+            // Get previous teams stats
+            if (previousTeams && previousTeams.length > 0) {
+                for (const prevTeam of previousTeams) {
+                    const seasonFrom = parseInt(prevTeam.seasonFrom);
+                    const seasonTo = parseInt(prevTeam.seasonTo);
+                    
+                    for (let s = seasonFrom; s <= seasonTo; s++) {
+                        const stats = await getTeamStats(prevTeam.name, s);
+                        totalW += stats.w;
+                        totalD += stats.d;
+                        totalL += stats.l;
+                        totalGS += stats.gs;
+                        totalGC += stats.gc;
+                    }
+                }
+            }
+
+            const winRate = (totalW + totalD + totalL) > 0 
+                ? ((totalW / (totalW + totalD + totalL)) * 100).toFixed(1) 
+                : 0;
+
+            return {
+                w: totalW,
+                d: totalD,
+                l: totalL,
+                gs: totalGS,
+                gc: totalGC,
+                gd: totalGS - totalGC,
+                winRate: parseFloat(winRate)
+            };
+        }
+
+        // Calculate manager scores
+        function calculateScores(manager) {
+            const trophyPoints = (manager.trophies || []).reduce((sum, t) => sum + (t.points || 0), 0);
+            const medalPoints = (manager.medals || []).reduce((sum, m) => sum + (m.points || 0), 0);
+            const winPoints = (manager.stats?.w || 0) * 1; // Each win = 1 point
+            const totalScore = trophyPoints + medalPoints + winPoints;
+
+            return {
+                trophyPoints,
+                medalPoints,
+                winPoints,
+                totalScore
+            };
+        }
+
+        // Load default avatar
+        async function loadDefaultAvatar() {
+            try {
+                const res = await database.ref('settings/defaultAvatar').once('value');
+                const data = res.val();
+                if (data && data.url) defaultAvatarUrl = data.url;
+            } catch(e) {
+                console.error('Error loading default avatar:', e);
+            }
+        }
+
+        // Load all managers
+        async function fetchManagers() {
+            const res = await database.ref('managers').once('value');
+            const data = res.val();
+            if (!data) return [];
+
+            const managersArray = [];
+            for (const [id, m] of Object.entries(data)) {
+                // Calculate stats from results
+                const stats = await calculateManagerStats(
+                    m.currentTeam?.name,
+                    m.currentTeam?.season,
+                    m.previousTeams || []
+                );
+
+                // Calculate scores
+                const scores = calculateScores({ ...m, stats });
+
+                managersArray.push({
+                    id,
+                    ...m,
+                    stats,
+                    scores
+                });
+            }
+
+            return managersArray;
+        }
+
+        async function fetchProfiles() {
+            const res = await database.ref('profiles').once('value');
+            const data = res.val();
+            if (!data) return [];
+            return Object.entries(data).map(([id, p]) => ({ 
+                id, 
+                username: p.username, 
+                profilePicture: p.profilePicture 
+            }));
+        }
+
+        // Ranking sort
+        function sortManagers(list) {
+            return [...list].sort((a, b) => {
+                // Primary: Total Score
+                if (a.scores.totalScore !== b.scores.totalScore) {
+                    return b.scores.totalScore - a.scores.totalScore;
+                }
+                // Secondary: Trophy count
+                const aTrophies = (a.trophies || []).length;
+                const bTrophies = (b.trophies || []).length;
+                if (aTrophies !== bTrophies) return bTrophies - aTrophies;
+                
+                // Tertiary: Wins
+                if (a.stats.w !== b.stats.w) return b.stats.w - a.stats.w;
+                
+                // Quaternary: Goal Difference
+                return (b.stats.gd || 0) - (a.stats.gd || 0);
+            });
+        }
+
+        // Render cards
+        async function renderCards() {
+            const container = document.getElementById('cardsContainer');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            let filtered = managers.filter(m => 
+                m.username.toLowerCase().includes(searchTerm) || 
+                (m.currentTeam?.name || '').toLowerCase().includes(searchTerm)
+            );
+            
+            const sorted = sortManagers(filtered);
+            
+            if (sorted.length === 0) {
+                container.innerHTML = '<div class="empty-row">No managers found</div>';
+                return;
+            }
+
+            let html = '';
+            sorted.forEach((m, idx) => {
+                const rank = idx + 1;
+                const rankDisplay = rank === 1 ? '🥇 #1' : rank === 2 ? '🥈 #2' : rank === 3 ? '🥉 #3' : `#${rank}`;
+                
+                let avatar = m.profilePicture || defaultAvatarUrl;
+                const teamLogo = m.currentTeam?.logo || '';
+                
+                const prevHtml = (m.previousTeams || [])
+                    .map(p => `${p.name} (S${p.seasonFrom}${p.seasonTo !== p.seasonFrom ? `-S${p.seasonTo}` : ''})`)
+                    .join(', ');
+                
+                const stats = m.stats || { w: 0, d: 0, l: 0, gs: 0, gc: 0, gd: 0, winRate: 0 };
+                const scores = m.scores || { trophyPoints: 0, medalPoints: 0, winPoints: 0, totalScore: 0 };
+                
+                const adminBtns = isAdmin ? `
+                    <div class="admin-buttons">
+                        <button onclick="editManager('${m.id}')">✏️ Edit</button>
+                        <button onclick="deleteManager('${m.id}')">🗑️ Delete</button>
+                    </div>
+                ` : '';
+
+                html += `
+                    <div class="manager-card">
+                        <div class="card-rank">${rankDisplay}</div>
+                        <div class="card-avatar"><img src="${avatar}" alt="avatar"></div>
+                        <div class="manager-name">${escapeHtml(m.username)}</div>
+                        <div class="current-team">
+                            ${teamLogo ? `<img src="${teamLogo}" class="team-logo-sm">` : ''}
+                            <span>${escapeHtml(m.currentTeam?.name || '—')} ${m.currentTeam?.season ? `(S${m.currentTeam.season})` : ''}</span>
+                        </div>
+                        ${prevHtml ? `<div class="prev-teams">📋 ${escapeHtml(prevHtml)}</div>` : ''}
+                        <div class="manager-score">🏆 TOTAL SCORE: ${scores.totalScore.toFixed(1)}</div>
+                        <div class="score-breakdown">
+                            <span>🏆 Trophies: ${scores.trophyPoints}</span>
+                            <span>🥇 Medals: ${scores.medalPoints.toFixed(1)}</span>
+                            <span>✅ Wins: ${scores.winPoints}</span>
+                        </div>
+                        <div class="stats-grid">
+                            <div class="stat-item"><div class="stat-label">WINS</div><div class="stat-value">${stats.w}</div></div>
+                            <div class="stat-item"><div class="stat-label">DRAWS</div><div class="stat-value">${stats.d}</div></div>
+                            <div class="stat-item"><div class="stat-label">LOSSES</div><div class="stat-value">${stats.l}</div></div>
+                            <div class="stat-item"><div class="stat-label">GOALS</div><div class="stat-value">${stats.gs}</div></div>
+                            <div class="stat-item"><div class="stat-label">CONCEDED</div><div class="stat-value">${stats.gc}</div></div>
+                            <div class="stat-item"><div class="stat-label">WIN RATE</div><div class="stat-value">${stats.winRate}%</div></div>
+                        </div>
+                        <button class="view-more-btn" onclick="openStatsPopup('${m.id}')">📊 View More Statistics</button>
+                        ${adminBtns}
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function filterManagers() {
+            renderCards();
+        }
+
+        // Admin mode
+        function promptAdminKey() {
+            const key = prompt("Enter Admin Key:");
+            if (key === "admin@11:11") {
+                isAdmin = true;
+                document.getElementById('adminTopBtn').style.display = 'block';
+                renderCards();
+                alert("Admin mode active");
+            } else if (key) {
+                alert("Invalid key");
+            }
+            closeMenu();
+        }
+
+        // Modal helpers
+        async function openAddManagerModal() {
+            if (!isAdmin) return;
+            await loadAvailableSeasons();
+            resetModalForm();
+            document.getElementById('modalTitle').innerText = "Add Manager";
+            document.getElementById('editManagerId').value = '';
+            
+            // Populate season dropdown
+            const seasonSelect = document.getElementById('currentSeasonSelect');
+            seasonSelect.innerHTML = '<option value="">Select Season</option>' + 
+                availableSeasons.map(s => `<option value="${s}">Season ${s}</option>`).join('');
+            
+            document.getElementById('managerModal').classList.add('active');
+        }
+
+        function closeManagerModal() {
+            document.getElementById('managerModal').classList.remove('active');
+        }
+
+        function toggleTypeFields() {
+            let type = document.getElementById('managerType').value;
+            document.getElementById('linkedSection').style.display = type === 'linked' ? 'block' : 'none';
+            document.getElementById('standaloneSection').style.display = type === 'standalone' ? 'block' : 'none';
+        }
+
+        async function searchUsers() {
+            let query = document.getElementById('linkedSearch').value.trim().toLowerCase();
+            if (query.length < 2) return;
+            
+            if (allProfiles.length === 0) allProfiles = await fetchProfiles();
+            
+            let matches = allProfiles.filter(p => p.username.toLowerCase().includes(query));
+            let resultsDiv = document.getElementById('userResults');
+            resultsDiv.innerHTML = matches.map(u => 
+                `<div style="padding:8px; cursor:pointer; border-bottom:1px solid #333;" 
+                      onclick="selectUser('${u.id}','${escapeHtml(u.username)}','${u.profilePicture || ''}')">${escapeHtml(u.username)}</div>`
+            ).join('');
+        }
+
+        function selectUser(id, name, pic) {
+            selectedLinkedUser = { id, username: name, profilePicture: pic };
+            document.getElementById('linkedSearch').value = name;
+            document.getElementById('userResults').innerHTML = '';
+        }
+
+        async function resetModalForm() {
+            document.getElementById('managerType').value = 'standalone';
+            toggleTypeFields();
+            document.getElementById('standaloneName').value = '';
+            document.getElementById('currentTeamSelect').innerHTML = '<option value="">Select Team</option>';
+            document.getElementById('currentSeasonSelect').innerHTML = '<option value="">Select Season</option>';
+            document.getElementById('teamLogoFile').value = '';
+            document.getElementById('teamLogoPreview').innerHTML = '';
+            tempTeamLogo = null;
+            tempPrevTeams = [];
+            tempTrophies = [];
+            tempMedals = [];
+            renderPrevTeamsUI();
+            renderTrophiesUI();
+            renderMedalsUI();
+            selectedLinkedUser = null;
+            document.getElementById('linkedSearch').value = '';
+        }
+
+        // Season change handler
+        document.getElementById('currentSeasonSelect').addEventListener('change', async function() {
+            const season = this.value;
+            const teamSelect = document.getElementById('currentTeamSelect');
+            
+            if (!season) {
+                teamSelect.innerHTML = '<option value="">Select Team</option>';
+                return;
+            }
+            
+            const teams = await getTeamsFromSeason(parseInt(season));
+            teamSelect.innerHTML = '<option value="">Select Team</option>' + 
+                teams.map(t => `<option value="${t}">${t}</option>`).join('');
+        });
+
+        document.getElementById('teamLogoFile').addEventListener('change', async (e) => {
+            if (e.target.files[0]) {
+                try {
+                    tempTeamLogo = await uploadToImgBB(e.target.files[0]);
+                    document.getElementById('teamLogoPreview').innerHTML = 
+                        `<img src="${tempTeamLogo}" class="preview-img">`;
+                } catch (err) {
+                    alert("Upload failed");
+                }
+            }
+        });
+
+        async function addPrevTeamField() {
+            const season = prompt("Which season? (e.g., 3, 4, 5...)");
+            if (!season) return;
+            const seasonNum = parseInt(season);
+            if (isNaN(seasonNum) || seasonNum < 3) {
+                alert("Invalid season. Must be 3 or higher.");
+                return;
+            }
+            
+            const teams = await getTeamsFromSeason(seasonNum);
+            if (teams.length === 0) {
+                alert("No teams found for this season");
+                return;
+            }
+            
+            const teamName = prompt(`Select team from Season ${seasonNum}:\n${teams.join(', ')}`);
+            if (!teamName || !teams.includes(teamName)) {
+                alert("Invalid team name");
+                return;
+            }
+            
+            const seasonTo = prompt(`Season to? (${seasonNum} or later)`, seasonNum);
+            const seasonToNum = parseInt(seasonTo);
+            if (isNaN(seasonToNum) || seasonToNum < seasonNum) {
+                alert("Invalid end season");
+                return;
+            }
+            
+            tempPrevTeams.push({ 
+                name: teamName, 
+                seasonFrom: seasonNum, 
+                seasonTo: seasonToNum 
+            });
+            renderPrevTeamsUI();
+        }
+
+        function renderPrevTeamsUI() {
+            let container = document.getElementById('prevTeamsList');
+            container.innerHTML = tempPrevTeams.map((t, i) => 
+                `<div class="team-block">
+                    ${t.name} (S${t.seasonFrom}${t.seasonTo !== t.seasonFrom ? ` - S${t.seasonTo}` : ''})
+                    <button onclick="removePrevTeam(${i})">✕</button>
+                </div>`
+            ).join('');
+        }
+
+        function removePrevTeam(i) {
+            tempPrevTeams.splice(i, 1);
+            renderPrevTeamsUI();
+        }
+
+        function renderTrophiesUI() {
+            let container = document.getElementById('trophiesList');
+            container.innerHTML = tempTrophies.map((t, i) => 
+                `<div class="team-block">
+                    ${t.name} (${t.season}) - ${t.points} pts
+                    <button onclick="removeTrophyTemp(${i})">✕</button>
+                </div>`
+            ).join('');
+        }
+
+        function removeTrophyTemp(i) {
+            tempTrophies.splice(i, 1);
+            renderTrophiesUI();
+        }
+
+        function renderMedalsUI() {
+            let container = document.getElementById('medalsList');
+            const medalIcons = { gold: '🥇', silver: '🥈', bronze: '🥉' };
+            container.innerHTML = tempMedals.map((m, i) => 
+                `<div class="team-block medal-${m.type}">
+                    ${medalIcons[m.type]} ${m.name} (${m.season}) - ${m.points.toFixed(1)} pts
+                    <button onclick="removeMedalTemp(${i})">✕</button>
+                </div>`
+            ).join('');
+        }
+
+        function removeMedalTemp(i) {
+            tempMedals.splice(i, 1);
+            renderMedalsUI();
+        }
+
+        function openTrophyModal() {
+            let select = document.getElementById('trophyComp');
+            select.innerHTML = trophyList.map(t => 
+                `<option value="${t.id}" data-points="${t.points}">${t.name} (${t.points} pts)</option>`
+            ).join('');
+            document.getElementById('trophyModal').classList.add('active');
+        }
+
+        function closeTrophyModal() {
+            document.getElementById('trophyModal').classList.remove('active');
+        }
+
+        function addTrophyItem() {
+            let compId = document.getElementById('trophyComp').value;
+            let trophy = trophyList.find(t => t.id === compId);
+            let season = document.getElementById('trophySeason').value.trim();
+            
+            if (trophy && season) {
+                tempTrophies.push({ 
+                    id: trophy.id, 
+                    name: trophy.name, 
+                    points: trophy.points, 
+                    season 
+                });
+                renderTrophiesUI();
+            }
+            closeTrophyModal();
+        }
+
+        function openMedalModal() {
+            let select = document.getElementById('medalComp');
+            select.innerHTML = trophyList.map(t => 
+                `<option value="${t.id}" data-points="${t.points}">${t.name}</option>`
+            ).join('');
+            document.getElementById('medalModal').classList.add('active');
+        }
+
+        function closeMedalModal() {
+            document.getElementById('medalModal').classList.remove('active');
+        }
+
+        function addMedalItem() {
+            let compId = document.getElementById('medalComp').value;
+            let trophy = trophyList.find(t => t.id === compId);
+            let medalType = document.getElementById('medalType').value;
+            let season = document.getElementById('medalSeason').value.trim();
+            
+            if (trophy && medalType && season) {
+                const points = calculateMedalPoints(trophy.points, medalType);
+                tempMedals.push({ 
+                    trophyId: trophy.id,
+                    name: trophy.name, 
+                    type: medalType,
+                    points: points, 
+                    season 
+                });
+                renderMedalsUI();
+            }
+            closeMedalModal();
+        }
+
+        async function saveManager() {
+            let type = document.getElementById('managerType').value;
+            let username = '', profilePicture = null;
+            
+            if (type === 'linked') {
+                if (!selectedLinkedUser) {
+                    alert("Select a linked user");
+                    return;
+                }
+                username = selectedLinkedUser.username;
+                profilePicture = selectedLinkedUser.profilePicture;
+            } else {
+                username = document.getElementById('standaloneName').value.trim();
+                if (!username) {
+                    alert("Enter manager name");
+                    return;
+                }
+                profilePicture = null;
+            }
+            
+            const currentTeamName = document.getElementById('currentTeamSelect').value;
+            const currentSeason = document.getElementById('currentSeasonSelect').value;
+            
+            let managerData = {
+                type,
+                userId: type === 'linked' ? selectedLinkedUser.id : null,
+                username,
+                profilePicture,
+                currentTeam: currentTeamName && currentSeason ? {
+                    name: currentTeamName,
+                    season: parseInt(currentSeason),
+                    logo: tempTeamLogo || null
+                } : null,
+                previousTeams: tempPrevTeams,
+                trophies: tempTrophies,
+                medals: tempMedals,
+                records: []
+            };
+            
+            let editId = document.getElementById('editManagerId').value;
+            let url = editId ? 
+                `managers/${editId}` : 
+                'managers';
+            
+            if (editId) {
+                await database.ref(url).update(managerData);
+            } else {
+                await database.ref(url).push(managerData);
+            }
+            
+            await refreshData();
+            closeManagerModal();
+        }
+
+        async function editManager(id) {
+            let m = managers.find(x => x.id === id);
+            if (!m) return;
+            
+            await loadAvailableSeasons();
+            resetModalForm();
+            
+            document.getElementById('modalTitle').innerText = "Edit Manager";
+            document.getElementById('editManagerId').value = id;
+            document.getElementById('managerType').value = m.type;
+            toggleTypeFields();
+            
+            if (m.type === 'linked') {
+                selectedLinkedUser = { 
+                    id: m.userId, 
+                    username: m.username, 
+                    profilePicture: m.profilePicture 
+                };
+                document.getElementById('linkedSearch').value = m.username;
+            } else {
+                document.getElementById('standaloneName').value = m.username;
+            }
+            
+            // Populate seasons
+            const seasonSelect = document.getElementById('currentSeasonSelect');
+            seasonSelect.innerHTML = '<option value="">Select Season</option>' + 
+                availableSeasons.map(s => `<option value="${s}">Season ${s}</option>`).join('');
+            
+            if (m.currentTeam) {
+                seasonSelect.value = m.currentTeam.season || '';
+                
+                // Load teams for that season
+                if (m.currentTeam.season) {
+                    const teams = await getTeamsFromSeason(m.currentTeam.season);
+                    const teamSelect = document.getElementById('currentTeamSelect');
+                    teamSelect.innerHTML = '<option value="">Select Team</option>' + 
+                        teams.map(t => `<option value="${t}">${t}</option>`).join('');
+                    teamSelect.value = m.currentTeam.name || '';
+                }
+                
+                tempTeamLogo = m.currentTeam.logo || null;
+                if (tempTeamLogo) {
+                    document.getElementById('teamLogoPreview').innerHTML = 
+                        `<img src="${tempTeamLogo}" class="preview-img">`;
+                }
+            }
+            
+            tempPrevTeams = m.previousTeams || [];
+            renderPrevTeamsUI();
+            
+            tempTrophies = m.trophies || [];
+            renderTrophiesUI();
+            
+            tempMedals = m.medals || [];
+            renderMedalsUI();
+            
+            document.getElementById('managerModal').classList.add('active');
+        }
+
+        async function deleteManager(id) {
+            if (!confirm("Delete permanently?")) return;
+            await database.ref(`managers/${id}`).remove();
+            await refreshData();
+        }
+
+        async function refreshData() {
+            managers = await fetchManagers();
+            renderCards();
+        }
+
+        // Stats Popup
+        async function openStatsPopup(managerId) {
+            currentStatsManagerId = managerId;
+            const manager = managers.find(m => m.id === managerId);
+            if (!manager) return;
+            
+            const content = document.getElementById('statsPopupContent');
+            const medals = manager.medals || [];
+            const trophies = manager.trophies || [];
+            const records = manager.records || [];
+            
+            // Group medals by type
+            const goldMedals = medals.filter(m => m.type === 'gold');
+            const silverMedals = medals.filter(m => m.type === 'silver');
+            const bronzeMedals = medals.filter(m => m.type === 'bronze');
+            
+            let html = '';
+            
+            // Records Section
+            html += `<div class="stats-section">
+                <h3>📊 Individual Records</h3>
+                ${records.map((r, i) => `
+                    <div class="record-item">
+                        <div>
+                            <strong>${escapeHtml(r.name)}</strong>: ${escapeHtml(r.value)}
+                            ${r.description ? `<br><small style="opacity:0.7">${escapeHtml(r.description)}</small>` : ''}
+                        </div>
+                        ${isAdmin ? `
+                            <div class="item-actions">
+                                <button onclick="editRecord(${i})">✏️</button>
+                                <button onclick="deleteRecord(${i})">🗑️</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+                ${records.length === 0 ? '<p style="opacity:0.6; text-align:center;">No records yet</p>' : ''}
+                ${isAdmin ? '<button class="add-item-btn" onclick="openRecordModal()">+ Add Record</button>' : ''}
+            </div>`;
+            
+            // Medals Section
+            html += `<div class="stats-section">
+                <h3>🥇 Medals</h3>`;
+            
+            if (goldMedals.length > 0) {
+                html += `<h4 style="margin-top:12px;">🥇 Gold Medals</h4>`;
+                goldMedals.forEach((m, i) => {
+                    html += `
+                        <div class="medal-item medal-gold">
+                            <div>
+                                <span class="medal-icon">🥇</span>
+                                <strong>${escapeHtml(m.name)}</strong> (${escapeHtml(m.season)})
+                                <br><small>${m.points.toFixed(1)} points</small>
+                            </div>
+                            ${isAdmin ? `
+                                <div class="item-actions">
+                                    <button onclick="deleteMedal(${medals.indexOf(m)})">🗑️</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+            }
+            
+            if (silverMedals.length > 0) {
+                html += `<h4 style="margin-top:12px;">🥈 Silver Medals</h4>`;
+                silverMedals.forEach((m, i) => {
+                    html += `
+                        <div class="medal-item medal-silver">
+                            <div>
+                                <span class="medal-icon">🥈</span>
+                                <strong>${escapeHtml(m.name)}</strong> (${escapeHtml(m.season)})
+                                <br><small>${m.points.toFixed(1)} points</small>
+                            </div>
+                            ${isAdmin ? `
+                                <div class="item-actions">
+                                    <button onclick="deleteMedal(${medals.indexOf(m)})">🗑️</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+            }
+            
+            if (bronzeMedals.length > 0) {
+                html += `<h4 style="margin-top:12px;">🥉 Bronze Medals</h4>`;
+                bronzeMedals.forEach((m, i) => {
+                    html += `
+                        <div class="medal-item medal-bronze">
+                            <div>
+                                <span class="medal-icon">🥉</span>
+                                <strong>${escapeHtml(m.name)}</strong> (${escapeHtml(m.season)})
+                                <br><small>${m.points.toFixed(1)} points</small>
+                            </div>
+                            ${isAdmin ? `
+                                <div class="item-actions">
+                                    <button onclick="deleteMedal(${medals.indexOf(m)})">🗑️</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+            }
+            
+            if (medals.length === 0) {
+                html += '<p style="opacity:0.6; text-align:center;">No medals yet</p>';
+            }
+            
+            const totalMedalPoints = medals.reduce((sum, m) => sum + m.points, 0);
+            html += `<div style="text-align:center; margin-top:12px; font-weight:bold;">
+                Total Medal Points: ${totalMedalPoints.toFixed(1)}
+            </div>`;
+            
+            html += `</div>`;
+            
+            // Trophies Section
+            html += `<div class="stats-section">
+                <h3>🏆 Trophies</h3>
+                ${trophies.map((t, i) => `
+                    <div class="trophy-item">
+                        <div>
+                            <strong>${escapeHtml(t.name)}</strong> (${escapeHtml(t.season)})
+                            <br><small>${t.points} points</small>
+                        </div>
+                        ${isAdmin ? `
+                            <div class="item-actions">
+                                <button onclick="deleteTrophy(${i})">🗑️</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+                ${trophies.length === 0 ? '<p style="opacity:0.6; text-align:center;">No trophies yet</p>' : ''}
+            </div>`;
+            
+            const totalTrophyPoints = trophies.reduce((sum, t) => sum + t.points, 0);
+            html += `<div style="text-align:center; margin-top:12px; font-weight:bold; font-size:1.2rem;">
+                Total Trophy Points: ${totalTrophyPoints}
+            </div>`;
+            
+            content.innerHTML = html;
+            document.getElementById('statsPopupTitle').innerText = `${manager.username} - Statistics`;
+            document.getElementById('statsPopup').classList.add('active');
+        }
+
+        function closeStatsPopup() {
+            document.getElementById('statsPopup').classList.remove('active');
+            currentStatsManagerId = null;
+        }
+
+        // Record Modal
+        function openRecordModal(recordIndex = null) {
+            if (!isAdmin || !currentStatsManagerId) return;
+            
+            const manager = managers.find(m => m.id === currentStatsManagerId);
+            if (!manager) return;
+            
+            editingRecordKey = recordIndex;
+            const record = recordIndex !== null ? manager.records[recordIndex] : null;
+            
+            document.getElementById('recordModalTitle').innerText = 
+                recordIndex !== null ? 'Edit Record' : 'Add Record';
+            document.getElementById('recordName').value = record?.name || '';
+            document.getElementById('recordValue').value = record?.value || '';
+            document.getElementById('recordDesc').value = record?.description || '';
+            
+            document.getElementById('recordModal').classList.add('active');
+        }
+
+        function closeRecordModal() {
+            document.getElementById('recordModal').classList.remove('active');
+            editingRecordKey = null;
+        }
+
+        async function saveRecord() {
+            if (!currentStatsManagerId) return;
+            
+            const name = document.getElementById('recordName').value.trim();
+            const value = document.getElementById('recordValue').value.trim();
+            const description = document.getElementById('recordDesc').value.trim();
+            
+            if (!name || !value) {
+                alert('Name and value are required');
+                return;
+            }
+            
+            const manager = managers.find(m => m.id === currentStatsManagerId);
+            if (!manager) return;
+            
+            const records = manager.records || [];
+            const newRecord = { name, value, description };
+            
+            if (editingRecordKey !== null) {
+                records[editingRecordKey] = newRecord;
+            } else {
+                records.push(newRecord);
+            }
+            
+            await database.ref(`managers/${currentStatsManagerId}/records`).set(records);
+            await refreshData();
+            closeRecordModal();
+            openStatsPopup(currentStatsManagerId);
+        }
+
+        async function editRecord(index) {
+            openRecordModal(index);
+        }
+
+        async function deleteRecord(index) {
+            if (!confirm('Delete this record?')) return;
+            
+            const manager = managers.find(m => m.id === currentStatsManagerId);
+            if (!manager) return;
+            
+            const records = manager.records || [];
+            records.splice(index, 1);
+            
+            await database.ref(`managers/${currentStatsManagerId}/records`).set(records);
+            await refreshData();
+            openStatsPopup(currentStatsManagerId);
+        }
+
+        async function deleteMedal(index) {
+            if (!confirm('Delete this medal?')) return;
+            
+            const manager = managers.find(m => m.id === currentStatsManagerId);
+            if (!manager) return;
+            
+            const medals = manager.medals || [];
+            medals.splice(index, 1);
+            
+            await database.ref(`managers/${currentStatsManagerId}/medals`).set(medals);
+            await refreshData();
+            openStatsPopup(currentStatsManagerId);
+        }
+
+        async function deleteTrophy(index) {
+            if (!confirm('Delete this trophy?')) return;
+            
+            const manager = managers.find(m => m.id === currentStatsManagerId);
+            if (!manager) return;
+            
+            const trophies = manager.trophies || [];
+            trophies.splice(index, 1);
+            
+            await database.ref(`managers/${currentStatsManagerId}/trophies`).set(trophies);
+            await refreshData();
+            openStatsPopup(currentStatsManagerId);
+        }
+
+        // Menu
+        function toggleMenu() {
+            document.getElementById('sideMenu').classList.toggle('active');
+            document.getElementById('overlay').classList.toggle('active');
+        }
+        
+        function closeMenu() {
+            document.getElementById('sideMenu').classList.remove('active');
+            document.getElementById('overlay').classList.remove('active');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Initialize
+        async function init() {
+            await loadDefaultAvatar();
+            await loadAvailableSeasons();
+            await refreshData();
+            
+            // Real-time listener
+            database.ref('managers').on('value', async () => {
+                await refreshData();
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
