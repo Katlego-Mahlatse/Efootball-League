@@ -832,6 +832,22 @@
       color: #1a1a1a;
     }
 
+    /* NEW: results table column stretching when no admin mode */
+    .results-table.no-admin-mode {
+      width: 100%;
+      table-layout: fixed;
+    }
+    .results-table.no-admin-mode td:first-child,
+    .results-table.no-admin-mode th:first-child {
+      width: 70%;
+      text-align: center;
+    }
+    .results-table.no-admin-mode td:last-child,
+    .results-table.no-admin-mode th:last-child {
+      width: 30%;
+      text-align: center;
+    }
+
     .image-preview-grid {
       display: flex;
       flex-wrap: wrap;
@@ -1099,7 +1115,7 @@
     </div>
     <div class="card-content">
       <div class="results-table-wrapper">
-        <table class="inner-table" id="resultsTable">
+        <table class="inner-table results-table" id="resultsTable">
           <thead>
             <tr>
               <th>Match</th>
@@ -1589,7 +1605,16 @@
     const actionHeader = document.getElementById('resultActionHeader');
     if(actionHeader) actionHeader.style.display = isAdminMode ? 'table-cell' : 'none';
     tbody.innerHTML = '';
-    // Sort results - LATEST FIRST (newest on top) - exactly as original
+    // Apply class to results table for column stretching
+    const resultsTable = document.getElementById('resultsTable');
+    if (resultsTable) {
+      if (!isAdminMode) {
+        resultsTable.classList.add('no-admin-mode');
+      } else {
+        resultsTable.classList.remove('no-admin-mode');
+      }
+    }
+    // Sort results - LATEST FIRST (newest on top)
     const sortedResults = [...resultsData].sort((a,b) => (b.md||0) - (a.md||0));
     
     sortedResults.forEach(r => {
@@ -1952,9 +1977,17 @@
     const title = type === 'scorer' ? 'TOP SCORERS' : 'TOP ASSISTANTS';
     const inner = document.getElementById('statsPopupInner');
     let slideshowHtml = `<div class="stats-popup-slideshow"><img id="statsPopupSlideshowImg" src="${images[0] || ''}" style="max-width:100%; max-height:200px; border-radius:1rem;"></div><div class="dots-container" id="statsPopupDots"></div>`;
-    let listHtml = `<table class="stats-list"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>${type === 'scorer' ? 'Goals' : 'Assists'}</th>${isAdminMode ? '<th>Actions</th>' : ''}</thead><tbody>`;
+    let listHtml = `<table class="stats-list"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>${type === 'scorer' ? 'Goals' : 'Assists'}</th>${isAdminMode ? '<th>Actions</th>' : ''}</tr></thead><tbody>`;
     list.sort((a,b) => (b.count||0) - (a.count||0)).forEach((item, idx) => {
-      listHtml += `<tr><td>${idx+1}</td><td>${item.name || ''}</td><td>${item.team || ''}</td><td>${item.count || 0}</td>${isAdminMode ? `<td><button class="edit-btn" data-key="${item.key}">✏️</button> <button class="delete-btn" data-key="${item.key}">🗑️</button></td>` : ''}</tr>`;
+      // Team icon instead of team name
+      let teamDisplay = '';
+      const iconUrl = teamIconsCache[item.team];
+      if (iconUrl) {
+        teamDisplay = `<img src="${iconUrl}" style="width: 30px; height: 30px; object-fit: contain; vertical-align: middle;" title="${item.team}">`;
+      } else {
+        teamDisplay = item.team || '';
+      }
+      listHtml += `<tr><td>${idx+1}</td><td>${item.name || ''}</td><td>${teamDisplay}</td><td>${item.count || 0}</td>${isAdminMode ? `<td><button class="edit-btn" data-key="${item.key}">✏️</button> <button class="delete-btn" data-key="${item.key}">🗑️</button></td>` : ''}</tr>`;
     });
     listHtml += `</tbody></table>`;
     let adminControls = '';
@@ -1991,18 +2024,28 @@
   function showAddEditStatsEntry(type, entry = null) {
     const modal = document.getElementById('modalOverlay');
     const content = document.getElementById('modalContent');
+    // Create team dropdown from current season teams
+    const teamOptions = teamsData.map(t => t.name).sort();
+    let teamSelectHtml = `<select id="entryTeam" style="width:100%; margin:0.5rem 0; padding:0.5rem;">`;
+    teamSelectHtml += `<option value="">Select Team</option>`;
+    teamOptions.forEach(team => {
+      const selected = (entry && entry.team === team) ? 'selected' : '';
+      teamSelectHtml += `<option value="${team}" ${selected}>${team}</option>`;
+    });
+    teamSelectHtml += `</select>`;
     content.innerHTML = `<h3>${entry ? 'Edit' : 'Add'} ${type === 'scorer' ? 'Top Scorer' : 'Top Assistant'}</h3>
       <input type="text" id="entryName" placeholder="Player Name" value="${entry?.name || ''}" style="width:100%; margin:0.5rem 0; padding:0.5rem;">
-      <input type="text" id="entryTeam" placeholder="Team Name" value="${entry?.team || ''}" style="width:100%; margin:0.5rem 0; padding:0.5rem;">
+      ${teamSelectHtml}
       <input type="number" id="entryCount" placeholder="${type === 'scorer' ? 'Goals' : 'Assists'}" value="${entry?.count || 0}" style="width:100%; margin:0.5rem 0; padding:0.5rem;">
       <button id="saveStatsEntryBtn" class="modal-option">Save</button>
       <button id="closeStatsEntry" class="close-modal">Cancel</button>`;
     modal.classList.add('active');
     document.getElementById('saveStatsEntryBtn').onclick = async () => {
       const name = document.getElementById('entryName').value.trim();
-      const team = document.getElementById('entryTeam').value.trim();
+      const team = document.getElementById('entryTeam').value;
       const count = parseInt(document.getElementById('entryCount').value) || 0;
       if (!name) { alert("Player name required"); return; }
+      if (!team) { alert("Please select a team"); return; }
       const data = { name, team, count };
       if (entry && entry.key) {
         await database.ref(`${type === 'scorer' ? 'topScorer/list' : 'topAssistant/list'}/${entry.key}`).set(data);
