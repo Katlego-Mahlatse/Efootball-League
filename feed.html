@@ -388,7 +388,6 @@
             scroll-behavior: smooth;
             scrollbar-width: none;
             -ms-overflow-style: none;
-            position: relative; /* added to make it the offsetParent for slide positioning */
         }
 
         .carousel-track::-webkit-scrollbar {
@@ -1490,6 +1489,7 @@
         let stories = [];
         let currentStoryIndex = 0;
         let autoSlideInterval = null;
+        let isCarouselVisible = true; // assume visible initially
         let uploadedProfilePhotoUrl = null;
         let editUploadedProfilePhotoUrl = null;
         let currentEditPostId = null;
@@ -1517,7 +1517,32 @@
             loadPosts(); 
             loadUserProfile(); 
             loadLeagues();
+            // Setup Intersection Observer to pause auto-scroll when carousel is not visible
+            setupCarouselVisibilityObserver();
         };
+
+        function setupCarouselVisibilityObserver() {
+            const carousel = document.getElementById('storiesCarousel');
+            if (!carousel) return;
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    isCarouselVisible = entry.isIntersecting;
+                    if (isCarouselVisible) {
+                        // Restart auto-slide if it was stopped
+                        if (!autoSlideInterval) {
+                            startAutoSlide();
+                        }
+                    } else {
+                        // Pause auto-slide
+                        if (autoSlideInterval) {
+                            clearInterval(autoSlideInterval);
+                            autoSlideInterval = null;
+                        }
+                    }
+                });
+            }, { threshold: 0.1 }); // 10% visibility
+            observer.observe(carousel);
+        }
 
         async function loadLeagues() {
             try {
@@ -2053,28 +2078,19 @@
         }
 
         function viewStory(index) {
+            // Only scroll the carousel horizontally, never affect page scroll
             const track = document.getElementById('carouselTrack');
             const slides = track.querySelectorAll('.story-slide');
             if (!slides[index]) return;
-            
-            // Calculate target scrollLeft to center the slide horizontally in the track
             const slide = slides[index];
-            const trackRect = track.getBoundingClientRect();
-            const slideRect = slide.getBoundingClientRect();
-            
-            // Compute desired scrollLeft: slide's left edge relative to track minus half track width plus half slide width
             const targetScrollLeft = slide.offsetLeft - (track.clientWidth / 2) + (slide.clientWidth / 2);
-            
-            // Smoothly scroll only the track horizontally
-            track.scrollTo({
-                left: Math.max(0, targetScrollLeft),
-                behavior: 'smooth'
-            });
-            
+            // Use scrollLeft property directly to avoid any browser interventions
+            track.scrollLeft = Math.max(0, targetScrollLeft);
             currentStoryIndex = index;
         }
 
         function nextStory() { 
+            if (!isCarouselVisible) return; // Don't advance if carousel isn't visible
             currentStoryIndex = (currentStoryIndex + 1) % stories.length;
             viewStory(currentStoryIndex);
         }
@@ -2082,14 +2098,14 @@
         function startAutoSlide() { 
             if (autoSlideInterval) clearInterval(autoSlideInterval); 
             autoSlideInterval = setInterval(() => { 
-                if (stories.length > 0) nextStory(); 
+                if (stories.length > 0 && isCarouselVisible) nextStory(); 
             }, 4000); 
         }
         
         function resetAutoSlideTimer() { 
             if (autoSlideInterval) clearInterval(autoSlideInterval); 
             autoSlideInterval = setInterval(() => { 
-                if (stories.length > 0) nextStory(); 
+                if (stories.length > 0 && isCarouselVisible) nextStory(); 
             }, 4000); 
         }
 
