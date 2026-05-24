@@ -2,8 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=1200, initial-scale=1.0, user-scalable=yes">
-  <title>Admin · Premier League</title>
+  <!-- DYNAMIC VIEWPORT: ensures full 1200px width is visible on any screen without changing element sizes -->
+  <script>
+    (function() {
+      // Target design width is 1200px
+      var designWidth = 1200;
+      // Get actual screen width (viewport width)
+      var screenWidth = window.screen.width;
+      // Calculate scale so that 1200px fits horizontally
+      var scale = screenWidth / designWidth;
+      // Clamp scale to reasonable range (minimum 0.3, maximum 1.0) – ensures readability
+      scale = Math.min(1.0, Math.max(0.3, scale));
+      // Create viewport meta tag with dynamic initial-scale
+      var viewportMeta = document.createElement('meta');
+      viewportMeta.name = 'viewport';
+      viewportMeta.content = 'width=1200, initial-scale=' + scale + ', user-scalable=yes';
+      document.head.appendChild(viewportMeta);
+    })();
+  </script>
+  <!-- Original viewport meta removed, replaced by dynamic script above -->
   <!-- Firebase SDKs (Compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -1979,7 +1996,7 @@
     const title = type === 'scorer' ? 'TOP SCORERS' : 'TOP ASSISTANTS';
     const inner = document.getElementById('statsPopupInner');
     let slideshowHtml = `<div class="stats-popup-slideshow"><img id="statsPopupSlideshowImg" src="${images[0] || ''}" style="max-width:100%; max-height:400px; border-radius:2rem;"></div><div class="dots-container" id="statsPopupDots"></div>`;
-    let listHtml = `<table class="stats-list"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>${type === 'scorer' ? 'Goals' : 'Assists'}</th>${isAdminMode ? '<th>Actions</th>' : ''}</thead><tbody>`;
+    let listHtml = `<table class="stats-list"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>${type === 'scorer' ? 'Goals' : 'Assists'}</th>${isAdminMode ? '<th>Actions</th>' : ''}</tr></thead><tbody>`;
     list.sort((a,b) => (b.count||0) - (a.count||0)).forEach((item, idx) => {
       // Team icon instead of team name
       let teamDisplay = '';
