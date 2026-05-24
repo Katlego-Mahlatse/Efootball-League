@@ -704,6 +704,26 @@
             justify-content: center;
         }
 
+        /* Loading spinner */
+        .loading-spinner {
+            text-align: center;
+            padding: 60px;
+            font-size: 1.2rem;
+            color: #f5d742;
+        }
+        .spinner {
+            border: 4px solid rgba(0,0,0,0.1);
+            border-left-color: #f5d742;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         @media (max-width: 780px) {
             .container { padding: 1rem; }
             .manager-name { font-size: 1.3rem; }
@@ -1053,6 +1073,12 @@
             general: '⚫'
         };
 
+        // --- Caching for performance ---
+        const cache = {
+            premierLeagueResults: new Map(), // key: seasonNum, value: results object
+            faCupGroups: new Map()            // key: seasonNum, value: groups object
+        };
+
         // Trophy hierarchy
         const trophyList = [
             { id: "wc", name: "FIFA World Cup", points: 100 },
@@ -1099,7 +1125,6 @@
                 if (euroSnap.val()) starIcons.european = `<img src="${euroSnap.val()}" class="manager-star">`;
                 if (generalSnap.val()) starIcons.general = `<img src="${generalSnap.val()}" class="manager-star">`;
                 
-                // Update legend
                 if (worldSnap.val()) document.getElementById('redStarLegend').innerHTML = `<img src="${worldSnap.val()}" class="legend-star">`;
                 if (euroSnap.val()) document.getElementById('blueStarLegend').innerHTML = `<img src="${euroSnap.val()}" class="legend-star">`;
                 if (generalSnap.val()) document.getElementById('blackStarLegend').innerHTML = `<img src="${generalSnap.val()}" class="legend-star">`;
@@ -1129,108 +1154,101 @@
             return [];
         }
 
-        // Calculate stats from both competitions
-        async function calculateManagerStats(currentTeams, previousTeams) {
-            let totalW = 0, totalD = 0, totalL = 0, totalGS = 0, totalGC = 0;
-
-            // Helper: Get team stats from Premier League
-            const getPLStats = async (teamName, seasonNum) => {
-                if (seasonNum < 3) return { w: 0, d: 0, l: 0, gs: 0, gc: 0 };
-                
-                const resultsSnap = await database.ref(`seasons/season_${seasonNum}/results`).once('value');
-                const results = resultsSnap.val() || {};
-                
-                let w = 0, d = 0, l = 0, gs = 0, gc = 0;
-
-                Object.values(results).forEach(result => {
-                    const matchText = result.matchText || '';
-                    if (!matchText.includes(teamName)) return;
-
-                    const scoreRegex = /(\d+)\s*-\s*(\d+)/;
-                    const match = matchText.match(scoreRegex);
-                    
-                    if (match) {
-                        const score1 = parseInt(match[1]);
-                        const score2 = parseInt(match[2]);
-                        const parts = matchText.split(/\s+\d+\s*-\s*\d+\s+/);
-                        
-                        if (parts.length >= 2) {
-                            const homeTeam = parts[0].trim();
-                            const awayTeam = parts[1].trim().replace(/\(.*\)/g, '').trim();
-                            
-                            if (homeTeam === teamName) {
-                                gs += score1;
-                                gc += score2;
-                                if (score1 > score2) w++;
-                                else if (score1 === score2) d++;
-                                else l++;
-                            } else if (awayTeam === teamName) {
-                                gs += score2;
-                                gc += score1;
-                                if (score2 > score1) w++;
-                                else if (score1 === score2) d++;
-                                else l++;
-                            }
-                        }
-                    }
-                });
-
-                return { w, d, l, gs, gc };
-            };
-
-            // Helper: Get team stats from FA Cup
-            const getFACupStats = async (teamName, seasonNum) => {
-                if (seasonNum < 3) return { w: 0, d: 0, l: 0, gs: 0, gc: 0 };
-                
-                const groupsSnap = await database.ref(`fa_cup/seasons/season_${seasonNum}/groups`).once('value');
-                const groups = groupsSnap.val() || {};
-                
-                let w = 0, d = 0, l = 0, gs = 0, gc = 0;
-
-                for (const groupId in groups) {
-                    const results = groups[groupId].results || {};
-                    
-                    Object.values(results).forEach(result => {
-                        const homeTeam = result.homeTeam;
-                        const awayTeam = result.awayTeam;
-                        const homeScore = parseInt(result.homeScore) || 0;
-                        const awayScore = parseInt(result.awayScore) || 0;
-                        
+        // --- Optimized stats fetching with caching and parallelism ---
+        async function getPLStatsCached(teamName, seasonNum) {
+            if (seasonNum < 3) return { w: 0, d: 0, l: 0, gs: 0, gc: 0 };
+            
+            let results = cache.premierLeagueResults.get(seasonNum);
+            if (!results) {
+                const snap = await database.ref(`seasons/season_${seasonNum}/results`).once('value');
+                results = snap.val() || {};
+                cache.premierLeagueResults.set(seasonNum, results);
+            }
+            
+            let w = 0, d = 0, l = 0, gs = 0, gc = 0;
+            for (const key in results) {
+                const result = results[key];
+                const matchText = result.matchText || '';
+                if (!matchText.includes(teamName)) continue;
+                const scoreRegex = /(\d+)\s*-\s*(\d+)/;
+                const match = matchText.match(scoreRegex);
+                if (match) {
+                    const score1 = parseInt(match[1]);
+                    const score2 = parseInt(match[2]);
+                    const parts = matchText.split(/\s+\d+\s*-\s*\d+\s+/);
+                    if (parts.length >= 2) {
+                        const homeTeam = parts[0].trim();
+                        const awayTeam = parts[1].trim().replace(/\(.*\)/g, '').trim();
                         if (homeTeam === teamName) {
-                            gs += homeScore;
-                            gc += awayScore;
-                            if (homeScore > awayScore) w++;
-                            else if (homeScore === awayScore) d++;
+                            gs += score1; gc += score2;
+                            if (score1 > score2) w++;
+                            else if (score1 === score2) d++;
                             else l++;
                         } else if (awayTeam === teamName) {
-                            gs += awayScore;
-                            gc += homeScore;
-                            if (awayScore > homeScore) w++;
-                            else if (homeScore === awayScore) d++;
+                            gs += score2; gc += score1;
+                            if (score2 > score1) w++;
+                            else if (score1 === score2) d++;
                             else l++;
                         }
-                    });
+                    }
                 }
+            }
+            return { w, d, l, gs, gc };
+        }
 
-                return { w, d, l, gs, gc };
-            };
+        async function getFACupStatsCached(teamName, seasonNum) {
+            if (seasonNum < 3) return { w: 0, d: 0, l: 0, gs: 0, gc: 0 };
+            
+            let groups = cache.faCupGroups.get(seasonNum);
+            if (!groups) {
+                const snap = await database.ref(`fa_cup/seasons/season_${seasonNum}/groups`).once('value');
+                groups = snap.val() || {};
+                cache.faCupGroups.set(seasonNum, groups);
+            }
+            
+            let w = 0, d = 0, l = 0, gs = 0, gc = 0;
+            for (const groupId in groups) {
+                const results = groups[groupId].results || {};
+                for (const key in results) {
+                    const result = results[key];
+                    const homeTeam = result.homeTeam;
+                    const awayTeam = result.awayTeam;
+                    const homeScore = parseInt(result.homeScore) || 0;
+                    const awayScore = parseInt(result.awayScore) || 0;
+                    if (homeTeam === teamName) {
+                        gs += homeScore; gc += awayScore;
+                        if (homeScore > awayScore) w++;
+                        else if (homeScore === awayScore) d++;
+                        else l++;
+                    } else if (awayTeam === teamName) {
+                        gs += awayScore; gc += homeScore;
+                        if (awayScore > homeScore) w++;
+                        else if (homeScore === awayScore) d++;
+                        else l++;
+                    }
+                }
+            }
+            return { w, d, l, gs, gc };
+        }
+
+        // Calculate stats for a single manager (parallelized internal calls)
+        async function calculateManagerStats(currentTeams, previousTeams) {
+            let totalW = 0, totalD = 0, totalL = 0, totalGS = 0, totalGC = 0;
+            const promises = [];
 
             // Process current teams
             if (currentTeams && currentTeams.length > 0) {
                 for (const team of currentTeams) {
-                    let stats;
                     if (team.competition === 'premier_league') {
-                        stats = await getPLStats(team.name, team.season);
+                        promises.push(getPLStatsCached(team.name, team.season).then(stats => {
+                            totalW += stats.w; totalD += stats.d; totalL += stats.l;
+                            totalGS += stats.gs; totalGC += stats.gc;
+                        }));
                     } else if (team.competition === 'fa_cup') {
-                        stats = await getFACupStats(team.name, team.season);
-                    }
-                    
-                    if (stats) {
-                        totalW += stats.w;
-                        totalD += stats.d;
-                        totalL += stats.l;
-                        totalGS += stats.gs;
-                        totalGC += stats.gc;
+                        promises.push(getFACupStatsCached(team.name, team.season).then(stats => {
+                            totalW += stats.w; totalD += stats.d; totalL += stats.l;
+                            totalGS += stats.gs; totalGC += stats.gc;
+                        }));
                     }
                 }
             }
@@ -1240,28 +1258,25 @@
                 for (const prevTeam of previousTeams) {
                     const seasonFrom = parseInt(prevTeam.seasonFrom);
                     const seasonTo = parseInt(prevTeam.seasonTo);
-                    
                     for (let s = seasonFrom; s <= seasonTo; s++) {
-                        if (s < 3) continue; // Skip seasons 1&2 for stats
-                        
-                        let stats;
+                        if (s < 3) continue;
                         if (prevTeam.competition === 'premier_league') {
-                            stats = await getPLStats(prevTeam.name, s);
+                            promises.push(getPLStatsCached(prevTeam.name, s).then(stats => {
+                                totalW += stats.w; totalD += stats.d; totalL += stats.l;
+                                totalGS += stats.gs; totalGC += stats.gc;
+                            }));
                         } else if (prevTeam.competition === 'fa_cup') {
-                            stats = await getFACupStats(prevTeam.name, s);
-                        }
-                        
-                        if (stats) {
-                            totalW += stats.w;
-                            totalD += stats.d;
-                            totalL += stats.l;
-                            totalGS += stats.gs;
-                            totalGC += stats.gc;
+                            promises.push(getFACupStatsCached(prevTeam.name, s).then(stats => {
+                                totalW += stats.w; totalD += stats.d; totalL += stats.l;
+                                totalGS += stats.gs; totalGC += stats.gc;
+                            }));
                         }
                     }
                 }
             }
 
+            await Promise.all(promises);
+            
             const winRate = (totalW + totalD + totalL) > 0 
                 ? ((totalW / (totalW + totalD + totalL)) * 100).toFixed(1) 
                 : 0;
@@ -1298,17 +1313,14 @@
             const trophies = manager.trophies || [];
             const medals = manager.medals || [];
             
-            // World Champion
             const hasWorldCup = trophies.some(t => t.id === 'wc') || medals.some(m => m.trophyId === 'wc');
             if (hasWorldCup) stars.push(starIcons.world);
             
-            // European Champion
             const europeanTrophies = ['ucl', 'uel', 'uecl', 'nations'];
             const hasEuropean = trophies.some(t => europeanTrophies.includes(t.id)) || 
                                medals.some(m => europeanTrophies.includes(m.trophyId));
             if (hasEuropean) stars.push(starIcons.european);
             
-            // General Champion
             const hasOther = trophies.length > 0 || medals.length > 0;
             if (hasOther && !hasWorldCup && !hasEuropean) {
                 stars.push(starIcons.general);
@@ -1319,30 +1331,29 @@
             return stars;
         }
 
-        // Load managers
+        // Load managers with parallel stats calculation
         async function fetchManagers() {
             const res = await database.ref('managers').once('value');
             const data = res.val();
             if (!data) return [];
 
-            const managersArray = [];
-            for (const [id, m] of Object.entries(data)) {
+            const managerEntries = Object.entries(data);
+            // Calculate stats for all managers in parallel
+            const statsPromises = managerEntries.map(async ([id, m]) => {
                 const stats = await calculateManagerStats(
                     m.currentTeams || [],
                     m.previousTeams || []
                 );
-
                 const scores = calculateScores({ ...m, stats });
-
-                managersArray.push({
+                return {
                     id,
                     ...m,
                     stats,
                     scores
-                });
-            }
-
-            return managersArray;
+                };
+            });
+            
+            return await Promise.all(statsPromises);
         }
 
         async function fetchProfiles() {
@@ -1372,7 +1383,7 @@
             });
         }
 
-        // Render cards
+        // Render cards with loading indicator removed after first load
         async function renderCards() {
             const container = document.getElementById('cardsContainer');
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
@@ -1399,7 +1410,6 @@
                 
                 let avatar = m.profilePicture || defaultAvatarUrl;
                 
-                // Current teams display
                 let currentTeamsHtml = '';
                 if (m.currentTeams && m.currentTeams.length > 0) {
                     currentTeamsHtml = m.currentTeams.map(ct => {
@@ -1416,7 +1426,6 @@
                 const stats = m.stats || { w: 0, d: 0, l: 0, gs: 0, gc: 0, gd: 0, winRate: 0 };
                 const scores = m.scores || { trophyPoints: 0, medalPoints: 0, winPoints: 0, totalScore: 0 };
                 
-                // Get stars
                 const stars = getManagerStars(m);
                 const starsHtml = stars.length > 0 ? 
                     `<div class="manager-stars">${stars.join('')}</div>` : '';
@@ -1457,6 +1466,14 @@
             renderCards();
         }
 
+        // Show loading indicator while fetching
+        async function refreshData() {
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = `<div class="loading-spinner"><div class="spinner"></div>Loading managers...</div>`;
+            managers = await fetchManagers();
+            await renderCards();
+        }
+
         // Admin mode
         function promptAdminKey() {
             const key = prompt("Enter Admin Key:");
@@ -1464,7 +1481,6 @@
                 isAdmin = true;
                 document.getElementById('adminTopBtn').style.display = 'block';
                 
-                // Add star icons manager button to menu
                 const menuItems = document.querySelector('.menu-items');
                 const starBtn = document.createElement('div');
                 starBtn.className = 'menu-item';
@@ -1480,849 +1496,70 @@
             closeMenu();
         }
 
-        // Modal helpers
-        async function openAddManagerModal() {
-            if (!isAdmin) return;
-            resetModalForm();
-            document.getElementById('modalTitle').innerText = "Add Manager";
-            document.getElementById('editManagerId').value = '';
-            document.getElementById('managerModal').classList.add('active');
-        }
-
-        function closeManagerModal() {
-            document.getElementById('managerModal').classList.remove('active');
-        }
-
-        function toggleTypeFields() {
-            let type = document.getElementById('managerType').value;
-            document.getElementById('linkedSection').style.display = type === 'linked' ? 'block' : 'none';
-            document.getElementById('standaloneSection').style.display = type === 'standalone' ? 'block' : 'none';
-        }
-
-        async function searchUsers() {
-            let query = document.getElementById('linkedSearch').value.trim().toLowerCase();
-            if (query.length < 2) return;
-            
-            if (allProfiles.length === 0) allProfiles = await fetchProfiles();
-            
-            let matches = allProfiles.filter(p => p.username.toLowerCase().includes(query));
-            let resultsDiv = document.getElementById('userResults');
-            resultsDiv.innerHTML = matches.map(u => 
-                `<div style="padding:8px; cursor:pointer; border-bottom:1px solid #333;" 
-                      onclick="selectUser('${u.id}','${escapeHtml(u.username)}','${u.profilePicture || ''}')">${escapeHtml(u.username)}</div>`
-            ).join('');
-        }
-
-        function selectUser(id, name, pic) {
-            selectedLinkedUser = { id, username: name, profilePicture: pic };
-            document.getElementById('linkedSearch').value = name;
-            document.getElementById('userResults').innerHTML = '';
-        }
-
-        async function resetModalForm() {
-            document.getElementById('managerType').value = 'standalone';
-            toggleTypeFields();
-            document.getElementById('standaloneName').value = '';
-            tempCurrentTeams = [];
-            tempPrevTeams = [];
-            tempTrophies = [];
-            tempMedals = [];
-            renderCurrentTeamsUI();
-            renderPrevTeamsUI();
-            renderTrophiesUI();
-            renderMedalsUI();
-            selectedLinkedUser = null;
-            document.getElementById('linkedSearch').value = '';
-        }
-
-        // Current Teams Management
-        async function addCurrentTeamField() {
-            const competition = prompt("Competition:\n1 = Premier League\n2 = FA Cup");
-            if (!competition) return;
-            
-            const comp = competition === '1' ? 'premier_league' : 'fa_cup';
-            const season = prompt("Which season? (e.g., 3, 4, 5...)");
-            if (!season) return;
-            const seasonNum = parseInt(season);
-            if (isNaN(seasonNum) || seasonNum < 3) {
-                alert("Invalid season. Must be 3 or higher.");
-                return;
-            }
-            
-            const teams = await getTeamsFromCompetition(comp, seasonNum);
-            if (teams.length === 0) {
-                alert("No teams found for this competition/season");
-                return;
-            }
-            
-            const teamName = prompt(`Select team from Season ${seasonNum}:\n${teams.join(', ')}`);
-            if (!teamName || !teams.includes(teamName)) {
-                alert("Invalid team name");
-                return;
-            }
-            
-            tempCurrentTeams.push({ 
-                name: teamName, 
-                competition: comp,
-                season: seasonNum,
-                logo: null
-            });
-            renderCurrentTeamsUI();
-        }
-
-        function renderCurrentTeamsUI() {
-            let container = document.getElementById('currentTeamsList');
-            container.innerHTML = tempCurrentTeams.map((t, i) => {
-                const compLabel = t.competition === 'premier_league' ? 'PL' : 'FA Cup';
-                return `<div class="team-block">
-                    ${t.name} (${compLabel} S${t.season})
-                    <button onclick="removeCurrentTeam(${i})">✕</button>
-                </div>`;
-            }).join('');
-        }
-
-        function removeCurrentTeam(i) {
-            tempCurrentTeams.splice(i, 1);
-            renderCurrentTeamsUI();
-        }
-
-        // Previous Teams Management
-        async function addPrevTeamField() {
-            const competition = prompt("Competition:\n1 = Premier League\n2 = FA Cup");
-            if (!competition) return;
-            
-            const comp = competition === '1' ? 'premier_league' : 'fa_cup';
-            const seasonFrom = prompt("Season from? (can be 1, 2, 3, etc.)");
-            if (!seasonFrom) return;
-            const seasonFromNum = parseInt(seasonFrom);
-            if (isNaN(seasonFromNum) || seasonFromNum < 1) {
-                alert("Invalid season");
-                return;
-            }
-            
-            const teams = await getTeamsFromCompetition(comp, seasonFromNum >= 3 ? seasonFromNum : 3);
-            if (teams.length === 0) {
-                const teamName = prompt("No teams found in that season. Enter team name manually:");
-                if (!teamName) return;
-                
-                const seasonTo = prompt(`Season to? (${seasonFromNum} or later)`, seasonFromNum);
-                const seasonToNum = parseInt(seasonTo);
-                if (isNaN(seasonToNum) || seasonToNum < seasonFromNum) {
-                    alert("Invalid end season");
-                    return;
-                }
-                
-                tempPrevTeams.push({ 
-                    name: teamName, 
-                    competition: comp,
-                    seasonFrom: seasonFromNum, 
-                    seasonTo: seasonToNum 
-                });
-            } else {
-                const teamName = prompt(`Select team:\n${teams.join(', ')}`);
-                if (!teamName) return;
-                
-                const seasonTo = prompt(`Season to? (${seasonFromNum} or later)`, seasonFromNum);
-                const seasonToNum = parseInt(seasonTo);
-                if (isNaN(seasonToNum) || seasonToNum < seasonFromNum) {
-                    alert("Invalid end season");
-                    return;
-                }
-                
-                tempPrevTeams.push({ 
-                    name: teamName, 
-                    competition: comp,
-                    seasonFrom: seasonFromNum, 
-                    seasonTo: seasonToNum 
-                });
-            }
-            
-            renderPrevTeamsUI();
-        }
-
-        function renderPrevTeamsUI() {
-            let container = document.getElementById('prevTeamsList');
-            container.innerHTML = tempPrevTeams.map((t, i) => {
-                const compLabel = t.competition === 'premier_league' ? 'PL' : 'FA';
-                return `<div class="team-block">
-                    ${t.name} (${compLabel} S${t.seasonFrom}${t.seasonTo !== t.seasonFrom ? ` - S${t.seasonTo}` : ''})
-                    <button onclick="removePrevTeam(${i})">✕</button>
-                </div>`;
-            }).join('');
-        }
-
-        function removePrevTeam(i) {
-            tempPrevTeams.splice(i, 1);
-            renderPrevTeamsUI();
-        }
-
-        function renderTrophiesUI() {
-            let container = document.getElementById('trophiesList');
-            container.innerHTML = tempTrophies.map((t, i) => 
-                `<div class="team-block">
-                    ${t.name} (${t.season})
-                    <button onclick="removeTrophyTemp(${i})">✕</button>
-                </div>`
-            ).join('');
-        }
-
-        function removeTrophyTemp(i) {
-            tempTrophies.splice(i, 1);
-            renderTrophiesUI();
-        }
-
-        function renderMedalsUI() {
-            let container = document.getElementById('medalsList');
-            const medalIcons = { gold: '🥇', silver: '🥈', bronze: '🥉' };
-            container.innerHTML = tempMedals.map((m, i) => 
-                `<div class="team-block medal-${m.type}">
-                    ${medalIcons[m.type]} ${m.name} (${m.season})
-                    <button onclick="removeMedalTemp(${i})">✕</button>
-                </div>`
-            ).join('');
-        }
-
-        function removeMedalTemp(i) {
-            tempMedals.splice(i, 1);
-            renderMedalsUI();
-        }
-
-        function openTrophyModal() {
-            let select = document.getElementById('trophyComp');
-            select.innerHTML = trophyList.map(t => 
-                `<option value="${t.id}" data-points="${t.points}">${t.name} (${t.points} pts)</option>`
-            ).join('');
-            document.getElementById('trophyModal').classList.add('active');
-        }
-
-        function closeTrophyModal() {
-            document.getElementById('trophyModal').classList.remove('active');
-        }
-
-        function addTrophyItem() {
-            let compId = document.getElementById('trophyComp').value;
-            let trophy = trophyList.find(t => t.id === compId);
-            let season = document.getElementById('trophySeason').value.trim();
-            
-            if (trophy && season) {
-                tempTrophies.push({ 
-                    id: trophy.id, 
-                    name: trophy.name, 
-                    points: trophy.points, 
-                    season 
-                });
-                renderTrophiesUI();
-            }
-            closeTrophyModal();
-        }
-
-        function openMedalModal() {
-            let select = document.getElementById('medalComp');
-            select.innerHTML = trophyList.map(t => 
-                `<option value="${t.id}" data-points="${t.points}">${t.name}</option>`
-            ).join('');
-            document.getElementById('medalModal').classList.add('active');
-        }
-
-        function closeMedalModal() {
-            document.getElementById('medalModal').classList.remove('active');
-        }
-
-        function addMedalItem() {
-            let compId = document.getElementById('medalComp').value;
-            let trophy = trophyList.find(t => t.id === compId);
-            let medalType = document.getElementById('medalType').value;
-            let season = document.getElementById('medalSeason').value.trim();
-            
-            if (trophy && medalType && season) {
-                const points = calculateMedalPoints(trophy.points, medalType);
-                tempMedals.push({ 
-                    trophyId: trophy.id,
-                    name: trophy.name, 
-                    type: medalType,
-                    points: points, 
-                    season 
-                });
-                renderMedalsUI();
-            }
-            closeMedalModal();
-        }
-
-        async function saveManager() {
-            let type = document.getElementById('managerType').value;
-            let username = '', profilePicture = null;
-            
-            if (type === 'linked') {
-                if (!selectedLinkedUser) {
-                    alert("Select a linked user");
-                    return;
-                }
-                username = selectedLinkedUser.username;
-                profilePicture = selectedLinkedUser.profilePicture;
-            } else {
-                username = document.getElementById('standaloneName').value.trim();
-                if (!username) {
-                    alert("Enter manager name");
-                    return;
-                }
-                profilePicture = null;
-            }
-            
-            let managerData = {
-                type,
-                userId: type === 'linked' ? selectedLinkedUser.id : null,
-                username,
-                profilePicture,
-                currentTeams: tempCurrentTeams,
-                previousTeams: tempPrevTeams,
-                trophies: tempTrophies,
-                medals: tempMedals,
-                records: [],
-                description: ''
-            };
-            
-            let editId = document.getElementById('editManagerId').value;
-            let url = editId ? 
-                `managers/${editId}` : 
-                'managers';
-            
-            if (editId) {
-                await database.ref(url).update(managerData);
-            } else {
-                await database.ref(url).push(managerData);
-            }
-            
-            await refreshData();
-            closeManagerModal();
-        }
-
-        async function editManager(id) {
-            let m = managers.find(x => x.id === id);
-            if (!m) return;
-            
-            resetModalForm();
-            
-            document.getElementById('modalTitle').innerText = "Edit Manager";
-            document.getElementById('editManagerId').value = id;
-            document.getElementById('managerType').value = m.type;
-            toggleTypeFields();
-            
-            if (m.type === 'linked') {
-                selectedLinkedUser = { 
-                    id: m.userId, 
-                    username: m.username, 
-                    profilePicture: m.profilePicture 
-                };
-                document.getElementById('linkedSearch').value = m.username;
-            } else {
-                document.getElementById('standaloneName').value = m.username;
-            }
-            
-            tempCurrentTeams = m.currentTeams || [];
-            renderCurrentTeamsUI();
-            
-            tempPrevTeams = m.previousTeams || [];
-            renderPrevTeamsUI();
-            
-            tempTrophies = m.trophies || [];
-            renderTrophiesUI();
-            
-            tempMedals = m.medals || [];
-            renderMedalsUI();
-            
-            document.getElementById('managerModal').classList.add('active');
-        }
-
-        async function deleteManager(id) {
-            if (!confirm("Delete permanently?")) return;
-            await database.ref(`managers/${id}`).remove();
-            await refreshData();
-        }
-
-        async function refreshData() {
-            managers = await fetchManagers();
-            renderCards();
-        }
-
-        // Stats Popup
+        // Modal helpers (unchanged from original, but keep all functions)
+        async function openAddManagerModal() { if (!isAdmin) return; resetModalForm(); document.getElementById('modalTitle').innerText = "Add Manager"; document.getElementById('editManagerId').value = ''; document.getElementById('managerModal').classList.add('active'); }
+        function closeManagerModal() { document.getElementById('managerModal').classList.remove('active'); }
+        function toggleTypeFields() { let type = document.getElementById('managerType').value; document.getElementById('linkedSection').style.display = type === 'linked' ? 'block' : 'none'; document.getElementById('standaloneSection').style.display = type === 'standalone' ? 'block' : 'none'; }
+        async function searchUsers() { let query = document.getElementById('linkedSearch').value.trim().toLowerCase(); if (query.length < 2) return; if (allProfiles.length === 0) allProfiles = await fetchProfiles(); let matches = allProfiles.filter(p => p.username.toLowerCase().includes(query)); let resultsDiv = document.getElementById('userResults'); resultsDiv.innerHTML = matches.map(u => `<div style="padding:8px; cursor:pointer; border-bottom:1px solid #333;" onclick="selectUser('${u.id}','${escapeHtml(u.username)}','${u.profilePicture || ''}')">${escapeHtml(u.username)}</div>`).join(''); }
+        function selectUser(id, name, pic) { selectedLinkedUser = { id, username: name, profilePicture: pic }; document.getElementById('linkedSearch').value = name; document.getElementById('userResults').innerHTML = ''; }
+        async function resetModalForm() { document.getElementById('managerType').value = 'standalone'; toggleTypeFields(); document.getElementById('standaloneName').value = ''; tempCurrentTeams = []; tempPrevTeams = []; tempTrophies = []; tempMedals = []; renderCurrentTeamsUI(); renderPrevTeamsUI(); renderTrophiesUI(); renderMedalsUI(); selectedLinkedUser = null; document.getElementById('linkedSearch').value = ''; }
+        async function addCurrentTeamField() { const competition = prompt("Competition:\n1 = Premier League\n2 = FA Cup"); if (!competition) return; const comp = competition === '1' ? 'premier_league' : 'fa_cup'; const season = prompt("Which season? (e.g., 3, 4, 5...)"); if (!season) return; const seasonNum = parseInt(season); if (isNaN(seasonNum) || seasonNum < 3) { alert("Invalid season. Must be 3 or higher."); return; } const teams = await getTeamsFromCompetition(comp, seasonNum); if (teams.length === 0) { alert("No teams found for this competition/season"); return; } const teamName = prompt(`Select team from Season ${seasonNum}:\n${teams.join(', ')}`); if (!teamName || !teams.includes(teamName)) { alert("Invalid team name"); return; } tempCurrentTeams.push({ name: teamName, competition: comp, season: seasonNum, logo: null }); renderCurrentTeamsUI(); }
+        function renderCurrentTeamsUI() { let container = document.getElementById('currentTeamsList'); container.innerHTML = tempCurrentTeams.map((t, i) => { const compLabel = t.competition === 'premier_league' ? 'PL' : 'FA Cup'; return `<div class="team-block">${t.name} (${compLabel} S${t.season})<button onclick="removeCurrentTeam(${i})">✕</button></div>`; }).join(''); }
+        function removeCurrentTeam(i) { tempCurrentTeams.splice(i, 1); renderCurrentTeamsUI(); }
+        async function addPrevTeamField() { const competition = prompt("Competition:\n1 = Premier League\n2 = FA Cup"); if (!competition) return; const comp = competition === '1' ? 'premier_league' : 'fa_cup'; const seasonFrom = prompt("Season from? (can be 1, 2, 3, etc.)"); if (!seasonFrom) return; const seasonFromNum = parseInt(seasonFrom); if (isNaN(seasonFromNum) || seasonFromNum < 1) { alert("Invalid season"); return; } const teams = await getTeamsFromCompetition(comp, seasonFromNum >= 3 ? seasonFromNum : 3); if (teams.length === 0) { const teamName = prompt("No teams found in that season. Enter team name manually:"); if (!teamName) return; const seasonTo = prompt(`Season to? (${seasonFromNum} or later)`, seasonFromNum); const seasonToNum = parseInt(seasonTo); if (isNaN(seasonToNum) || seasonToNum < seasonFromNum) { alert("Invalid end season"); return; } tempPrevTeams.push({ name: teamName, competition: comp, seasonFrom: seasonFromNum, seasonTo: seasonToNum }); } else { const teamName = prompt(`Select team:\n${teams.join(', ')}`); if (!teamName) return; const seasonTo = prompt(`Season to? (${seasonFromNum} or later)`, seasonFromNum); const seasonToNum = parseInt(seasonTo); if (isNaN(seasonToNum) || seasonToNum < seasonFromNum) { alert("Invalid end season"); return; } tempPrevTeams.push({ name: teamName, competition: comp, seasonFrom: seasonFromNum, seasonTo: seasonToNum }); } renderPrevTeamsUI(); }
+        function renderPrevTeamsUI() { let container = document.getElementById('prevTeamsList'); container.innerHTML = tempPrevTeams.map((t, i) => { const compLabel = t.competition === 'premier_league' ? 'PL' : 'FA'; return `<div class="team-block">${t.name} (${compLabel} S${t.seasonFrom}${t.seasonTo !== t.seasonFrom ? ` - S${t.seasonTo}` : ''})<button onclick="removePrevTeam(${i})">✕</button></div>`; }).join(''); }
+        function removePrevTeam(i) { tempPrevTeams.splice(i, 1); renderPrevTeamsUI(); }
+        function renderTrophiesUI() { let container = document.getElementById('trophiesList'); container.innerHTML = tempTrophies.map((t, i) => `<div class="team-block">${t.name} (${t.season})<button onclick="removeTrophyTemp(${i})">✕</button></div>`).join(''); }
+        function removeTrophyTemp(i) { tempTrophies.splice(i, 1); renderTrophiesUI(); }
+        function renderMedalsUI() { let container = document.getElementById('medalsList'); const medalIcons = { gold: '🥇', silver: '🥈', bronze: '🥉' }; container.innerHTML = tempMedals.map((m, i) => `<div class="team-block medal-${m.type}">${medalIcons[m.type]} ${m.name} (${m.season})<button onclick="removeMedalTemp(${i})">✕</button></div>`).join(''); }
+        function removeMedalTemp(i) { tempMedals.splice(i, 1); renderMedalsUI(); }
+        function openTrophyModal() { let select = document.getElementById('trophyComp'); select.innerHTML = trophyList.map(t => `<option value="${t.id}" data-points="${t.points}">${t.name} (${t.points} pts)</option>`).join(''); document.getElementById('trophyModal').classList.add('active'); }
+        function closeTrophyModal() { document.getElementById('trophyModal').classList.remove('active'); }
+        function addTrophyItem() { let compId = document.getElementById('trophyComp').value; let trophy = trophyList.find(t => t.id === compId); let season = document.getElementById('trophySeason').value.trim(); if (trophy && season) { tempTrophies.push({ id: trophy.id, name: trophy.name, points: trophy.points, season }); renderTrophiesUI(); } closeTrophyModal(); }
+        function openMedalModal() { let select = document.getElementById('medalComp'); select.innerHTML = trophyList.map(t => `<option value="${t.id}" data-points="${t.points}">${t.name}</option>`).join(''); document.getElementById('medalModal').classList.add('active'); }
+        function closeMedalModal() { document.getElementById('medalModal').classList.remove('active'); }
+        function addMedalItem() { let compId = document.getElementById('medalComp').value; let trophy = trophyList.find(t => t.id === compId); let medalType = document.getElementById('medalType').value; let season = document.getElementById('medalSeason').value.trim(); if (trophy && medalType && season) { const points = calculateMedalPoints(trophy.points, medalType); tempMedals.push({ trophyId: trophy.id, name: trophy.name, type: medalType, points: points, season }); renderMedalsUI(); } closeMedalModal(); }
+        async function saveManager() { let type = document.getElementById('managerType').value; let username = '', profilePicture = null; if (type === 'linked') { if (!selectedLinkedUser) { alert("Select a linked user"); return; } username = selectedLinkedUser.username; profilePicture = selectedLinkedUser.profilePicture; } else { username = document.getElementById('standaloneName').value.trim(); if (!username) { alert("Enter manager name"); return; } profilePicture = null; } let managerData = { type, userId: type === 'linked' ? selectedLinkedUser.id : null, username, profilePicture, currentTeams: tempCurrentTeams, previousTeams: tempPrevTeams, trophies: tempTrophies, medals: tempMedals, records: [], description: '' }; let editId = document.getElementById('editManagerId').value; let url = editId ? `managers/${editId}` : 'managers'; if (editId) { await database.ref(url).update(managerData); } else { await database.ref(url).push(managerData); } await refreshData(); closeManagerModal(); }
+        async function editManager(id) { let m = managers.find(x => x.id === id); if (!m) return; resetModalForm(); document.getElementById('modalTitle').innerText = "Edit Manager"; document.getElementById('editManagerId').value = id; document.getElementById('managerType').value = m.type; toggleTypeFields(); if (m.type === 'linked') { selectedLinkedUser = { id: m.userId, username: m.username, profilePicture: m.profilePicture }; document.getElementById('linkedSearch').value = m.username; } else { document.getElementById('standaloneName').value = m.username; } tempCurrentTeams = m.currentTeams || []; renderCurrentTeamsUI(); tempPrevTeams = m.previousTeams || []; renderPrevTeamsUI(); tempTrophies = m.trophies || []; renderTrophiesUI(); tempMedals = m.medals || []; renderMedalsUI(); document.getElementById('managerModal').classList.add('active'); }
+        async function deleteManager(id) { if (!confirm("Delete permanently?")) return; await database.ref(`managers/${id}`).remove(); await refreshData(); }
+        
+        // Stats popup functions (unchanged, but keep them)
         let trophyCabinetSlideIdx = 0;
         let trophyCabinetInterval = null;
-
-        async function openStatsPopup(managerId) {
-            currentStatsManagerId = managerId;
-            const manager = managers.find(m => m.id === managerId);
-            if (!manager) return;
-            
-            const content = document.getElementById('statsPopupContent');
-            const medals = manager.medals || [];
-            const trophies = manager.trophies || [];
-            const records = manager.records || [];
-            const previousTeams = manager.previousTeams || [];
-            const description = manager.description || '';
-            const trophyCabinet = manager.trophyCabinet || { slideshow: { images: [], duration: 3000 } };
-            
-            const goldMedals = medals.filter(m => m.type === 'gold');
-            const silverMedals = medals.filter(m => m.type === 'silver');
-            const bronzeMedals = medals.filter(m => m.type === 'bronze');
-            
-            let html = '';
-            
-            // Trophy Cabinet
-            html += `<div class="stats-section">
-                <h3>🏆 Trophy Cabinet</h3>`;
-            
-            if (trophyCabinet.slideshow.images && trophyCabinet.slideshow.images.length > 0) {
-                html += `
-                    <div class="trophy-slideshow">
-                        <img id="trophyCabinetImg" src="${trophyCabinet.slideshow.images[0]}" alt="Trophy">
-                        <div class="slideshow-dots" id="trophyCabinetDots"></div>
-                    </div>
-                `;
-            }
-            
-            html += '<div style="margin-top: 16px;">';
-            trophies.forEach(t => {
-                html += `<div class="trophy-item">
-                    <div><strong>${escapeHtml(t.name)}</strong> (${escapeHtml(t.season)})</div>
-                </div>`;
-            });
-            if (trophies.length === 0) {
-                html += '<p style="opacity:0.6; text-align:center;">No trophies yet</p>';
-            }
-            html += '</div>';
-            
-            if (isAdmin) {
-                html += `<button class="add-item-btn" onclick="openSlideshowManager()">📸 Manage Trophy Images</button>`;
-            }
-            
-            html += `</div>`;
-            
-            // Description
-            html += `<div class="stats-section">
-                <h3>📝 Description</h3>`;
-            
-            if (description) {
-                html += `<div class="description-text">${escapeHtml(description)}</div>`;
-            } else {
-                html += '<p style="opacity:0.6; text-align:center;">No description yet</p>';
-            }
-            
-            if (isAdmin) {
-                html += `<button class="add-item-btn" onclick="openDescriptionEditor()">✏️ Edit Description</button>`;
-            }
-            
-            html += `</div>`;
-            
-            // Medals
-            html += `<div class="stats-section">
-                <h3>🥇 Medals</h3>`;
-            
-            if (goldMedals.length > 0) {
-                html += `<h4 style="margin-top:12px;">🥇 Gold Medals</h4>`;
-                goldMedals.forEach(m => {
-                    html += `
-                        <div class="medal-item medal-gold">
-                            <div>
-                                <span class="medal-icon">🥇</span>
-                                <strong>${escapeHtml(m.name)}</strong> (${escapeHtml(m.season)})
-                            </div>
-                            ${isAdmin ? `
-                                <div class="item-actions">
-                                    <button onclick="deleteMedal(${medals.indexOf(m)})">🗑️</button>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-                });
-            }
-            
-            if (silverMedals.length > 0) {
-                html += `<h4 style="margin-top:12px;">🥈 Silver Medals</h4>`;
-                silverMedals.forEach(m => {
-                    html += `
-                        <div class="medal-item medal-silver">
-                            <div>
-                                <span class="medal-icon">🥈</span>
-                                <strong>${escapeHtml(m.name)}</strong> (${escapeHtml(m.season)})
-                            </div>
-                            ${isAdmin ? `
-                                <div class="item-actions">
-                                    <button onclick="deleteMedal(${medals.indexOf(m)})">🗑️</button>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-                });
-            }
-            
-            if (bronzeMedals.length > 0) {
-                html += `<h4 style="margin-top:12px;">🥉 Bronze Medals</h4>`;
-                bronzeMedals.forEach(m => {
-                    html += `
-                        <div class="medal-item medal-bronze">
-                            <div>
-                                <span class="medal-icon">🥉</span>
-                                <strong>${escapeHtml(m.name)}</strong> (${escapeHtml(m.season)})
-                            </div>
-                            ${isAdmin ? `
-                                <div class="item-actions">
-                                    <button onclick="deleteMedal(${medals.indexOf(m)})">🗑️</button>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-                });
-            }
-            
-            if (medals.length === 0) {
-                html += '<p style="opacity:0.6; text-align:center;">No medals yet</p>';
-            }
-            
-            html += `</div>`;
-            
-            // Records
-            html += `<div class="stats-section">
-                <h3>📊 Individual Records</h3>
-                ${records.map((r, i) => `
-                    <div class="record-item">
-                        <div>
-                            <strong>${escapeHtml(r.name)}</strong>: ${escapeHtml(r.value)}
-                            ${r.description ? `<br><small style="opacity:0.7">${escapeHtml(r.description)}</small>` : ''}
-                        </div>
-                        ${isAdmin ? `
-                            <div class="item-actions">
-                                <button onclick="editRecord(${i})">✏️</button>
-                                <button onclick="deleteRecord(${i})">🗑️</button>
-                            </div>
-                        ` : ''}
-                    </div>
-                `).join('')}
-                ${records.length === 0 ? '<p style="opacity:0.6; text-align:center;">No records yet</p>' : ''}
-                ${isAdmin ? '<button class="add-item-btn" onclick="openRecordModal()">+ Add Record</button>' : ''}
-            </div>`;
-            
-            // Previous Teams
-            html += `<div class="stats-section">
-                <h3>📋 Previous Teams</h3>`;
-            
-            if (previousTeams.length > 0) {
-                previousTeams.forEach(pt => {
-                    const compLabel = pt.competition === 'premier_league' ? 'PL' : 'FA Cup';
-                    html += `<div class="record-item">
-                        <div>${escapeHtml(pt.name)} (${compLabel} S${pt.seasonFrom}${pt.seasonTo !== pt.seasonFrom ? ` - S${pt.seasonTo}` : ''})</div>
-                    </div>`;
-                });
-            } else {
-                html += '<p style="opacity:0.6; text-align:center;">No previous teams</p>';
-            }
-            
-            html += `</div>`;
-            
-            content.innerHTML = html;
-            document.getElementById('statsPopupTitle').innerText = `${manager.username} - Statistics`;
-            document.getElementById('statsPopup').classList.add('active');
-            
-            // Start trophy slideshow
-            if (trophyCabinet.slideshow.images && trophyCabinet.slideshow.images.length > 0) {
-                startTrophySlideshow(trophyCabinet.slideshow.images, trophyCabinet.slideshow.duration || 3000);
-            }
-        }
-
-        function startTrophySlideshow(images, duration) {
-            if (trophyCabinetInterval) clearInterval(trophyCabinetInterval);
-            trophyCabinetSlideIdx = 0;
-            updateTrophySlide(images);
-            
-            if (images.length > 1) {
-                trophyCabinetInterval = setInterval(() => {
-                    trophyCabinetSlideIdx = (trophyCabinetSlideIdx + 1) % images.length;
-                    updateTrophySlide(images);
-                }, duration);
-            }
-        }
-
-        function updateTrophySlide(images) {
-            const img = document.getElementById('trophyCabinetImg');
-            const dotsContainer = document.getElementById('trophyCabinetDots');
-            
-            if (img) {
-                img.src = images[trophyCabinetSlideIdx];
-            }
-            
-            if (dotsContainer) {
-                dotsContainer.innerHTML = images.map((_, i) => 
-                    `<span class="dot ${i === trophyCabinetSlideIdx ? 'active' : ''}" onclick="jumpToTrophySlide(${i})"></span>`
-                ).join('');
-            }
-        }
-
-        function jumpToTrophySlide(index) {
-            const manager = managers.find(m => m.id === currentStatsManagerId);
-            if (!manager) return;
-            const images = manager.trophyCabinet?.slideshow?.images || [];
-            trophyCabinetSlideIdx = index;
-            updateTrophySlide(images);
-        }
-
-        function closeStatsPopup() {
-            document.getElementById('statsPopup').classList.remove('active');
-            if (trophyCabinetInterval) clearInterval(trophyCabinetInterval);
-            currentStatsManagerId = null;
-        }
-
-        // Trophy Slideshow Manager
-        function openSlideshowManager() {
-            document.getElementById('slideshowModal').classList.add('active');
-            const manager = managers.find(m => m.id === currentStatsManagerId);
-            if (!manager) return;
-            
-            const images = manager.trophyCabinet?.slideshow?.images || [];
-            const duration = (manager.trophyCabinet?.slideshow?.duration || 3000) / 1000;
-            
-            document.getElementById('slideshowDuration').value = duration;
-            renderSlideshowPreview(images);
-        }
-
-        function renderSlideshowPreview(images) {
-            const container = document.getElementById('slideshowPreview');
-            container.innerHTML = images.map((url, i) => `
-                <div class="image-preview-item">
-                    <img src="${url}">
-                    <button class="delete-preview-btn" onclick="deleteSlideshowImage(${i})">✕</button>
-                </div>
-            `).join('');
-        }
-
-        async function uploadSlideshowImage() {
-            const file = document.getElementById('slideshowFile').files[0];
-            if (!file) {
-                alert('Select an image');
-                return;
-            }
-            
-            try {
-                const url = await uploadToImgBB(file);
-                const manager = managers.find(m => m.id === currentStatsManagerId);
-                if (!manager) return;
-                
-                const images = manager.trophyCabinet?.slideshow?.images || [];
-                images.push(url);
-                
-                await database.ref(`managers/${currentStatsManagerId}/trophyCabinet/slideshow/images`).set(images);
-                await refreshData();
-                
-                renderSlideshowPreview(images);
-                document.getElementById('slideshowFile').value = '';
-                alert('Image uploaded!');
-            } catch (e) {
-                alert('Upload failed: ' + e.message);
-            }
-        }
-
-        async function deleteSlideshowImage(index) {
-            if (!confirm('Delete this image?')) return;
-            
-            const manager = managers.find(m => m.id === currentStatsManagerId);
-            if (!manager) return;
-            
-            const images = manager.trophyCabinet?.slideshow?.images || [];
-            images.splice(index, 1);
-            
-            await database.ref(`managers/${currentStatsManagerId}/trophyCabinet/slideshow/images`).set(images);
-            await refreshData();
-            renderSlideshowPreview(images);
-        }
-
-        async function saveSlideshowDuration() {
-            const duration = parseFloat(document.getElementById('slideshowDuration').value) * 1000;
-            await database.ref(`managers/${currentStatsManagerId}/trophyCabinet/slideshow/duration`).set(duration);
-            await refreshData();
-            alert('Duration saved!');
-        }
-
-        function closeSlideshowModal() {
-            document.getElementById('slideshowModal').classList.remove('active');
-        }
-
-        // Description Editor
-        function openDescriptionEditor() {
-            const manager = managers.find(m => m.id === currentStatsManagerId);
-            if (!manager) return;
-            
-            document.getElementById('descriptionText').value = manager.description || '';
-            document.getElementById('descriptionModal').classList.add('active');
-        }
-
-        async function saveDescription() {
-            const text = document.getElementById('descriptionText').value.trim();
-            await database.ref(`managers/${currentStatsManagerId}/description`).set(text);
-            await refreshData();
-            closeDescriptionModal();
-            openStatsPopup(currentStatsManagerId);
-        }
-
-        function closeDescriptionModal() {
-            document.getElementById('descriptionModal').classList.remove('active');
-        }
-
-        // Record Modal
-        function openRecordModal(recordIndex = null) {
-            if (!isAdmin || !currentStatsManagerId) return;
-            
-            const manager = managers.find(m => m.id === currentStatsManagerId);
-            if (!manager) return;
-            
-            editingRecordKey = recordIndex;
-            const record = recordIndex !== null ? manager.records[recordIndex] : null;
-            
-            document.getElementById('recordModalTitle').innerText = 
-                recordIndex !== null ? 'Edit Record' : 'Add Record';
-            document.getElementById('recordName').value = record?.name || '';
-            document.getElementById('recordValue').value = record?.value || '';
-            document.getElementById('recordDesc').value = record?.description || '';
-            
-            document.getElementById('recordModal').classList.add('active');
-        }
-
-        function closeRecordModal() {
-            document.getElementById('recordModal').classList.remove('active');
-            editingRecordKey = null;
-        }
-
-        async function saveRecord() {
-            if (!currentStatsManagerId) return;
-            
-            const name = document.getElementById('recordName').value.trim();
-            const value = document.getElementById('recordValue').value.trim();
-            const description = document.getElementById('recordDesc').value.trim();
-            
-            if (!name || !value) {
-                alert('Name and value are required');
-                return;
-            }
-            
-            const manager = managers.find(m => m.id === currentStatsManagerId);
-            if (!manager) return;
-            
-            const records = manager.records || [];
-            const newRecord = { name, value, description };
-            
-            if (editingRecordKey !== null) {
-                records[editingRecordKey] = newRecord;
-            } else {
-                records.push(newRecord);
-            }
-            
-            await database.ref(`managers/${currentStatsManagerId}/records`).set(records);
-            await refreshData();
-            closeRecordModal();
-            openStatsPopup(currentStatsManagerId);
-        }
-
-        async function editRecord(index) {
-            openRecordModal(index);
-        }
-
-        async function deleteRecord(index) {
-            if (!confirm('Delete this record?')) return;
-            
-            const manager = managers.find(m => m.id === currentStatsManagerId);
-            if (!manager) return;
-            
-            const records = manager.records || [];
-            records.splice(index, 1);
-            
-            await database.ref(`managers/${currentStatsManagerId}/records`).set(records);
-            await refreshData();
-            openStatsPopup(currentStatsManagerId);
-        }
-
-        async function deleteMedal(index) {
-            if (!confirm('Delete this medal?')) return;
-            
-            const manager = managers.find(m => m.id === currentStatsManagerId);
-            if (!manager) return;
-            
-            const medals = manager.medals || [];
-            medals.splice(index, 1);
-            
-            await database.ref(`managers/${currentStatsManagerId}/medals`).set(medals);
-            await refreshData();
-            openStatsPopup(currentStatsManagerId);
-        }
-
-        // Ranking Method Popup
-        function showRankingMethodPopup() {
-            document.getElementById('rankingMethodPopup').classList.add('active');
-        }
-
-        function closeRankingMethodPopup() {
-            document.getElementById('rankingMethodPopup').classList.remove('active');
-        }
-
-        // Star Icons Manager
-        function openStarIconsModal() {
-            document.getElementById('starIconsModal').classList.add('active');
-        }
-
-        function closeStarIconsModal() {
-            document.getElementById('starIconsModal').classList.remove('active');
-        }
-
-        async function uploadStarIcons() {
-            const worldFile = document.getElementById('worldStarFile').files[0];
-            const euroFile = document.getElementById('euroStarFile').files[0];
-            const generalFile = document.getElementById('generalStarFile').files[0];
-            
-            try {
-                if (worldFile) {
-                    const url = await uploadToImgBB(worldFile);
-                    await database.ref('settings/starIcons/worldChampion').set(url);
-                }
-                
-                if (euroFile) {
-                    const url = await uploadToImgBB(euroFile);
-                    await database.ref('settings/starIcons/europeanChampion').set(url);
-                }
-                
-                if (generalFile) {
-                    const url = await uploadToImgBB(generalFile);
-                    await database.ref('settings/starIcons/generalChampion').set(url);
-                }
-                
-                await loadStarIcons();
-                await renderCards();
-                closeStarIconsModal();
-                alert('Star icons updated!');
-            } catch (e) {
-                alert('Upload failed: ' + e.message);
-            }
-        }
-
-        // Menu
-        function toggleMenu() {
-            document.getElementById('sideMenu').classList.toggle('active');
-            document.getElementById('overlay').classList.toggle('active');
-        }
-        
-        function closeMenu() {
-            document.getElementById('sideMenu').classList.remove('active');
-            document.getElementById('overlay').classList.remove('active');
-        }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
+        async function openStatsPopup(managerId) { currentStatsManagerId = managerId; const manager = managers.find(m => m.id === managerId); if (!manager) return; const content = document.getElementById('statsPopupContent'); const medals = manager.medals || []; const trophies = manager.trophies || []; const records = manager.records || []; const previousTeams = manager.previousTeams || []; const description = manager.description || ''; const trophyCabinet = manager.trophyCabinet || { slideshow: { images: [], duration: 3000 } }; const goldMedals = medals.filter(m => m.type === 'gold'); const silverMedals = medals.filter(m => m.type === 'silver'); const bronzeMedals = medals.filter(m => m.type === 'bronze'); let html = ''; html += `<div class="stats-section"><h3>🏆 Trophy Cabinet</h3>`; if (trophyCabinet.slideshow.images && trophyCabinet.slideshow.images.length > 0) { html += `<div class="trophy-slideshow"><img id="trophyCabinetImg" src="${trophyCabinet.slideshow.images[0]}" alt="Trophy"><div class="slideshow-dots" id="trophyCabinetDots"></div></div>`; } html += '<div style="margin-top: 16px;">'; trophies.forEach(t => { html += `<div class="trophy-item"><div><strong>${escapeHtml(t.name)}</strong> (${escapeHtml(t.season)})</div></div>`; }); if (trophies.length === 0) { html += '<p style="opacity:0.6; text-align:center;">No trophies yet</p>'; } html += '</div>'; if (isAdmin) { html += `<button class="add-item-btn" onclick="openSlideshowManager()">📸 Manage Trophy Images</button>`; } html += `</div>`; html += `<div class="stats-section"><h3>📝 Description</h3>`; if (description) { html += `<div class="description-text">${escapeHtml(description)}</div>`; } else { html += '<p style="opacity:0.6; text-align:center;">No description yet</p>'; } if (isAdmin) { html += `<button class="add-item-btn" onclick="openDescriptionEditor()">✏️ Edit Description</button>`; } html += `</div>`; html += `<div class="stats-section"><h3>🥇 Medals</h3>`; if (goldMedals.length > 0) { html += `<h4 style="margin-top:12px;">🥇 Gold Medals</h4>`; goldMedals.forEach(m => { html += `<div class="medal-item medal-gold"><div><span class="medal-icon">🥇</span><strong>${escapeHtml(m.name)}</strong> (${escapeHtml(m.season)})</div>${isAdmin ? `<div class="item-actions"><button onclick="deleteMedal(${medals.indexOf(m)})">🗑️</button></div>` : ''}</div>`; }); } if (silverMedals.length > 0) { html += `<h4 style="margin-top:12px;">🥈 Silver Medals</h4>`; silverMedals.forEach(m => { html += `<div class="medal-item medal-silver"><div><span class="medal-icon">🥈</span><strong>${escapeHtml(m.name)}</strong> (${escapeHtml(m.season)})</div>${isAdmin ? `<div class="item-actions"><button onclick="deleteMedal(${medals.indexOf(m)})">🗑️</button></div>` : ''}</div>`; }); } if (bronzeMedals.length > 0) { html += `<h4 style="margin-top:12px;">🥉 Bronze Medals</h4>`; bronzeMedals.forEach(m => { html += `<div class="medal-item medal-bronze"><div><span class="medal-icon">🥉</span><strong>${escapeHtml(m.name)}</strong> (${escapeHtml(m.season)})</div>${isAdmin ? `<div class="item-actions"><button onclick="deleteMedal(${medals.indexOf(m)})">🗑️</button></div>` : ''}</div>`; }); } if (medals.length === 0) { html += '<p style="opacity:0.6; text-align:center;">No medals yet</p>'; } html += `</div>`; html += `<div class="stats-section"><h3>📊 Individual Records</h3>${records.map((r, i) => `<div class="record-item"><div><strong>${escapeHtml(r.name)}</strong>: ${escapeHtml(r.value)}${r.description ? `<br><small style="opacity:0.7">${escapeHtml(r.description)}</small>` : ''}</div>${isAdmin ? `<div class="item-actions"><button onclick="editRecord(${i})">✏️</button><button onclick="deleteRecord(${i})">🗑️</button></div>` : ''}</div>`).join('')}${records.length === 0 ? '<p style="opacity:0.6; text-align:center;">No records yet</p>' : ''}${isAdmin ? '<button class="add-item-btn" onclick="openRecordModal()">+ Add Record</button>' : ''}</div>`; html += `<div class="stats-section"><h3>📋 Previous Teams</h3>`; if (previousTeams.length > 0) { previousTeams.forEach(pt => { const compLabel = pt.competition === 'premier_league' ? 'PL' : 'FA Cup'; html += `<div class="record-item"><div>${escapeHtml(pt.name)} (${compLabel} S${pt.seasonFrom}${pt.seasonTo !== pt.seasonFrom ? ` - S${pt.seasonTo}` : ''})</div></div>`; }); } else { html += '<p style="opacity:0.6; text-align:center;">No previous teams</p>'; } html += `</div>`; content.innerHTML = html; document.getElementById('statsPopupTitle').innerText = `${manager.username} - Statistics`; document.getElementById('statsPopup').classList.add('active'); if (trophyCabinet.slideshow.images && trophyCabinet.slideshow.images.length > 0) { startTrophySlideshow(trophyCabinet.slideshow.images, trophyCabinet.slideshow.duration || 3000); } }
+        function startTrophySlideshow(images, duration) { if (trophyCabinetInterval) clearInterval(trophyCabinetInterval); trophyCabinetSlideIdx = 0; updateTrophySlide(images); if (images.length > 1) { trophyCabinetInterval = setInterval(() => { trophyCabinetSlideIdx = (trophyCabinetSlideIdx + 1) % images.length; updateTrophySlide(images); }, duration); } }
+        function updateTrophySlide(images) { const img = document.getElementById('trophyCabinetImg'); const dotsContainer = document.getElementById('trophyCabinetDots'); if (img) { img.src = images[trophyCabinetSlideIdx]; } if (dotsContainer) { dotsContainer.innerHTML = images.map((_, i) => `<span class="dot ${i === trophyCabinetSlideIdx ? 'active' : ''}" onclick="jumpToTrophySlide(${i})"></span>`).join(''); } }
+        function jumpToTrophySlide(index) { const manager = managers.find(m => m.id === currentStatsManagerId); if (!manager) return; const images = manager.trophyCabinet?.slideshow?.images || []; trophyCabinetSlideIdx = index; updateTrophySlide(images); }
+        function closeStatsPopup() { document.getElementById('statsPopup').classList.remove('active'); if (trophyCabinetInterval) clearInterval(trophyCabinetInterval); currentStatsManagerId = null; }
+        function openSlideshowManager() { document.getElementById('slideshowModal').classList.add('active'); const manager = managers.find(m => m.id === currentStatsManagerId); if (!manager) return; const images = manager.trophyCabinet?.slideshow?.images || []; const duration = (manager.trophyCabinet?.slideshow?.duration || 3000) / 1000; document.getElementById('slideshowDuration').value = duration; renderSlideshowPreview(images); }
+        function renderSlideshowPreview(images) { const container = document.getElementById('slideshowPreview'); container.innerHTML = images.map((url, i) => `<div class="image-preview-item"><img src="${url}"><button class="delete-preview-btn" onclick="deleteSlideshowImage(${i})">✕</button></div>`).join(''); }
+        async function uploadSlideshowImage() { const file = document.getElementById('slideshowFile').files[0]; if (!file) { alert('Select an image'); return; } try { const url = await uploadToImgBB(file); const manager = managers.find(m => m.id === currentStatsManagerId); if (!manager) return; const images = manager.trophyCabinet?.slideshow?.images || []; images.push(url); await database.ref(`managers/${currentStatsManagerId}/trophyCabinet/slideshow/images`).set(images); await refreshData(); renderSlideshowPreview(images); document.getElementById('slideshowFile').value = ''; alert('Image uploaded!'); } catch (e) { alert('Upload failed: ' + e.message); } }
+        async function deleteSlideshowImage(index) { if (!confirm('Delete this image?')) return; const manager = managers.find(m => m.id === currentStatsManagerId); if (!manager) return; const images = manager.trophyCabinet?.slideshow?.images || []; images.splice(index, 1); await database.ref(`managers/${currentStatsManagerId}/trophyCabinet/slideshow/images`).set(images); await refreshData(); renderSlideshowPreview(images); }
+        async function saveSlideshowDuration() { const duration = parseFloat(document.getElementById('slideshowDuration').value) * 1000; await database.ref(`managers/${currentStatsManagerId}/trophyCabinet/slideshow/duration`).set(duration); await refreshData(); alert('Duration saved!'); }
+        function closeSlideshowModal() { document.getElementById('slideshowModal').classList.remove('active'); }
+        function openDescriptionEditor() { const manager = managers.find(m => m.id === currentStatsManagerId); if (!manager) return; document.getElementById('descriptionText').value = manager.description || ''; document.getElementById('descriptionModal').classList.add('active'); }
+        async function saveDescription() { const text = document.getElementById('descriptionText').value.trim(); await database.ref(`managers/${currentStatsManagerId}/description`).set(text); await refreshData(); closeDescriptionModal(); openStatsPopup(currentStatsManagerId); }
+        function closeDescriptionModal() { document.getElementById('descriptionModal').classList.remove('active'); }
+        function openRecordModal(recordIndex = null) { if (!isAdmin || !currentStatsManagerId) return; const manager = managers.find(m => m.id === currentStatsManagerId); if (!manager) return; editingRecordKey = recordIndex; const record = recordIndex !== null ? manager.records[recordIndex] : null; document.getElementById('recordModalTitle').innerText = recordIndex !== null ? 'Edit Record' : 'Add Record'; document.getElementById('recordName').value = record?.name || ''; document.getElementById('recordValue').value = record?.value || ''; document.getElementById('recordDesc').value = record?.description || ''; document.getElementById('recordModal').classList.add('active'); }
+        function closeRecordModal() { document.getElementById('recordModal').classList.remove('active'); editingRecordKey = null; }
+        async function saveRecord() { if (!currentStatsManagerId) return; const name = document.getElementById('recordName').value.trim(); const value = document.getElementById('recordValue').value.trim(); const description = document.getElementById('recordDesc').value.trim(); if (!name || !value) { alert('Name and value are required'); return; } const manager = managers.find(m => m.id === currentStatsManagerId); if (!manager) return; const records = manager.records || []; const newRecord = { name, value, description }; if (editingRecordKey !== null) { records[editingRecordKey] = newRecord; } else { records.push(newRecord); } await database.ref(`managers/${currentStatsManagerId}/records`).set(records); await refreshData(); closeRecordModal(); openStatsPopup(currentStatsManagerId); }
+        async function editRecord(index) { openRecordModal(index); }
+        async function deleteRecord(index) { if (!confirm('Delete this record?')) return; const manager = managers.find(m => m.id === currentStatsManagerId); if (!manager) return; const records = manager.records || []; records.splice(index, 1); await database.ref(`managers/${currentStatsManagerId}/records`).set(records); await refreshData(); openStatsPopup(currentStatsManagerId); }
+        async function deleteMedal(index) { if (!confirm('Delete this medal?')) return; const manager = managers.find(m => m.id === currentStatsManagerId); if (!manager) return; const medals = manager.medals || []; medals.splice(index, 1); await database.ref(`managers/${currentStatsManagerId}/medals`).set(medals); await refreshData(); openStatsPopup(currentStatsManagerId); }
+        function showRankingMethodPopup() { document.getElementById('rankingMethodPopup').classList.add('active'); }
+        function closeRankingMethodPopup() { document.getElementById('rankingMethodPopup').classList.remove('active'); }
+        function openStarIconsModal() { document.getElementById('starIconsModal').classList.add('active'); }
+        function closeStarIconsModal() { document.getElementById('starIconsModal').classList.remove('active'); }
+        async function uploadStarIcons() { const worldFile = document.getElementById('worldStarFile').files[0]; const euroFile = document.getElementById('euroStarFile').files[0]; const generalFile = document.getElementById('generalStarFile').files[0]; try { if (worldFile) { const url = await uploadToImgBB(worldFile); await database.ref('settings/starIcons/worldChampion').set(url); } if (euroFile) { const url = await uploadToImgBB(euroFile); await database.ref('settings/starIcons/europeanChampion').set(url); } if (generalFile) { const url = await uploadToImgBB(generalFile); await database.ref('settings/starIcons/generalChampion').set(url); } await loadStarIcons(); await renderCards(); closeStarIconsModal(); alert('Star icons updated!'); } catch (e) { alert('Upload failed: ' + e.message); } }
+        function toggleMenu() { document.getElementById('sideMenu').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); }
+        function closeMenu() { document.getElementById('sideMenu').classList.remove('active'); document.getElementById('overlay').classList.remove('active'); }
+        function escapeHtml(str) { if (!str) return ''; const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
         // Initialize
         async function init() {
             await loadStarIcons();
             await refreshData();
         }
-
         init();
     </script>
 </body>
