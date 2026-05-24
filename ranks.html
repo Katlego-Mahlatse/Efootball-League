@@ -228,30 +228,6 @@
             color: #000;
         }
         
-        .current-teams {
-            text-align: center;
-            margin-bottom: 12px;
-        }
-        
-        .current-team-item {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin: 4px 8px;
-            background: rgba(0,0,0,0.1);
-            padding: 6px 12px;
-            border-radius: 20px;
-        }
-        
-        .team-logo-sm {
-            width: 24px;
-            height: 24px;
-            object-fit: contain;
-            background: #fff;
-            border-radius: 6px;
-            padding: 2px;
-        }
-        
         .manager-score {
             text-align: center;
             font-size: 1.8rem;
@@ -265,7 +241,7 @@
         
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 10px;
             margin-bottom: 16px;
             background: rgba(0,0,0,0.1);
@@ -501,6 +477,9 @@
         .stats-popup-header h2 {
             font-size: 1.8rem;
         }
+        .stats-popup-header .close-modal {
+            color: #000;
+        }
         .stats-popup-content {
             padding: 20px;
         }
@@ -552,7 +531,7 @@
             align-items: center;
             gap: 8px;
         }
-        .record-item, .medal-item, .trophy-item {
+        .record-item, .medal-item, .trophy-item, .award-item {
             background: rgba(0,0,0,0.05);
             padding: 12px;
             border-radius: 12px;
@@ -641,6 +620,30 @@
             justify-content: center;
         }
 
+        .current-teams {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        
+        .current-team-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 8px;
+            background: rgba(0,0,0,0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+        
+        .team-logo-sm {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            background: #fff;
+            border-radius: 6px;
+            padding: 2px;
+        }
+
         @media (max-width: 780px) {
             .container { padding: 1rem; }
             .manager-name { font-size: 1.3rem; }
@@ -668,6 +671,7 @@
         <span class="close-menu" onclick="closeMenu()">✕</span>
         <div class="menu-items">
             <div class="menu-item" onclick="window.location.href='feed.html'">🏠 Home</div>
+            <div class="menu-item" onclick="showRankingMethodPopup()">📊 View Ranking Method</div>
             <div class="menu-item" id="adminModeMenuItem" onclick="promptAdminKey()">🔑 Admin Mode</div>
         </div>
     </div>
@@ -717,6 +721,12 @@
             </div>
             
             <div class="form-group">
+                <label>Profile Photo (Optional)</label>
+                <input type="file" id="profilePhotoUpload" accept="image/*" onchange="previewProfilePhoto()">
+                <div id="profilePhotoPreview"></div>
+            </div>
+            
+            <div class="form-group">
                 <label>Current Teams (can add multiple)</label>
                 <div id="currentTeamsList"></div>
                 <button type="button" class="btn-outline" onclick="addCurrentTeamField()">+ Add Current Team</button>
@@ -738,6 +748,12 @@
                 <label>Medals</label>
                 <div id="medalsList"></div>
                 <button type="button" class="btn-outline" onclick="openMedalModal()">🥇 Add Medal</button>
+            </div>
+            
+            <div class="form-group">
+                <label>Individual Awards</label>
+                <div id="awardsList"></div>
+                <button type="button" class="btn-outline" onclick="openAwardModal()">🏅 Add Individual Award</button>
             </div>
             
             <div class="flex-row">
@@ -790,6 +806,37 @@
                 <input type="text" id="medalSeason" placeholder="2023/24">
             </div>
             <button class="btn-gold" onclick="addMedalItem()">Add</button>
+        </div>
+    </div>
+
+    <!-- Individual Award Modal -->
+    <div id="awardModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Individual Award</h2>
+                <button class="close-modal" onclick="closeAwardModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Award Type</label>
+                <select id="awardType" onchange="toggleAwardFields()">
+                    <option value="">Select Award Type</option>
+                    <option value="golden_boot">⚽ Golden Boot (Top Scorer)</option>
+                    <option value="golden_glove">🧤 Golden Glove (Best GK)</option>
+                    <option value="ballon_dor">🏆 Ballon d'Or</option>
+                    <option value="yashin">🧤 Yashin Trophy</option>
+                </select>
+            </div>
+            <div id="tournamentSection" style="display:none;">
+                <div class="form-group">
+                    <label>Tournament</label>
+                    <select id="awardTournament"></select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Season/Year (e.g., 2023/24 or 2024)</label>
+                <input type="text" id="awardSeason" placeholder="2023/24">
+            </div>
+            <button class="btn-gold" onclick="addAwardItem()">Add</button>
         </div>
     </div>
 
@@ -865,6 +912,50 @@
         </div>
     </div>
 
+    <!-- Manual Stats Editor Modal -->
+    <div id="manualStatsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Stats Manually</h2>
+                <button class="close-modal" onclick="closeManualStatsModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Wins</label>
+                <input type="number" id="manualW" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label>Draws</label>
+                <input type="number" id="manualD" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label>Losses</label>
+                <input type="number" id="manualL" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label>Matches Played</label>
+                <input type="number" id="manualMP" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label>Goals Scored</label>
+                <input type="number" id="manualGS" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label>Goals Conceded</label>
+                <input type="number" id="manualGC" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label>Forfeit Wins</label>
+                <input type="number" id="manualFW" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label>Forfeit Losses</label>
+                <input type="number" id="manualFL" min="0" value="0">
+            </div>
+            <button class="btn-gold" onclick="saveManualStats()">Save Manual Stats</button>
+            <button class="btn-outline" onclick="resetToAutoStats()">Reset to Auto-Calculate</button>
+        </div>
+    </div>
+
     <!-- Ranking Method Popup -->
     <div id="rankingMethodPopup" class="modal">
         <div class="modal-content">
@@ -874,7 +965,7 @@
             </div>
             <div style="line-height: 1.8;">
                 <h3 style="color: #f5d742; margin-bottom: 12px;">Total Score Calculation:</h3>
-                <p style="margin-bottom: 16px;"><strong>Total Score = Trophy Points + Medal Points + Win Points</strong></p>
+                <p style="margin-bottom: 16px;"><strong>Total Score = Trophy Points + Medal Points + Individual Award Points + Win Points</strong></p>
                 
                 <h4 style="color: #f5d742; margin-top: 20px; margin-bottom: 8px;">Trophy Points:</h4>
                 <p>Each trophy has specific points based on its importance:</p>
@@ -884,7 +975,11 @@
                     <li>FIFA Club World Cup: 80 points</li>
                     <li>UEFA Europa League: 70 points</li>
                     <li>Premier League: 60 points</li>
-                    <li>And more...</li>
+                    <li>UEFA Nations League: 55 points</li>
+                    <li>UEFA Conference League: 50 points</li>
+                    <li>FA Cup: 45 points</li>
+                    <li>UEFA Super Cup: 40 points</li>
+                    <li>Community Shield: 30 points</li>
                 </ul>
                 
                 <h4 style="color: #f5d742; margin-top: 20px; margin-bottom: 8px;">Medal Points:</h4>
@@ -895,8 +990,31 @@
                     <li>🥉 Bronze Medal = Silver Medal Points ÷ 2</li>
                 </ul>
                 
+                <h4 style="color: #f5d742; margin-top: 20px; margin-bottom: 8px;">Individual Award Points:</h4>
+                <ul style="margin-left: 20px; margin-top: 8px;">
+                    <li><strong>Golden Boot</strong> (Top Scorer): Trophy Points ÷ 4
+                        <ul style="margin-left: 20px; margin-top: 4px;">
+                            <li>Example: UCL Golden Boot = 90 ÷ 4 = 22.5 points</li>
+                        </ul>
+                    </li>
+                    <li><strong>Golden Glove</strong> (Best Goalkeeper): Trophy Points ÷ 2
+                        <ul style="margin-left: 20px; margin-top: 4px;">
+                            <li>Example: Premier League Golden Glove = 60 ÷ 2 = 30 points</li>
+                        </ul>
+                    </li>
+                    <li><strong>Ballon d'Or</strong>: 80 points (fixed)</li>
+                    <li><strong>Yashin Trophy</strong> (Best Goalkeeper): 80 points (fixed)</li>
+                </ul>
+                
                 <h4 style="color: #f5d742; margin-top: 20px; margin-bottom: 8px;">Win Points:</h4>
-                <p>Each match win = 1 point</p>
+                <p>Each match win = 1 point (including forfeit wins)</p>
+                
+                <h4 style="color: #f5d742; margin-top: 20px; margin-bottom: 8px;">Forfeit Rules:</h4>
+                <ul style="margin-left: 20px; margin-top: 8px;">
+                    <li><strong>Forfeit Win:</strong> Counts as 1 win, but NO goals are credited (GS and GC stay 0)</li>
+                    <li><strong>Forfeit Loss:</strong> Counts as 1 loss, concede 3 goals, but GS stays 0</li>
+                    <li><strong>No Contest:</strong> Counts only toward Matches Played, no W/D/L or goals</li>
+                </ul>
                 
                 <h4 style="color: #f5d742; margin-top: 20px; margin-bottom: 8px;">Tiebreaker Order:</h4>
                 <ol style="margin-left: 20px; margin-top: 8px;">
@@ -932,6 +1050,8 @@
         let tempPrevTeams = [];
         let tempTrophies = [];
         let tempMedals = [];
+        let tempAwards = [];
+        let tempProfilePhotoUrl = null;
         let defaultAvatarUrl = 'https://via.placeholder.com/90/333/f5d742?text=⚽';
         let currentStatsManagerId = null;
         let editingRecordKey = null;
@@ -958,6 +1078,15 @@
             return 0;
         }
 
+        // Calculate individual award points
+        function calculateAwardPoints(awardType, trophyPoints = null) {
+            if (awardType === 'golden_boot') return trophyPoints / 4;
+            if (awardType === 'golden_glove') return trophyPoints / 2;
+            if (awardType === 'ballon_dor') return 80;
+            if (awardType === 'yashin') return 80;
+            return 0;
+        }
+
         // Upload to ImgBB
         async function uploadToImgBB(file) {
             const fd = new FormData();
@@ -969,6 +1098,20 @@
             const data = await res.json();
             if (!data.success) throw new Error("Upload failed");
             return data.data.url;
+        }
+
+        // Profile photo preview
+        async function previewProfilePhoto() {
+            const file = document.getElementById('profilePhotoUpload').files[0];
+            if (!file) return;
+            
+            try {
+                tempProfilePhotoUrl = await uploadToImgBB(file);
+                document.getElementById('profilePhotoPreview').innerHTML = 
+                    `<img src="${tempProfilePhotoUrl}" class="preview-img">`;
+            } catch (e) {
+                alert('Upload failed: ' + e.message);
+            }
         }
 
         // Get teams from competition/season
@@ -992,22 +1135,44 @@
             return [];
         }
 
-        // Calculate stats from both competitions
+        // Check if match is forfeit or no contest
+        function isForfeit(matchText) {
+            return matchText.toLowerCase().includes('forfeit');
+        }
+
+        function isNoContest(matchText) {
+            return matchText.toLowerCase().includes('no contest');
+        }
+
+        // Calculate stats from both competitions with forfeit handling
         async function calculateManagerStats(currentTeams, previousTeams) {
             let totalW = 0, totalD = 0, totalL = 0, totalGS = 0, totalGC = 0;
+            let totalFW = 0, totalFL = 0, totalMP = 0;
 
             // Helper: Get team stats from Premier League
-            const getPLStats = async (teamName, seasonNum) => {
-                if (seasonNum < 3) return { w: 0, d: 0, l: 0, gs: 0, gc: 0 };
+            const getPLStats = async (teamName, seasonNum, managerType = 'manager', fromMD = null, toMD = null) => {
+                if (seasonNum < 3) return { w: 0, d: 0, l: 0, gs: 0, gc: 0, fw: 0, fl: 0, mp: 0 };
                 
                 const resultsSnap = await database.ref(`seasons/season_${seasonNum}/results`).once('value');
                 const results = resultsSnap.val() || {};
                 
-                let w = 0, d = 0, l = 0, gs = 0, gc = 0;
+                let w = 0, d = 0, l = 0, gs = 0, gc = 0, fw = 0, fl = 0, mp = 0;
 
                 Object.values(results).forEach(result => {
                     const matchText = result.matchText || '';
+                    const md = result.md || 0;
+                    
+                    // Filter by matchday based on manager type
+                    if (managerType === 'interim' && fromMD !== null && md < fromMD) return;
+                    if (managerType === 'sacked' && toMD !== null && md > toMD) return;
+                    
                     if (!matchText.includes(teamName)) return;
+
+                    // Check for no contest
+                    if (isNoContest(matchText)) {
+                        mp++;
+                        return;
+                    }
 
                     const scoreRegex = /(\d+)\s*-\s*(\d+)/;
                     const match = matchText.match(scoreRegex);
@@ -1021,34 +1186,60 @@
                             const homeTeam = parts[0].trim();
                             const awayTeam = parts[1].trim().replace(/\(.*\)/g, '').trim();
                             
+                            const isForfeitMatch = isForfeit(matchText);
+                            
                             if (homeTeam === teamName) {
-                                gs += score1;
-                                gc += score2;
-                                if (score1 > score2) w++;
-                                else if (score1 === score2) d++;
-                                else l++;
+                                mp++;
+                                if (isForfeitMatch) {
+                                    if (score1 > score2) {
+                                        w++;
+                                        fw++;
+                                    } else if (score1 < score2) {
+                                        l++;
+                                        fl++;
+                                        gc += 3;
+                                    }
+                                } else {
+                                    gs += score1;
+                                    gc += score2;
+                                    if (score1 > score2) w++;
+                                    else if (score1 === score2) d++;
+                                    else l++;
+                                }
                             } else if (awayTeam === teamName) {
-                                gs += score2;
-                                gc += score1;
-                                if (score2 > score1) w++;
-                                else if (score1 === score2) d++;
-                                else l++;
+                                mp++;
+                                if (isForfeitMatch) {
+                                    if (score2 > score1) {
+                                        w++;
+                                        fw++;
+                                    } else if (score2 < score1) {
+                                        l++;
+                                        fl++;
+                                        gc += 3;
+                                    }
+                                } else {
+                                    gs += score2;
+                                    gc += score1;
+                                    if (score2 > score1) w++;
+                                    else if (score1 === score2) d++;
+                                    else l++;
+                                }
                             }
                         }
                     }
                 });
 
-                return { w, d, l, gs, gc };
+                return { w, d, l, gs, gc, fw, fl, mp };
             };
 
             // Helper: Get team stats from FA Cup
-            const getFACupStats = async (teamName, seasonNum) => {
-                if (seasonNum < 3) return { w: 0, d: 0, l: 0, gs: 0, gc: 0 };
+            const getFACupStats = async (teamName, seasonNum, managerType = 'manager', fromMD = null, toMD = null) => {
+                if (seasonNum < 3) return { w: 0, d: 0, l: 0, gs: 0, gc: 0, fw: 0, fl: 0, mp: 0 };
                 
                 const groupsSnap = await database.ref(`fa_cup/seasons/season_${seasonNum}/groups`).once('value');
                 const groups = groupsSnap.val() || {};
                 
-                let w = 0, d = 0, l = 0, gs = 0, gc = 0;
+                let w = 0, d = 0, l = 0, gs = 0, gc = 0, fw = 0, fl = 0, mp = 0;
 
                 for (const groupId in groups) {
                     const results = groups[groupId].results || {};
@@ -1058,24 +1249,65 @@
                         const awayTeam = result.awayTeam;
                         const homeScore = parseInt(result.homeScore) || 0;
                         const awayScore = parseInt(result.awayScore) || 0;
+                        const md = result.md || 0;
+                        
+                        // Filter by matchday based on manager type
+                        if (managerType === 'interim' && fromMD !== null && md < fromMD) return;
+                        if (managerType === 'sacked' && toMD !== null && md > toMD) return;
+                        
+                        const matchText = `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam}`;
+                        
+                        // Check for no contest
+                        if (result.forfeit && isNoContest(result.forfeit)) {
+                            if (homeTeam === teamName || awayTeam === teamName) {
+                                mp++;
+                            }
+                            return;
+                        }
+                        
+                        const isForfeitMatch = result.forfeit && isForfeit(result.forfeit);
                         
                         if (homeTeam === teamName) {
-                            gs += homeScore;
-                            gc += awayScore;
-                            if (homeScore > awayScore) w++;
-                            else if (homeScore === awayScore) d++;
-                            else l++;
+                            mp++;
+                            if (isForfeitMatch) {
+                                if (homeScore > awayScore) {
+                                    w++;
+                                    fw++;
+                                } else if (homeScore < awayScore) {
+                                    l++;
+                                    fl++;
+                                    gc += 3;
+                                }
+                            } else {
+                                gs += homeScore;
+                                gc += awayScore;
+                                if (homeScore > awayScore) w++;
+                                else if (homeScore === awayScore) d++;
+                                else l++;
+                            }
                         } else if (awayTeam === teamName) {
-                            gs += awayScore;
-                            gc += homeScore;
-                            if (awayScore > homeScore) w++;
-                            else if (homeScore === awayScore) d++;
-                            else l++;
+                            mp++;
+                            if (isForfeitMatch) {
+                                if (awayScore > homeScore) {
+                                    w++;
+                                    fw++;
+                                } else if (awayScore < homeScore) {
+                                    l++;
+                                    fl++;
+                                    gc += 3;
+                                }
+                            } else {
+                                gs += awayScore;
+                                gc += homeScore;
+                                if (awayScore > homeScore) w++;
+                                else if (homeScore === awayScore) d++;
+                                else l++;
+                            }
                         }
                     });
                 }
 
-                return { w, d, l, gs, gc };
+                return { w, d, l, gs, gc, fw, fl, mp };
             };
 
             // Process current teams
@@ -1083,9 +1315,21 @@
                 for (const team of currentTeams) {
                     let stats;
                     if (team.competition === 'premier_league') {
-                        stats = await getPLStats(team.name, team.season);
+                        stats = await getPLStats(
+                            team.name, 
+                            team.season, 
+                            team.managerType || 'manager',
+                            team.fromMatchday || null,
+                            team.toMatchday || null
+                        );
                     } else if (team.competition === 'fa_cup') {
-                        stats = await getFACupStats(team.name, team.season);
+                        stats = await getFACupStats(
+                            team.name, 
+                            team.season,
+                            team.managerType || 'manager',
+                            team.fromMatchday || null,
+                            team.toMatchday || null
+                        );
                     }
                     
                     if (stats) {
@@ -1094,6 +1338,9 @@
                         totalL += stats.l;
                         totalGS += stats.gs;
                         totalGC += stats.gc;
+                        totalFW += stats.fw;
+                        totalFL += stats.fl;
+                        totalMP += stats.mp;
                     }
                 }
             }
@@ -1105,13 +1352,25 @@
                     const seasonTo = parseInt(prevTeam.seasonTo);
                     
                     for (let s = seasonFrom; s <= seasonTo; s++) {
-                        if (s < 3) continue; // Skip seasons 1&2 for stats
+                        if (s < 3) continue;
                         
                         let stats;
                         if (prevTeam.competition === 'premier_league') {
-                            stats = await getPLStats(prevTeam.name, s);
+                            stats = await getPLStats(
+                                prevTeam.name, 
+                                s,
+                                prevTeam.managerType || 'manager',
+                                prevTeam.fromMatchday || null,
+                                prevTeam.toMatchday || null
+                            );
                         } else if (prevTeam.competition === 'fa_cup') {
-                            stats = await getFACupStats(prevTeam.name, s);
+                            stats = await getFACupStats(
+                                prevTeam.name, 
+                                s,
+                                prevTeam.managerType || 'manager',
+                                prevTeam.fromMatchday || null,
+                                prevTeam.toMatchday || null
+                            );
                         }
                         
                         if (stats) {
@@ -1120,6 +1379,9 @@
                             totalL += stats.l;
                             totalGS += stats.gs;
                             totalGC += stats.gc;
+                            totalFW += stats.fw;
+                            totalFL += stats.fl;
+                            totalMP += stats.mp;
                         }
                     }
                 }
@@ -1136,6 +1398,9 @@
                 gs: totalGS,
                 gc: totalGC,
                 gd: totalGS - totalGC,
+                fw: totalFW,
+                fl: totalFL,
+                mp: totalMP,
                 winRate: parseFloat(winRate)
             };
         }
@@ -1144,12 +1409,14 @@
         function calculateScores(manager) {
             const trophyPoints = (manager.trophies || []).reduce((sum, t) => sum + (t.points || 0), 0);
             const medalPoints = (manager.medals || []).reduce((sum, m) => sum + (m.points || 0), 0);
+            const awardPoints = (manager.individualAwards || []).reduce((sum, a) => sum + (a.points || 0), 0);
             const winPoints = (manager.stats?.w || 0) * 1;
-            const totalScore = trophyPoints + medalPoints + winPoints;
+            const totalScore = trophyPoints + medalPoints + awardPoints + winPoints;
 
             return {
                 trophyPoints,
                 medalPoints,
+                awardPoints,
                 winPoints,
                 totalScore
             };
@@ -1163,10 +1430,17 @@
 
             const managersArray = [];
             for (const [id, m] of Object.entries(data)) {
-                const stats = await calculateManagerStats(
-                    m.currentTeams || [],
-                    m.previousTeams || []
-                );
+                let stats;
+                
+                // Check if manual stats exist
+                if (m.manualStats) {
+                    stats = m.manualStats;
+                } else {
+                    stats = await calculateManagerStats(
+                        m.currentTeams || [],
+                        m.previousTeams || []
+                    );
+                }
 
                 const scores = calculateScores({ ...m, stats });
 
@@ -1208,7 +1482,7 @@
             });
         }
 
-        // Render cards (no stars)
+        // Render cards
         async function renderCards() {
             const container = document.getElementById('cardsContainer');
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
@@ -1233,24 +1507,11 @@
                 const rank = idx + 1;
                 const rankDisplay = rank === 1 ? '🥇 #1' : rank === 2 ? '🥈 #2' : rank === 3 ? '🥉 #3' : `#${rank}`;
                 
-                let avatar = m.profilePicture || defaultAvatarUrl;
+                let avatar = m.customProfilePhoto || m.profilePicture || defaultAvatarUrl;
                 
-                // Current teams display
-                let currentTeamsHtml = '';
-                if (m.currentTeams && m.currentTeams.length > 0) {
-                    currentTeamsHtml = m.currentTeams.map(ct => {
-                        const compLabel = ct.competition === 'premier_league' ? 'PL' : 'FA';
-                        return `
-                            <div class="current-team-item">
-                                ${ct.logo ? `<img src="${ct.logo}" class="team-logo-sm">` : ''}
-                                <span>${escapeHtml(ct.name)} (${compLabel} S${ct.season})</span>
-                            </div>
-                        `;
-                    }).join('');
-                }
-                
-                const stats = m.stats || { w: 0, d: 0, l: 0, gs: 0, gc: 0, gd: 0, winRate: 0 };
-                const scores = m.scores || { trophyPoints: 0, medalPoints: 0, winPoints: 0, totalScore: 0 };
+                const stats = m.stats || { w: 0, d: 0, l: 0, gs: 0, gc: 0, gd: 0, fw: 0, fl: 0, mp: 0, winRate: 0 };
+                const scores = m.scores || { trophyPoints: 0, medalPoints: 0, awardPoints: 0, winPoints: 0, totalScore: 0 };
+                const trophyCount = (m.trophies || []).length;
                 
                 const adminBtns = isAdmin ? `
                     <div class="admin-buttons">
@@ -1264,14 +1525,15 @@
                         <div class="card-rank">${rankDisplay}</div>
                         <div class="card-avatar"><img src="${avatar}" alt="avatar"></div>
                         <div class="manager-name">${escapeHtml(m.username)}</div>
-                        <div class="current-teams">${currentTeamsHtml || '<span style="opacity:0.6;">No current team</span>'}</div>
                         <div class="manager-score">🏆 TOTAL SCORE: ${scores.totalScore.toFixed(1)}</div>
                         <div class="stats-grid">
                             <div class="stat-item"><div class="stat-label">WINS</div><div class="stat-value">${stats.w}</div></div>
                             <div class="stat-item"><div class="stat-label">DRAWS</div><div class="stat-value">${stats.d}</div></div>
                             <div class="stat-item"><div class="stat-label">LOSSES</div><div class="stat-value">${stats.l}</div></div>
-                            <div class="stat-item"><div class="stat-label">GOALS</div><div class="stat-value">${stats.gs}</div></div>
-                            <div class="stat-item"><div class="stat-label">CONCEDED</div><div class="stat-value">${stats.gc}</div></div>
+                            <div class="stat-item"><div class="stat-label">MATCHES</div><div class="stat-value">${stats.mp}</div></div>
+                            <div class="stat-item"><div class="stat-label">FORFEIT W</div><div class="stat-value">${stats.fw}</div></div>
+                            <div class="stat-item"><div class="stat-label">FORFEIT L</div><div class="stat-value">${stats.fl}</div></div>
+                            <div class="stat-item"><div class="stat-label">TROPHIES</div><div class="stat-value">${trophyCount}</div></div>
                             <div class="stat-item"><div class="stat-label">WIN RATE</div><div class="stat-value">${stats.winRate}%</div></div>
                         </div>
                         <button class="view-more-btn" onclick="openStatsPopup('${m.id}')">📊 View More Statistics</button>
@@ -1344,14 +1606,19 @@
             document.getElementById('managerType').value = 'standalone';
             toggleTypeFields();
             document.getElementById('standaloneName').value = '';
+            document.getElementById('profilePhotoUpload').value = '';
+            document.getElementById('profilePhotoPreview').innerHTML = '';
             tempCurrentTeams = [];
             tempPrevTeams = [];
             tempTrophies = [];
             tempMedals = [];
+            tempAwards = [];
+            tempProfilePhotoUrl = null;
             renderCurrentTeamsUI();
             renderPrevTeamsUI();
             renderTrophiesUI();
             renderMedalsUI();
+            renderAwardsUI();
             selectedLinkedUser = null;
             document.getElementById('linkedSearch').value = '';
         }
@@ -1365,27 +1632,53 @@
             const season = prompt("Which season? (e.g., 3, 4, 5...)");
             if (!season) return;
             const seasonNum = parseInt(season);
-            if (isNaN(seasonNum) || seasonNum < 3) {
-                alert("Invalid season. Must be 3 or higher.");
+            if (isNaN(seasonNum) || seasonNum < 1) {
+                alert("Invalid season.");
                 return;
             }
             
-            const teams = await getTeamsFromCompetition(comp, seasonNum);
+            const teams = await getTeamsFromCompetition(comp, seasonNum >= 3 ? seasonNum : 3);
+            let teamName;
+            
             if (teams.length === 0) {
-                alert("No teams found for this competition/season");
-                return;
+                teamName = prompt("No teams found. Enter team name manually:");
+                if (!teamName) return;
+            } else {
+                teamName = prompt(`Select team from Season ${seasonNum}:\n${teams.join(', ')}`);
+                if (!teamName) return;
             }
             
-            const teamName = prompt(`Select team from Season ${seasonNum}:\n${teams.join(', ')}`);
-            if (!teamName || !teams.includes(teamName)) {
-                alert("Invalid team name");
-                return;
+            // Manager type
+            const managerTypeChoice = prompt("Manager Type:\n1 = Full Season Manager\n2 = Interim Manager\n3 = Sacked Manager");
+            let managerType = 'manager';
+            let fromMatchday = null;
+            let toMatchday = null;
+            
+            if (managerTypeChoice === '2') {
+                managerType = 'interim';
+                const fromMD = prompt("Starting from which matchday?");
+                fromMatchday = parseInt(fromMD);
+                if (isNaN(fromMatchday)) {
+                    alert("Invalid matchday");
+                    return;
+                }
+            } else if (managerTypeChoice === '3') {
+                managerType = 'sacked';
+                const toMD = prompt("Up to which matchday?");
+                toMatchday = parseInt(toMD);
+                if (isNaN(toMatchday)) {
+                    alert("Invalid matchday");
+                    return;
+                }
             }
             
             tempCurrentTeams.push({ 
                 name: teamName, 
                 competition: comp,
                 season: seasonNum,
+                managerType: managerType,
+                fromMatchday: fromMatchday,
+                toMatchday: toMatchday,
                 logo: null
             });
             renderCurrentTeamsUI();
@@ -1395,8 +1688,14 @@
             let container = document.getElementById('currentTeamsList');
             container.innerHTML = tempCurrentTeams.map((t, i) => {
                 const compLabel = t.competition === 'premier_league' ? 'PL' : 'FA Cup';
+                let typeLabel = '';
+                if (t.managerType === 'interim') {
+                    typeLabel = ` - Interim from MD${t.fromMatchday}`;
+                } else if (t.managerType === 'sacked') {
+                    typeLabel = ` - Until MD${t.toMatchday}`;
+                }
                 return `<div class="team-block">
-                    ${t.name} (${compLabel} S${t.season})
+                    ${t.name} (${compLabel} S${t.season}${typeLabel})
                     <button onclick="removeCurrentTeam(${i})">✕</button>
                 </div>`;
             }).join('');
@@ -1422,41 +1721,56 @@
             }
             
             const teams = await getTeamsFromCompetition(comp, seasonFromNum >= 3 ? seasonFromNum : 3);
+            let teamName;
+            
             if (teams.length === 0) {
-                const teamName = prompt("No teams found in that season. Enter team name manually:");
+                teamName = prompt("No teams found. Enter team name manually:");
                 if (!teamName) return;
-                
-                const seasonTo = prompt(`Season to? (${seasonFromNum} or later)`, seasonFromNum);
-                const seasonToNum = parseInt(seasonTo);
-                if (isNaN(seasonToNum) || seasonToNum < seasonFromNum) {
-                    alert("Invalid end season");
-                    return;
-                }
-                
-                tempPrevTeams.push({ 
-                    name: teamName, 
-                    competition: comp,
-                    seasonFrom: seasonFromNum, 
-                    seasonTo: seasonToNum 
-                });
             } else {
-                const teamName = prompt(`Select team:\n${teams.join(', ')}`);
+                teamName = prompt(`Select team:\n${teams.join(', ')}`);
                 if (!teamName) return;
-                
-                const seasonTo = prompt(`Season to? (${seasonFromNum} or later)`, seasonFromNum);
-                const seasonToNum = parseInt(seasonTo);
-                if (isNaN(seasonToNum) || seasonToNum < seasonFromNum) {
-                    alert("Invalid end season");
+            }
+            
+            const seasonTo = prompt(`Season to? (${seasonFromNum} or later)`, seasonFromNum);
+            const seasonToNum = parseInt(seasonTo);
+            if (isNaN(seasonToNum) || seasonToNum < seasonFromNum) {
+                alert("Invalid end season");
+                return;
+            }
+            
+            // Manager type
+            const managerTypeChoice = prompt("Manager Type:\n1 = Full Season Manager\n2 = Interim Manager\n3 = Sacked Manager");
+            let managerType = 'manager';
+            let fromMatchday = null;
+            let toMatchday = null;
+            
+            if (managerTypeChoice === '2') {
+                managerType = 'interim';
+                const fromMD = prompt("Starting from which matchday?");
+                fromMatchday = parseInt(fromMD);
+                if (isNaN(fromMatchday)) {
+                    alert("Invalid matchday");
                     return;
                 }
-                
-                tempPrevTeams.push({ 
-                    name: teamName, 
-                    competition: comp,
-                    seasonFrom: seasonFromNum, 
-                    seasonTo: seasonToNum 
-                });
+            } else if (managerTypeChoice === '3') {
+                managerType = 'sacked';
+                const toMD = prompt("Up to which matchday?");
+                toMatchday = parseInt(toMD);
+                if (isNaN(toMatchday)) {
+                    alert("Invalid matchday");
+                    return;
+                }
             }
+            
+            tempPrevTeams.push({ 
+                name: teamName, 
+                competition: comp,
+                seasonFrom: seasonFromNum, 
+                seasonTo: seasonToNum,
+                managerType: managerType,
+                fromMatchday: fromMatchday,
+                toMatchday: toMatchday
+            });
             
             renderPrevTeamsUI();
         }
@@ -1465,8 +1779,14 @@
             let container = document.getElementById('prevTeamsList');
             container.innerHTML = tempPrevTeams.map((t, i) => {
                 const compLabel = t.competition === 'premier_league' ? 'PL' : 'FA';
+                let typeLabel = '';
+                if (t.managerType === 'interim') {
+                    typeLabel = ` - Interim from MD${t.fromMatchday}`;
+                } else if (t.managerType === 'sacked') {
+                    typeLabel = ` - Until MD${t.toMatchday}`;
+                }
                 return `<div class="team-block">
-                    ${t.name} (${compLabel} S${t.seasonFrom}${t.seasonTo !== t.seasonFrom ? ` - S${t.seasonTo}` : ''})
+                    ${t.name} (${compLabel} S${t.seasonFrom}${t.seasonTo !== t.seasonFrom ? ` - S${t.seasonTo}` : ''}${typeLabel})
                     <button onclick="removePrevTeam(${i})">✕</button>
                 </div>`;
             }).join('');
@@ -1506,6 +1826,27 @@
         function removeMedalTemp(i) {
             tempMedals.splice(i, 1);
             renderMedalsUI();
+        }
+
+        function renderAwardsUI() {
+            let container = document.getElementById('awardsList');
+            const awardIcons = { 
+                golden_boot: '⚽', 
+                golden_glove: '🧤', 
+                ballon_dor: '🏆', 
+                yashin: '🧤' 
+            };
+            container.innerHTML = tempAwards.map((a, i) => 
+                `<div class="team-block">
+                    ${awardIcons[a.type]} ${a.name} (${a.season})
+                    <button onclick="removeAwardTemp(${i})">✕</button>
+                </div>`
+            ).join('');
+        }
+
+        function removeAwardTemp(i) {
+            tempAwards.splice(i, 1);
+            renderAwardsUI();
         }
 
         function openTrophyModal() {
@@ -1569,6 +1910,80 @@
             closeMedalModal();
         }
 
+        function openAwardModal() {
+            document.getElementById('awardModal').classList.add('active');
+        }
+
+        function closeAwardModal() {
+            document.getElementById('awardModal').classList.remove('active');
+        }
+
+        function toggleAwardFields() {
+            const type = document.getElementById('awardType').value;
+            const tournamentSection = document.getElementById('tournamentSection');
+            
+            if (type === 'golden_boot' || type === 'golden_glove') {
+                tournamentSection.style.display = 'block';
+                let select = document.getElementById('awardTournament');
+                select.innerHTML = trophyList.map(t => 
+                    `<option value="${t.id}" data-points="${t.points}">${t.name}</option>`
+                ).join('');
+            } else {
+                tournamentSection.style.display = 'none';
+            }
+        }
+
+        function addAwardItem() {
+            const type = document.getElementById('awardType').value;
+            const season = document.getElementById('awardSeason').value.trim();
+            
+            if (!type || !season) {
+                alert('Please fill all fields');
+                return;
+            }
+            
+            let awardName = '';
+            let points = 0;
+            
+            if (type === 'golden_boot' || type === 'golden_glove') {
+                const tournamentId = document.getElementById('awardTournament').value;
+                const trophy = trophyList.find(t => t.id === tournamentId);
+                if (!trophy) return;
+                
+                points = calculateAwardPoints(type, trophy.points);
+                awardName = `${trophy.name} ${type === 'golden_boot' ? 'Golden Boot' : 'Golden Glove'}`;
+                
+                tempAwards.push({
+                    type: type,
+                    trophyId: tournamentId,
+                    name: awardName,
+                    points: points,
+                    season: season
+                });
+            } else if (type === 'ballon_dor') {
+                awardName = "Ballon d'Or";
+                points = 80;
+                tempAwards.push({
+                    type: type,
+                    name: awardName,
+                    points: points,
+                    season: season
+                });
+            } else if (type === 'yashin') {
+                awardName = "Yashin Trophy";
+                points = 80;
+                tempAwards.push({
+                    type: type,
+                    name: awardName,
+                    points: points,
+                    season: season
+                });
+            }
+            
+            renderAwardsUI();
+            closeAwardModal();
+        }
+
         async function saveManager() {
             let type = document.getElementById('managerType').value;
             let username = '', profilePicture = null;
@@ -1594,10 +2009,12 @@
                 userId: type === 'linked' ? selectedLinkedUser.id : null,
                 username,
                 profilePicture,
+                customProfilePhoto: tempProfilePhotoUrl,
                 currentTeams: tempCurrentTeams,
                 previousTeams: tempPrevTeams,
                 trophies: tempTrophies,
                 medals: tempMedals,
+                individualAwards: tempAwards,
                 records: [],
                 description: ''
             };
@@ -1639,6 +2056,12 @@
                 document.getElementById('standaloneName').value = m.username;
             }
             
+            if (m.customProfilePhoto) {
+                tempProfilePhotoUrl = m.customProfilePhoto;
+                document.getElementById('profilePhotoPreview').innerHTML = 
+                    `<img src="${m.customProfilePhoto}" class="preview-img">`;
+            }
+            
             tempCurrentTeams = m.currentTeams || [];
             renderCurrentTeamsUI();
             
@@ -1650,6 +2073,9 @@
             
             tempMedals = m.medals || [];
             renderMedalsUI();
+            
+            tempAwards = m.individualAwards || [];
+            renderAwardsUI();
             
             document.getElementById('managerModal').classList.add('active');
         }
@@ -1677,16 +2103,64 @@
             const content = document.getElementById('statsPopupContent');
             const medals = manager.medals || [];
             const trophies = manager.trophies || [];
+            const awards = manager.individualAwards || [];
             const records = manager.records || [];
             const previousTeams = manager.previousTeams || [];
+            const currentTeams = manager.currentTeams || [];
             const description = manager.description || '';
             const trophyCabinet = manager.trophyCabinet || { slideshow: { images: [], duration: 3000 } };
+            const stats = manager.stats || {};
             
             const goldMedals = medals.filter(m => m.type === 'gold');
             const silverMedals = medals.filter(m => m.type === 'silver');
             const bronzeMedals = medals.filter(m => m.type === 'bronze');
             
             let html = '';
+            
+            // Current Teams Section
+            html += `<div class="stats-section">
+                <h3>⚽ Current Teams</h3>`;
+            
+            if (currentTeams.length > 0) {
+                currentTeams.forEach(ct => {
+                    const compLabel = ct.competition === 'premier_league' ? 'Premier League' : 'FA Cup';
+                    let typeLabel = '';
+                    if (ct.managerType === 'interim') {
+                        typeLabel = ` (Interim from MD${ct.fromMatchday})`;
+                    } else if (ct.managerType === 'sacked') {
+                        typeLabel = ` (Until MD${ct.toMatchday})`;
+                    }
+                    html += `<div class="record-item">
+                        <div>${escapeHtml(ct.name)} - ${compLabel} Season ${ct.season}${typeLabel}</div>
+                    </div>`;
+                });
+            } else {
+                html += '<p style="opacity:0.6; text-align:center;">No current teams</p>';
+            }
+            
+            html += `</div>`;
+            
+            // Full Stats Section
+            html += `<div class="stats-section">
+                <h3>📊 Match Statistics</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                    <div class="record-item"><strong>Wins:</strong> ${stats.w || 0}</div>
+                    <div class="record-item"><strong>Draws:</strong> ${stats.d || 0}</div>
+                    <div class="record-item"><strong>Losses:</strong> ${stats.l || 0}</div>
+                    <div class="record-item"><strong>Matches Played:</strong> ${stats.mp || 0}</div>
+                    <div class="record-item"><strong>Goals Scored:</strong> ${stats.gs || 0}</div>
+                    <div class="record-item"><strong>Goals Conceded:</strong> ${stats.gc || 0}</div>
+                    <div class="record-item"><strong>Goal Difference:</strong> ${stats.gd || 0}</div>
+                    <div class="record-item"><strong>Win Rate:</strong> ${stats.winRate || 0}%</div>
+                    <div class="record-item"><strong>Forfeit Wins:</strong> ${stats.fw || 0}</div>
+                    <div class="record-item"><strong>Forfeit Losses:</strong> ${stats.fl || 0}</div>
+                </div>`;
+            
+            if (isAdmin) {
+                html += `<button class="add-item-btn" onclick="openManualStatsEditor()">✏️ Edit Stats Manually</button>`;
+            }
+            
+            html += `</div>`;
             
             // Trophy Cabinet
             html += `<div class="stats-section">
@@ -1714,6 +2188,31 @@
             
             if (isAdmin) {
                 html += `<button class="add-item-btn" onclick="openSlideshowManager()">📸 Manage Trophy Images</button>`;
+            }
+            
+            html += `</div>`;
+            
+            // Individual Awards
+            html += `<div class="stats-section">
+                <h3>🏅 Individual Awards</h3>`;
+            
+            if (awards.length > 0) {
+                awards.forEach(a => {
+                    const icon = a.type === 'golden_boot' ? '⚽' : 
+                                a.type === 'golden_glove' ? '🧤' :
+                                a.type === 'ballon_dor' ? '🏆' :
+                                a.type === 'yashin' ? '🧤' : '🏅';
+                    html += `<div class="award-item">
+                        <div>${icon} <strong>${escapeHtml(a.name)}</strong> (${escapeHtml(a.season)})</div>
+                        ${isAdmin ? `
+                            <div class="item-actions">
+                                <button onclick="deleteAward(${awards.indexOf(a)})">🗑️</button>
+                            </div>
+                        ` : ''}
+                    </div>`;
+                });
+            } else {
+                html += '<p style="opacity:0.6; text-align:center;">No individual awards yet</p>';
             }
             
             html += `</div>`;
@@ -1829,8 +2328,14 @@
             if (previousTeams.length > 0) {
                 previousTeams.forEach(pt => {
                     const compLabel = pt.competition === 'premier_league' ? 'PL' : 'FA Cup';
+                    let typeLabel = '';
+                    if (pt.managerType === 'interim') {
+                        typeLabel = ` (Interim from MD${pt.fromMatchday})`;
+                    } else if (pt.managerType === 'sacked') {
+                        typeLabel = ` (Until MD${pt.toMatchday})`;
+                    }
                     html += `<div class="record-item">
-                        <div>${escapeHtml(pt.name)} (${compLabel} S${pt.seasonFrom}${pt.seasonTo !== pt.seasonFrom ? ` - S${pt.seasonTo}` : ''})</div>
+                        <div>${escapeHtml(pt.name)} (${compLabel} S${pt.seasonFrom}${pt.seasonTo !== pt.seasonFrom ? ` - S${pt.seasonTo}` : ''}${typeLabel})</div>
                     </div>`;
                 });
             } else {
@@ -2072,9 +2577,88 @@
             openStatsPopup(currentStatsManagerId);
         }
 
+        async function deleteAward(index) {
+            if (!confirm('Delete this award?')) return;
+            
+            const manager = managers.find(m => m.id === currentStatsManagerId);
+            if (!manager) return;
+            
+            const awards = manager.individualAwards || [];
+            awards.splice(index, 1);
+            
+            await database.ref(`ranks/${currentStatsManagerId}/individualAwards`).set(awards);
+            await refreshData();
+            openStatsPopup(currentStatsManagerId);
+        }
+
+        // Manual Stats Editor
+        function openManualStatsEditor() {
+            if (!isAdmin || !currentStatsManagerId) return;
+            
+            const manager = managers.find(m => m.id === currentStatsManagerId);
+            if (!manager) return;
+            
+            const stats = manager.manualStats || manager.stats || {};
+            
+            document.getElementById('manualW').value = stats.w || 0;
+            document.getElementById('manualD').value = stats.d || 0;
+            document.getElementById('manualL').value = stats.l || 0;
+            document.getElementById('manualMP').value = stats.mp || 0;
+            document.getElementById('manualGS').value = stats.gs || 0;
+            document.getElementById('manualGC').value = stats.gc || 0;
+            document.getElementById('manualFW').value = stats.fw || 0;
+            document.getElementById('manualFL').value = stats.fl || 0;
+            
+            document.getElementById('manualStatsModal').classList.add('active');
+        }
+
+        function closeManualStatsModal() {
+            document.getElementById('manualStatsModal').classList.remove('active');
+        }
+
+        async function saveManualStats() {
+            if (!currentStatsManagerId) return;
+            
+            const manualStats = {
+                w: parseInt(document.getElementById('manualW').value) || 0,
+                d: parseInt(document.getElementById('manualD').value) || 0,
+                l: parseInt(document.getElementById('manualL').value) || 0,
+                mp: parseInt(document.getElementById('manualMP').value) || 0,
+                gs: parseInt(document.getElementById('manualGS').value) || 0,
+                gc: parseInt(document.getElementById('manualGC').value) || 0,
+                fw: parseInt(document.getElementById('manualFW').value) || 0,
+                fl: parseInt(document.getElementById('manualFL').value) || 0,
+                gd: 0,
+                winRate: 0
+            };
+            
+            manualStats.gd = manualStats.gs - manualStats.gc;
+            manualStats.winRate = (manualStats.w + manualStats.d + manualStats.l) > 0 
+                ? ((manualStats.w / (manualStats.w + manualStats.d + manualStats.l)) * 100).toFixed(1)
+                : 0;
+            manualStats.winRate = parseFloat(manualStats.winRate);
+            
+            await database.ref(`ranks/${currentStatsManagerId}/manualStats`).set(manualStats);
+            await refreshData();
+            closeManualStatsModal();
+            openStatsPopup(currentStatsManagerId);
+            alert('Manual stats saved!');
+        }
+
+        async function resetToAutoStats() {
+            if (!confirm('Reset to auto-calculated stats? This will remove manual overrides.')) return;
+            
+            await database.ref(`ranks/${currentStatsManagerId}/manualStats`).remove();
+            await refreshData();
+            closeManualStatsModal();
+            openStatsPopup(currentStatsManagerId);
+            alert('Reset to auto-calculated stats!');
+        }
+
         // Ranking Method Popup
         function showRankingMethodPopup() {
             document.getElementById('rankingMethodPopup').classList.add('active');
+            closeMenu();
         }
 
         function closeRankingMethodPopup() {
