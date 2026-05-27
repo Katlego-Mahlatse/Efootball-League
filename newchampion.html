@@ -499,7 +499,6 @@
       letter-spacing: 0.5px;
     }
 
-    /* ─── SCROLLBAR ─── */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
     ::-webkit-scrollbar-thumb { background: rgba(197,166,71,0.4); border-radius: 3px; }
@@ -517,7 +516,6 @@
 </head>
 <body>
 
-<!-- NAVBAR -->
 <div class="navbar">
   <div id="logoContainer"></div>
   <button class="menu-btn" id="menuBtn" aria-label="Menu">
@@ -525,7 +523,6 @@
   </button>
 </div>
 
-<!-- OVERLAY + SIDE MENU -->
 <div class="overlay" id="overlay"></div>
 <div class="side-menu" id="sideMenu">
   <div class="close-menu" id="closeMenuBtn">&#x2715;</div>
@@ -533,7 +530,6 @@
   <div class="menu-item" id="adminModeBtn">🔐 Admin Mode</div>
 </div>
 
-<!-- SLIDESHOW -->
 <div class="slideshow-wrapper">
   <div class="slideshow-frame">
     <img id="slideshowImg" class="slideshow-img" src="" alt="Slideshow" style="display:none;">
@@ -541,7 +537,6 @@
   <div class="dots-container" id="dotsContainer"></div>
 </div>
 
-<!-- SEASON SELECTOR -->
 <div class="season-bar">
   <div class="season-controls">
     <button class="season-arrow" id="prevSeasonBtn">&#8249;</button>
@@ -555,7 +550,6 @@
   </div>
 </div>
 
-<!-- TABS -->
 <div class="tabs-container">
   <button class="tab-btn active" data-tab="fixtures">Fixtures</button>
   <button class="tab-btn" data-tab="results">Results</button>
@@ -563,20 +557,17 @@
   <button class="tab-btn" data-tab="assists">Top Assists</button>
 </div>
 
-<!-- CONTENT -->
 <div class="content-card" id="contentCard">
   <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
 </div>
 
 <footer>eFootball Fan Hub &mdash; UEFA Champions League &copy; 2025</footer>
 
-<!-- MODAL -->
 <div id="genericModal" class="modal-overlay">
   <div class="modal-card" id="modalContent"></div>
 </div>
 
 <script>
-// ─── FIREBASE ───
 const firebaseConfig = {
   apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
   authDomain: "efootball-412.firebaseapp.com",
@@ -601,7 +592,6 @@ let teamIcons = {};
 let fixtures = [], results = [], topScorers = [], topAssists = [];
 let slideshowImages = [], slideInterval = null, currentSlide = 0, slideshowDuration = 3000;
 
-// ─── HELPERS ───
 async function uploadToImgBB(blob) {
   const fd = new FormData();
   fd.append('image', blob);
@@ -643,7 +633,6 @@ function showModal(html) {
 }
 function closeModal() { document.getElementById('genericModal').classList.remove('active'); }
 
-// ─── BACKGROUND & LOGO ───
 async function loadBackground() {
   const snap = await db.ref(`${BASE_PATH}/settings/backgroundImage`).once('value');
   const val  = snap.val();
@@ -682,7 +671,6 @@ async function loadTeamIcons() {
   teamIcons  = snap.val() || {};
 }
 
-// ─── SEASONS ───
 async function loadSeasons() {
   const snap    = await db.ref(`${BASE_PATH}/seasons`).once('value');
   const seasons = snap.val() || {};
@@ -770,7 +758,6 @@ async function setActiveSeason() {
   alert(`Season ${currentSeasonId} is now active`);
 }
 
-// ─── FIXTURES CRUD ───
 async function openFixtureModal(item = null) {
   showModal(`
     <h3>${item ? 'Edit Fixture' : 'Add Fixture'}</h3>
@@ -814,7 +801,6 @@ async function deleteFixture(id) {
   await loadSeasonData();
 }
 
-// ─── RESULTS CRUD ───
 async function openResultModal(item = null, prefill = null) {
   const p = prefill || {};
   showModal(`
@@ -866,13 +852,11 @@ async function deleteResult(id) {
   await loadSeasonData();
 }
 
-// ─── STATS CRUD ───
 async function openStatsModal(type) {
   const list = type === 'scorer' ? topScorers : topAssists;
   const label = type === 'scorer' ? 'Goals' : 'Assists';
   const sorted = [...list].sort((a,b) => (b.count||0) - (a.count||0));
   const medals = ['🥇','🥈','🥉'];
-
   let rows = sorted.map((p, i) => `
     <tr class="${i < 3 ? 'rank-'+(i+1) : ''}">
       <td>${medals[i] || (i+1)}</td>
@@ -883,24 +867,19 @@ async function openStatsModal(type) {
         <button class="btn-sm btn-edit" data-id="${p.id}">Edit</button>
         <button class="btn-sm btn-delete" data-id="${p.id}">Del</button>
       </td>` : ''}
-    </tr>
+    </td>
   `).join('');
-
   showModal(`
     <h3>${type === 'scorer' ? '⚽ Top Scorers' : '🎯 Top Assists'}</h3>
     <div class="stats-table-wrap">
       <table class="stats-table">
-        <thead><tr>
-          <th>#</th><th>Player</th><th>Team</th><th>${label}</th>
-          ${isAdmin ? '<th>Actions</th>' : ''}
-        </tr></thead>
-        <tbody>${rows || `<tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,0.4);padding:20px;">No data yet</td></tr>`}</tbody>
+        <thead><tr><th>#</th><th>Player</th><th>Team</th><th>${label}</th>${isAdmin ? '<th>Actions</th>' : ''}</tr></thead>
+        <tbody>${rows || `<tr><td colspan="5" style="text-align:center;padding:20px;">No data yet</td></tr>`}</tbody>
       </table>
     </div>
     ${isAdmin ? `<button class="add-btn-main" id="addStatBtn">+ Add Entry</button>` : ''}
     <div class="modal-btns"><button class="modal-btn-cancel" id="closeStatsBtn" style="width:100%;">Close</button></div>
   `);
-
   document.getElementById('closeStatsBtn').onclick = closeModal;
   if (isAdmin) {
     document.getElementById('addStatBtn').onclick = () => openStatEntryModal(type);
@@ -947,7 +926,6 @@ async function openStatEntryModal(type, entry = null) {
   };
 }
 
-// ─── RENDER ───
 function renderFixtures() {
   const sorted = [...fixtures].sort((a,b) => (a.md||0) - (b.md||0));
   if (!sorted.length) return `<div class="empty-state"><div class="empty-icon">📅</div><p>No fixtures scheduled yet</p></div>`;
@@ -960,9 +938,7 @@ function renderFixtures() {
             <span class="team-name">${f.homeTeam}</span>
             ${teamIconHtml(f.homeTeam)}
           </div>
-          <div class="match-center">
-            <span class="vs-text">VS</span>
-          </div>
+          <div class="match-center"><span class="vs-text">VS</span></div>
           <div class="team-side away">
             <span class="team-name">${f.awayTeam}</span>
             ${teamIconHtml(f.awayTeam)}
@@ -974,8 +950,7 @@ function renderFixtures() {
           ${f.description ? `<span class="meta-tag">${f.description}</span>` : ''}
           ${f.md ? `<span class="meta-tag">MD ${f.md}</span>` : ''}
         </div>
-        ${isAdmin ? `
-        <div class="admin-row">
+        ${isAdmin ? `<div class="admin-row">
           <button class="btn-sm btn-add-result" data-id="${f.id}">+ Add Result</button>
           <button class="btn-sm btn-edit" data-id="${f.id}">Edit</button>
           <button class="btn-sm btn-delete" data-id="${f.id}">Delete</button>
@@ -1000,9 +975,7 @@ function renderResults() {
             <span class="team-name">${r.homeTeam}</span>
             ${teamIconHtml(r.homeTeam)}
           </div>
-          <div class="match-center">
-            <span class="score-display">${r.homeScore} - ${r.awayScore}</span>
-          </div>
+          <div class="match-center"><span class="score-display">${r.homeScore} - ${r.awayScore}</span></div>
           <div class="team-side away">
             <span class="team-name">${r.awayTeam}</span>
             ${teamIconHtml(r.awayTeam)}
@@ -1014,8 +987,7 @@ function renderResults() {
           ${r.matchType ? `<span class="meta-tag">${r.matchType}</span>` : ''}
           ${r.md ? `<span class="meta-tag">MD ${r.md}</span>` : ''}
         </div>
-        ${isAdmin ? `
-        <div class="admin-row">
+        ${isAdmin ? `<div class="admin-row">
           <button class="btn-sm btn-edit" data-id="${r.id}">Edit</button>
           <button class="btn-sm btn-delete" data-id="${r.id}">Delete</button>
         </div>` : ''}
@@ -1032,13 +1004,14 @@ function renderCurrentTab() {
   const card = document.getElementById('contentCard');
   if (tab === 'fixtures') { card.innerHTML = renderFixtures(); attachFixtureHandlers(); }
   else if (tab === 'results') { card.innerHTML = renderResults(); attachResultHandlers(); }
-  else if (tab === 'scorers') { card.innerHTML = ''; openStatsModal('scorer'); }
-  else if (tab === 'assists') { card.innerHTML = ''; openStatsModal('assist'); }
+  else if (tab === 'scorers') { openStatsModal('scorer'); card.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><span>Loading stats...</span></div>'; }
+  else if (tab === 'assists') { openStatsModal('assist'); card.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><span>Loading stats...</span></div>'; }
 }
 
 function attachFixtureHandlers() {
   if (!isAdmin) return;
-  document.getElementById('addFixtureBtn')?.addEventListener('click', () => openFixtureModal());
+  const addBtn = document.getElementById('addFixtureBtn');
+  if (addBtn) addBtn.onclick = () => openFixtureModal();
   document.querySelectorAll('.btn-edit[data-id]').forEach(btn => {
     const f = fixtures.find(x => x.id === btn.dataset.id);
     btn.onclick = () => openFixtureModal(f);
@@ -1054,7 +1027,8 @@ function attachFixtureHandlers() {
 
 function attachResultHandlers() {
   if (!isAdmin) return;
-  document.getElementById('addResultBtn')?.addEventListener('click', () => openResultModal());
+  const addBtn = document.getElementById('addResultBtn');
+  if (addBtn) addBtn.onclick = () => openResultModal();
   document.querySelectorAll('.btn-edit[data-id]').forEach(btn => {
     const r = results.find(x => x.id === btn.dataset.id);
     btn.onclick = () => openResultModal(r);
@@ -1064,7 +1038,6 @@ function attachResultHandlers() {
   });
 }
 
-// ─── SLIDESHOW ───
 async function loadSlideshow() {
   const [imgSnap, durSnap] = await Promise.all([
     db.ref(`${BASE_PATH}/slideshow/images`).once('value'),
@@ -1103,7 +1076,6 @@ function updateSlide() {
   });
 }
 
-// ─── ADMIN SETTINGS ───
 function openAdminSettings() {
   showModal(`
     <h3>⚙️ Admin Settings</h3>
@@ -1143,36 +1115,25 @@ function pickFile(accept) {
   });
 }
 
-// ─── BACKGROUND CROP TOOL ───
 let cropState = { img: null, x: 0, y: 0, scale: 1, dragging: false, startX: 0, startY: 0, originX: 0, originY: 0, naturalW: 0, naturalH: 0 };
 
 async function openBgCropTool() {
   const file = await pickFile('image/*');
   if (!file) return;
   const objectUrl = URL.createObjectURL(file);
-
   showModal(`
     <h3>🌄 Crop Background</h3>
     <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-bottom:12px;">Drag to reposition • Use slider to zoom</p>
     <div class="crop-container" id="cropContainer">
       <img class="crop-img" id="cropImg" src="${objectUrl}" draggable="false">
     </div>
-    <div class="crop-controls">
-      <label>Zoom</label>
-      <input class="crop-slider" id="zoomSlider" type="range" min="0.5" max="3" step="0.01" value="1">
-    </div>
-    <div class="modal-btns">
-      <button class="modal-btn-primary" id="applyCropBtn">Apply Background</button>
-      <button class="modal-btn-cancel" id="cancelCropBtn">Cancel</button>
-    </div>
+    <div class="crop-controls"><label>Zoom</label><input class="crop-slider" id="zoomSlider" type="range" min="0.5" max="3" step="0.01" value="1"></div>
+    <div class="modal-btns"><button class="modal-btn-primary" id="applyCropBtn">Apply Background</button><button class="modal-btn-cancel" id="cancelCropBtn">Cancel</button></div>
   `);
-
   const container = document.getElementById('cropContainer');
   const img       = document.getElementById('cropImg');
   const slider    = document.getElementById('zoomSlider');
-
   cropState = { x:0, y:0, scale:1, dragging:false, startX:0, startY:0, originX:0, originY:0 };
-
   img.onload = () => {
     cropState.naturalW = img.naturalWidth;
     cropState.naturalH = img.naturalHeight;
@@ -1188,13 +1149,10 @@ async function openBgCropTool() {
     cropState.y = (ch - img.naturalHeight * fit) / 2;
     applyTransform();
   };
-
   function applyTransform() {
     img.style.transform = `translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale})`;
     img.style.transformOrigin = '0 0';
-    img.style.left = '0'; img.style.top = '0';
   }
-
   slider.oninput = () => {
     const oldScale = cropState.scale;
     const newScale = parseFloat(slider.value);
@@ -1205,142 +1163,61 @@ async function openBgCropTool() {
     cropState.scale = newScale;
     applyTransform();
   };
-
-  container.addEventListener('mousedown', e => {
-    cropState.dragging = true;
-    cropState.startX   = e.clientX - cropState.x;
-    cropState.startY   = e.clientY - cropState.y;
-    e.preventDefault();
-  });
-  container.addEventListener('touchstart', e => {
-    cropState.dragging = true;
-    cropState.startX   = e.touches[0].clientX - cropState.x;
-    cropState.startY   = e.touches[0].clientY - cropState.y;
-  }, { passive:true });
-  document.addEventListener('mousemove', e => {
-    if (!cropState.dragging) return;
-    cropState.x = e.clientX - cropState.startX;
-    cropState.y = e.clientY - cropState.startY;
-    applyTransform();
-  });
-  document.addEventListener('touchmove', e => {
-    if (!cropState.dragging) return;
-    cropState.x = e.touches[0].clientX - cropState.startX;
-    cropState.y = e.touches[0].clientY - cropState.startY;
-    applyTransform();
-  }, { passive:true });
+  container.addEventListener('mousedown', e => { cropState.dragging = true; cropState.startX = e.clientX - cropState.x; cropState.startY = e.clientY - cropState.y; e.preventDefault(); });
+  container.addEventListener('touchstart', e => { cropState.dragging = true; cropState.startX = e.touches[0].clientX - cropState.x; cropState.startY = e.touches[0].clientY - cropState.y; }, { passive:true });
+  document.addEventListener('mousemove', e => { if (!cropState.dragging) return; cropState.x = e.clientX - cropState.startX; cropState.y = e.clientY - cropState.startY; applyTransform(); });
+  document.addEventListener('touchmove', e => { if (!cropState.dragging) return; cropState.x = e.touches[0].clientX - cropState.startX; cropState.y = e.touches[0].clientY - cropState.startY; applyTransform(); }, { passive:true });
   const stopDrag = () => { cropState.dragging = false; };
-  document.addEventListener('mouseup', stopDrag);
-  document.addEventListener('touchend', stopDrag);
-
+  document.addEventListener('mouseup', stopDrag); document.addEventListener('touchend', stopDrag);
   document.getElementById('cancelCropBtn').onclick = closeModal;
   document.getElementById('applyCropBtn').onclick = async () => {
     document.getElementById('applyCropBtn').textContent = 'Uploading…';
     document.getElementById('applyCropBtn').disabled = true;
     try {
-      // Capture the crop as canvas
-      const cw = container.clientWidth;
-      const ch = container.clientHeight;
-      const canvas = document.createElement('canvas');
-      canvas.width  = cw * 2;
-      canvas.height = ch * 2;
-      const ctx = canvas.getContext('2d');
-      ctx.scale(2, 2);
-      ctx.drawImage(
-        img,
-        -cropState.x / cropState.scale,
-        -cropState.y / cropState.scale,
-        cw / cropState.scale,
-        ch / cropState.scale,
-        0, 0, cw, ch
-      );
+      const cw = container.clientWidth; const ch = container.clientHeight;
+      const canvas = document.createElement('canvas'); canvas.width = cw * 2; canvas.height = ch * 2;
+      const ctx = canvas.getContext('2d'); ctx.scale(2,2);
+      ctx.drawImage(img, -cropState.x / cropState.scale, -cropState.y / cropState.scale, cw / cropState.scale, ch / cropState.scale, 0, 0, cw, ch);
       const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
       const url  = await uploadToImgBB(blob);
       await db.ref(`${BASE_PATH}/settings/backgroundImage`).set(url);
-      document.body.style.setProperty('--bg-image', `url(${url})`);
+      document.body.style.setProperty('--bg-image', `url(${url}`);
       document.body.classList.add('has-bg');
-      closeModal();
-      alert('Background applied!');
-      URL.revokeObjectURL(objectUrl);
-    } catch(e) {
-      alert('Failed: ' + e.message);
-      document.getElementById('applyCropBtn').textContent = 'Apply Background';
-      document.getElementById('applyCropBtn').disabled = false;
-    }
+      closeModal(); alert('Background applied!'); URL.revokeObjectURL(objectUrl);
+    } catch(e) { alert('Failed: ' + e.message); document.getElementById('applyCropBtn').textContent = 'Apply Background'; document.getElementById('applyCropBtn').disabled = false; }
   };
 }
 
-// ─── SLIDESHOW MANAGER ───
 async function manageSlideshowUI() {
   const refresh = () => {
     let preview = '<div class="img-preview-grid">';
-    slideshowImages.forEach((url, idx) => {
-      preview += `<div class="preview-thumb"><img src="${url}" alt="slide"><span class="thumb-del" data-idx="${idx}">×</span></div>`;
-    });
+    slideshowImages.forEach((url, idx) => { preview += `<div class="preview-thumb"><img src="${url}" alt="slide"><span class="thumb-del" data-idx="${idx}">×</span></div>`; });
     preview += '</div>';
     showModal(`
-      <h3>🎞️ Slideshow Manager</h3>
-      ${preview}
-      <label>Add New Slide</label>
-      <input type="file" id="newSlideFile" accept="image/*" style="border-radius:8px;">
+      <h3>🎞️ Slideshow Manager</h3>${preview}
+      <label>Add New Slide</label><input type="file" id="newSlideFile" accept="image/*" style="border-radius:8px;">
       <button class="add-btn-main" id="addSlideBtn">+ Add Slide</button>
-      <label style="margin-top:14px;">Duration (seconds)</label>
-      <input type="number" id="slideDur" value="${slideshowDuration/1000}" step="0.5" min="1" max="10">
-      <div class="modal-btns">
-        <button class="modal-btn-primary" id="saveDurBtn">Save Duration</button>
-        <button class="modal-btn-cancel" id="closeSlideBtn">Close</button>
-      </div>
+      <label style="margin-top:14px;">Duration (seconds)</label><input type="number" id="slideDur" value="${slideshowDuration/1000}" step="0.5" min="1" max="10">
+      <div class="modal-btns"><button class="modal-btn-primary" id="saveDurBtn">Save Duration</button><button class="modal-btn-cancel" id="closeSlideBtn">Close</button></div>
     `);
-    document.querySelectorAll('.thumb-del').forEach(btn => {
-      btn.onclick = async () => {
-        const idx = parseInt(btn.dataset.idx);
-        slideshowImages.splice(idx, 1);
-        await db.ref(`${BASE_PATH}/slideshow/images`).set(slideshowImages.length ? slideshowImages : null);
-        await loadSlideshow(); refresh();
-      };
-    });
-    document.getElementById('addSlideBtn').onclick = async () => {
-      const file = document.getElementById('newSlideFile').files[0];
-      if (!file) return;
-      document.getElementById('addSlideBtn').textContent = 'Uploading…';
-      try {
-        const url = await uploadToImgBB(file);
-        slideshowImages.push(url);
-        await db.ref(`${BASE_PATH}/slideshow/images`).set(slideshowImages);
-        await loadSlideshow(); refresh();
-      } catch(e) { alert('Upload failed: ' + e.message); document.getElementById('addSlideBtn').textContent = '+ Add Slide'; }
-    };
-    document.getElementById('saveDurBtn').onclick = async () => {
-      let sec = parseFloat(document.getElementById('slideDur').value);
-      if (isNaN(sec)) sec = 3;
-      sec = Math.min(10, Math.max(1, sec));
-      await db.ref(`${BASE_PATH}/slideshow/duration`).set(sec * 1000);
-      await loadSlideshow();
-      alert('Duration saved!'); closeModal();
-    };
+    document.querySelectorAll('.thumb-del').forEach(btn => { btn.onclick = async () => { const idx = parseInt(btn.dataset.idx); slideshowImages.splice(idx,1); await db.ref(`${BASE_PATH}/slideshow/images`).set(slideshowImages.length ? slideshowImages : null); await loadSlideshow(); refresh(); }; });
+    document.getElementById('addSlideBtn').onclick = async () => { const file = document.getElementById('newSlideFile').files[0]; if(!file) return; document.getElementById('addSlideBtn').textContent = 'Uploading…'; try { const url = await uploadToImgBB(file); slideshowImages.push(url); await db.ref(`${BASE_PATH}/slideshow/images`).set(slideshowImages); await loadSlideshow(); refresh(); } catch(e) { alert('Upload failed: '+e.message); document.getElementById('addSlideBtn').textContent = '+ Add Slide'; } };
+    document.getElementById('saveDurBtn').onclick = async () => { let sec = parseFloat(document.getElementById('slideDur').value); if(isNaN(sec)) sec=3; sec = Math.min(10,Math.max(1,sec)); await db.ref(`${BASE_PATH}/slideshow/duration`).set(sec*1000); await loadSlideshow(); alert('Duration saved!'); closeModal(); };
     document.getElementById('closeSlideBtn').onclick = closeModal;
   };
   refresh();
 }
 
-// ─── TEAM ICON UPLOAD (remove.bg + ImgBB) ───
 async function uploadTeamIcon() {
   const teamName = prompt("Enter team name exactly as it appears in fixtures/results:");
   if (!teamName) return;
   const file = await pickFile('image/*');
   if (!file) return;
-
   const loadMsg = () => showModal(`<h3>Processing Icon</h3><div class="loading-spinner"><div class="spinner"></div><span>Removing background…</span></div>`);
   loadMsg();
-
   try {
     let transparentBlob;
-    try {
-      transparentBlob = await removeBackground(file);
-    } catch(e) {
-      console.warn('remove.bg failed, using original:', e);
-      transparentBlob = file;
-    }
+    try { transparentBlob = await removeBackground(file); } catch(e) { console.warn('remove.bg failed, using original:', e); transparentBlob = file; }
     document.querySelector('.loading-spinner span').textContent = 'Uploading to storage…';
     const url = await uploadToImgBB(transparentBlob);
     await db.ref(`${BASE_PATH}/teamIcons/${teamName}`).set(url);
@@ -1348,26 +1225,15 @@ async function uploadTeamIcon() {
     renderCurrentTab();
     closeModal();
     alert(`Icon saved for "${teamName}"!`);
-  } catch(e) {
-    alert('Failed: ' + e.message);
-    closeModal();
-  }
+  } catch(e) { alert('Failed: ' + e.message); closeModal(); }
 }
 
-// ─── MENU ───
-function toggleMenu() {
-  document.getElementById('sideMenu').classList.toggle('active');
-  document.getElementById('overlay').classList.toggle('active');
-}
-function closeMenu() {
-  document.getElementById('sideMenu').classList.remove('active');
-  document.getElementById('overlay').classList.remove('active');
-}
-
-document.getElementById('menuBtn').onclick    = toggleMenu;
+function toggleMenu() { document.getElementById('sideMenu').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); }
+function closeMenu() { document.getElementById('sideMenu').classList.remove('active'); document.getElementById('overlay').classList.remove('active'); }
+document.getElementById('menuBtn').onclick = toggleMenu;
 document.getElementById('closeMenuBtn').onclick = closeMenu;
-document.getElementById('overlay').onclick    = closeMenu;
-document.getElementById('homeBtn').onclick    = () => window.location.href = 'feed.html';
+document.getElementById('overlay').onclick = closeMenu;
+document.getElementById('homeBtn').onclick = () => window.location.href = 'feed.html';
 document.getElementById('adminModeBtn').onclick = () => {
   const key = prompt("Enter admin key:");
   if (key === "admin@100") {
@@ -1385,15 +1251,11 @@ document.getElementById('adminModeBtn').onclick = () => {
     }
   } else alert("Incorrect key");
 };
-
-// Season buttons
-document.getElementById('prevSeasonBtn').onclick    = () => switchSeason(-1);
-document.getElementById('nextSeasonBtn').onclick    = () => switchSeason(1);
-document.getElementById('addSeasonBtn').onclick     = () => isAdmin && addNewSeason();
-document.getElementById('renameSeasonBtn').onclick  = () => isAdmin && renameSeason();
+document.getElementById('prevSeasonBtn').onclick = () => switchSeason(-1);
+document.getElementById('nextSeasonBtn').onclick = () => switchSeason(1);
+document.getElementById('addSeasonBtn').onclick = () => isAdmin && addNewSeason();
+document.getElementById('renameSeasonBtn').onclick = () => isAdmin && renameSeason();
 document.getElementById('setActiveSeasonBtn').onclick = () => isAdmin && setActiveSeason();
-
-// Tabs
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.onclick = () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1401,14 +1263,11 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     renderCurrentTab();
   };
 });
-
-// ─── INIT ───
 async function init() {
   await Promise.all([loadBgSettings(), loadLogo(), loadTeamIcons()]);
   await loadSeasons();
   await loadSlideshow();
 }
-
 window.goHome = () => window.location.href = 'feed.html';
 init();
 </script>
