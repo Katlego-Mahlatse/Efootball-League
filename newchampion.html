@@ -2,514 +2,560 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>UEFA Champions League | eFootball Fan Hub</title>
-  <!-- Firebase SDKs -->
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     :root {
       --ucl-blue: #0A2B5E;
       --ucl-blue-light: #0E3A7A;
+      --ucl-blue-dark: #061A3A;
       --ucl-gold: #C5A647;
+      --ucl-gold-light: #E2C76A;
       --white: #FFFFFF;
-      --dark-text: #1A2C3E;
+      --glass-bg: rgba(255,255,255,0.07);
+      --glass-border: rgba(255,255,255,0.15);
+      --glass-blur: blur(12px);
     }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--ucl-blue);
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--ucl-blue-dark);
       min-height: 100vh;
-      transition: background-image 0.3s ease;
-      position: relative;
+      overflow-x: hidden;
     }
 
-    body.has-bg-image::before {
+    body.has-bg::before {
       content: '';
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-size: cover;
-      background-position: center;
+      inset: 0;
+      background-image: var(--bg-image);
+      background-size: var(--bg-size, cover);
+      background-position: var(--bg-pos, center);
       background-repeat: no-repeat;
-      opacity: 0.85;
+      z-index: -2;
+    }
+    body.has-bg::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(6,26,58,0.55);
       z-index: -1;
     }
 
-    /* Smaller navbar */
+    /* ─── NAVBAR ─── */
     .navbar {
-      background: var(--white);
-      padding: 0.5rem 1.5rem;
+      background: rgba(6,26,58,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(197,166,71,0.3);
+      padding: 0 2rem;
+      height: 62px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       position: sticky;
       top: 0;
       z-index: 100;
     }
-
-    .navbar-logo {
-      height: 45px;
-      max-width: 160px;
-      object-fit: contain;
-      cursor: pointer;
-    }
-
+    .navbar-logo { height: 42px; max-width: 160px; object-fit: contain; cursor: pointer; }
     .navbar-logo-placeholder {
-      height: 45px;
-      width: 160px;
-      background: #f0f0f0;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--ucl-blue);
-      font-weight: bold;
-      border: 1px solid var(--ucl-blue);
-      font-size: 0.8rem;
-    }
-
-    /* Menu button */
-    .menu-btn {
-      background: var(--ucl-blue);
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 4px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.3rem;
+      letter-spacing: 2px;
+      color: var(--ucl-gold);
       cursor: pointer;
-      border: none;
-      transition: transform 0.2s ease;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
+    .menu-btn {
+      background: rgba(197,166,71,0.15);
+      border: 1px solid rgba(197,166,71,0.4);
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      gap: 5px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .menu-btn span { width: 18px; height: 2px; background: var(--ucl-gold); border-radius: 2px; transition: 0.2s; }
+    .menu-btn:hover { background: rgba(197,166,71,0.3); }
 
-    .menu-btn span {
-      width: 20px;
-      height: 2.5px;
-      background: var(--white);
-      border-radius: 2px;
-    }
-
-    .menu-btn:hover {
-      transform: scale(1.05);
-    }
-
-    /* Overlay & side menu */
-    .overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.8);
-      z-index: 199;
-      display: none;
-    }
+    /* ─── SIDE MENU ─── */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 199; display: none; backdrop-filter: blur(2px); }
     .overlay.active { display: block; }
-
     .side-menu {
-      position: fixed;
-      top: 0;
-      right: -280px;
-      width: 260px;
-      height: 100%;
-      background: var(--white);
-      z-index: 200;
-      padding: 25px 20px;
-      transition: right 0.3s ease;
-      box-shadow: -2px 0 20px rgba(0,0,0,0.2);
-      border-left: 3px solid var(--ucl-blue);
+      position: fixed; top: 0; right: -300px; width: 280px; height: 100%;
+      background: rgba(6,26,58,0.97);
+      backdrop-filter: blur(20px);
+      border-left: 1px solid rgba(197,166,71,0.3);
+      z-index: 200; padding: 28px 20px;
+      transition: right 0.35s cubic-bezier(.4,0,.2,1);
     }
     .side-menu.active { right: 0; }
-
-    .close-menu {
-      text-align: right;
-      font-size: 26px;
-      cursor: pointer;
-      color: var(--ucl-blue);
-      margin-bottom: 25px;
-    }
+    .close-menu { text-align: right; font-size: 1.8rem; cursor: pointer; color: var(--ucl-gold); margin-bottom: 30px; line-height: 1; }
     .menu-item {
-      padding: 12px 18px;
-      margin: 8px 0;
-      background: rgba(10,43,94,0.08);
-      border-radius: 30px;
-      cursor: pointer;
-      font-weight: 500;
-      color: var(--ucl-blue);
-      transition: 0.2s;
+      padding: 13px 20px; margin: 8px 0;
+      border: 1px solid rgba(197,166,71,0.2);
+      border-radius: 12px; cursor: pointer;
+      font-weight: 600; font-size: 1rem;
+      color: var(--white);
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
     }
-    .menu-item:hover {
-      background: var(--ucl-blue);
-      color: white;
-      transform: translateX(5px);
-    }
+    .menu-item:hover { background: rgba(197,166,71,0.2); border-color: var(--ucl-gold); color: var(--ucl-gold); }
 
-    /* Slideshow */
-    .slideshow-container {
-      text-align: center;
-      padding: 20px 20px 10px;
+    /* ─── SLIDESHOW ─── */
+    .slideshow-wrapper {
+      padding: 24px 40px 16px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .slideshow-frame {
+      width: 100%; max-width: 900px;
+      border-radius: 20px; overflow: hidden;
+      position: relative;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      border: 1px solid rgba(197,166,71,0.25);
     }
     .slideshow-img {
-      max-width: 90%;
-      max-height: 380px;
-      border-radius: 20px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.3);
-      border: 2px solid var(--white);
-      object-fit: cover;
+      width: 100%; height: 360px;
+      object-fit: cover; display: block;
+      transition: opacity 0.5s ease;
     }
-    .dots-container {
-      margin-top: 12px;
-    }
+    .dots-container { margin-top: 14px; display: flex; gap: 8px; }
     .dot {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.5);
-      margin: 0 5px;
-      cursor: pointer;
-      transition: 0.2s;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,0.3); cursor: pointer; transition: all 0.2s;
     }
-    .dot.active {
-      background: var(--white);
-      transform: scale(1.2);
-    }
+    .dot.active { background: var(--ucl-gold); transform: scale(1.3); }
 
-    /* Season selector - right aligned under slideshow */
+    /* ─── SEASON SELECTOR ─── */
     .season-bar {
-      display: flex;
-      justify-content: flex-end;
-      margin: 15px 30px 10px;
+      display: flex; justify-content: center;
+      margin: 18px 0 10px;
     }
     .season-controls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(0,0,0,0.4);
-      padding: 5px 15px;
-      border-radius: 50px;
-      backdrop-filter: blur(4px);
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(6,26,58,0.6);
+      border: 1px solid rgba(197,166,71,0.3);
+      padding: 6px 20px; border-radius: 50px;
+      backdrop-filter: blur(8px);
     }
     .season-arrow {
-      background: white;
-      border: none;
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      font-size: 1.4rem;
-      cursor: pointer;
-      font-weight: bold;
-      color: var(--ucl-blue);
-      transition: 0.2s;
+      background: rgba(197,166,71,0.15);
+      border: 1px solid rgba(197,166,71,0.4);
+      width: 32px; height: 32px; border-radius: 50%;
+      font-size: 1.2rem; cursor: pointer;
+      color: var(--ucl-gold); font-weight: bold;
+      transition: all 0.2s; line-height: 1;
     }
-    .season-arrow:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
+    .season-arrow:hover:not(:disabled) { background: var(--ucl-gold); color: var(--ucl-blue-dark); }
+    .season-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
     .season-number {
-      font-weight: bold;
-      font-size: 1.2rem;
-      background: white;
-      padding: 4px 18px;
-      border-radius: 30px;
-      color: var(--ucl-blue);
-      cursor: pointer;
-      min-width: 120px;
-      text-align: center;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.3rem; letter-spacing: 2px;
+      color: var(--ucl-gold); min-width: 110px; text-align: center;
     }
-    .season-admin-btns {
-      display: flex;
-      gap: 8px;
-      margin-left: 12px;
-    }
+    .season-admin-btns { display: flex; gap: 6px; margin-left: 10px; }
     .season-admin-btn {
-      background: white;
-      border: none;
-      padding: 4px 14px;
-      border-radius: 30px;
-      font-weight: bold;
-      cursor: pointer;
-      color: var(--ucl-blue);
-      font-size: 0.8rem;
+      background: rgba(197,166,71,0.15);
+      border: 1px solid rgba(197,166,71,0.4);
+      padding: 4px 12px; border-radius: 20px;
+      font-weight: 600; cursor: pointer;
+      color: var(--ucl-gold); font-size: 0.75rem;
+      font-family: 'Rajdhani', sans-serif;
+      transition: all 0.2s;
     }
+    .season-admin-btn:hover { background: var(--ucl-gold); color: var(--ucl-blue-dark); }
 
-    /* Horizontal tabs at bottom */
+    /* ─── TABS ─── */
     .tabs-container {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      margin: 30px 20px 20px;
-      flex-wrap: wrap;
+      display: flex; justify-content: center;
+      gap: 0; margin: 20px 40px 0;
+      background: rgba(6,26,58,0.5);
+      border: 1px solid rgba(197,166,71,0.2);
+      border-radius: 50px;
+      padding: 5px;
+      backdrop-filter: blur(8px);
+      max-width: 700px;
+      margin-left: auto; margin-right: auto;
     }
     .tab-btn {
-      background: transparent;
-      border: none;
-      font-size: 1rem;
-      font-weight: 600;
-      padding: 8px 22px;
-      cursor: pointer;
-      color: white;
+      flex: 1;
+      background: transparent; border: none;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem; font-weight: 700;
+      padding: 10px 18px; cursor: pointer;
+      color: rgba(255,255,255,0.6);
       border-radius: 40px;
-      transition: 0.2s;
+      letter-spacing: 0.5px;
+      transition: all 0.25s;
+      white-space: nowrap;
     }
     .tab-btn.active {
-      background: white;
-      color: var(--ucl-blue);
+      background: var(--ucl-gold);
+      color: var(--ucl-blue-dark);
     }
-    .tab-btn:hover:not(.active) {
-      background: rgba(255,255,255,0.2);
-    }
+    .tab-btn:hover:not(.active) { color: var(--ucl-gold); background: rgba(197,166,71,0.1); }
 
-    /* Transparent Card */
-    .card-transparent {
-      background: transparent;
-      backdrop-filter: blur(2px);
-      margin: 20px;
+    /* ─── CONTENT CARD ─── */
+    .content-card {
+      margin: 18px 40px 30px;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
       border-radius: 24px;
-      padding: 20px;
+      padding: 24px;
+      min-height: 200px;
     }
 
-    /* Fixtures / Results list */
-    .fixtures-list, .results-list {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+    /* ─── MATCH CARDS ─── */
+    .matches-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .match-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 16px 24px;
+      transition: all 0.2s;
     }
-    .fixture-item, .result-item {
-      background: rgba(255,255,255,0.12);
-      backdrop-filter: blur(8px);
-      border-radius: 20px;
-      padding: 14px 20px;
+    .match-card:hover { background: rgba(255,255,255,0.1); border-color: rgba(197,166,71,0.3); }
+
+    .match-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
       gap: 12px;
-      border: 1px solid rgba(255,255,255,0.2);
     }
-    .match-details {
-      flex: 2;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .match-teams {
+
+    .team-side {
       display: flex;
       align-items: center;
-      gap: 20px;
-      flex-wrap: wrap;
+      gap: 12px;
+      flex: 1;
     }
-    .team-with-icon {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 600;
-      font-size: 1rem;
-      color: white;
+    .team-side.away { flex-direction: row-reverse; }
+
+    .team-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700; font-size: 1.1rem;
+      color: var(--white);
+      letter-spacing: 0.3px;
     }
-    .team-icon-small {
-      width: 32px;
-      height: 32px;
-      object-fit: contain;
+    .team-side.away .team-name { text-align: right; }
+
+    .team-icon-wrap {
+      width: 44px; height: 44px;
       border-radius: 50%;
-      background: white;
-      padding: 2px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; flex-shrink: 0;
     }
-    .vs {
-      font-weight: bold;
-      color: var(--ucl-gold);
-      font-size: 1rem;
+    .team-icon-wrap img { width: 38px; height: 38px; object-fit: contain; }
+    .team-initials {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem; color: var(--ucl-gold);
+      letter-spacing: 1px;
     }
-    .match-score {
-      font-size: 1.2rem;
-      font-weight: bold;
-      color: var(--ucl-gold);
-      background: rgba(0,0,0,0.5);
-      padding: 2px 12px;
-      border-radius: 30px;
+
+    .match-center {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
+      flex-shrink: 0; min-width: 110px;
     }
+    .vs-text {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.4rem; color: var(--ucl-gold);
+      letter-spacing: 3px;
+    }
+    .score-display {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem; color: var(--ucl-gold);
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.3);
+      padding: 2px 16px; border-radius: 30px;
+      border: 1px solid rgba(197,166,71,0.3);
+    }
+
     .match-meta {
-      font-size: 0.8rem;
-      color: #ddd;
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
+      display: flex; gap: 8px; flex-wrap: wrap;
+      margin-top: 10px; justify-content: center;
     }
-    .match-meta span {
-      background: rgba(0,0,0,0.4);
-      padding: 2px 10px;
-      border-radius: 20px;
-    }
-    .admin-actions {
-      display: flex;
-      gap: 8px;
-    }
-    .edit-btn, .delete-btn, .add-result-btn {
-      background: white;
-      border: none;
-      padding: 5px 12px;
-      border-radius: 30px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 0.8rem;
+    .meta-tag {
+      font-size: 0.78rem; font-weight: 500;
+      color: rgba(255,255,255,0.6);
+      background: rgba(0,0,0,0.25);
+      padding: 2px 10px; border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.08);
+      font-family: 'Inter', sans-serif;
     }
 
-    /* Stats table (popup) */
+    .admin-row {
+      display: flex; gap: 8px; justify-content: flex-end;
+      margin-top: 10px;
+    }
+    .btn-sm {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700; font-size: 0.8rem;
+      padding: 4px 14px; border-radius: 20px;
+      border: none; cursor: pointer; transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .btn-edit { background: rgba(197,166,71,0.2); color: var(--ucl-gold); border: 1px solid rgba(197,166,71,0.4); }
+    .btn-edit:hover { background: var(--ucl-gold); color: var(--ucl-blue-dark); }
+    .btn-delete { background: rgba(220,50,50,0.2); color: #ff6b6b; border: 1px solid rgba(220,50,50,0.3); }
+    .btn-delete:hover { background: #cc3333; color: white; }
+    .btn-add-result { background: rgba(50,200,100,0.2); color: #5dde8a; border: 1px solid rgba(50,200,100,0.3); }
+    .btn-add-result:hover { background: #22884a; color: white; }
+
+    .add-btn-main {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(197,166,71,0.15);
+      border: 1px solid rgba(197,166,71,0.4);
+      color: var(--ucl-gold);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700; font-size: 0.95rem;
+      padding: 8px 20px; border-radius: 30px;
+      cursor: pointer; margin-top: 16px;
+      transition: all 0.2s; letter-spacing: 0.5px;
+    }
+    .add-btn-main:hover { background: var(--ucl-gold); color: var(--ucl-blue-dark); }
+
+    /* ─── STATS TABLE ─── */
+    .stats-table-wrap { overflow-x: auto; }
     .stats-table {
-      width: 100%;
-      border-collapse: collapse;
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(4px);
-      border-radius: 20px;
-      overflow: hidden;
+      width: 100%; border-collapse: collapse;
+      font-family: 'Rajdhani', sans-serif;
     }
-    .stats-table th, .stats-table td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
-      color: white;
+    .stats-table thead th {
+      background: rgba(0,0,0,0.4);
+      color: var(--ucl-gold);
+      font-size: 0.85rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      padding: 12px 16px; text-align: left;
+      border-bottom: 1px solid rgba(197,166,71,0.3);
     }
-    .stats-table th {
-      background: rgba(0,0,0,0.5);
+    .stats-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.06); transition: background 0.15s; }
+    .stats-table tbody tr:hover { background: rgba(255,255,255,0.05); }
+    .stats-table td { padding: 11px 16px; color: var(--white); font-size: 1rem; font-weight: 500; }
+    .stats-table td:first-child { color: var(--ucl-gold); font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; }
+    .rank-1 td:first-child { color: #FFD700; }
+    .rank-2 td:first-child { color: #C0C0C0; }
+    .rank-3 td:first-child { color: #CD7F32; }
+    .count-badge {
+      background: rgba(197,166,71,0.2);
+      border: 1px solid rgba(197,166,71,0.4);
+      color: var(--ucl-gold);
+      padding: 2px 12px; border-radius: 20px;
+      font-weight: 700; font-size: 0.95rem;
     }
+    .team-cell { display: flex; align-items: center; gap: 10px; }
 
-    .add-btn {
-      background: white;
-      color: var(--ucl-blue);
-      border: none;
-      padding: 6px 18px;
-      border-radius: 40px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 15px;
-      font-size: 0.9rem;
-    }
-
-    /* Modals */
+    /* ─── MODAL ─── */
     .modal-overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.95);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(6px);
+      display: none; justify-content: center; align-items: center;
+      z-index: 1000; padding: 20px;
     }
     .modal-overlay.active { display: flex; }
     .modal-card {
-      background: white;
-      border-radius: 28px;
-      padding: 25px;
-      max-width: 550px;
-      width: 90%;
-      color: var(--ucl-blue);
-      max-height: 80vh;
-      overflow-y: auto;
+      background: rgba(8,24,52,0.97);
+      border: 1px solid rgba(197,166,71,0.35);
+      border-radius: 24px; padding: 28px;
+      max-width: 520px; width: 100%;
+      max-height: 88vh; overflow-y: auto;
+      font-family: 'Rajdhani', sans-serif;
+    }
+    .modal-card h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.6rem; color: var(--ucl-gold);
+      letter-spacing: 2px; margin-bottom: 20px;
+    }
+    .modal-card label {
+      display: block; color: rgba(255,255,255,0.6);
+      font-size: 0.82rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 4px; margin-top: 14px;
     }
     .modal-card input, .modal-card select, .modal-card textarea {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 30px;
-      border: 1px solid #ccc;
+      width: 100%; padding: 10px 16px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px; color: white;
+      font-family: 'Rajdhani', sans-serif; font-size: 1rem;
+      font-weight: 500; outline: none; transition: border-color 0.2s;
     }
-    .image-preview-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin: 15px 0;
+    .modal-card input:focus, .modal-card select:focus, .modal-card textarea:focus {
+      border-color: rgba(197,166,71,0.6);
     }
-    .preview-item {
-      position: relative;
-      width: 90px;
-      height: 90px;
+    .modal-card textarea { resize: vertical; min-height: 70px; }
+    .modal-card select option { background: #0A2B5E; }
+    .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+    .modal-btn-primary {
+      flex: 1; background: var(--ucl-gold); color: var(--ucl-blue-dark);
+      border: none; padding: 11px; border-radius: 14px;
+      font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem;
+      letter-spacing: 1px; cursor: pointer; transition: all 0.2s;
     }
-    .preview-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 12px;
+    .modal-btn-primary:hover { background: var(--ucl-gold-light); }
+    .modal-btn-cancel {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.7); padding: 11px 20px;
+      border-radius: 14px;
+      font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem;
+      letter-spacing: 1px; cursor: pointer; transition: all 0.2s;
     }
-    .delete-preview {
+    .modal-btn-cancel:hover { background: rgba(255,255,255,0.15); }
+
+    /* ─── CROP MODAL ─── */
+    .crop-container {
+      width: 100%; height: 280px;
+      overflow: hidden; border-radius: 16px;
+      position: relative; cursor: grab;
+      border: 1px solid rgba(197,166,71,0.3);
+      background: #000;
+      user-select: none;
+    }
+    .crop-container:active { cursor: grabbing; }
+    .crop-img {
       position: absolute;
-      top: -8px;
-      right: -8px;
-      background: red;
-      color: white;
-      border-radius: 50%;
-      width: 22px;
-      height: 22px;
-      cursor: pointer;
-      font-size: 12px;
-      text-align: center;
-      line-height: 20px;
+      transform-origin: 0 0;
+      pointer-events: none;
     }
-    .bg-preview {
-      margin: 15px 0;
-      text-align: center;
-    }
-    .bg-preview img {
-      max-width: 100%;
-      max-height: 200px;
-      border-radius: 16px;
-      border: 2px solid var(--ucl-blue);
+    .crop-controls { margin-top: 14px; }
+    .crop-controls label { color: rgba(255,255,255,0.7); font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 6px; }
+    .crop-slider {
+      width: 100%; accent-color: var(--ucl-gold);
+      height: 4px; cursor: pointer;
     }
 
+    /* ─── IMAGE PREVIEW GRID ─── */
+    .img-preview-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
+    .preview-thumb {
+      position: relative; width: 80px; height: 80px;
+      border-radius: 10px; overflow: hidden;
+      border: 1px solid rgba(197,166,71,0.3);
+    }
+    .preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .thumb-del {
+      position: absolute; top: -6px; right: -6px;
+      background: #cc3333; color: white; border-radius: 50%;
+      width: 20px; height: 20px; font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-weight: bold;
+    }
+
+    /* ─── EMPTY STATE ─── */
+    .empty-state {
+      text-align: center; padding: 48px 20px;
+      color: rgba(255,255,255,0.4);
+    }
+    .empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty-state p { font-size: 1.1rem; font-weight: 500; }
+
+    /* ─── ADMIN SETTINGS ─── */
+    .settings-grid { display: flex; flex-direction: column; gap: 10px; }
+    .settings-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: white; padding: 12px 18px;
+      border-radius: 14px; cursor: pointer;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem; font-weight: 600;
+      text-align: left; transition: all 0.2s;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .settings-btn:hover { background: rgba(197,166,71,0.15); border-color: rgba(197,166,71,0.4); color: var(--ucl-gold); }
+
+    /* ─── LOADING ─── */
+    .loading-spinner {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 48px; color: rgba(255,255,255,0.5);
+      gap: 14px;
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid rgba(197,166,71,0.2);
+      border-top-color: var(--ucl-gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     footer {
-      text-align: center;
-      padding: 25px;
-      color: rgba(255,255,255,0.5);
-      font-size: 0.8rem;
+      text-align: center; padding: 28px;
+      color: rgba(255,255,255,0.25);
+      font-size: 0.8rem; font-family: 'Inter', sans-serif;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      margin-top: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+    ::-webkit-scrollbar-thumb { background: rgba(197,166,71,0.4); border-radius: 3px; }
+
+    @media (max-width: 600px) {
+      .tabs-container { margin: 16px 16px 0; }
+      .content-card { margin: 14px 16px 20px; padding: 16px; }
+      .tab-btn { font-size: 0.8rem; padding: 8px 10px; }
+      .slideshow-wrapper { padding: 16px 16px 10px; }
+      .slideshow-img { height: 200px; }
+      .match-row { flex-wrap: wrap; gap: 8px; }
+      .team-name { font-size: 0.95rem; }
     }
   </style>
 </head>
 <body>
 
+<!-- NAVBAR -->
 <div class="navbar">
   <div id="logoContainer"></div>
-  <div class="menu-btn" id="menuBtn">
+  <button class="menu-btn" id="menuBtn" aria-label="Menu">
     <span></span><span></span><span></span>
-  </div>
-</div>
-<div class="overlay" id="overlay"></div>
-<div class="side-menu" id="sideMenu">
-  <div class="close-menu" id="closeMenuBtn">x</div>
-  <div class="menu-item" id="homeBtn">Home</div>
-  <div class="menu-item" id="adminModeBtn">Admin Mode</div>
+  </button>
 </div>
 
-<div class="slideshow-container">
-  <img id="slideshowImg" class="slideshow-img" src="" alt="Slideshow">
+<!-- OVERLAY + SIDE MENU -->
+<div class="overlay" id="overlay"></div>
+<div class="side-menu" id="sideMenu">
+  <div class="close-menu" id="closeMenuBtn">&#x2715;</div>
+  <div class="menu-item" id="homeBtn">🏠 Home</div>
+  <div class="menu-item" id="adminModeBtn">🔐 Admin Mode</div>
+</div>
+
+<!-- SLIDESHOW -->
+<div class="slideshow-wrapper">
+  <div class="slideshow-frame">
+    <img id="slideshowImg" class="slideshow-img" src="" alt="Slideshow" style="display:none;">
+  </div>
   <div class="dots-container" id="dotsContainer"></div>
 </div>
 
+<!-- SEASON SELECTOR -->
 <div class="season-bar">
   <div class="season-controls">
-    <button class="season-arrow" id="prevSeasonBtn">‹</button>
+    <button class="season-arrow" id="prevSeasonBtn">&#8249;</button>
     <div class="season-number" id="seasonNumber">Season 1</div>
-    <button class="season-arrow" id="nextSeasonBtn">›</button>
+    <button class="season-arrow" id="nextSeasonBtn">&#8250;</button>
     <div id="seasonAdminPanel" style="display:none;" class="season-admin-btns">
-      <button class="season-admin-btn" id="addSeasonBtn">+New</button>
+      <button class="season-admin-btn" id="addSeasonBtn">+ New</button>
       <button class="season-admin-btn" id="renameSeasonBtn">Rename</button>
       <button class="season-admin-btn" id="setActiveSeasonBtn">Set Active</button>
     </div>
   </div>
 </div>
 
+<!-- TABS -->
 <div class="tabs-container">
   <button class="tab-btn active" data-tab="fixtures">Fixtures</button>
   <button class="tab-btn" data-tab="results">Results</button>
@@ -517,731 +563,854 @@
   <button class="tab-btn" data-tab="assists">Top Assists</button>
 </div>
 
-<div class="card-transparent" id="contentCard">
-  <!-- dynamic content for fixtures (default) -->
+<!-- CONTENT -->
+<div class="content-card" id="contentCard">
+  <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
 </div>
 
-<footer>eFootball Fan Hub — UEFA Champions League</footer>
+<footer>eFootball Fan Hub &mdash; UEFA Champions League &copy; 2025</footer>
 
-<!-- Generic Modal -->
-<div id="genericModal" class="modal-overlay"><div class="modal-card" id="modalContent"></div></div>
+<!-- MODAL -->
+<div id="genericModal" class="modal-overlay">
+  <div class="modal-card" id="modalContent"></div>
+</div>
 
 <script>
-  // Firebase Config
-  const firebaseConfig = {
-    apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
-    authDomain: "efootball-412.firebaseapp.com",
-    databaseURL: "https://efootball-412-default-rtdb.firebaseio.com",
-    projectId: "efootball-412",
-    storageBucket: "efootball-412.firebasestorage.app",
-    messagingSenderId: "596548424249",
-    appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  const IMGBB_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
+// ─── FIREBASE ───
+const firebaseConfig = {
+  apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
+  authDomain: "efootball-412.firebaseapp.com",
+  databaseURL: "https://efootball-412-default-rtdb.firebaseio.com",
+  projectId: "efootball-412",
+  storageBucket: "efootball-412.firebasestorage.app",
+  messagingSenderId: "596548424249",
+  appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-  // Paths
-  const BASE_PATH = "champions_league";
-  let isAdmin = false;
-  let currentSeasonId = 1;
-  let availableSeasons = [1];
-  let activeSeasonId = 1;
-  let teamIcons = {};
+const IMGBB_KEY   = "81c24f30884ec6dda1dbd2b39739e0c9";
+const RMBG_KEY    = "zdkDj9iwQqbGNe8sJu7AEuE8";
+const BASE_PATH   = "champions_league";
 
-  let fixtures = [];
-  let results = [];
-  let topScorers = [];
-  let topAssists = [];
+let isAdmin = false;
+let currentSeasonId = 1;
+let availableSeasons = [1];
+let activeSeasonId   = 1;
+let teamIcons = {};
+let fixtures = [], results = [], topScorers = [], topAssists = [];
+let slideshowImages = [], slideInterval = null, currentSlide = 0, slideshowDuration = 3000;
 
-  // Slideshow
-  let slideshowImages = [];
-  let slideInterval = null;
-  let currentSlide = 0;
-  let slideshowDuration = 3000;
+// ─── HELPERS ───
+async function uploadToImgBB(blob) {
+  const fd = new FormData();
+  fd.append('image', blob);
+  const res  = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method:'POST', body:fd });
+  const data = await res.json();
+  if (!data.success) throw new Error(data.error?.message || 'ImgBB upload failed');
+  return data.data.url;
+}
 
-  // Background image
-  let bgImageUrl = null;
-  let navbarLogoUrl = null;
-
-  // Helper: upload to ImgBB
-  async function uploadToImgBB(file) {
-    const fd = new FormData();
-    fd.append('image', file);
-    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error?.message);
-    return data.data.url;
-  }
-
-  // Load background
-  async function loadBackground() {
-    const snap = await db.ref(`${BASE_PATH}/settings/backgroundImage`).once('value');
-    bgImageUrl = snap.val();
-    if (bgImageUrl) {
-      document.body.style.backgroundImage = `url(${bgImageUrl})`;
-      document.body.style.backgroundSize = 'cover';
-      document.body.style.backgroundPosition = 'center';
-      document.body.style.backgroundAttachment = 'fixed';
-      document.body.classList.add('has-bg-image');
-    } else {
-      document.body.style.backgroundImage = '';
-      document.body.style.backgroundColor = '#0A2B5E';
-      document.body.classList.remove('has-bg-image');
-    }
-  }
-
-  async function loadLogo() {
-    const snap = await db.ref(`${BASE_PATH}/settings/navbarLogo`).once('value');
-    navbarLogoUrl = snap.val();
-    const container = document.getElementById('logoContainer');
-    if (navbarLogoUrl) {
-      container.innerHTML = `<img src="${navbarLogoUrl}" class="navbar-logo" alt="Logo" onclick="goHome()">`;
-    } else {
-      container.innerHTML = `<div class="navbar-logo-placeholder" onclick="goHome()">CHAMPIONS LEAGUE</div>`;
-    }
-  }
-
-  async function loadTeamIcons() {
-    const snap = await db.ref(`${BASE_PATH}/teamIcons`).once('value');
-    teamIcons = snap.val() || {};
-  }
-
-  function getIconHtml(teamName, className = "team-icon-small") {
-    const url = teamIcons[teamName];
-    return url ? `<img class="${className}" src="${url}" alt="${teamName}">` : `<span style="width:32px;display:inline-block;"></span>`;
-  }
-
-  // Season management
-  async function loadSeasons() {
-    const snap = await db.ref(`${BASE_PATH}/seasons`).once('value');
-    const seasons = snap.val() || {};
-    availableSeasons = [];
-    for (const key in seasons) {
-      if (key.startsWith('season_')) {
-        let id = parseInt(key.split('_')[1]);
-        if (!isNaN(id)) availableSeasons.push(id);
-        if (seasons[key].active === true) activeSeasonId = id;
-      }
-    }
-    if (availableSeasons.length === 0) {
-      availableSeasons = [1];
-      await db.ref(`${BASE_PATH}/seasons/season_1`).set({ active: true, name: "Season 1" });
-      activeSeasonId = 1;
-    }
-    if (!availableSeasons.includes(activeSeasonId)) activeSeasonId = availableSeasons[0];
-    currentSeasonId = activeSeasonId;
-    updateSeasonUI();
-    await loadSeasonData();
-  }
-
-  async function loadSeasonData() {
-    const seasonRef = `${BASE_PATH}/seasons/season_${currentSeasonId}`;
-    const fixturesSnap = await db.ref(`${seasonRef}/fixtures`).once('value');
-    const resultsSnap = await db.ref(`${seasonRef}/results`).once('value');
-    const scorersSnap = await db.ref(`${seasonRef}/topScorers`).once('value');
-    const assistsSnap = await db.ref(`${seasonRef}/topAssists`).once('value');
-    fixtures = fixturesSnap.val() ? Object.entries(fixturesSnap.val()).map(([k,v])=>({id:k, ...v})) : [];
-    results = resultsSnap.val() ? Object.entries(resultsSnap.val()).map(([k,v])=>({id:k, ...v})) : [];
-    topScorers = scorersSnap.val() ? Object.entries(scorersSnap.val()).map(([k,v])=>({id:k, ...v})) : [];
-    topAssists = assistsSnap.val() ? Object.entries(assistsSnap.val()).map(([k,v])=>({id:k, ...v})) : [];
-    renderCurrentTab();
-  }
-
-  function updateSeasonUI() {
-    document.getElementById('seasonNumber').innerText = `Season ${currentSeasonId}`;
-    const idx = availableSeasons.indexOf(currentSeasonId);
-    document.getElementById('prevSeasonBtn').disabled = idx <= 0;
-    document.getElementById('nextSeasonBtn').disabled = idx >= availableSeasons.length-1;
-    const adminPanel = document.getElementById('seasonAdminPanel');
-    if (adminPanel) adminPanel.style.display = isAdmin ? 'flex' : 'none';
-  }
-
-  async function switchSeason(delta) {
-    const idx = availableSeasons.indexOf(currentSeasonId);
-    const newIdx = idx + delta;
-    if (newIdx >= 0 && newIdx < availableSeasons.length) {
-      currentSeasonId = availableSeasons[newIdx];
-      updateSeasonUI();
-      await loadSeasonData();
-    }
-  }
-
-  async function addNewSeason() {
-    let newId = prompt("Enter new season number:");
-    if (!newId) return;
-    newId = parseInt(newId);
-    if (availableSeasons.includes(newId)) { alert("Season exists"); return; }
-    await db.ref(`${BASE_PATH}/seasons/season_${newId}`).set({ active: false, name: `Season ${newId}`, fixtures: {}, results: {}, topScorers: {}, topAssists: {} });
-    availableSeasons.push(newId);
-    availableSeasons.sort((a,b)=>a-b);
-    currentSeasonId = newId;
-    updateSeasonUI();
-    await loadSeasonData();
-  }
-
-  async function renameSeason() {
-    let newNum = prompt(`Enter new number for Season ${currentSeasonId}:`);
-    if (!newNum) return;
-    newNum = parseInt(newNum);
-    if (availableSeasons.includes(newNum) && newNum !== currentSeasonId) { alert("Number taken"); return; }
-    const oldData = await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}`).once('value');
-    await db.ref(`${BASE_PATH}/seasons/season_${newNum}`).set(oldData.val());
-    await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}`).remove();
-    availableSeasons = availableSeasons.map(s => s === currentSeasonId ? newNum : s);
-    availableSeasons.sort((a,b)=>a-b);
-    currentSeasonId = newNum;
-    if (activeSeasonId === currentSeasonId) activeSeasonId = newNum;
-    updateSeasonUI();
-    await loadSeasonData();
-  }
-
-  async function setActiveSeason() {
-    const updates = {};
-    for (let s of availableSeasons) {
-      updates[`${BASE_PATH}/seasons/season_${s}/active`] = (s === currentSeasonId);
-    }
-    await db.ref().update(updates);
-    activeSeasonId = currentSeasonId;
-    alert(`Season ${currentSeasonId} active`);
-  }
-
-  // CRUD for fixtures (with date, venue, description)
-  async function addEditFixture(item = null) {
-    const modal = document.getElementById('genericModal');
-    const content = document.getElementById('modalContent');
-    content.innerHTML = `
-      <h3>${item ? 'Edit Fixture' : 'Add Fixture'}</h3>
-      <input type="text" id="fixtureHomeTeam" placeholder="Home Team" value="${item?.homeTeam || ''}">
-      <input type="text" id="fixtureAwayTeam" placeholder="Away Team" value="${item?.awayTeam || ''}">
-      <input type="text" id="fixtureDate" placeholder="Date (e.g., 15 May 2025)" value="${item?.date || ''}">
-      <input type="text" id="fixtureVenue" placeholder="Venue" value="${item?.venue || ''}">
-      <textarea id="fixtureDescription" placeholder="Description (e.g., Semi Final - First Leg)">${item?.description || ''}</textarea>
-      <input type="number" id="fixtureMd" placeholder="Matchday" value="${item?.md || 0}">
-      <button id="saveFixtureBtn">Save</button>
-      <button id="cancelModalBtn">Cancel</button>
-    `;
-    modal.classList.add('active');
-    document.getElementById('saveFixtureBtn').onclick = async () => {
-      const homeTeam = document.getElementById('fixtureHomeTeam').value.trim();
-      const awayTeam = document.getElementById('fixtureAwayTeam').value.trim();
-      const date = document.getElementById('fixtureDate').value.trim();
-      const venue = document.getElementById('fixtureVenue').value.trim();
-      const description = document.getElementById('fixtureDescription').value.trim();
-      const md = parseInt(document.getElementById('fixtureMd').value) || 0;
-      if (!homeTeam || !awayTeam) { alert("Enter both teams"); return; }
-      const data = { homeTeam, awayTeam, date, venue, description, md };
-      if (item && item.id) {
-        await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}/fixtures/${item.id}`).set(data);
-      } else {
-        await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}/fixtures`).push(data);
-      }
-      modal.classList.remove('active');
-      await loadSeasonData();
-    };
-    document.getElementById('cancelModalBtn').onclick = () => modal.classList.remove('active');
-  }
-
-  async function deleteFixture(id) {
-    if (confirm("Delete fixture?")) {
-      await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}/fixtures/${id}`).remove();
-      await loadSeasonData();
-    }
-  }
-
-  // Add result from fixture (popup)
-  async function addResultFromFixture(fixture) {
-    const modal = document.getElementById('genericModal');
-    const content = document.getElementById('modalContent');
-    content.innerHTML = `
-      <h3>Add Result</h3>
-      <div>${fixture.homeTeam} vs ${fixture.awayTeam}</div>
-      <input type="number" id="homeScore" placeholder="Home Score" value="0">
-      <input type="number" id="awayScore" placeholder="Away Score" value="0">
-      <input type="text" id="resultType" placeholder="Match type (e.g., Final)" value="${fixture.description || ''}">
-      <input type="number" id="resultMd" placeholder="Matchday" value="${fixture.md || 0}">
-      <button id="saveResultFromFixtureBtn">Save Result</button>
-      <button id="cancelModalBtn">Cancel</button>
-    `;
-    modal.classList.add('active');
-    document.getElementById('saveResultFromFixtureBtn').onclick = async () => {
-      const homeScore = parseInt(document.getElementById('homeScore').value) || 0;
-      const awayScore = parseInt(document.getElementById('awayScore').value) || 0;
-      const resultType = document.getElementById('resultType').value.trim();
-      const md = parseInt(document.getElementById('resultMd').value) || 0;
-      const resultData = {
-        homeTeam: fixture.homeTeam,
-        awayTeam: fixture.awayTeam,
-        homeScore, awayScore,
-        matchType: resultType,
-        md,
-        date: fixture.date || "",
-        venue: fixture.venue || ""
-      };
-      await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}/results`).push(resultData);
-      modal.classList.remove('active');
-      await loadSeasonData();
-      // Optionally switch to results tab
-      document.querySelector('.tab-btn[data-tab="results"]').click();
-    };
-    document.getElementById('cancelModalBtn').onclick = () => modal.classList.remove('active');
-  }
-
-  // Results CRUD
-  async function addEditResult(item = null) {
-    const modal = document.getElementById('genericModal');
-    const content = document.getElementById('modalContent');
-    content.innerHTML = `
-      <h3>${item ? 'Edit Result' : 'Add Result'}</h3>
-      <input type="text" id="resHomeTeam" placeholder="Home Team" value="${item?.homeTeam || ''}">
-      <input type="text" id="resAwayTeam" placeholder="Away Team" value="${item?.awayTeam || ''}">
-      <input type="number" id="resHomeScore" placeholder="Home Score" value="${item?.homeScore || 0}">
-      <input type="number" id="resAwayScore" placeholder="Away Score" value="${item?.awayScore || 0}">
-      <input type="text" id="resType" placeholder="Match type" value="${item?.matchType || ''}">
-      <input type="text" id="resDate" placeholder="Date" value="${item?.date || ''}">
-      <input type="text" id="resVenue" placeholder="Venue" value="${item?.venue || ''}">
-      <input type="number" id="resMd" placeholder="Matchday" value="${item?.md || 0}">
-      <button id="saveResultBtn">Save</button>
-      <button id="cancelModalBtn">Cancel</button>
-    `;
-    modal.classList.add('active');
-    document.getElementById('saveResultBtn').onclick = async () => {
-      const homeTeam = document.getElementById('resHomeTeam').value.trim();
-      const awayTeam = document.getElementById('resAwayTeam').value.trim();
-      const homeScore = parseInt(document.getElementById('resHomeScore').value) || 0;
-      const awayScore = parseInt(document.getElementById('resAwayScore').value) || 0;
-      const matchType = document.getElementById('resType').value.trim();
-      const date = document.getElementById('resDate').value.trim();
-      const venue = document.getElementById('resVenue').value.trim();
-      const md = parseInt(document.getElementById('resMd').value) || 0;
-      if (!homeTeam || !awayTeam) { alert("Teams required"); return; }
-      const data = { homeTeam, awayTeam, homeScore, awayScore, matchType, date, venue, md };
-      if (item && item.id) {
-        await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}/results/${item.id}`).set(data);
-      } else {
-        await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}/results`).push(data);
-      }
-      modal.classList.remove('active');
-      await loadSeasonData();
-    };
-    document.getElementById('cancelModalBtn').onclick = () => modal.classList.remove('active');
-  }
-
-  async function deleteResult(id) {
-    if (confirm("Delete result?")) {
-      await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}/results/${id}`).remove();
-      await loadSeasonData();
-    }
-  }
-
-  // Top Scorer / Assists CRUD (popup modals)
-  function openStatsPopup(type) {
-    const modal = document.getElementById('genericModal');
-    const content = document.getElementById('modalContent');
-    const list = type === 'scorer' ? topScorers : topAssists;
-    const sorted = [...list].sort((a,b)=> (b.count||0) - (a.count||0));
-    let html = `<h3>${type === 'scorer' ? 'Top Scorers' : 'Top Assists'}</h3>
-                <table class="stats-table"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>${type === 'scorer' ? 'Goals' : 'Assists'}</th>${isAdmin ? '<th>Actions</th>' : ''}</tr></thead><tbody>`;
-    sorted.forEach((p, idx) => {
-      html += `<tr>
-        <td>${idx+1}</td>
-        <td>${p.name}</td>
-        <td><div class="team-with-icon" style="gap:6px;">${getIconHtml(p.team)} ${p.team}</div></td>
-        <td>${p.count}</td>
-        ${isAdmin ? `<td><button class="edit-btn" data-id="${p.id}" data-type="${type}">Edit</button> <button class="delete-btn" data-id="${p.id}" data-type="${type}">Del</button></td>` : ''}
-      </tr>`;
-    });
-    html += `</tbody></table>`;
-    if (isAdmin) {
-      html += `<button id="addStatsEntryBtn" class="add-btn">Add ${type === 'scorer' ? 'Scorer' : 'Assistant'}</button>`;
-    }
-    html += `<button id="closeStatsPopup" class="add-btn" style="background:#ccc;">Close</button>`;
-    content.innerHTML = html;
-    modal.classList.add('active');
-
-    if (isAdmin) {
-      document.getElementById('addStatsEntryBtn').onclick = () => addEditStatsEntry(type);
-      document.querySelectorAll('.edit-btn').forEach(btn => {
-        const id = btn.dataset.id;
-        const entry = list.find(p => p.id === id);
-        btn.onclick = () => addEditStatsEntry(type, entry);
-      });
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        const id = btn.dataset.id;
-        btn.onclick = async () => {
-          if (confirm("Delete?")) {
-            const path = type === 'scorer' ? 'topScorers' : 'topAssists';
-            await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}/${path}/${id}`).remove();
-            modal.classList.remove('active');
-            await loadSeasonData();
-            openStatsPopup(type);
-          }
-        };
-      });
-    }
-    document.getElementById('closeStatsPopup').onclick = () => modal.classList.remove('active');
-  }
-
-  async function addEditStatsEntry(type, entry = null) {
-    const modal = document.getElementById('genericModal');
-    const content = document.getElementById('modalContent');
-    content.innerHTML = `
-      <h3>${entry ? 'Edit' : 'Add'} ${type === 'scorer' ? 'Top Scorer' : 'Top Assistant'}</h3>
-      <input type="text" id="statName" placeholder="Player Name" value="${entry?.name || ''}">
-      <input type="text" id="statTeam" placeholder="Team" value="${entry?.team || ''}">
-      <input type="number" id="statCount" placeholder="${type === 'scorer' ? 'Goals' : 'Assists'}" value="${entry?.count || 0}">
-      <button id="saveStatBtn">Save</button>
-      <button id="cancelModalBtn">Cancel</button>
-    `;
-    modal.classList.add('active');
-    document.getElementById('saveStatBtn').onclick = async () => {
-      const name = document.getElementById('statName').value.trim();
-      const team = document.getElementById('statTeam').value.trim();
-      const count = parseInt(document.getElementById('statCount').value) || 0;
-      if (!name || !team) { alert("Fill all fields"); return; }
-      const data = { name, team, count };
-      const path = type === 'scorer' ? 'topScorers' : 'topAssists';
-      if (entry && entry.id) {
-        await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}/${path}/${entry.id}`).set(data);
-      } else {
-        await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}/${path}`).push(data);
-      }
-      modal.classList.remove('active');
-      await loadSeasonData();
-      openStatsPopup(type);
-    };
-    document.getElementById('cancelModalBtn').onclick = () => modal.classList.remove('active');
-  }
-
-  // Render Fixtures tab
-  function renderFixturesTab() {
-    const sorted = [...fixtures].sort((a,b)=> (a.md||0) - (b.md||0));
-    if (sorted.length === 0) return '<div style="color:white; text-align:center;">No fixtures scheduled.</div>';
-    let html = '<div class="fixtures-list">';
-    sorted.forEach(f => {
-      html += `
-        <div class="fixture-item">
-          <div class="match-details">
-            <div class="match-teams">
-              <div class="team-with-icon">${getIconHtml(f.homeTeam)} ${f.homeTeam}</div>
-              <span class="vs">vs</span>
-              <div class="team-with-icon">${getIconHtml(f.awayTeam)} ${f.awayTeam}</div>
-            </div>
-            <div class="match-meta">
-              <span>${f.date || 'TBD'}</span>
-              <span>${f.venue || 'TBD'}</span>
-              <span>${f.description || 'Match'}</span>
-              <span>MD ${f.md || 0}</span>
-            </div>
-          </div>
-          ${isAdmin ? `
-          <div class="admin-actions">
-            <button class="add-result-btn" data-id="${f.id}">Add Result</button>
-            <button class="edit-btn" data-id="${f.id}">Edit</button>
-            <button class="delete-btn" data-id="${f.id}">Delete</button>
-          </div>` : ''}
-        </div>
-      `;
-    });
-    html += `</div>${isAdmin ? '<button class="add-btn" id="addFixtureBtn">+ Add Fixture</button>' : ''}`;
-    return html;
-  }
-
-  function renderResultsTab() {
-    const sorted = [...results].sort((a,b)=> (b.md||0) - (a.md||0));
-    if (sorted.length === 0) return '<div style="color:white; text-align:center;">No results yet.</div>';
-    let html = '<div class="results-list">';
-    sorted.forEach(r => {
-      html += `
-        <div class="fixture-item">
-          <div class="match-details">
-            <div class="match-teams">
-              <div class="team-with-icon">${getIconHtml(r.homeTeam)} ${r.homeTeam}</div>
-              <div class="match-score">${r.homeScore} - ${r.awayScore}</div>
-              <div class="team-with-icon">${getIconHtml(r.awayTeam)} ${r.awayTeam}</div>
-            </div>
-            <div class="match-meta">
-              <span>${r.date || ''}</span>
-              <span>${r.venue || ''}</span>
-              <span>${r.matchType || 'Match'}</span>
-              <span>MD ${r.md || 0}</span>
-            </div>
-          </div>
-          ${isAdmin ? `<div class="admin-actions"><button class="edit-btn" data-id="${r.id}">Edit</button><button class="delete-btn" data-id="${r.id}">Delete</button></div>` : ''}
-        </div>
-      `;
-    });
-    html += `</div>${isAdmin ? '<button class="add-btn" id="addResultBtn">+ Add Result</button>' : ''}`;
-    return html;
-  }
-
-  function renderCurrentTab() {
-    const card = document.getElementById('contentCard');
-    let content = '';
-    const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
-    if (activeTab === 'fixtures') {
-      content = renderFixturesTab();
-    } else if (activeTab === 'results') {
-      content = renderResultsTab();
-    } else if (activeTab === 'scorers') {
-      openStatsPopup('scorer');
-      return;
-    } else if (activeTab === 'assists') {
-      openStatsPopup('assist');
-      return;
-    }
-    card.innerHTML = content;
-    attachTabEventHandlers();
-  }
-
-  function attachTabEventHandlers() {
-    if (isAdmin) {
-      const addFixtureBtn = document.getElementById('addFixtureBtn');
-      if (addFixtureBtn) addFixtureBtn.onclick = () => addEditFixture();
-      const addResultBtn = document.getElementById('addResultBtn');
-      if (addResultBtn) addResultBtn.onclick = () => addEditResult();
-      document.querySelectorAll('.edit-btn[data-id]').forEach(btn => {
-        const id = btn.dataset.id;
-        const isResult = btn.closest('.results-list') !== null;
-        if (isResult) {
-          const item = results.find(r => r.id === id);
-          btn.onclick = () => addEditResult(item);
-        } else {
-          const item = fixtures.find(f => f.id === id);
-          btn.onclick = () => addEditFixture(item);
-        }
-      });
-      document.querySelectorAll('.delete-btn[data-id]').forEach(btn => {
-        const id = btn.dataset.id;
-        const isResult = btn.closest('.results-list') !== null;
-        if (isResult) {
-          btn.onclick = () => deleteResult(id);
-        } else {
-          btn.onclick = () => deleteFixture(id);
-        }
-      });
-      document.querySelectorAll('.add-result-btn').forEach(btn => {
-        const id = btn.dataset.id;
-        const fixture = fixtures.find(f => f.id === id);
-        btn.onclick = () => addResultFromFixture(fixture);
-      });
-    }
-  }
-
-  // Slideshow
-  async function loadSlideshow() {
-    const imagesSnap = await db.ref(`${BASE_PATH}/slideshow/images`).once('value');
-    slideshowImages = imagesSnap.val() || [];
-    const durSnap = await db.ref(`${BASE_PATH}/slideshow/duration`).once('value');
-    slideshowDuration = durSnap.val() || 3000;
-    if (slideInterval) clearInterval(slideInterval);
-    if (slideshowImages.length) {
-      currentSlide = 0;
-      updateSlide();
-      slideInterval = setInterval(() => {
-        currentSlide = (currentSlide + 1) % slideshowImages.length;
-        updateSlide();
-      }, slideshowDuration);
-    }
-  }
-  function updateSlide() {
-    const img = document.getElementById('slideshowImg');
-    if (slideshowImages.length) img.src = slideshowImages[currentSlide];
-    const dotsDiv = document.getElementById('dotsContainer');
-    dotsDiv.innerHTML = '';
-    slideshowImages.forEach((_, i) => {
-      const dot = document.createElement('span');
-      dot.classList.add('dot');
-      if (i === currentSlide) dot.classList.add('active');
-      dot.onclick = () => { currentSlide = i; updateSlide(); if(slideInterval){clearInterval(slideInterval); slideInterval = setInterval(()=>{ currentSlide = (currentSlide+1)%slideshowImages.length; updateSlide();}, slideshowDuration);} };
-      dotsDiv.appendChild(dot);
-    });
-  }
-
-  // Admin settings with background preview
-  function openAdminSettings() {
-    const modal = document.getElementById('genericModal');
-    const content = document.getElementById('modalContent');
-    content.innerHTML = `
-      <h3>Admin Settings</h3>
-      <button id="uploadLogoBtn" class="add-btn">Upload Navbar Logo</button>
-      <button id="uploadBgBtn" class="add-btn">Upload Background Image</button>
-      <button id="previewBgBtn" class="add-btn">Preview Background</button>
-      <button id="manageSlideshowBtn" class="add-btn">Manage Slideshow</button>
-      <button id="uploadTeamIconBtn" class="add-btn">Add Team Icon</button>
-      <button id="closeAdminModal" class="add-btn" style="background:#ddd;">Close</button>
-    `;
-    modal.classList.add('active');
-    document.getElementById('uploadLogoBtn').onclick = () => uploadImageAndSave('navbarLogo');
-    document.getElementById('uploadBgBtn').onclick = () => uploadImageAndSave('backgroundImage');
-    document.getElementById('previewBgBtn').onclick = () => previewBackground();
-    document.getElementById('manageSlideshowBtn').onclick = () => manageSlideshowUI();
-    document.getElementById('uploadTeamIconBtn').onclick = () => uploadTeamIcon();
-    document.getElementById('closeAdminModal').onclick = () => modal.classList.remove('active');
-  }
-
-  async function uploadImageAndSave(type) {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const url = await uploadToImgBB(file);
-      if (type === 'navbarLogo') await db.ref(`${BASE_PATH}/settings/navbarLogo`).set(url);
-      else if (type === 'backgroundImage') await db.ref(`${BASE_PATH}/settings/backgroundImage`).set(url);
-      await loadLogo();
-      await loadBackground();
-      alert('Updated');
-      document.getElementById('genericModal').classList.remove('active');
-    };
-    input.click();
-  }
-
-  async function previewBackground() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const url = await uploadToImgBB(file);
-      const modal = document.getElementById('genericModal');
-      const content = document.getElementById('modalContent');
-      content.innerHTML = `
-        <h3>Background Preview</h3>
-        <div class="bg-preview"><img src="${url}" alt="Preview"></div>
-        <button id="applyBgBtn" class="add-btn">Apply This Background</button>
-        <button id="cancelPreviewBtn" class="add-btn">Cancel</button>
-      `;
-      document.getElementById('applyBgBtn').onclick = async () => {
-        await db.ref(`${BASE_PATH}/settings/backgroundImage`).set(url);
-        await loadBackground();
-        modal.classList.remove('active');
-        alert('Background applied');
-      };
-      document.getElementById('cancelPreviewBtn').onclick = () => modal.classList.remove('active');
-    };
-    input.click();
-  }
-
-  async function manageSlideshowUI() {
-    const modal = document.getElementById('genericModal');
-    const content = document.getElementById('modalContent');
-    let imgs = [...slideshowImages];
-    const refresh = () => {
-      let preview = '<div class="image-preview-grid">';
-      imgs.forEach((url, idx) => {
-        preview += `<div class="preview-item"><img src="${url}"><button class="delete-preview" data-idx="${idx}">x</button></div>`;
-      });
-      preview += '</div>';
-      content.innerHTML = `<h3>Slideshow Manager</h3>${preview}<input type="file" id="newSlideFile"><button id="addSlideBtn">Add Slide</button><label>Duration (sec): <input type="number" id="slideDurSec" value="${slideshowDuration/1000}" step="0.5"></label><button id="saveDurBtn">Set Duration</button><button id="closeSlideModal">Close</button>`;
-      document.querySelectorAll('.delete-preview').forEach(btn => {
-        btn.onclick = async () => {
-          const idx = parseInt(btn.dataset.idx);
-          imgs.splice(idx,1);
-          await db.ref(`${BASE_PATH}/slideshow/images`).set(imgs);
-          await loadSlideshow();
-          manageSlideshowUI();
-        };
-      });
-      document.getElementById('addSlideBtn').onclick = async () => {
-        const file = document.getElementById('newSlideFile').files[0];
-        if (!file) return;
-        const url = await uploadToImgBB(file);
-        imgs.push(url);
-        await db.ref(`${BASE_PATH}/slideshow/images`).set(imgs);
-        await loadSlideshow();
-        manageSlideshowUI();
-      };
-      document.getElementById('saveDurBtn').onclick = async () => {
-        let sec = parseFloat(document.getElementById('slideDurSec').value);
-        if (isNaN(sec)) sec = 3;
-        sec = Math.min(10, Math.max(1, sec));
-        await db.ref(`${BASE_PATH}/slideshow/duration`).set(sec * 1000);
-        await loadSlideshow();
-        alert('Duration updated');
-        modal.classList.remove('active');
-      };
-      document.getElementById('closeSlideModal').onclick = () => modal.classList.remove('active');
-    };
-    refresh();
-    modal.classList.add('active');
-  }
-
-  async function uploadTeamIcon() {
-    const team = prompt("Enter team name:");
-    if (!team) return;
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const url = await uploadToImgBB(file);
-      await db.ref(`${BASE_PATH}/teamIcons/${team}`).set(url);
-      await loadTeamIcons();
-      await loadSeasonData();
-      alert('Icon added');
-    };
-    input.click();
-  }
-
-  // Menu, admin mode
-  function toggleMenu() {
-    document.getElementById('sideMenu').classList.toggle('active');
-    document.getElementById('overlay').classList.toggle('active');
-  }
-  function closeMenu() { document.getElementById('sideMenu').classList.remove('active'); document.getElementById('overlay').classList.remove('active'); }
-  document.getElementById('menuBtn').onclick = toggleMenu;
-  document.getElementById('closeMenuBtn').onclick = closeMenu;
-  document.getElementById('overlay').onclick = closeMenu;
-  document.getElementById('homeBtn').onclick = () => window.location.href = 'feed.html';
-  document.getElementById('adminModeBtn').onclick = () => {
-    const key = prompt("Admin key:");
-    if (key === "admin@100") {
-      isAdmin = true;
-      alert("Admin mode ON");
-      document.getElementById('seasonAdminPanel').style.display = 'flex';
-      renderCurrentTab();
-      // Add admin settings to side menu
-      let settingsItem = document.getElementById('adminSettingsMenuItem');
-      if (!settingsItem) {
-        settingsItem = document.createElement('div');
-        settingsItem.id = 'adminSettingsMenuItem';
-        settingsItem.className = 'menu-item';
-        settingsItem.innerText = 'Admin Settings';
-        settingsItem.onclick = () => { openAdminSettings(); closeMenu(); };
-        document.getElementById('sideMenu').appendChild(settingsItem);
-      }
-    } else alert("Wrong key");
-  };
-
-  document.getElementById('prevSeasonBtn').onclick = () => switchSeason(-1);
-  document.getElementById('nextSeasonBtn').onclick = () => switchSeason(1);
-  document.getElementById('addSeasonBtn').onclick = () => { if(isAdmin) addNewSeason(); };
-  document.getElementById('renameSeasonBtn').onclick = () => { if(isAdmin) renameSeason(); };
-  document.getElementById('setActiveSeasonBtn').onclick = () => { if(isAdmin) setActiveSeason(); };
-
-  // Tab switching
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderCurrentTab();
-    };
+async function removeBackground(file) {
+  const fd = new FormData();
+  fd.append('image_file', file);
+  fd.append('size', 'auto');
+  const res = await fetch('https://api.remove.bg/v1.0/removebg', {
+    method: 'POST',
+    headers: { 'X-Api-Key': RMBG_KEY },
+    body: fd
   });
-
-  async function init() {
-    await loadSeasons();
-    await loadTeamIcons();
-    await loadLogo();
-    await loadBackground();
-    await loadSlideshow();
-    renderCurrentTab();
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.errors?.[0]?.title || 'remove.bg failed');
   }
-  init();
-  window.goHome = () => window.location.href = 'feed.html';
+  return await res.blob();
+}
+
+function getInitials(name) {
+  return (name || '?').split(' ').map(w => w[0]).join('').slice(0,3).toUpperCase();
+}
+
+function teamIconHtml(teamName) {
+  const url = teamIcons[teamName];
+  if (url) return `<div class="team-icon-wrap"><img src="${url}" alt="${teamName}"></div>`;
+  return `<div class="team-icon-wrap"><span class="team-initials">${getInitials(teamName)}</span></div>`;
+}
+
+function showModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('genericModal').classList.add('active');
+}
+function closeModal() { document.getElementById('genericModal').classList.remove('active'); }
+
+// ─── BACKGROUND & LOGO ───
+async function loadBackground() {
+  const snap = await db.ref(`${BASE_PATH}/settings/backgroundImage`).once('value');
+  const val  = snap.val();
+  if (val) {
+    document.body.style.setProperty('--bg-image', `url(${val})`);
+    document.body.style.setProperty('--bg-size', snap.val()?.bgSize || 'cover');
+    document.body.style.setProperty('--bg-pos', snap.val()?.bgPos || 'center');
+    document.body.classList.add('has-bg');
+  } else {
+    document.body.classList.remove('has-bg');
+  }
+}
+
+async function loadBgSettings() {
+  const snap = await db.ref(`${BASE_PATH}/settings`).once('value');
+  const s = snap.val() || {};
+  if (s.backgroundImage) {
+    document.body.style.setProperty('--bg-image', `url(${s.backgroundImage})`);
+    document.body.style.setProperty('--bg-size', s.bgSize || 'cover');
+    document.body.style.setProperty('--bg-pos',  s.bgPos  || 'center');
+    document.body.classList.add('has-bg');
+  }
+}
+
+async function loadLogo() {
+  const snap = await db.ref(`${BASE_PATH}/settings/navbarLogo`).once('value');
+  const url  = snap.val();
+  const c    = document.getElementById('logoContainer');
+  c.innerHTML = url
+    ? `<img src="${url}" class="navbar-logo" alt="Logo" onclick="goHome()">`
+    : `<div class="navbar-logo-placeholder" onclick="goHome()">⚽ CHAMPIONS LEAGUE</div>`;
+}
+
+async function loadTeamIcons() {
+  const snap = await db.ref(`${BASE_PATH}/teamIcons`).once('value');
+  teamIcons  = snap.val() || {};
+}
+
+// ─── SEASONS ───
+async function loadSeasons() {
+  const snap    = await db.ref(`${BASE_PATH}/seasons`).once('value');
+  const seasons = snap.val() || {};
+  availableSeasons = [];
+  for (const key in seasons) {
+    if (!key.startsWith('season_')) continue;
+    const id = parseInt(key.split('_')[1]);
+    if (!isNaN(id)) availableSeasons.push(id);
+    if (seasons[key].active) activeSeasonId = id;
+  }
+  if (!availableSeasons.length) {
+    availableSeasons = [1];
+    await db.ref(`${BASE_PATH}/seasons/season_1`).set({ active:true, name:'Season 1' });
+    activeSeasonId = 1;
+  }
+  availableSeasons.sort((a,b) => a-b);
+  if (!availableSeasons.includes(activeSeasonId)) activeSeasonId = availableSeasons[0];
+  currentSeasonId = activeSeasonId;
+  updateSeasonUI();
+  await loadSeasonData();
+}
+
+async function loadSeasonData() {
+  const base = `${BASE_PATH}/seasons/season_${currentSeasonId}`;
+  const [fSnap, rSnap, sSnap, aSnap] = await Promise.all([
+    db.ref(`${base}/fixtures`).once('value'),
+    db.ref(`${base}/results`).once('value'),
+    db.ref(`${base}/topScorers`).once('value'),
+    db.ref(`${base}/topAssists`).once('value'),
+  ]);
+  fixtures   = fSnap.val() ? Object.entries(fSnap.val()).map(([k,v])=>({id:k,...v})) : [];
+  results    = rSnap.val() ? Object.entries(rSnap.val()).map(([k,v])=>({id:k,...v})) : [];
+  topScorers = sSnap.val() ? Object.entries(sSnap.val()).map(([k,v])=>({id:k,...v})) : [];
+  topAssists = aSnap.val() ? Object.entries(aSnap.val()).map(([k,v])=>({id:k,...v})) : [];
+  renderCurrentTab();
+}
+
+function updateSeasonUI() {
+  document.getElementById('seasonNumber').textContent = `Season ${currentSeasonId}`;
+  const idx = availableSeasons.indexOf(currentSeasonId);
+  document.getElementById('prevSeasonBtn').disabled = idx <= 0;
+  document.getElementById('nextSeasonBtn').disabled = idx >= availableSeasons.length - 1;
+  document.getElementById('seasonAdminPanel').style.display = isAdmin ? 'flex' : 'none';
+}
+
+async function switchSeason(delta) {
+  const idx = availableSeasons.indexOf(currentSeasonId);
+  const nIdx = idx + delta;
+  if (nIdx < 0 || nIdx >= availableSeasons.length) return;
+  currentSeasonId = availableSeasons[nIdx];
+  updateSeasonUI();
+  await loadSeasonData();
+}
+
+async function addNewSeason() {
+  const raw = prompt("Enter new season number:");
+  if (!raw) return;
+  const id = parseInt(raw);
+  if (isNaN(id)) { alert("Invalid number"); return; }
+  if (availableSeasons.includes(id)) { alert("Season already exists"); return; }
+  await db.ref(`${BASE_PATH}/seasons/season_${id}`).set({ active:false, name:`Season ${id}` });
+  availableSeasons.push(id); availableSeasons.sort((a,b)=>a-b);
+  currentSeasonId = id; updateSeasonUI(); await loadSeasonData();
+}
+
+async function renameSeason() {
+  const raw = prompt(`New number for Season ${currentSeasonId}:`);
+  if (!raw) return;
+  const id = parseInt(raw);
+  if (isNaN(id)) return;
+  if (availableSeasons.includes(id) && id !== currentSeasonId) { alert("Number taken"); return; }
+  const snap = await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}`).once('value');
+  await db.ref(`${BASE_PATH}/seasons/season_${id}`).set(snap.val());
+  await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}`).remove();
+  availableSeasons = availableSeasons.map(s => s === currentSeasonId ? id : s).sort((a,b)=>a-b);
+  if (activeSeasonId === currentSeasonId) activeSeasonId = id;
+  currentSeasonId = id; updateSeasonUI(); await loadSeasonData();
+}
+
+async function setActiveSeason() {
+  const updates = {};
+  availableSeasons.forEach(s => { updates[`${BASE_PATH}/seasons/season_${s}/active`] = (s === currentSeasonId); });
+  await db.ref().update(updates);
+  activeSeasonId = currentSeasonId;
+  alert(`Season ${currentSeasonId} is now active`);
+}
+
+// ─── FIXTURES CRUD ───
+async function openFixtureModal(item = null) {
+  showModal(`
+    <h3>${item ? 'Edit Fixture' : 'Add Fixture'}</h3>
+    <label>Home Team</label>
+    <input id="fHome" placeholder="Home Team" value="${item?.homeTeam || ''}">
+    <label>Away Team</label>
+    <input id="fAway" placeholder="Away Team" value="${item?.awayTeam || ''}">
+    <label>Date</label>
+    <input id="fDate" placeholder="e.g. 15 May 2025" value="${item?.date || ''}">
+    <label>Venue</label>
+    <input id="fVenue" placeholder="Venue" value="${item?.venue || ''}">
+    <label>Description</label>
+    <textarea id="fDesc">${item?.description || ''}</textarea>
+    <label>Matchday</label>
+    <input id="fMd" type="number" placeholder="Matchday" value="${item?.md || 0}">
+    <div class="modal-btns">
+      <button class="modal-btn-primary" id="saveFixtureBtn">Save Fixture</button>
+      <button class="modal-btn-cancel" id="cancelFixtureBtn">Cancel</button>
+    </div>
+  `);
+  document.getElementById('cancelFixtureBtn').onclick = closeModal;
+  document.getElementById('saveFixtureBtn').onclick = async () => {
+    const homeTeam    = document.getElementById('fHome').value.trim();
+    const awayTeam    = document.getElementById('fAway').value.trim();
+    const date        = document.getElementById('fDate').value.trim();
+    const venue       = document.getElementById('fVenue').value.trim();
+    const description = document.getElementById('fDesc').value.trim();
+    const md          = parseInt(document.getElementById('fMd').value) || 0;
+    if (!homeTeam || !awayTeam) { alert("Both teams required"); return; }
+    const data = { homeTeam, awayTeam, date, venue, description, md };
+    const path = `${BASE_PATH}/seasons/season_${currentSeasonId}/fixtures`;
+    if (item?.id) await db.ref(`${path}/${item.id}`).set(data);
+    else await db.ref(path).push(data);
+    closeModal(); await loadSeasonData();
+  };
+}
+
+async function deleteFixture(id) {
+  if (!confirm("Delete this fixture?")) return;
+  await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}/fixtures/${id}`).remove();
+  await loadSeasonData();
+}
+
+// ─── RESULTS CRUD ───
+async function openResultModal(item = null, prefill = null) {
+  const p = prefill || {};
+  showModal(`
+    <h3>${item ? 'Edit Result' : 'Add Result'}</h3>
+    <label>Home Team</label>
+    <input id="rHome" placeholder="Home Team" value="${item?.homeTeam || p.homeTeam || ''}">
+    <label>Away Team</label>
+    <input id="rAway" placeholder="Away Team" value="${item?.awayTeam || p.awayTeam || ''}">
+    <label>Home Score</label>
+    <input id="rHScore" type="number" placeholder="0" value="${item?.homeScore ?? 0}">
+    <label>Away Score</label>
+    <input id="rAScore" type="number" placeholder="0" value="${item?.awayScore ?? 0}">
+    <label>Match Type</label>
+    <input id="rType" placeholder="e.g. Semi Final" value="${item?.matchType || p.description || ''}">
+    <label>Date</label>
+    <input id="rDate" placeholder="Date" value="${item?.date || p.date || ''}">
+    <label>Venue</label>
+    <input id="rVenue" placeholder="Venue" value="${item?.venue || p.venue || ''}">
+    <label>Matchday</label>
+    <input id="rMd" type="number" placeholder="Matchday" value="${item?.md || p.md || 0}">
+    <div class="modal-btns">
+      <button class="modal-btn-primary" id="saveResultBtn">Save Result</button>
+      <button class="modal-btn-cancel" id="cancelResultBtn">Cancel</button>
+    </div>
+  `);
+  document.getElementById('cancelResultBtn').onclick = closeModal;
+  document.getElementById('saveResultBtn').onclick = async () => {
+    const homeTeam  = document.getElementById('rHome').value.trim();
+    const awayTeam  = document.getElementById('rAway').value.trim();
+    const homeScore = parseInt(document.getElementById('rHScore').value) || 0;
+    const awayScore = parseInt(document.getElementById('rAScore').value) || 0;
+    const matchType = document.getElementById('rType').value.trim();
+    const date      = document.getElementById('rDate').value.trim();
+    const venue     = document.getElementById('rVenue').value.trim();
+    const md        = parseInt(document.getElementById('rMd').value) || 0;
+    if (!homeTeam || !awayTeam) { alert("Both teams required"); return; }
+    const data = { homeTeam, awayTeam, homeScore, awayScore, matchType, date, venue, md };
+    const path = `${BASE_PATH}/seasons/season_${currentSeasonId}/results`;
+    if (item?.id) await db.ref(`${path}/${item.id}`).set(data);
+    else await db.ref(path).push(data);
+    closeModal(); await loadSeasonData();
+    document.querySelector('.tab-btn[data-tab="results"]').click();
+  };
+}
+
+async function deleteResult(id) {
+  if (!confirm("Delete this result?")) return;
+  await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}/results/${id}`).remove();
+  await loadSeasonData();
+}
+
+// ─── STATS CRUD ───
+async function openStatsModal(type) {
+  const list = type === 'scorer' ? topScorers : topAssists;
+  const label = type === 'scorer' ? 'Goals' : 'Assists';
+  const sorted = [...list].sort((a,b) => (b.count||0) - (a.count||0));
+  const medals = ['🥇','🥈','🥉'];
+
+  let rows = sorted.map((p, i) => `
+    <tr class="${i < 3 ? 'rank-'+(i+1) : ''}">
+      <td>${medals[i] || (i+1)}</td>
+      <td>${p.name}</td>
+      <td><div class="team-cell">${teamIconHtml(p.team)}<span>${p.team}</span></div></td>
+      <td><span class="count-badge">${p.count}</span></td>
+      ${isAdmin ? `<td>
+        <button class="btn-sm btn-edit" data-id="${p.id}">Edit</button>
+        <button class="btn-sm btn-delete" data-id="${p.id}">Del</button>
+      </td>` : ''}
+    </tr>
+  `).join('');
+
+  showModal(`
+    <h3>${type === 'scorer' ? '⚽ Top Scorers' : '🎯 Top Assists'}</h3>
+    <div class="stats-table-wrap">
+      <table class="stats-table">
+        <thead><tr>
+          <th>#</th><th>Player</th><th>Team</th><th>${label}</th>
+          ${isAdmin ? '<th>Actions</th>' : ''}
+        </tr></thead>
+        <tbody>${rows || `<tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,0.4);padding:20px;">No data yet</td></tr>`}</tbody>
+      </table>
+    </div>
+    ${isAdmin ? `<button class="add-btn-main" id="addStatBtn">+ Add Entry</button>` : ''}
+    <div class="modal-btns"><button class="modal-btn-cancel" id="closeStatsBtn" style="width:100%;">Close</button></div>
+  `);
+
+  document.getElementById('closeStatsBtn').onclick = closeModal;
+  if (isAdmin) {
+    document.getElementById('addStatBtn').onclick = () => openStatEntryModal(type);
+    document.querySelectorAll('.btn-edit[data-id]').forEach(btn => {
+      const entry = list.find(p => p.id === btn.dataset.id);
+      btn.onclick = () => openStatEntryModal(type, entry);
+    });
+    document.querySelectorAll('.btn-delete[data-id]').forEach(btn => {
+      btn.onclick = async () => {
+        if (!confirm("Delete?")) return;
+        const path = type === 'scorer' ? 'topScorers' : 'topAssists';
+        await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}/${path}/${btn.dataset.id}`).remove();
+        closeModal(); await loadSeasonData(); openStatsModal(type);
+      };
+    });
+  }
+}
+
+async function openStatEntryModal(type, entry = null) {
+  const label = type === 'scorer' ? 'Goals' : 'Assists';
+  showModal(`
+    <h3>${entry ? 'Edit' : 'Add'} ${type === 'scorer' ? 'Scorer' : 'Assistant'}</h3>
+    <label>Player Name</label>
+    <input id="statName" placeholder="Player Name" value="${entry?.name || ''}">
+    <label>Team</label>
+    <input id="statTeam" placeholder="Team" value="${entry?.team || ''}">
+    <label>${label}</label>
+    <input id="statCount" type="number" placeholder="0" value="${entry?.count || 0}">
+    <div class="modal-btns">
+      <button class="modal-btn-primary" id="saveStatBtn">Save</button>
+      <button class="modal-btn-cancel" id="cancelStatBtn">Cancel</button>
+    </div>
+  `);
+  document.getElementById('cancelStatBtn').onclick = () => { closeModal(); openStatsModal(type); };
+  document.getElementById('saveStatBtn').onclick = async () => {
+    const name  = document.getElementById('statName').value.trim();
+    const team  = document.getElementById('statTeam').value.trim();
+    const count = parseInt(document.getElementById('statCount').value) || 0;
+    if (!name || !team) { alert("Fill all fields"); return; }
+    const path = `${BASE_PATH}/seasons/season_${currentSeasonId}/${type === 'scorer' ? 'topScorers' : 'topAssists'}`;
+    if (entry?.id) await db.ref(`${path}/${entry.id}`).set({ name, team, count });
+    else await db.ref(path).push({ name, team, count });
+    closeModal(); await loadSeasonData(); openStatsModal(type);
+  };
+}
+
+// ─── RENDER ───
+function renderFixtures() {
+  const sorted = [...fixtures].sort((a,b) => (a.md||0) - (b.md||0));
+  if (!sorted.length) return `<div class="empty-state"><div class="empty-icon">📅</div><p>No fixtures scheduled yet</p></div>`;
+  let html = '<div class="matches-list">';
+  sorted.forEach(f => {
+    html += `
+      <div class="match-card">
+        <div class="match-row">
+          <div class="team-side home">
+            <span class="team-name">${f.homeTeam}</span>
+            ${teamIconHtml(f.homeTeam)}
+          </div>
+          <div class="match-center">
+            <span class="vs-text">VS</span>
+          </div>
+          <div class="team-side away">
+            <span class="team-name">${f.awayTeam}</span>
+            ${teamIconHtml(f.awayTeam)}
+          </div>
+        </div>
+        <div class="match-meta">
+          ${f.date ? `<span class="meta-tag">📅 ${f.date}</span>` : ''}
+          ${f.venue ? `<span class="meta-tag">📍 ${f.venue}</span>` : ''}
+          ${f.description ? `<span class="meta-tag">${f.description}</span>` : ''}
+          ${f.md ? `<span class="meta-tag">MD ${f.md}</span>` : ''}
+        </div>
+        ${isAdmin ? `
+        <div class="admin-row">
+          <button class="btn-sm btn-add-result" data-id="${f.id}">+ Add Result</button>
+          <button class="btn-sm btn-edit" data-id="${f.id}">Edit</button>
+          <button class="btn-sm btn-delete" data-id="${f.id}">Delete</button>
+        </div>` : ''}
+      </div>
+    `;
+  });
+  html += '</div>';
+  if (isAdmin) html += `<button class="add-btn-main" id="addFixtureBtn">+ Add Fixture</button>`;
+  return html;
+}
+
+function renderResults() {
+  const sorted = [...results].sort((a,b) => (b.md||0) - (a.md||0));
+  if (!sorted.length) return `<div class="empty-state"><div class="empty-icon">🏆</div><p>No results yet</p></div>`;
+  let html = '<div class="matches-list">';
+  sorted.forEach(r => {
+    html += `
+      <div class="match-card">
+        <div class="match-row">
+          <div class="team-side home">
+            <span class="team-name">${r.homeTeam}</span>
+            ${teamIconHtml(r.homeTeam)}
+          </div>
+          <div class="match-center">
+            <span class="score-display">${r.homeScore} - ${r.awayScore}</span>
+          </div>
+          <div class="team-side away">
+            <span class="team-name">${r.awayTeam}</span>
+            ${teamIconHtml(r.awayTeam)}
+          </div>
+        </div>
+        <div class="match-meta">
+          ${r.date ? `<span class="meta-tag">📅 ${r.date}</span>` : ''}
+          ${r.venue ? `<span class="meta-tag">📍 ${r.venue}</span>` : ''}
+          ${r.matchType ? `<span class="meta-tag">${r.matchType}</span>` : ''}
+          ${r.md ? `<span class="meta-tag">MD ${r.md}</span>` : ''}
+        </div>
+        ${isAdmin ? `
+        <div class="admin-row">
+          <button class="btn-sm btn-edit" data-id="${r.id}">Edit</button>
+          <button class="btn-sm btn-delete" data-id="${r.id}">Delete</button>
+        </div>` : ''}
+      </div>
+    `;
+  });
+  html += '</div>';
+  if (isAdmin) html += `<button class="add-btn-main" id="addResultBtn">+ Add Result</button>`;
+  return html;
+}
+
+function renderCurrentTab() {
+  const tab  = document.querySelector('.tab-btn.active')?.dataset.tab;
+  const card = document.getElementById('contentCard');
+  if (tab === 'fixtures') { card.innerHTML = renderFixtures(); attachFixtureHandlers(); }
+  else if (tab === 'results') { card.innerHTML = renderResults(); attachResultHandlers(); }
+  else if (tab === 'scorers') { card.innerHTML = ''; openStatsModal('scorer'); }
+  else if (tab === 'assists') { card.innerHTML = ''; openStatsModal('assist'); }
+}
+
+function attachFixtureHandlers() {
+  if (!isAdmin) return;
+  document.getElementById('addFixtureBtn')?.addEventListener('click', () => openFixtureModal());
+  document.querySelectorAll('.btn-edit[data-id]').forEach(btn => {
+    const f = fixtures.find(x => x.id === btn.dataset.id);
+    btn.onclick = () => openFixtureModal(f);
+  });
+  document.querySelectorAll('.btn-delete[data-id]').forEach(btn => {
+    btn.onclick = () => deleteFixture(btn.dataset.id);
+  });
+  document.querySelectorAll('.btn-add-result[data-id]').forEach(btn => {
+    const f = fixtures.find(x => x.id === btn.dataset.id);
+    btn.onclick = () => openResultModal(null, f);
+  });
+}
+
+function attachResultHandlers() {
+  if (!isAdmin) return;
+  document.getElementById('addResultBtn')?.addEventListener('click', () => openResultModal());
+  document.querySelectorAll('.btn-edit[data-id]').forEach(btn => {
+    const r = results.find(x => x.id === btn.dataset.id);
+    btn.onclick = () => openResultModal(r);
+  });
+  document.querySelectorAll('.btn-delete[data-id]').forEach(btn => {
+    btn.onclick = () => deleteResult(btn.dataset.id);
+  });
+}
+
+// ─── SLIDESHOW ───
+async function loadSlideshow() {
+  const [imgSnap, durSnap] = await Promise.all([
+    db.ref(`${BASE_PATH}/slideshow/images`).once('value'),
+    db.ref(`${BASE_PATH}/slideshow/duration`).once('value'),
+  ]);
+  slideshowImages  = imgSnap.val() || [];
+  slideshowDuration = durSnap.val() || 3000;
+  if (slideInterval) clearInterval(slideInterval);
+  const imgEl = document.getElementById('slideshowImg');
+  if (slideshowImages.length) {
+    imgEl.style.display = 'block';
+    currentSlide = 0;
+    updateSlide();
+    slideInterval = setInterval(() => {
+      currentSlide = (currentSlide + 1) % slideshowImages.length;
+      updateSlide();
+    }, slideshowDuration);
+  } else {
+    imgEl.style.display = 'none';
+  }
+}
+
+function updateSlide() {
+  const img = document.getElementById('slideshowImg');
+  img.src = slideshowImages[currentSlide];
+  const dots = document.getElementById('dotsContainer');
+  dots.innerHTML = '';
+  slideshowImages.forEach((_, i) => {
+    const d = document.createElement('span');
+    d.className = 'dot' + (i === currentSlide ? ' active' : '');
+    d.onclick = () => {
+      currentSlide = i; updateSlide();
+      if (slideInterval) { clearInterval(slideInterval); slideInterval = setInterval(() => { currentSlide = (currentSlide+1) % slideshowImages.length; updateSlide(); }, slideshowDuration); }
+    };
+    dots.appendChild(d);
+  });
+}
+
+// ─── ADMIN SETTINGS ───
+function openAdminSettings() {
+  showModal(`
+    <h3>⚙️ Admin Settings</h3>
+    <div class="settings-grid">
+      <button class="settings-btn" id="setLogoBtn">🖼️ Upload Navbar Logo</button>
+      <button class="settings-btn" id="setBgBtn">🌄 Set Background Image</button>
+      <button class="settings-btn" id="manageSlideBtn">🎞️ Manage Slideshow</button>
+      <button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button>
+    </div>
+    <div class="modal-btns"><button class="modal-btn-cancel" id="closeSettingsBtn" style="width:100%;margin-top:12px;">Close</button></div>
+  `);
+  document.getElementById('closeSettingsBtn').onclick = closeModal;
+  document.getElementById('setLogoBtn').onclick    = () => uploadLogo();
+  document.getElementById('setBgBtn').onclick      = () => openBgCropTool();
+  document.getElementById('manageSlideBtn').onclick = () => manageSlideshowUI();
+  document.getElementById('addIconBtn').onclick    = () => uploadTeamIcon();
+}
+
+async function uploadLogo() {
+  const file = await pickFile('image/*');
+  if (!file) return;
+  try {
+    const url = await uploadToImgBB(file);
+    await db.ref(`${BASE_PATH}/settings/navbarLogo`).set(url);
+    await loadLogo();
+    alert('Logo updated!');
+    closeModal();
+  } catch(e) { alert('Upload failed: ' + e.message); }
+}
+
+function pickFile(accept) {
+  return new Promise(res => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = accept;
+    inp.onchange = e => res(e.target.files[0] || null);
+    inp.click();
+  });
+}
+
+// ─── BACKGROUND CROP TOOL ───
+let cropState = { img: null, x: 0, y: 0, scale: 1, dragging: false, startX: 0, startY: 0, originX: 0, originY: 0, naturalW: 0, naturalH: 0 };
+
+async function openBgCropTool() {
+  const file = await pickFile('image/*');
+  if (!file) return;
+  const objectUrl = URL.createObjectURL(file);
+
+  showModal(`
+    <h3>🌄 Crop Background</h3>
+    <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-bottom:12px;">Drag to reposition • Use slider to zoom</p>
+    <div class="crop-container" id="cropContainer">
+      <img class="crop-img" id="cropImg" src="${objectUrl}" draggable="false">
+    </div>
+    <div class="crop-controls">
+      <label>Zoom</label>
+      <input class="crop-slider" id="zoomSlider" type="range" min="0.5" max="3" step="0.01" value="1">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn-primary" id="applyCropBtn">Apply Background</button>
+      <button class="modal-btn-cancel" id="cancelCropBtn">Cancel</button>
+    </div>
+  `);
+
+  const container = document.getElementById('cropContainer');
+  const img       = document.getElementById('cropImg');
+  const slider    = document.getElementById('zoomSlider');
+
+  cropState = { x:0, y:0, scale:1, dragging:false, startX:0, startY:0, originX:0, originY:0 };
+
+  img.onload = () => {
+    cropState.naturalW = img.naturalWidth;
+    cropState.naturalH = img.naturalHeight;
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+    const fit = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
+    cropState.scale = fit;
+    slider.min   = fit * 0.8;
+    slider.max   = fit * 4;
+    slider.step  = fit * 0.01;
+    slider.value = fit;
+    cropState.x = (cw - img.naturalWidth * fit) / 2;
+    cropState.y = (ch - img.naturalHeight * fit) / 2;
+    applyTransform();
+  };
+
+  function applyTransform() {
+    img.style.transform = `translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale})`;
+    img.style.transformOrigin = '0 0';
+    img.style.left = '0'; img.style.top = '0';
+  }
+
+  slider.oninput = () => {
+    const oldScale = cropState.scale;
+    const newScale = parseFloat(slider.value);
+    const cw = container.clientWidth / 2;
+    const ch = container.clientHeight / 2;
+    cropState.x = cw - (cw - cropState.x) * (newScale / oldScale);
+    cropState.y = ch - (ch - cropState.y) * (newScale / oldScale);
+    cropState.scale = newScale;
+    applyTransform();
+  };
+
+  container.addEventListener('mousedown', e => {
+    cropState.dragging = true;
+    cropState.startX   = e.clientX - cropState.x;
+    cropState.startY   = e.clientY - cropState.y;
+    e.preventDefault();
+  });
+  container.addEventListener('touchstart', e => {
+    cropState.dragging = true;
+    cropState.startX   = e.touches[0].clientX - cropState.x;
+    cropState.startY   = e.touches[0].clientY - cropState.y;
+  }, { passive:true });
+  document.addEventListener('mousemove', e => {
+    if (!cropState.dragging) return;
+    cropState.x = e.clientX - cropState.startX;
+    cropState.y = e.clientY - cropState.startY;
+    applyTransform();
+  });
+  document.addEventListener('touchmove', e => {
+    if (!cropState.dragging) return;
+    cropState.x = e.touches[0].clientX - cropState.startX;
+    cropState.y = e.touches[0].clientY - cropState.startY;
+    applyTransform();
+  }, { passive:true });
+  const stopDrag = () => { cropState.dragging = false; };
+  document.addEventListener('mouseup', stopDrag);
+  document.addEventListener('touchend', stopDrag);
+
+  document.getElementById('cancelCropBtn').onclick = closeModal;
+  document.getElementById('applyCropBtn').onclick = async () => {
+    document.getElementById('applyCropBtn').textContent = 'Uploading…';
+    document.getElementById('applyCropBtn').disabled = true;
+    try {
+      // Capture the crop as canvas
+      const cw = container.clientWidth;
+      const ch = container.clientHeight;
+      const canvas = document.createElement('canvas');
+      canvas.width  = cw * 2;
+      canvas.height = ch * 2;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(2, 2);
+      ctx.drawImage(
+        img,
+        -cropState.x / cropState.scale,
+        -cropState.y / cropState.scale,
+        cw / cropState.scale,
+        ch / cropState.scale,
+        0, 0, cw, ch
+      );
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+      const url  = await uploadToImgBB(blob);
+      await db.ref(`${BASE_PATH}/settings/backgroundImage`).set(url);
+      document.body.style.setProperty('--bg-image', `url(${url})`);
+      document.body.classList.add('has-bg');
+      closeModal();
+      alert('Background applied!');
+      URL.revokeObjectURL(objectUrl);
+    } catch(e) {
+      alert('Failed: ' + e.message);
+      document.getElementById('applyCropBtn').textContent = 'Apply Background';
+      document.getElementById('applyCropBtn').disabled = false;
+    }
+  };
+}
+
+// ─── SLIDESHOW MANAGER ───
+async function manageSlideshowUI() {
+  const refresh = () => {
+    let preview = '<div class="img-preview-grid">';
+    slideshowImages.forEach((url, idx) => {
+      preview += `<div class="preview-thumb"><img src="${url}" alt="slide"><span class="thumb-del" data-idx="${idx}">×</span></div>`;
+    });
+    preview += '</div>';
+    showModal(`
+      <h3>🎞️ Slideshow Manager</h3>
+      ${preview}
+      <label>Add New Slide</label>
+      <input type="file" id="newSlideFile" accept="image/*" style="border-radius:8px;">
+      <button class="add-btn-main" id="addSlideBtn">+ Add Slide</button>
+      <label style="margin-top:14px;">Duration (seconds)</label>
+      <input type="number" id="slideDur" value="${slideshowDuration/1000}" step="0.5" min="1" max="10">
+      <div class="modal-btns">
+        <button class="modal-btn-primary" id="saveDurBtn">Save Duration</button>
+        <button class="modal-btn-cancel" id="closeSlideBtn">Close</button>
+      </div>
+    `);
+    document.querySelectorAll('.thumb-del').forEach(btn => {
+      btn.onclick = async () => {
+        const idx = parseInt(btn.dataset.idx);
+        slideshowImages.splice(idx, 1);
+        await db.ref(`${BASE_PATH}/slideshow/images`).set(slideshowImages.length ? slideshowImages : null);
+        await loadSlideshow(); refresh();
+      };
+    });
+    document.getElementById('addSlideBtn').onclick = async () => {
+      const file = document.getElementById('newSlideFile').files[0];
+      if (!file) return;
+      document.getElementById('addSlideBtn').textContent = 'Uploading…';
+      try {
+        const url = await uploadToImgBB(file);
+        slideshowImages.push(url);
+        await db.ref(`${BASE_PATH}/slideshow/images`).set(slideshowImages);
+        await loadSlideshow(); refresh();
+      } catch(e) { alert('Upload failed: ' + e.message); document.getElementById('addSlideBtn').textContent = '+ Add Slide'; }
+    };
+    document.getElementById('saveDurBtn').onclick = async () => {
+      let sec = parseFloat(document.getElementById('slideDur').value);
+      if (isNaN(sec)) sec = 3;
+      sec = Math.min(10, Math.max(1, sec));
+      await db.ref(`${BASE_PATH}/slideshow/duration`).set(sec * 1000);
+      await loadSlideshow();
+      alert('Duration saved!'); closeModal();
+    };
+    document.getElementById('closeSlideBtn').onclick = closeModal;
+  };
+  refresh();
+}
+
+// ─── TEAM ICON UPLOAD (remove.bg + ImgBB) ───
+async function uploadTeamIcon() {
+  const teamName = prompt("Enter team name exactly as it appears in fixtures/results:");
+  if (!teamName) return;
+  const file = await pickFile('image/*');
+  if (!file) return;
+
+  const loadMsg = () => showModal(`<h3>Processing Icon</h3><div class="loading-spinner"><div class="spinner"></div><span>Removing background…</span></div>`);
+  loadMsg();
+
+  try {
+    let transparentBlob;
+    try {
+      transparentBlob = await removeBackground(file);
+    } catch(e) {
+      console.warn('remove.bg failed, using original:', e);
+      transparentBlob = file;
+    }
+    document.querySelector('.loading-spinner span').textContent = 'Uploading to storage…';
+    const url = await uploadToImgBB(transparentBlob);
+    await db.ref(`${BASE_PATH}/teamIcons/${teamName}`).set(url);
+    teamIcons[teamName] = url;
+    renderCurrentTab();
+    closeModal();
+    alert(`Icon saved for "${teamName}"!`);
+  } catch(e) {
+    alert('Failed: ' + e.message);
+    closeModal();
+  }
+}
+
+// ─── MENU ───
+function toggleMenu() {
+  document.getElementById('sideMenu').classList.toggle('active');
+  document.getElementById('overlay').classList.toggle('active');
+}
+function closeMenu() {
+  document.getElementById('sideMenu').classList.remove('active');
+  document.getElementById('overlay').classList.remove('active');
+}
+
+document.getElementById('menuBtn').onclick    = toggleMenu;
+document.getElementById('closeMenuBtn').onclick = closeMenu;
+document.getElementById('overlay').onclick    = closeMenu;
+document.getElementById('homeBtn').onclick    = () => window.location.href = 'feed.html';
+document.getElementById('adminModeBtn').onclick = () => {
+  const key = prompt("Enter admin key:");
+  if (key === "admin@100") {
+    isAdmin = true;
+    alert("Admin mode activated ✅");
+    document.getElementById('seasonAdminPanel').style.display = 'flex';
+    renderCurrentTab();
+    if (!document.getElementById('adminSettingsItem')) {
+      const item = document.createElement('div');
+      item.id = 'adminSettingsItem';
+      item.className = 'menu-item';
+      item.innerHTML = '⚙️ Admin Settings';
+      item.onclick = () => { openAdminSettings(); closeMenu(); };
+      document.getElementById('sideMenu').appendChild(item);
+    }
+  } else alert("Incorrect key");
+};
+
+// Season buttons
+document.getElementById('prevSeasonBtn').onclick    = () => switchSeason(-1);
+document.getElementById('nextSeasonBtn').onclick    = () => switchSeason(1);
+document.getElementById('addSeasonBtn').onclick     = () => isAdmin && addNewSeason();
+document.getElementById('renameSeasonBtn').onclick  = () => isAdmin && renameSeason();
+document.getElementById('setActiveSeasonBtn').onclick = () => isAdmin && setActiveSeason();
+
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderCurrentTab();
+  };
+});
+
+// ─── INIT ───
+async function init() {
+  await Promise.all([loadBgSettings(), loadLogo(), loadTeamIcons()]);
+  await loadSeasons();
+  await loadSlideshow();
+}
+
+window.goHome = () => window.location.href = 'feed.html';
+init();
 </script>
 </body>
 </html>
