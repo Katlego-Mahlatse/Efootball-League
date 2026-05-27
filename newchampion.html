@@ -313,7 +313,7 @@
     .btn-add-result:hover { background: #22884a; color: white; }
 
     .add-btn-main {
-      display: flex; align-items: center; gap: 8px;
+      display: inline-flex; align-items: center; gap: 8px;
       background: rgba(197,166,71,0.15);
       border: 1px solid rgba(197,166,71,0.4);
       color: var(--ucl-gold);
@@ -867,7 +867,7 @@ async function openStatsModal(type) {
         <button class="btn-sm btn-edit" data-id="${p.id}">Edit</button>
         <button class="btn-sm btn-delete" data-id="${p.id}">Del</button>
       </td>` : ''}
-    </td>
+    </tr>
   `).join('');
   showModal(`
     <h3>${type === 'scorer' ? '⚽ Top Scorers' : '🎯 Top Assists'}</h3>
@@ -928,84 +928,108 @@ async function openStatEntryModal(type, entry = null) {
 
 function renderFixtures() {
   const sorted = [...fixtures].sort((a,b) => (a.md||0) - (b.md||0));
-  if (!sorted.length) return `<div class="empty-state"><div class="empty-icon">📅</div><p>No fixtures scheduled yet</p></div>`;
-  let html = '<div class="matches-list">';
-  sorted.forEach(f => {
-    html += `
-      <div class="match-card">
-        <div class="match-row">
-          <div class="team-side home">
-            <span class="team-name">${f.homeTeam}</span>
-            ${teamIconHtml(f.homeTeam)}
+  let html = '';
+  if (sorted.length === 0) {
+    html = '<div class="empty-state"><div class="empty-icon">📅</div><p>No fixtures scheduled yet</p></div>';
+  } else {
+    html = '<div class="matches-list">';
+    sorted.forEach(f => {
+      html += `
+        <div class="match-card">
+          <div class="match-row">
+            <div class="team-side home">
+              <span class="team-name">${f.homeTeam}</span>
+              ${teamIconHtml(f.homeTeam)}
+            </div>
+            <div class="match-center"><span class="vs-text">VS</span></div>
+            <div class="team-side away">
+              <span class="team-name">${f.awayTeam}</span>
+              ${teamIconHtml(f.awayTeam)}
+            </div>
           </div>
-          <div class="match-center"><span class="vs-text">VS</span></div>
-          <div class="team-side away">
-            <span class="team-name">${f.awayTeam}</span>
-            ${teamIconHtml(f.awayTeam)}
+          <div class="match-meta">
+            ${f.date ? `<span class="meta-tag">📅 ${f.date}</span>` : ''}
+            ${f.venue ? `<span class="meta-tag">📍 ${f.venue}</span>` : ''}
+            ${f.description ? `<span class="meta-tag">${f.description}</span>` : ''}
+            ${f.md ? `<span class="meta-tag">MD ${f.md}</span>` : ''}
           </div>
+          ${isAdmin ? `<div class="admin-row">
+            <button class="btn-sm btn-add-result" data-id="${f.id}">+ Add Result</button>
+            <button class="btn-sm btn-edit" data-id="${f.id}">Edit</button>
+            <button class="btn-sm btn-delete" data-id="${f.id}">Delete</button>
+          </div>` : ''}
         </div>
-        <div class="match-meta">
-          ${f.date ? `<span class="meta-tag">📅 ${f.date}</span>` : ''}
-          ${f.venue ? `<span class="meta-tag">📍 ${f.venue}</span>` : ''}
-          ${f.description ? `<span class="meta-tag">${f.description}</span>` : ''}
-          ${f.md ? `<span class="meta-tag">MD ${f.md}</span>` : ''}
-        </div>
-        ${isAdmin ? `<div class="admin-row">
-          <button class="btn-sm btn-add-result" data-id="${f.id}">+ Add Result</button>
-          <button class="btn-sm btn-edit" data-id="${f.id}">Edit</button>
-          <button class="btn-sm btn-delete" data-id="${f.id}">Delete</button>
-        </div>` : ''}
-      </div>
-    `;
-  });
-  html += '</div>';
-  if (isAdmin) html += `<button class="add-btn-main" id="addFixtureBtn">+ Add Fixture</button>`;
+      `;
+    });
+    html += '</div>';
+  }
+  if (isAdmin) {
+    html += `<button class="add-btn-main" id="addFixtureBtn" style="display:inline-flex;">+ Add Fixture</button>`;
+  }
   return html;
 }
 
 function renderResults() {
   const sorted = [...results].sort((a,b) => (b.md||0) - (a.md||0));
-  if (!sorted.length) return `<div class="empty-state"><div class="empty-icon">🏆</div><p>No results yet</p></div>`;
-  let html = '<div class="matches-list">';
-  sorted.forEach(r => {
-    html += `
-      <div class="match-card">
-        <div class="match-row">
-          <div class="team-side home">
-            <span class="team-name">${r.homeTeam}</span>
-            ${teamIconHtml(r.homeTeam)}
+  let html = '';
+  if (sorted.length === 0) {
+    html = '<div class="empty-state"><div class="empty-icon">🏆</div><p>No results yet</p></div>';
+  } else {
+    html = '<div class="matches-list">';
+    sorted.forEach(r => {
+      html += `
+        <div class="match-card">
+          <div class="match-row">
+            <div class="team-side home">
+              <span class="team-name">${r.homeTeam}</span>
+              ${teamIconHtml(r.homeTeam)}
+            </div>
+            <div class="match-center"><span class="score-display">${r.homeScore} - ${r.awayScore}</span></div>
+            <div class="team-side away">
+              <span class="team-name">${r.awayTeam}</span>
+              ${teamIconHtml(r.awayTeam)}
+            </div>
           </div>
-          <div class="match-center"><span class="score-display">${r.homeScore} - ${r.awayScore}</span></div>
-          <div class="team-side away">
-            <span class="team-name">${r.awayTeam}</span>
-            ${teamIconHtml(r.awayTeam)}
+          <div class="match-meta">
+            ${r.date ? `<span class="meta-tag">📅 ${r.date}</span>` : ''}
+            ${r.venue ? `<span class="meta-tag">📍 ${r.venue}</span>` : ''}
+            ${r.matchType ? `<span class="meta-tag">${r.matchType}</span>` : ''}
+            ${r.md ? `<span class="meta-tag">MD ${r.md}</span>` : ''}
           </div>
+          ${isAdmin ? `<div class="admin-row">
+            <button class="btn-sm btn-edit" data-id="${r.id}">Edit</button>
+            <button class="btn-sm btn-delete" data-id="${r.id}">Delete</button>
+          </div>` : ''}
         </div>
-        <div class="match-meta">
-          ${r.date ? `<span class="meta-tag">📅 ${r.date}</span>` : ''}
-          ${r.venue ? `<span class="meta-tag">📍 ${r.venue}</span>` : ''}
-          ${r.matchType ? `<span class="meta-tag">${r.matchType}</span>` : ''}
-          ${r.md ? `<span class="meta-tag">MD ${r.md}</span>` : ''}
-        </div>
-        ${isAdmin ? `<div class="admin-row">
-          <button class="btn-sm btn-edit" data-id="${r.id}">Edit</button>
-          <button class="btn-sm btn-delete" data-id="${r.id}">Delete</button>
-        </div>` : ''}
-      </div>
-    `;
-  });
-  html += '</div>';
-  if (isAdmin) html += `<button class="add-btn-main" id="addResultBtn">+ Add Result</button>`;
+      `;
+    });
+    html += '</div>';
+  }
+  if (isAdmin) {
+    html += `<button class="add-btn-main" id="addResultBtn" style="display:inline-flex;">+ Add Result</button>`;
+  }
   return html;
 }
 
 function renderCurrentTab() {
   const tab  = document.querySelector('.tab-btn.active')?.dataset.tab;
   const card = document.getElementById('contentCard');
-  if (tab === 'fixtures') { card.innerHTML = renderFixtures(); attachFixtureHandlers(); }
-  else if (tab === 'results') { card.innerHTML = renderResults(); attachResultHandlers(); }
-  else if (tab === 'scorers') { openStatsModal('scorer'); card.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><span>Loading stats...</span></div>'; }
-  else if (tab === 'assists') { openStatsModal('assist'); card.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><span>Loading stats...</span></div>'; }
+  if (tab === 'fixtures') {
+    card.innerHTML = renderFixtures();
+    attachFixtureHandlers();
+  }
+  else if (tab === 'results') {
+    card.innerHTML = renderResults();
+    attachResultHandlers();
+  }
+  else if (tab === 'scorers') {
+    openStatsModal('scorer');
+    card.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><span>Loading stats...</span></div>';
+  }
+  else if (tab === 'assists') {
+    openStatsModal('assist');
+    card.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><span>Loading stats...</span></div>';
+  }
 }
 
 function attachFixtureHandlers() {
@@ -1014,14 +1038,14 @@ function attachFixtureHandlers() {
   if (addBtn) addBtn.onclick = () => openFixtureModal();
   document.querySelectorAll('.btn-edit[data-id]').forEach(btn => {
     const f = fixtures.find(x => x.id === btn.dataset.id);
-    btn.onclick = () => openFixtureModal(f);
+    if (f) btn.onclick = () => openFixtureModal(f);
   });
   document.querySelectorAll('.btn-delete[data-id]').forEach(btn => {
     btn.onclick = () => deleteFixture(btn.dataset.id);
   });
   document.querySelectorAll('.btn-add-result[data-id]').forEach(btn => {
     const f = fixtures.find(x => x.id === btn.dataset.id);
-    btn.onclick = () => openResultModal(null, f);
+    if (f) btn.onclick = () => openResultModal(null, f);
   });
 }
 
@@ -1031,7 +1055,7 @@ function attachResultHandlers() {
   if (addBtn) addBtn.onclick = () => openResultModal();
   document.querySelectorAll('.btn-edit[data-id]').forEach(btn => {
     const r = results.find(x => x.id === btn.dataset.id);
-    btn.onclick = () => openResultModal(r);
+    if (r) btn.onclick = () => openResultModal(r);
   });
   document.querySelectorAll('.btn-delete[data-id]').forEach(btn => {
     btn.onclick = () => deleteResult(btn.dataset.id);
@@ -1181,7 +1205,7 @@ async function openBgCropTool() {
       const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
       const url  = await uploadToImgBB(blob);
       await db.ref(`${BASE_PATH}/settings/backgroundImage`).set(url);
-      document.body.style.setProperty('--bg-image', `url(${url}`);
+      document.body.style.setProperty('--bg-image', `url(${url})`);
       document.body.classList.add('has-bg');
       closeModal(); alert('Background applied!'); URL.revokeObjectURL(objectUrl);
     } catch(e) { alert('Failed: ' + e.message); document.getElementById('applyCropBtn').textContent = 'Apply Background'; document.getElementById('applyCropBtn').disabled = false; }
