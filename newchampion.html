@@ -137,10 +137,17 @@
       border-radius: 32px; overflow: hidden;
       box-shadow: 0 8px 32px rgba(0,0,0,0.5);
       border: 1px solid rgba(255,255,255,0.25);
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     .slideshow-img {
-      width: 100%; height: 500px;
-      object-fit: cover; display: block;
+      width: 100%;
+      height: auto;
+      max-height: 500px;
+      object-fit: contain;
+      display: block;
       transition: opacity 0.5s ease;
     }
     .dots-container { margin-top: 24px; display: flex; gap: 12px; }
@@ -466,7 +473,10 @@
       margin: 0 auto;
     }
     .sub-slideshow .slideshow-img {
-      height: 400px;
+      max-height: 400px;
+      width: 100%;
+      height: auto;
+      object-fit: contain;
     }
   </style>
 </head>
@@ -548,7 +558,7 @@ let teamIcons = {};
 let fixtures = [], results = [], topScorers = [], topAssists = [];
 let slideshowImages = [], slideInterval = null, currentSlide = 0, slideshowDuration = 3000;
 
-// Sub slideshows
+// Sub slideshows (per-season)
 let fixturesSlideshow = { images: [], duration: 3000, interval: null, current: 0 };
 let resultsSlideshow  = { images: [], duration: 3000, interval: null, current: 0 };
 
@@ -670,6 +680,16 @@ async function switchSeason(delta) {
   currentSeasonId = availableSeasons[nIdx];
   updateSeasonUI();
   await loadSeasonData();
+  await loadSubSlideshows(); // reload per-season slideshows for fixtures/results
+  // if current tab is fixtures or results, restart sub slideshow
+  const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
+  if (activeTab === 'fixtures') {
+    if (fixturesSlideshow.interval) clearInterval(fixturesSlideshow.interval);
+    startSubSlideshow('fixtures');
+  } else if (activeTab === 'results') {
+    if (resultsSlideshow.interval) clearInterval(resultsSlideshow.interval);
+    startSubSlideshow('results');
+  }
 }
 
 async function addNewSeason() {
@@ -681,6 +701,7 @@ async function addNewSeason() {
   await db.ref(`${BASE_PATH}/seasons/season_${id}`).set({ active:false, name:`Season ${id}` });
   availableSeasons.push(id); availableSeasons.sort((a,b)=>a-b);
   currentSeasonId = id; updateSeasonUI(); await loadSeasonData();
+  await loadSubSlideshows();
 }
 
 async function renameSeason() {
@@ -695,6 +716,7 @@ async function renameSeason() {
   availableSeasons = availableSeasons.map(s => s === currentSeasonId ? id : s).sort((a,b)=>a-b);
   if (activeSeasonId === currentSeasonId) activeSeasonId = id;
   currentSeasonId = id; updateSeasonUI(); await loadSeasonData();
+  await loadSubSlideshows();
 }
 
 async function setActiveSeason() {
@@ -806,7 +828,7 @@ async function openStatsModal(type) {
   const medals = ['🥇','🥈','🥉'];
   let rows = sorted.map((p, i) => `
     <tr class="${i < 3 ? 'rank-'+(i+1) : ''}">
-      <td>${medals[i] || (i+1)}</td>
+      <tr>${medals[i] || (i+1)}</td>
       <td>${p.name}</td>
       <td><div class="team-cell">${teamIconHtml(p.team)}<span>${p.team}</span></div></td>
       <td><span class="count-badge">${p.count}</span></td>
@@ -916,14 +938,20 @@ function startSubSlideshow(type) {
 }
 
 async function loadSubSlideshows() {
-  const fSnap = await db.ref(`${BASE_PATH}/fixturesSlideshow`).once('value');
+  const base = `${BASE_PATH}/seasons/season_${currentSeasonId}`;
+  const [fSnap, rSnap] = await Promise.all([
+    db.ref(`${base}/fixturesSlideshow`).once('value'),
+    db.ref(`${base}/resultsSlideshow`).once('value'),
+  ]);
   const f = fSnap.val() || {};
   fixturesSlideshow.images = f.images || [];
   fixturesSlideshow.duration = f.duration || 3000;
-  const rSnap = await db.ref(`${BASE_PATH}/resultsSlideshow`).once('value');
   const r = rSnap.val() || {};
   resultsSlideshow.images = r.images || [];
   resultsSlideshow.duration = r.duration || 3000;
+  // clear existing intervals
+  if (fixturesSlideshow.interval) clearInterval(fixturesSlideshow.interval);
+  if (resultsSlideshow.interval) clearInterval(resultsSlideshow.interval);
 }
 
 function renderFixtures() {
@@ -1111,8 +1139,8 @@ function openAdminSettings() {
       <button class="settings-btn" id="setLogoBtn">🖼️ Upload Navbar Logo</button>
       <button class="settings-btn" id="setBgBtn">🌄 Set Background Image</button>
       <button class="settings-btn" id="manageSlideBtn">🎞️ Manage Main Slideshow</button>
-      <button class="settings-btn" id="manageFixturesSlideBtn">📸 Manage Fixtures Slideshow</button>
-      <button class="settings-btn" id="manageResultsSlideBtn">📸 Manage Results Slideshow</button>
+      <button class="settings-btn" id="manageFixturesSlideBtn">📸 Manage Fixtures Slideshow (Season ${currentSeasonId})</button>
+      <button class="settings-btn" id="manageResultsSlideBtn">📸 Manage Results Slideshow (Season ${currentSeasonId})</button>
       <button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button>
     </div>
     <div class="modal-btns"><button class="modal-btn-cancel" id="closeSettingsBtn" style="width:100%;">Close</button></div>
@@ -1211,11 +1239,11 @@ async function manageSlideshowUI(type) {
   } else if (type === 'fixtures') {
     images = fixturesSlideshow.images;
     duration = fixturesSlideshow.duration/1000;
-    refPath = `${BASE_PATH}/fixturesSlideshow`;
+    refPath = `${BASE_PATH}/seasons/season_${currentSeasonId}/fixturesSlideshow`;
   } else {
     images = resultsSlideshow.images;
     duration = resultsSlideshow.duration/1000;
-    refPath = `${BASE_PATH}/resultsSlideshow`;
+    refPath = `${BASE_PATH}/seasons/season_${currentSeasonId}/resultsSlideshow`;
   }
   const refresh = () => {
     let preview = '<div class="img-preview-grid">';
