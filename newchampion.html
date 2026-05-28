@@ -197,24 +197,36 @@
     }
     .season-admin-btn:hover { background: var(--ucl-white); color: var(--ucl-blue-dark); }
 
-    /* tabs */
+    /* tabs - two rows */
     .tabs-container {
-      display: flex; justify-content: center;
-      gap: 0; margin: 30px 40px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin: 30px 40px 0;
       background: rgba(6,26,58,0.5);
       border: 1px solid rgba(255,255,255,0.2);
       border-radius: 80px;
-      padding: 8px;
+      padding: 12px 20px;
       backdrop-filter: blur(8px);
-      max-width: 900px;
-      margin-left: auto; margin-right: auto;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .tabs-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
     }
     .tab-btn {
-      flex: 1;
-      background: transparent; border: none;
+      background: transparent;
+      border: none;
       font-family: 'Rajdhani', sans-serif;
-      font-size: 1.3rem; font-weight: 700;
-      padding: 14px 24px; cursor: pointer;
+      font-size: 1.2rem;
+      font-weight: 700;
+      padding: 10px 24px;
+      cursor: pointer;
       color: rgba(255,255,255,0.6);
       border-radius: 60px;
       letter-spacing: 0.5px;
@@ -238,7 +250,7 @@
       min-height: 200px;
     }
 
-    /* match cards - 2X BIGGER than previous enlarged state */
+    /* match cards */
     .matches-list { display: flex; flex-direction: column; gap: 40px; }
 
     .match-card {
@@ -257,7 +269,6 @@
       gap: 40px;
     }
 
-    /* team side vertical layout */
     .team-side {
       display: flex;
       flex-direction: column;
@@ -266,17 +277,12 @@
       flex: 1;
       text-align: center;
     }
-    .team-side.away { 
-      flex-direction: column;
-    }
-
     .team-name {
       font-family: 'Rajdhani', sans-serif;
       font-weight: 700; font-size: 3.2rem;
       color: var(--white);
       letter-spacing: 0.3px;
     }
-
     .team-icon-wrap {
       width: 160px; height: 160px;
       border-radius: 50%;
@@ -429,6 +435,60 @@
     .modal-btn-primary:hover { background: var(--ucl-white-light); }
     .modal-btn-cancel { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.7); }
 
+    /* popup for image / video */
+    .popup-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.9);
+      display: none; justify-content: center; align-items: center;
+      z-index: 1100;
+    }
+    .popup-overlay.active { display: flex; }
+    .popup-content {
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+      background: #000;
+      border-radius: 24px;
+      overflow: auto;
+    }
+    .popup-content img {
+      width: auto;
+      max-width: 100%;
+      height: auto;
+      max-height: 85vh;
+      object-fit: contain;
+      display: block;
+    }
+    .popup-content iframe {
+      width: 80vw;
+      height: 45vw;
+      max-width: 1000px;
+      max-height: 562px;
+      border: none;
+    }
+    .close-popup {
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      background: white;
+      color: black;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 28px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: none;
+      z-index: 1101;
+    }
+    @media (max-width: 700px) {
+      .close-popup { top: 10px; right: 10px; }
+      .popup-content iframe { width: 90vw; height: 50.6vw; }
+    }
+
     /* crop */
     .crop-container { width: 100%; height: 450px; overflow: hidden; border-radius: 32px; cursor: grab; background: #000; }
     .crop-img { position: absolute; transform-origin: 0 0; pointer-events: none; }
@@ -461,26 +521,6 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     footer { text-align: center; padding: 40px; color: rgba(255,255,255,0.25); font-size: 1rem; border-top: 1px solid rgba(255,255,255,0.05); }
-
-    /* sub-slideshow (for fixtures / results) - bigger height for landscape */
-    .sub-slideshow {
-      margin-top: 60px;
-      padding-top: 40px;
-      border-top: 2px solid rgba(255,255,255,0.3);
-    }
-    .sub-slideshow .slideshow-frame {
-      max-width: 1000px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .sub-slideshow .slideshow-img {
-      width: 100%;
-      height: auto;
-      max-height: 500px; /* bigger height for landscape images */
-      object-fit: contain;
-    }
   </style>
 </head>
 <body>
@@ -520,10 +560,16 @@
 </div>
 
 <div class="tabs-container">
-  <button class="tab-btn active" data-tab="fixtures">Fixtures</button>
-  <button class="tab-btn" data-tab="results">Results</button>
-  <button class="tab-btn" data-tab="scorers">Top Scorers</button>
-  <button class="tab-btn" data-tab="assists">Top Assists</button>
+  <div class="tabs-row">
+    <button class="tab-btn active" data-tab="fixtures">Fixtures</button>
+    <button class="tab-btn" data-tab="results">Results</button>
+    <button class="tab-btn" data-tab="scorers">Top Scorers</button>
+    <button class="tab-btn" data-tab="assists">Top Assists</button>
+  </div>
+  <div class="tabs-row">
+    <button class="tab-btn" data-tab="matchup">Match Up Diagram</button>
+    <button class="tab-btn" data-tab="watch">Watch Match</button>
+  </div>
 </div>
 
 <div class="content-card" id="contentCard">
@@ -534,6 +580,14 @@
 
 <div id="genericModal" class="modal-overlay">
   <div class="modal-card" id="modalContent"></div>
+</div>
+
+<!-- Popup for Match Up Diagram and Watch Match -->
+<div id="popupOverlay" class="popup-overlay">
+  <div class="popup-content">
+    <button class="close-popup" id="closePopupBtn">&times;</button>
+    <div id="popupInner"></div>
+  </div>
 </div>
 
 <script>
@@ -561,9 +615,9 @@ let teamIcons = {};
 let fixtures = [], results = [], topScorers = [], topAssists = [];
 let slideshowImages = [], slideInterval = null, currentSlide = 0, slideshowDuration = 3000;
 
-// Sub slideshows (per-season)
-let fixturesSlideshow = { images: [], duration: 3000, interval: null, current: 0 };
-let resultsSlideshow  = { images: [], duration: 3000, interval: null, current: 0 };
+// Data for new tabs
+let matchUpDiagramImage = "";
+let watchMatchEmbed = "";
 
 async function uploadToImgBB(blob) {
   const fd = new FormData();
@@ -605,6 +659,26 @@ function showModal(html) {
   document.getElementById('genericModal').classList.add('active');
 }
 function closeModal() { document.getElementById('genericModal').classList.remove('active'); }
+
+function showPopup(contentHtml) {
+  const popup = document.getElementById('popupOverlay');
+  const inner = document.getElementById('popupInner');
+  inner.innerHTML = contentHtml;
+  popup.classList.add('active');
+}
+function closePopup() {
+  document.getElementById('popupOverlay').classList.remove('active');
+  document.getElementById('popupInner').innerHTML = '';
+}
+
+async function loadMatchUpData() {
+  const snap = await db.ref(`${BASE_PATH}/matchUpDiagram`).once('value');
+  matchUpDiagramImage = snap.val()?.imageUrl || "";
+}
+async function loadWatchMatchData() {
+  const snap = await db.ref(`${BASE_PATH}/watchMatch`).once('value');
+  watchMatchEmbed = snap.val()?.embedCode || "";
+}
 
 async function loadBgSettings() {
   const snap = await db.ref(`${BASE_PATH}/settings`).once('value');
@@ -676,10 +750,8 @@ function updateSeasonUI() {
   document.getElementById('seasonAdminPanel').style.display = isAdmin ? 'flex' : 'none';
 }
 
-// Helper: parse date string like "15 May 2025" into timestamp
 function parseDateToTimestamp(dateStr) {
   if (!dateStr) return null;
-  // try to parse with JavaScript Date (supports many formats)
   const d = new Date(dateStr);
   return isNaN(d.getTime()) ? null : d.getTime();
 }
@@ -688,29 +760,16 @@ function sortFixturesByDate(fixturesList) {
   const today = new Date();
   today.setHours(0,0,0,0);
   const todayTime = today.getTime();
-  
-  const upcoming = [];
-  const past = [];
-  const noDate = [];
-  
+  const upcoming = [], past = [], noDate = [];
   fixturesList.forEach(f => {
     const ts = parseDateToTimestamp(f.date);
-    if (ts === null) {
-      noDate.push(f);
-    } else if (ts >= todayTime) {
-      upcoming.push(f);
-    } else {
-      past.push(f);
-    }
+    if (ts === null) noDate.push(f);
+    else if (ts >= todayTime) upcoming.push(f);
+    else past.push(f);
   });
-  
-  // sort upcoming ascending (earliest first)
   upcoming.sort((a,b) => (parseDateToTimestamp(a.date)||0) - (parseDateToTimestamp(b.date)||0));
-  // sort past ascending (earliest past first)
   past.sort((a,b) => (parseDateToTimestamp(a.date)||0) - (parseDateToTimestamp(b.date)||0));
-  // no date: sort by matchday or id
   noDate.sort((a,b) => (a.md||0) - (b.md||0));
-  
   return [...upcoming, ...past, ...noDate];
 }
 
@@ -721,15 +780,6 @@ async function switchSeason(delta) {
   currentSeasonId = availableSeasons[nIdx];
   updateSeasonUI();
   await loadSeasonData();
-  await loadSubSlideshows();
-  const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
-  if (activeTab === 'fixtures') {
-    if (fixturesSlideshow.interval) clearInterval(fixturesSlideshow.interval);
-    startSubSlideshow('fixtures');
-  } else if (activeTab === 'results') {
-    if (resultsSlideshow.interval) clearInterval(resultsSlideshow.interval);
-    startSubSlideshow('results');
-  }
 }
 
 async function addNewSeason() {
@@ -741,7 +791,6 @@ async function addNewSeason() {
   await db.ref(`${BASE_PATH}/seasons/season_${id}`).set({ active:false, name:`Season ${id}` });
   availableSeasons.push(id); availableSeasons.sort((a,b)=>a-b);
   currentSeasonId = id; updateSeasonUI(); await loadSeasonData();
-  await loadSubSlideshows();
 }
 
 async function renameSeason() {
@@ -756,7 +805,6 @@ async function renameSeason() {
   availableSeasons = availableSeasons.map(s => s === currentSeasonId ? id : s).sort((a,b)=>a-b);
   if (activeSeasonId === currentSeasonId) activeSeasonId = id;
   currentSeasonId = id; updateSeasonUI(); await loadSeasonData();
-  await loadSubSlideshows();
 }
 
 async function setActiveSeason() {
@@ -924,75 +972,6 @@ async function openStatEntryModal(type, entry = null) {
   };
 }
 
-function renderSubSlideshow(type) {
-  const data = type === 'fixtures' ? fixturesSlideshow : resultsSlideshow;
-  if (!data.images || data.images.length === 0) return '';
-  let dotsHtml = '<div class="dots-container" id="subDots_' + type + '"></div>';
-  return `
-    <div class="sub-slideshow">
-      <div class="slideshow-frame">
-        <img class="slideshow-img" id="subSlideImg_${type}" src="${data.images[0]}" alt="slideshow">
-      </div>
-      ${dotsHtml}
-    </div>
-  `;
-}
-
-function startSubSlideshow(type) {
-  const data = type === 'fixtures' ? fixturesSlideshow : resultsSlideshow;
-  if (!data.images || data.images.length === 0) return;
-  if (data.interval) clearInterval(data.interval);
-  const imgEl = document.getElementById(`subSlideImg_${type}`);
-  if (!imgEl) return;
-  data.current = 0;
-  imgEl.src = data.images[0];
-  function updateDots() {
-    const container = document.getElementById(`subDots_${type}`);
-    if (!container) return;
-    container.innerHTML = '';
-    data.images.forEach((_, i) => {
-      const dot = document.createElement('span');
-      dot.className = 'dot' + (i === data.current ? ' active' : '');
-      dot.onclick = () => {
-        data.current = i;
-        imgEl.src = data.images[i];
-        updateDots();
-        if (data.interval) {
-          clearInterval(data.interval);
-          data.interval = setInterval(() => {
-            data.current = (data.current + 1) % data.images.length;
-            imgEl.src = data.images[data.current];
-            updateDots();
-          }, data.duration);
-        }
-      };
-      container.appendChild(dot);
-    });
-  }
-  updateDots();
-  data.interval = setInterval(() => {
-    data.current = (data.current + 1) % data.images.length;
-    imgEl.src = data.images[data.current];
-    updateDots();
-  }, data.duration);
-}
-
-async function loadSubSlideshows() {
-  const base = `${BASE_PATH}/seasons/season_${currentSeasonId}`;
-  const [fSnap, rSnap] = await Promise.all([
-    db.ref(`${base}/fixturesSlideshow`).once('value'),
-    db.ref(`${base}/resultsSlideshow`).once('value'),
-  ]);
-  const f = fSnap.val() || {};
-  fixturesSlideshow.images = f.images || [];
-  fixturesSlideshow.duration = f.duration || 3000;
-  const r = rSnap.val() || {};
-  resultsSlideshow.images = r.images || [];
-  resultsSlideshow.duration = r.duration || 3000;
-  if (fixturesSlideshow.interval) clearInterval(fixturesSlideshow.interval);
-  if (resultsSlideshow.interval) clearInterval(resultsSlideshow.interval);
-}
-
 function renderFixtures() {
   const sorted = sortFixturesByDate(fixtures);
   let html = '';
@@ -1033,7 +1012,6 @@ function renderFixtures() {
   if (isAdmin) {
     html += `<button class="add-btn-main" id="addFixtureBtn" style="display:inline-flex;">+ Add Fixture</button>`;
   }
-  html += renderSubSlideshow('fixtures');
   return html;
 }
 
@@ -1076,8 +1054,23 @@ function renderResults() {
   if (isAdmin) {
     html += `<button class="add-btn-main" id="addResultBtn" style="display:inline-flex;">+ Add Result</button>`;
   }
-  html += renderSubSlideshow('results');
   return html;
+}
+
+function handleMatchUpTab() {
+  if (matchUpDiagramImage) {
+    showPopup(`<img src="${matchUpDiagramImage}" alt="Match Up Diagram">`);
+  } else {
+    alert("No match up diagram available yet.");
+  }
+}
+
+function handleWatchTab() {
+  if (watchMatchEmbed) {
+    showPopup(watchMatchEmbed);
+  } else {
+    alert("No match video available yet.");
+  }
 }
 
 function renderCurrentTab() {
@@ -1086,12 +1079,10 @@ function renderCurrentTab() {
   if (tab === 'fixtures') {
     card.innerHTML = renderFixtures();
     attachFixtureHandlers();
-    setTimeout(() => startSubSlideshow('fixtures'), 100);
   }
   else if (tab === 'results') {
     card.innerHTML = renderResults();
     attachResultHandlers();
-    setTimeout(() => startSubSlideshow('results'), 100);
   }
   else if (tab === 'scorers') {
     openStatsModal('scorer');
@@ -1100,6 +1091,14 @@ function renderCurrentTab() {
   else if (tab === 'assists') {
     openStatsModal('assist');
     card.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><span>Loading stats...</span></div>';
+  }
+  else if (tab === 'matchup') {
+    handleMatchUpTab();
+    card.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><p>Click to view Match Up Diagram</p></div>';
+  }
+  else if (tab === 'watch') {
+    handleWatchTab();
+    card.innerHTML = '<div class="empty-state"><div class="empty-icon">🎬</div><p>Click to watch the match</p></div>';
   }
 }
 
@@ -1171,6 +1170,41 @@ function updateSlide() {
   });
 }
 
+async function uploadMatchUpDiagram() {
+  const file = await pickFile('image/*');
+  if (!file) return;
+  try {
+    const url = await uploadToImgBB(file);
+    await db.ref(`${BASE_PATH}/matchUpDiagram`).set({ imageUrl: url });
+    matchUpDiagramImage = url;
+    alert("Match Up Diagram updated!");
+    closeModal();
+  } catch(e) { alert('Upload failed: ' + e.message); }
+}
+
+async function updateWatchMatchEmbed() {
+  const embed = prompt("Paste YouTube embed code (iframe) or full URL:", watchMatchEmbed);
+  if (embed === null) return;
+  let finalEmbed = embed.trim();
+  // If user pastes a normal YouTube URL, convert to iframe
+  if (finalEmbed.includes("youtube.com/watch?v=") || finalEmbed.includes("youtu.be/")) {
+    let videoId = "";
+    if (finalEmbed.includes("youtu.be/")) {
+      videoId = finalEmbed.split("youtu.be/")[1].split(/[?#]/)[0];
+    } else {
+      const urlParams = new URLSearchParams(new URL(finalEmbed).search);
+      videoId = urlParams.get('v');
+    }
+    if (videoId) {
+      finalEmbed = `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    }
+  }
+  await db.ref(`${BASE_PATH}/watchMatch`).set({ embedCode: finalEmbed });
+  watchMatchEmbed = finalEmbed;
+  alert("Watch Match content updated!");
+  closeModal();
+}
+
 function openAdminSettings() {
   showModal(`
     <h3>⚙️ Admin Settings</h3>
@@ -1178,8 +1212,8 @@ function openAdminSettings() {
       <button class="settings-btn" id="setLogoBtn">🖼️ Upload Navbar Logo</button>
       <button class="settings-btn" id="setBgBtn">🌄 Set Background Image</button>
       <button class="settings-btn" id="manageSlideBtn">🎞️ Manage Main Slideshow</button>
-      <button class="settings-btn" id="manageFixturesSlideBtn">📸 Manage Fixtures Slideshow (Season ${currentSeasonId})</button>
-      <button class="settings-btn" id="manageResultsSlideBtn">📸 Manage Results Slideshow (Season ${currentSeasonId})</button>
+      <button class="settings-btn" id="setMatchUpBtn">📊 Upload Match Up Diagram</button>
+      <button class="settings-btn" id="setWatchMatchBtn">🎥 Set Watch Match Embed</button>
       <button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button>
     </div>
     <div class="modal-btns"><button class="modal-btn-cancel" id="closeSettingsBtn" style="width:100%;">Close</button></div>
@@ -1188,8 +1222,8 @@ function openAdminSettings() {
   document.getElementById('setLogoBtn').onclick    = () => uploadLogo();
   document.getElementById('setBgBtn').onclick      = () => openBgCropTool();
   document.getElementById('manageSlideBtn').onclick = () => manageSlideshowUI('main');
-  document.getElementById('manageFixturesSlideBtn').onclick = () => manageSubSlideshowUI('fixtures');
-  document.getElementById('manageResultsSlideBtn').onclick = () => manageSubSlideshowUI('results');
+  document.getElementById('setMatchUpBtn').onclick = () => uploadMatchUpDiagram();
+  document.getElementById('setWatchMatchBtn').onclick = () => updateWatchMatchEmbed();
   document.getElementById('addIconBtn').onclick    = () => uploadTeamIcon();
 }
 
@@ -1270,26 +1304,15 @@ async function openBgCropTool() {
 }
 
 async function manageSlideshowUI(type) {
-  let images, duration, refPath;
-  if (type === 'main') {
-    images = slideshowImages;
-    duration = slideshowDuration/1000;
-    refPath = `${BASE_PATH}/slideshow`;
-  } else if (type === 'fixtures') {
-    images = fixturesSlideshow.images;
-    duration = fixturesSlideshow.duration/1000;
-    refPath = `${BASE_PATH}/seasons/season_${currentSeasonId}/fixturesSlideshow`;
-  } else {
-    images = resultsSlideshow.images;
-    duration = resultsSlideshow.duration/1000;
-    refPath = `${BASE_PATH}/seasons/season_${currentSeasonId}/resultsSlideshow`;
-  }
+  let images = slideshowImages;
+  let duration = slideshowDuration/1000;
+  let refPath = `${BASE_PATH}/slideshow`;
   const refresh = () => {
     let preview = '<div class="img-preview-grid">';
     images.forEach((url, idx) => { preview += `<div class="preview-thumb"><img src="${url}"><span class="thumb-del" data-idx="${idx}">×</span></div>`; });
     preview += '</div>';
     showModal(`
-      <h3>Manage ${type === 'main' ? 'Main' : (type === 'fixtures' ? 'Fixtures' : 'Results')} Slideshow</h3>
+      <h3>Manage Main Slideshow</h3>
       ${preview}
       <input type="file" id="newSlideFile" accept="image/*">
       <button class="add-btn-main" id="uploadSlideBtn" style="margin-top:10px;">+ Add Slide</button>
@@ -1302,9 +1325,7 @@ async function manageSlideshowUI(type) {
         const idx = parseInt(btn.dataset.idx);
         images.splice(idx,1);
         await db.ref(`${refPath}/images`).set(images);
-        if (type === 'main') { slideshowImages = images; await loadSlideshow(); }
-        else if (type === 'fixtures') { fixturesSlideshow.images = images; if (document.querySelector('.tab-btn.active')?.dataset.tab === 'fixtures') startSubSlideshow('fixtures'); }
-        else { resultsSlideshow.images = images; if (document.querySelector('.tab-btn.active')?.dataset.tab === 'results') startSubSlideshow('results'); }
+        slideshowImages = images; await loadSlideshow();
         refresh();
       };
     });
@@ -1316,9 +1337,7 @@ async function manageSlideshowUI(type) {
         const url = await uploadToImgBB(file);
         images.push(url);
         await db.ref(`${refPath}/images`).set(images);
-        if (type === 'main') { slideshowImages = images; await loadSlideshow(); }
-        else if (type === 'fixtures') { fixturesSlideshow.images = images; if (document.querySelector('.tab-btn.active')?.dataset.tab === 'fixtures') startSubSlideshow('fixtures'); }
-        else { resultsSlideshow.images = images; if (document.querySelector('.tab-btn.active')?.dataset.tab === 'results') startSubSlideshow('results'); }
+        slideshowImages = images; await loadSlideshow();
         refresh();
       } catch(e) { alert('Upload failed'); document.getElementById('uploadSlideBtn').textContent = '+ Add Slide'; }
     };
@@ -1327,19 +1346,13 @@ async function manageSlideshowUI(type) {
       if (isNaN(sec)) sec = 3;
       sec = Math.min(10, Math.max(1, sec));
       await db.ref(`${refPath}/duration`).set(sec*1000);
-      if (type === 'main') { slideshowDuration = sec*1000; loadSlideshow(); }
-      else if (type === 'fixtures') { fixturesSlideshow.duration = sec*1000; if (document.querySelector('.tab-btn.active')?.dataset.tab === 'fixtures') startSubSlideshow('fixtures'); }
-      else { resultsSlideshow.duration = sec*1000; if (document.querySelector('.tab-btn.active')?.dataset.tab === 'results') startSubSlideshow('results'); }
+      slideshowDuration = sec*1000; loadSlideshow();
       alert('Duration saved!');
       closeModal();
     };
     document.getElementById('closeSlideBtn').onclick = closeModal;
   };
   refresh();
-}
-
-async function manageSubSlideshowUI(sub) {
-  await manageSlideshowUI(sub);
 }
 
 async function uploadTeamIcon() {
@@ -1395,13 +1408,17 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     renderCurrentTab();
   };
 });
+document.getElementById('closePopupBtn').onclick = closePopup;
+document.getElementById('popupOverlay').onclick = (e) => { if(e.target === document.getElementById('popupOverlay')) closePopup(); };
+
 async function init() {
   await loadBgSettings();
   await loadLogo();
   await loadTeamIcons();
   await loadSeasons();
   await loadSlideshow();
-  await loadSubSlideshows();
+  await loadMatchUpData();
+  await loadWatchMatchData();
 }
 window.goHome = () => window.location.href = 'feed.html';
 init();
