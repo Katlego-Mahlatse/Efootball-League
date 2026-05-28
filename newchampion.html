@@ -127,14 +127,15 @@
     }
     .menu-item:hover { background: rgba(255,255,255,0.2); border-color: var(--ucl-white); color: var(--ucl-white); }
 
-    /* slideshow main */
+    /* slideshow main - full image no crop */
     .slideshow-wrapper {
       padding: 40px 40px 24px;
       display: flex; flex-direction: column; align-items: center;
     }
     .slideshow-frame {
       width: 100%; max-width: 1100px;
-      border-radius: 32px; overflow: hidden;
+      border-radius: 32px;
+      overflow: hidden;
       box-shadow: 0 8px 32px rgba(0,0,0,0.5);
       border: 1px solid rgba(255,255,255,0.25);
       background: #000;
@@ -256,7 +257,7 @@
       gap: 40px;
     }
 
-    /* NEW: team side with vertical layout (icon above name) */
+    /* team side vertical layout */
     .team-side {
       display: flex;
       flex-direction: column;
@@ -266,7 +267,7 @@
       text-align: center;
     }
     .team-side.away { 
-      flex-direction: column; /* same vertical stack, no reverse */
+      flex-direction: column;
     }
 
     .team-name {
@@ -276,7 +277,6 @@
       letter-spacing: 0.3px;
     }
 
-    /* icons 2x bigger: 160px */
     .team-icon-wrap {
       width: 160px; height: 160px;
       border-radius: 50%;
@@ -462,7 +462,7 @@
 
     footer { text-align: center; padding: 40px; color: rgba(255,255,255,0.25); font-size: 1rem; border-top: 1px solid rgba(255,255,255,0.05); }
 
-    /* sub-slideshow (for fixtures / results) - appears below the list and add button */
+    /* sub-slideshow (for fixtures / results) - bigger height for landscape */
     .sub-slideshow {
       margin-top: 60px;
       padding-top: 40px;
@@ -471,11 +471,14 @@
     .sub-slideshow .slideshow-frame {
       max-width: 1000px;
       margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     .sub-slideshow .slideshow-img {
-      max-height: 400px;
       width: 100%;
       height: auto;
+      max-height: 500px; /* bigger height for landscape images */
       object-fit: contain;
     }
   </style>
@@ -673,6 +676,44 @@ function updateSeasonUI() {
   document.getElementById('seasonAdminPanel').style.display = isAdmin ? 'flex' : 'none';
 }
 
+// Helper: parse date string like "15 May 2025" into timestamp
+function parseDateToTimestamp(dateStr) {
+  if (!dateStr) return null;
+  // try to parse with JavaScript Date (supports many formats)
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d.getTime();
+}
+
+function sortFixturesByDate(fixturesList) {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const todayTime = today.getTime();
+  
+  const upcoming = [];
+  const past = [];
+  const noDate = [];
+  
+  fixturesList.forEach(f => {
+    const ts = parseDateToTimestamp(f.date);
+    if (ts === null) {
+      noDate.push(f);
+    } else if (ts >= todayTime) {
+      upcoming.push(f);
+    } else {
+      past.push(f);
+    }
+  });
+  
+  // sort upcoming ascending (earliest first)
+  upcoming.sort((a,b) => (parseDateToTimestamp(a.date)||0) - (parseDateToTimestamp(b.date)||0));
+  // sort past ascending (earliest past first)
+  past.sort((a,b) => (parseDateToTimestamp(a.date)||0) - (parseDateToTimestamp(b.date)||0));
+  // no date: sort by matchday or id
+  noDate.sort((a,b) => (a.md||0) - (b.md||0));
+  
+  return [...upcoming, ...past, ...noDate];
+}
+
 async function switchSeason(delta) {
   const idx = availableSeasons.indexOf(currentSeasonId);
   const nIdx = idx + delta;
@@ -680,8 +721,7 @@ async function switchSeason(delta) {
   currentSeasonId = availableSeasons[nIdx];
   updateSeasonUI();
   await loadSeasonData();
-  await loadSubSlideshows(); // reload per-season slideshows for fixtures/results
-  // if current tab is fixtures or results, restart sub slideshow
+  await loadSubSlideshows();
   const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
   if (activeTab === 'fixtures') {
     if (fixturesSlideshow.interval) clearInterval(fixturesSlideshow.interval);
@@ -828,7 +868,7 @@ async function openStatsModal(type) {
   const medals = ['🥇','🥈','🥉'];
   let rows = sorted.map((p, i) => `
     <tr class="${i < 3 ? 'rank-'+(i+1) : ''}">
-      <tr>${medals[i] || (i+1)}</td>
+      <td>${medals[i] || (i+1)}</td>
       <td>${p.name}</td>
       <td><div class="team-cell">${teamIconHtml(p.team)}<span>${p.team}</span></div></td>
       <td><span class="count-badge">${p.count}</span></td>
@@ -949,13 +989,12 @@ async function loadSubSlideshows() {
   const r = rSnap.val() || {};
   resultsSlideshow.images = r.images || [];
   resultsSlideshow.duration = r.duration || 3000;
-  // clear existing intervals
   if (fixturesSlideshow.interval) clearInterval(fixturesSlideshow.interval);
   if (resultsSlideshow.interval) clearInterval(resultsSlideshow.interval);
 }
 
 function renderFixtures() {
-  const sorted = [...fixtures].sort((a,b) => (a.md||0) - (b.md||0));
+  const sorted = sortFixturesByDate(fixtures);
   let html = '';
   if (sorted.length === 0) {
     html = '<div class="empty-state"><div class="empty-icon">📅</div><p>No fixtures scheduled yet</p></div>';
