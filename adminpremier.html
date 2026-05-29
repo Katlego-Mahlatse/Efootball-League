@@ -5,22 +5,16 @@
   <!-- DYNAMIC VIEWPORT: ensures full 1200px width is visible on any screen without changing element sizes -->
   <script>
     (function() {
-      // Target design width is 1200px
       var designWidth = 1200;
-      // Get actual screen width (viewport width)
       var screenWidth = window.screen.width;
-      // Calculate scale so that 1200px fits horizontally
       var scale = screenWidth / designWidth;
-      // Clamp scale to reasonable range (minimum 0.3, maximum 1.0) – ensures readability
       scale = Math.min(1.0, Math.max(0.3, scale));
-      // Create viewport meta tag with dynamic initial-scale
       var viewportMeta = document.createElement('meta');
       viewportMeta.name = 'viewport';
       viewportMeta.content = 'width=1200, initial-scale=' + scale + ', user-scalable=yes';
       document.head.appendChild(viewportMeta);
     })();
   </script>
-  <!-- Original viewport meta removed, replaced by dynamic script above -->
   <!-- Firebase SDKs (Compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -31,20 +25,24 @@
       background: linear-gradient(145deg, #0a0a0a 0%, #1a1a1a 100%);
       font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
       padding-bottom: 2rem;
-      font-size: 32px; /* base font size doubled */
+      font-size: 32px;
       min-width: 1200px;
       width: 1200px;
       margin: 0 auto;
     }
     
-    /* scale down inner elements that are not text to keep layout consistent but larger */
-    .gold-navbar, .card, .dashboard, .slideshow-container, .results-card-compact {
-      font-size: 1rem;
+    /* Premier League Colors: Purple (#38003C) + Pink (#E90052) */
+    :root {
+      --pl-purple: #38003C;
+      --pl-pink: #E90052;
+      --pl-pink-light: #ff1a6e;
+      --pl-purple-dark: #1a001c;
+      --pl-white: #ffffff;
     }
     
-    @keyframes goldGlow {
-      0%, 100% { box-shadow: 0 0 20px rgba(245, 215, 66, 0.3), 0 0 40px rgba(245, 215, 66, 0.2); }
-      50% { box-shadow: 0 0 40px rgba(245, 215, 66, 0.5), 0 0 60px rgba(245, 215, 66, 0.3); }
+    @keyframes pinkGlow {
+      0%, 100% { box-shadow: 0 0 20px rgba(233, 0, 82, 0.3), 0 0 40px rgba(233, 0, 82, 0.2); }
+      50% { box-shadow: 0 0 40px rgba(233, 0, 82, 0.5), 0 0 60px rgba(233, 0, 82, 0.3); }
     }
     
     @keyframes slideIn {
@@ -57,8 +55,9 @@
       to { opacity: 1; }
     }
     
+    /* Navbar - Purple */
     .gold-navbar {
-      background: linear-gradient(135deg, #f5d742, #d4af37);
+      background: var(--pl-purple);
       padding: 0.8rem 2rem;
       display: flex;
       justify-content: space-between;
@@ -67,7 +66,8 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      animation: goldGlow 3s ease-in-out infinite;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      border-bottom: 2px solid var(--pl-pink);
     }
 
     .navbar-logo {
@@ -85,19 +85,19 @@
     .navbar-logo-placeholder {
       height: 80px;
       width: 240px;
-      background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
+      background: var(--pl-purple-dark);
       border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #f5d742;
+      color: var(--pl-pink);
       font-size: 1.4rem;
       font-weight: bold;
-      border: 2px solid #f5d742;
+      border: 2px solid var(--pl-pink);
     }
     
     .hamburger-btn {
-      background: #1a1a1a;
+      background: var(--pl-purple-dark);
       width: 72px;
       height: 72px;
       border-radius: 50%;
@@ -107,117 +107,74 @@
       align-items: center;
       gap: 8px;
       cursor: pointer;
-      border: 3px solid #f5d742;
+      border: 3px solid var(--pl-pink);
       transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
     }
     
     .hamburger-btn:hover { 
       transform: scale(1.1) rotate(90deg); 
-      background: #0a0a0a;
-      box-shadow: 0 0 30px rgba(245, 215, 66, 0.6);
+      background: var(--pl-purple);
+      box-shadow: 0 0 30px rgba(233, 0, 82, 0.6);
     }
     
     .hamburger-btn span { 
       width: 36px; 
       height: 5px; 
-      background: #f5d742; 
+      background: var(--pl-pink); 
       border-radius: 4px;
       transition: all 0.3s ease;
     }
     
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.9);
-      z-index: 200;
-      visibility: hidden;
-      opacity: 0;
-      pointer-events: none;
+    /* Tabs Container */
+    .premier-tabs {
       display: flex;
-      align-items: center;
       justify-content: center;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
-    }
-    
-    .modal-overlay.active { 
-      visibility: visible; 
-      opacity: 1;
-      pointer-events: auto; 
-    }
-    
-    .modal-content {
-      background: #f5d742;
-      border: 2px solid #1a1a1a;
-      border-radius: 2rem;
-      padding: 2rem;
-      min-width: 500px;
-      max-width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-      text-align: center;
-      box-shadow: 0 20px 80px rgba(245, 215, 66, 0.4);
-      color: #1a1a1a;
-      animation: slideIn 0.4s ease;
-    }
-    
-    .modal-content h3 {
-      margin-bottom: 1.5rem;
-      font-size: 2rem;
-    }
-    
-    .modal-option {
-      background: rgba(0,0,0,0.1);
-      padding: 1rem 2rem;
+      gap: 1rem;
+      margin: 2rem 2rem 1rem;
+      flex-wrap: wrap;
+      background: rgba(0,0,0,0.3);
+      padding: 0.8rem 1.5rem;
       border-radius: 60px;
-      text-decoration: none;
-      color: #1a1a1a;
+      backdrop-filter: blur(4px);
+    }
+    
+    .tab-btn {
+      background: transparent;
+      border: 2px solid var(--pl-pink);
+      font-family: inherit;
+      font-size: 1.2rem;
       font-weight: 700;
-      font-size: 1.2rem;
-      display: block;
-      margin: 1rem 0;
-      border: 2px solid #1a1a1a;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    
-    .modal-option:hover { 
-      background: #1a1a1a; 
-      color: #f5d742;
-      transform: translateX(10px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    }
-    
-    .close-modal {
-      background: #1a1a1a;
-      color: #f5d742;
-      border: none;
-      padding: 0.8rem 2rem;
+      padding: 0.7rem 1.8rem;
       border-radius: 60px;
       cursor: pointer;
-      font-weight: bold;
-      margin-top: 1.5rem;
-      font-size: 1.2rem;
+      color: var(--pl-white);
       transition: all 0.3s ease;
+      letter-spacing: 1px;
     }
     
-    .close-modal:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 30px rgba(245, 215, 66, 0.5);
+    .tab-btn.active {
+      background: var(--pl-pink);
+      color: var(--pl-purple-dark);
+      border-color: var(--pl-pink);
+      box-shadow: 0 0 20px rgba(233, 0, 82, 0.5);
     }
     
+    .tab-btn:hover:not(.active) {
+      background: rgba(233, 0, 82, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    /* Dashboard content area */
     .dashboard { 
       max-width: 1400px; 
       margin: 0 auto; 
-      padding: 3rem 2rem;
+      padding: 1rem 2rem 3rem;
       animation: fadeIn 0.6s ease;
     }
     
     .slideshow-container { 
       text-align: center; 
-      margin-bottom: 3rem; 
+      margin-bottom: 2rem; 
       position: relative;
     }
     
@@ -225,7 +182,7 @@
       max-width: 90%; 
       border-radius: 2rem; 
       box-shadow: 0 20px 40px rgba(0,0,0,0.3); 
-      border: 3px solid #f5d742;
+      border: 3px solid var(--pl-pink);
       transition: transform 0.3s ease;
       max-height: 600px;
       object-fit: contain;
@@ -250,29 +207,30 @@
     }
     
     .dot.active { 
-      background: #f5d742;
+      background: var(--pl-pink);
       transform: scale(1.3);
-      box-shadow: 0 0 20px rgba(245, 215, 66, 0.6);
+      box-shadow: 0 0 20px rgba(233, 0, 82, 0.6);
     }
     
     .dot:hover {
       transform: scale(1.2);
     }
     
+    /* Cards */
     .card {
-      background: #f5d742;
+      background: var(--pl-purple);
       border-radius: 3rem;
-      border: 3px solid #1a1a1a;
+      border: 2px solid var(--pl-pink);
       margin-bottom: 3rem;
       overflow: hidden;
-      color: #1a1a1a;
+      color: var(--pl-white);
       transition: all 0.3s ease;
       animation: slideIn 0.5s ease;
       position: relative;
     }
     
     .card:hover {
-      box-shadow: 0 0 50px rgba(245, 215, 66, 0.4);
+      box-shadow: 0 0 50px rgba(233, 0, 82, 0.3);
     }
 
     .table-corner-image {
@@ -284,8 +242,8 @@
     
     .card-header {
       padding: 1.5rem 2rem;
-      background: #d4af37;
-      border-bottom: 3px solid #1a1a1a;
+      background: var(--pl-purple-dark);
+      border-bottom: 3px solid var(--pl-pink);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -294,7 +252,7 @@
     }
     
     .card-header:hover {
-      background: #c9a532;
+      background: #2a002e;
     }
     
     .card-header-left { 
@@ -313,7 +271,7 @@
     
     .card-header-left h2 { 
       font-size: 2.5rem; 
-      color: #1a1a1a; 
+      color: var(--pl-pink); 
       margin-right: 1rem;
       display: inline-flex;
       align-items: center;
@@ -324,20 +282,20 @@
       display: flex;
       align-items: center;
       gap: 1rem;
-      background: rgba(0,0,0,0.1);
+      background: rgba(0,0,0,0.3);
       padding: 0.5rem 1.2rem;
       border-radius: 60px;
       transition: all 0.3s ease;
     }
     
     .season-controls:hover {
-      background: rgba(0,0,0,0.15);
-      box-shadow: 0 0 20px rgba(245, 215, 66, 0.3);
+      background: rgba(0,0,0,0.5);
+      box-shadow: 0 0 20px rgba(233, 0, 82, 0.3);
     }
     
     .season-arrow {
-      background: #1a1a1a;
-      color: #f5d742;
+      background: var(--pl-pink);
+      color: var(--pl-purple-dark);
       border: none;
       width: 48px;
       height: 48px;
@@ -349,9 +307,9 @@
     }
     
     .season-arrow:hover { 
-      background: #0a0a0a; 
+      background: var(--pl-pink-light); 
       transform: scale(1.15);
-      box-shadow: 0 0 20px rgba(245, 215, 66, 0.5);
+      box-shadow: 0 0 20px rgba(233, 0, 82, 0.5);
     }
     
     .season-arrow:disabled {
@@ -364,17 +322,17 @@
       font-size: 1.6rem;
       width: 180px;
       text-align: center;
-      background: #1a1a1a;
-      border: 2px solid #f5d742;
+      background: var(--pl-purple-dark);
+      border: 2px solid var(--pl-pink);
       border-radius: 60px;
-      color: #f5d742;
+      color: var(--pl-pink);
       padding: 0.5rem 1rem;
       transition: all 0.3s ease;
     }
     
     .season-number-input:focus {
       outline: none;
-      box-shadow: 0 0 30px rgba(245, 215, 66, 0.6);
+      box-shadow: 0 0 30px rgba(233, 0, 82, 0.6);
     }
     
     .season-admin-buttons {
@@ -384,35 +342,36 @@
     }
     
     .season-admin-btn {
-      background: #1a1a1a;
-      border: 2px solid #f5d742;
+      background: var(--pl-purple-dark);
+      border: 2px solid var(--pl-pink);
       border-radius: 60px;
       padding: 0.5rem 1.2rem;
-      color: #f5d742;
+      color: var(--pl-pink);
       font-size: 1rem;
       cursor: pointer;
       transition: all 0.3s ease;
     }
     
     .season-admin-btn:hover {
-      background: #0a0a0a;
+      background: var(--pl-pink);
+      color: var(--pl-purple-dark);
       transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(245, 215, 66, 0.4);
+      box-shadow: 0 8px 24px rgba(233, 0, 82, 0.4);
     }
     
     .toggle-icon { 
       font-size: 1.8rem; 
-      color: #1a1a1a; 
+      color: var(--pl-pink); 
       margin-left: 1.5rem;
       transition: transform 0.3s ease;
     }
     
     .add-btn {
-      background: #1a1a1a;
-      border: 2px solid #f5d742;
+      background: var(--pl-pink);
+      border: none;
       border-radius: 3rem;
       padding: 0.7rem 2rem;
-      color: #f5d742;
+      color: var(--pl-purple-dark);
       font-weight: bold;
       font-size: 1.2rem;
       cursor: pointer;
@@ -420,15 +379,15 @@
     }
     
     .add-btn:hover { 
-      background: #0a0a0a; 
+      background: var(--pl-pink-light); 
       transform: translateY(-5px);
-      box-shadow: 0 12px 40px rgba(245, 215, 66, 0.5);
+      box-shadow: 0 12px 40px rgba(233, 0, 82, 0.5);
     }
     
     .three-dot-menu {
       background: none;
       border: none;
-      color: #1a1a1a;
+      color: var(--pl-pink);
       font-size: 3rem;
       cursor: pointer;
       padding: 0 1rem;
@@ -437,7 +396,7 @@
     
     .three-dot-menu:hover {
       transform: scale(1.2);
-      color: #0a0a0a;
+      color: var(--pl-pink-light);
     }
     
     .card-content { 
@@ -454,16 +413,16 @@
     
     .filter-container { 
       padding: 1.5rem; 
-      background: rgba(0,0,0,0.1); 
-      border-bottom: 2px solid #1a1a1a; 
+      background: rgba(0,0,0,0.2); 
+      border-bottom: 2px solid var(--pl-pink); 
     }
     
     .filter-input { 
-      background: #1a1a1a; 
-      border: 2px solid #f5d742; 
+      background: var(--pl-purple-dark); 
+      border: 2px solid var(--pl-pink); 
       border-radius: 60px; 
       padding: 1rem 1.5rem; 
-      color: #f5d742; 
+      color: var(--pl-pink); 
       width: 100%; 
       max-width: 560px;
       font-size: 1.2rem;
@@ -472,7 +431,7 @@
     
     .filter-input:focus {
       outline: none;
-      box-shadow: 0 0 30px rgba(245, 215, 66, 0.5);
+      box-shadow: 0 0 30px rgba(233, 0, 82, 0.5);
     }
     
     .league-table-wrapper {
@@ -481,35 +440,31 @@
       position: relative;
     }
     
-    /* STICKY FIRST TWO COLUMNS (Pos + Club) with divider after Club column */
     .stats-table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 1400px; /* ensure horizontal scroll */
+      min-width: 1400px;
       font-size: 1.2rem;
     }
     
-    /* Pos column sticky */
     .stats-table th:first-child,
     .stats-table td:first-child {
       position: sticky;
       left: 0;
-      background: #f5d742;
+      background: var(--pl-purple);
       z-index: 10;
       padding-right: 12px;
     }
     
-    /* Club column sticky - immediately after Pos */
     .stats-table th:nth-child(2),
     .stats-table td:nth-child(2) {
       position: sticky;
-      left: 80px; /* increased for larger font */
-      background: #f5d742;
+      left: 80px;
+      background: var(--pl-purple);
       z-index: 10;
       padding-right: 12px;
     }
     
-    /* Vertical divider line after Club column (between Club and P) */
     .stats-table th:nth-child(2)::after,
     .stats-table td:nth-child(2)::after {
       content: '';
@@ -518,25 +473,16 @@
       top: 0;
       bottom: 0;
       width: 4px;
-      background: #1a1a1a;
+      background: var(--pl-pink);
       z-index: 15;
     }
     
-    /* Ensure cells have relative positioning for pseudo-element */
     .stats-table th, .stats-table td {
       position: relative;
       padding: 1rem 0.8rem;
       text-align: left;
-      border-bottom: 2px solid #e5e7eb;
-      background-color: #f5d742;
-    }
-    
-    /* Reduce gap after Club column and before P column - stats start very close */
-    .stats-table th:nth-child(2), .stats-table td:nth-child(2) {
-      padding-right: 4px;
-    }
-    .stats-table th:nth-child(3), .stats-table td:nth-child(3) {
-      padding-left: 8px;
+      border-bottom: 2px solid rgba(233, 0, 82, 0.3);
+      background-color: var(--pl-purple);
     }
     
     .stats-table th:first-child, .stats-table td:first-child { padding-left: 1rem; width: 80px; }
@@ -544,63 +490,46 @@
     .inner-table th, .inner-table td { padding: 1rem 0.8rem; font-size: 1.1rem; }
     
     .stats-table th, .inner-table th { 
-      background: #d4af37; 
-      border-bottom: 3px solid #1a1a1a; 
-      color: #1a1a1a;
+      background: var(--pl-purple-dark); 
+      border-bottom: 3px solid var(--pl-pink); 
+      color: var(--pl-pink);
       font-weight: 700;
       font-size: 1.2rem;
     }
     
     .stats-table td, .inner-table td { 
-      border-bottom: 2px solid rgba(0,0,0,0.2); 
-      color: #1a1a1a; 
+      border-bottom: 2px solid rgba(233, 0, 82, 0.2); 
+      color: var(--pl-white); 
       vertical-align: middle;
       transition: background 0.2s ease;
       font-size: 1.1rem;
     }
     
     .stats-table tbody tr:hover td {
-      background: rgba(0,0,0,0.05);
+      background: rgba(233, 0, 82, 0.1);
     }
     
-    .team-icon-sm { 
-      width: 56px; 
-      height: 56px; 
-      object-fit: contain; 
-      vertical-align: middle; 
+    /* Team icons - NO CIRCLE, transparent */
+    .team-icon-sm, .team-icon, .inline-team-icon {
+      width: 56px;
+      height: 56px;
+      object-fit: contain;
+      vertical-align: middle;
       margin-right: 16px;
-      transition: transform 0.3s ease;
-    }
-    
-    .team-icon-sm:hover {
-      transform: scale(1.15);
-    }
-    
-    .team-icon { 
-      width: 56px; 
-      height: 56px; 
-      object-fit: contain; 
-      vertical-align: middle; 
-      margin-right: 16px; 
       display: inline-block;
       transition: transform 0.3s ease;
+      background: transparent;
+      border-radius: 0;
+      border: none;
     }
     
-    .team-icon:hover {
-      transform: scale(1.15);
+    .inline-team-icon {
+      width: 100px;
+      height: 100px;
+      margin: 0 16px;
     }
     
-    .inline-team-icon { 
-      width: 100px; 
-      height: 100px; 
-      object-fit: contain; 
-      vertical-align: middle; 
-      margin: 0 16px; 
-      display: inline-block;
-      transition: transform 0.3s ease;
-    }
-    
-    .inline-team-icon:hover {
+    .team-icon-sm:hover, .team-icon:hover, .inline-team-icon:hover {
       transform: scale(1.1);
     }
     
@@ -620,11 +549,11 @@
     .green-bar-vertical { background: #22c55e; }
     .red-bar-vertical { background: #ef4444; }
     
-    .dashed-separator-gold { border-bottom: 4px dashed #d4af37 !important; }
-    .dashed-separator-white { border-bottom: 4px dashed #ffffff !important; }
+    .dashed-separator-gold { border-bottom: 4px dashed var(--pl-pink) !important; }
+    .dashed-separator-white { border-bottom: 4px dashed var(--pl-pink) !important; }
     .dashed-separator-red { border-bottom: 4px dashed #ef4444 !important; }
     
-    .pts-cell { font-weight: 800; color: #1a1a1a; text-align: center; font-size: 1.3rem; }
+    .pts-cell { font-weight: 800; color: var(--pl-pink); text-align: center; font-size: 1.3rem; }
     
     .team-name { 
       display: flex; 
@@ -670,12 +599,12 @@
     
     .arrow-up { color: #22c55e; font-size: 2rem; display: inline-block; width: 40px; text-align: center; }
     .arrow-down { color: #ef4444; font-size: 2rem; display: inline-block; width: 40px; text-align: center; }
-    .arrow-side { color: #f5d742; font-size: 2rem; display: inline-block; width: 40px; text-align: center; }
+    .arrow-side { color: var(--pl-pink); font-size: 2rem; display: inline-block; width: 40px; text-align: center; }
     
     .legend-under-table { 
       margin-top: 1.5rem; 
       padding: 1.2rem 2rem; 
-      background: rgba(0,0,0,0.1); 
+      background: rgba(0,0,0,0.2); 
       border-radius: 2rem; 
       display: flex; 
       gap: 2rem; 
@@ -684,28 +613,28 @@
       font-size: 1rem; 
     }
     
-    .legend-item { display: inline-flex; align-items: center; gap: 10px; }
+    .legend-item { display: inline-flex; align-items: center; gap: 10px; color: var(--pl-white); }
     .legend-vertical-bar { width: 8px; height: 24px; border-radius: 4px; display: inline-block; }
     .legend-blue { background: #3b82f6; }
     .legend-orange { background: #f97316; }
     .legend-green { background: #22c55e; }
     .legend-red { background: #ef4444; }
-    .legend-dashed-white { display: inline-block; width: 30px; height: 3px; border-bottom: 3px dashed #ffffff; vertical-align: middle; }
+    .legend-dashed-white { display: inline-block; width: 30px; height: 3px; border-bottom: 3px dashed var(--pl-pink); vertical-align: middle; }
     
     .forfeit-text { 
       font-size: 1rem; 
-      color: #1a1a1a; 
+      color: var(--pl-pink); 
       margin-top: 8px; 
-      background: rgba(0,0,0,0.1); 
+      background: rgba(0,0,0,0.5); 
       display: inline-block; 
       padding: 0 0.6rem; 
       border-radius: 24px; 
     }
     
     .edit-btn, .delete-btn { 
-      background: #1a1a1a; 
-      border: none; 
-      color: #f5d742; 
+      background: var(--pl-purple-dark); 
+      border: 1px solid var(--pl-pink); 
+      color: var(--pl-pink); 
       margin: 0 0.4rem; 
       cursor: pointer; 
       font-size: 1.2rem; 
@@ -715,9 +644,10 @@
     }
     
     .edit-btn:hover, .delete-btn:hover { 
-      background: #0a0a0a; 
+      background: var(--pl-pink); 
+      color: var(--pl-purple-dark);
       transform: scale(1.1);
-      box-shadow: 0 8px 24px rgba(245, 215, 66, 0.4);
+      box-shadow: 0 8px 24px rgba(233, 0, 82, 0.4);
     }
     
     .form-overlay {
@@ -742,59 +672,61 @@
     }
     
     .form-card { 
-      background: #f5d742; 
-      border: 3px solid #1a1a1a; 
+      background: var(--pl-purple); 
+      border: 3px solid var(--pl-pink); 
       border-radius: 3rem; 
       padding: 2rem; 
       width: 90%; 
       max-width: 800px; 
-      color: #1a1a1a;
+      color: var(--pl-white);
       animation: slideIn 0.4s ease;
-      box-shadow: 0 20px 80px rgba(245, 215, 66, 0.5);
+      box-shadow: 0 20px 80px rgba(233, 0, 82, 0.5);
     }
     
     .form-card h3 {
       margin-bottom: 1.5rem;
       font-size: 2rem;
+      color: var(--pl-pink);
     }
     
     .form-card input, .form-card select { 
       width: 100%; 
       padding: 1rem; 
       margin: 1rem 0; 
-      background: #1a1a1a; 
-      border: 2px solid #f5d742; 
+      background: var(--pl-purple-dark); 
+      border: 2px solid var(--pl-pink); 
       border-radius: 3rem; 
-      color: #f5d742;
+      color: var(--pl-pink);
       font-size: 1.2rem;
       transition: all 0.3s ease;
     }
     
     .form-card input:focus, .form-card select:focus {
       outline: none;
-      box-shadow: 0 0 30px rgba(245, 215, 66, 0.6);
+      box-shadow: 0 0 30px rgba(233, 0, 82, 0.6);
     }
     
     .form-card button { 
-      background: #1a1a1a; 
+      background: var(--pl-pink); 
       border: none; 
       border-radius: 3rem; 
       padding: 1rem 2rem; 
-      color: #f5d742; 
+      color: var(--pl-purple-dark); 
       margin: 1rem 1rem 0 0; 
       cursor: pointer;
       font-size: 1.2rem;
+      font-weight: bold;
       transition: all 0.3s ease;
     }
     
     .form-card button:hover {
       transform: translateY(-3px);
-      box-shadow: 0 12px 40px rgba(245, 215, 66, 0.5);
+      box-shadow: 0 12px 40px rgba(233, 0, 82, 0.5);
     }
     
     .popup-menu {
-      background: #f5d742;
-      border: 2px solid #1a1a1a;
+      background: var(--pl-purple);
+      border: 2px solid var(--pl-pink);
       border-radius: 2rem;
       padding: 1rem 0;
       z-index: 150;
@@ -807,56 +739,30 @@
     .popup-menu div { 
       padding: 1rem 1.5rem; 
       cursor: pointer; 
-      color: #1a1a1a; 
+      color: var(--pl-white); 
       transition: all 0.2s ease; 
     }
     
     .popup-menu div:hover { 
-      background: rgba(0,0,0,0.1);
+      background: rgba(233, 0, 82, 0.2);
       transform: translateX(10px);
     }
     
-    .view-matches-link {
+    .results-table-wrapper {
+      overflow-x: auto;
+    }
+    
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .results-table th, .results-table td {
+      padding: 1rem;
       text-align: center;
-      padding: 2rem;
-      margin-bottom: 1.5rem;
-      display: flex;
-      justify-content: center;
-      gap: 3rem;
-      flex-wrap: wrap;
+      border-bottom: 1px solid rgba(233, 0, 82, 0.3);
     }
-
-    .view-matches-link a, .view-matches-link .link-btn {
-      color: #f5d742;
-      font-size: 1.6rem;
-      font-weight: bold;
-      text-decoration: none;
-      transition: all 0.3s ease;
-      border-bottom: 3px solid transparent;
-      cursor: pointer;
-      background: none;
-      border: none;
-      font-family: inherit;
-    }
-
-    .view-matches-link a:hover, .view-matches-link .link-btn:hover {
-      color: #d4af37;
-      border-bottom: 3px solid #f5d742;
-    }
-
-    .results-card-compact {
-      max-width: 1200px;
-      margin: 0 auto 3rem;
-    }
-
-    .results-card-compact .card-header {
-      padding: 1.2rem 2rem;
-    }
-
-    .results-card-compact .card-header h2 {
-      font-size: 2rem;
-    }
-
+    
     .result-match-display {
       display: flex;
       align-items: center;
@@ -865,29 +771,13 @@
       flex-wrap: wrap;
       padding: 0.8rem 0;
     }
-
+    
     .result-score-text {
       font-size: 2.8rem;
       font-weight: bold;
-      color: #1a1a1a;
+      color: var(--pl-pink);
     }
-
-    /* results table column stretching when no admin mode */
-    .results-table.no-admin-mode {
-      width: 100%;
-      table-layout: fixed;
-    }
-    .results-table.no-admin-mode td:first-child,
-    .results-table.no-admin-mode th:first-child {
-      width: 70%;
-      text-align: center;
-    }
-    .results-table.no-admin-mode td:last-child,
-    .results-table.no-admin-mode th:last-child {
-      width: 30%;
-      text-align: center;
-    }
-
+    
     .image-preview-grid {
       display: flex;
       flex-wrap: wrap;
@@ -895,21 +785,21 @@
       margin: 1.5rem 0;
       justify-content: center;
     }
-
+    
     .image-preview-item {
       position: relative;
       width: 200px;
       height: 200px;
     }
-
+    
     .image-preview-item img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       border-radius: 16px;
-      border: 3px solid #1a1a1a;
+      border: 3px solid var(--pl-pink);
     }
-
+    
     .delete-preview-btn {
       position: absolute;
       top: -12px;
@@ -928,12 +818,12 @@
       justify-content: center;
       box-shadow: 0 4px 16px rgba(0,0,0,0.3);
     }
-
+    
     .delete-preview-btn:hover {
       background: #dc2626;
       transform: scale(1.1);
     }
-
+    
     .status-message {
       margin-top: 1.5rem;
       padding: 1rem;
@@ -942,26 +832,26 @@
       text-align: center;
       font-size: 1rem;
     }
-
+    
     .status-success {
       background: #dcfce7;
       color: #166534;
     }
-
+    
     .status-error {
       background: #fee2e2;
       color: #991b1b;
     }
-
+    
     .status-loading {
       background: #fef3c7;
       color: #92400e;
     }
-
-    /* Popup for top scorer/assistant */
+    
+    /* Stats Popup */
     .stats-popup {
-      background: #f5d742;
-      border: 3px solid #1a1a1a;
+      background: var(--pl-purple);
+      border: 3px solid var(--pl-pink);
       border-radius: 3rem;
       width: 85%;
       max-width: 1200px;
@@ -969,25 +859,25 @@
       overflow-y: auto;
       position: relative;
       animation: slideIn 0.4s ease;
-      box-shadow: 0 20px 80px rgba(245, 215, 66, 0.5);
+      box-shadow: 0 20px 80px rgba(233, 0, 82, 0.5);
       display: flex;
       flex-direction: column;
     }
-
+    
     .stats-popup-header {
       display: flex;
       justify-content: flex-end;
       padding: 1rem 1.5rem;
-      border-bottom: 3px solid #1a1a1a;
+      border-bottom: 3px solid var(--pl-pink);
       position: sticky;
       top: 0;
-      background: #f5d742;
+      background: var(--pl-purple);
       z-index: 20;
     }
-
+    
     .close-popup {
-      background: #1a1a1a;
-      color: #f5d742;
+      background: var(--pl-pink);
+      color: var(--pl-purple-dark);
       border: none;
       width: 48px;
       height: 48px;
@@ -996,52 +886,55 @@
       cursor: pointer;
       transition: all 0.3s ease;
     }
-
+    
     .close-popup:hover {
       transform: scale(1.1);
-      background: #0a0a0a;
+      background: var(--pl-pink-light);
     }
-
+    
     .stats-popup-content {
       padding: 1.5rem 2rem 2rem;
     }
-
+    
     .stats-popup-slideshow {
       text-align: center;
       margin-bottom: 1.5rem;
     }
-
+    
     .stats-popup-slideshow img {
       max-width: 100%;
       max-height: 400px;
       border-radius: 2rem;
-      border: 3px solid #1a1a1a;
+      border: 3px solid var(--pl-pink);
     }
-
+    
     .stats-popup h2 {
       text-align: center;
       margin: 1.5rem 0;
       font-size: 2.5rem;
+      color: var(--pl-pink);
     }
-
+    
     .stats-list {
       width: 100%;
       border-collapse: collapse;
     }
-
+    
     .stats-list th, .stats-list td {
       padding: 1rem;
-      border-bottom: 2px solid rgba(0,0,0,0.2);
+      border-bottom: 2px solid rgba(233, 0, 82, 0.3);
       text-align: left;
       font-size: 1.1rem;
+      color: var(--pl-white);
     }
-
+    
     .stats-list th {
-      background: #d4af37;
+      background: var(--pl-purple-dark);
+      color: var(--pl-pink);
       font-weight: bold;
       font-size: 1.2rem;
     }
-
+    
     .admin-stats-controls {
       margin-top: 1.5rem;
       display: flex;
@@ -1050,7 +943,29 @@
       flex-wrap: wrap;
     }
     
-    /* No mobile media queries because we force desktop view */
+    /* Watch Match inline */
+    .video-wrapper {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      margin: 1rem 0;
+    }
+    
+    .video-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 2rem;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 4rem;
+      color: rgba(255,255,255,0.5);
+    }
   </style>
 </head>
 <body>
@@ -1068,85 +983,18 @@
     <div class="dots-container" id="dotsContainer"></div>
   </div>
 
-  <div class="card">
-    <div class="card-header">
-      <div class="card-header-left">
-        <h2>
-          PREMIER LEAGUE
-          <span id="tableCornerImageContainer" style="display: inline-flex; vertical-align: middle;"></span>
-        </h2>
-        <div class="season-controls">
-          <button class="season-arrow" id="prevSeasonBtn">‹</button>
-          <input type="text" id="seasonNumberInput" class="season-number-input" value="Season 2" inputmode="text" readonly>
-          <button class="season-arrow" id="nextSeasonBtn">›</button>
-        </div>
-        <div id="seasonAdminButtons" class="season-admin-buttons" style="display:none;">
-          <button class="season-admin-btn" id="addSeasonBtn">+ New Season</button>
-          <button class="season-admin-btn" id="renameSeasonBtn">Edit Season #</button>
-          <button class="season-admin-btn" id="setActiveSeasonBtn">Set Active</button>
-        </div>
-        <button class="add-btn" id="addTeamBtn" style="display:none;">+ Add Team</button>
-      </div>
-      <div class="card-header-right">
-        <button class="three-dot-menu" id="threeDotBtn">⋮</button>
-      </div>
-    </div>
-    <div class="card-content">
-      <div class="league-table-wrapper">
-        <table class="stats-table" id="leagueTable">
-          <thead>
-            <tr>
-              <th>Pos</th>
-              <th>Club</th>
-              <th>P</th>
-              <th>W</th>
-              <th>D</th>
-              <th>L</th>
-              <th>GS</th>
-              <th>GC</th>
-              <th>GD</th>
-              <th>Pts</th>
-              <th>Last 5</th>
-              <th id="actionHeader" style="display:none;">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody"></tbody>
-        </table>
-      </div>
-      <div class="legend-under-table" id="legendContainer"></div>
-    </div>
+  <!-- TABS: TABLE | FIXTURES | RESULTS | TOP SCORERS | TOP ASSISTANTS | WATCH MATCH -->
+  <div class="premier-tabs">
+    <button class="tab-btn active" data-tab="table">🏆 TABLE</button>
+    <button class="tab-btn" data-tab="fixtures">📅 FIXTURES</button>
+    <button class="tab-btn" data-tab="results">📝 RESULTS</button>
+    <button class="tab-btn" data-tab="topscorers">⚽ TOP SCORERS</button>
+    <button class="tab-btn" data-tab="topassists">🅰️ TOP ASSISTANTS</button>
+    <button class="tab-btn" data-tab="watch">🎬 WATCH MATCH</button>
   </div>
 
-  <!-- View Matches + Top Scorer + Top Assistant Links -->
-  <div class="view-matches-link">
-    <a href="manager-calendar.html">📅 View Upcoming Matches</a>
-    <button class="link-btn" id="topScorerBtn">⭐ View Top Scorer</button>
-    <button class="link-btn" id="topAssistantBtn">🅰️ View Top Assistant</button>
-  </div>
-
-  <!-- Results Card -->
-  <div class="card results-card-compact">
-    <div class="card-header">
-      <div class="card-header-left">
-        <h2>📝 RESULTS</h2>
-        <button class="add-btn" id="addResultBtn" style="display:none;">+ Add Result</button>
-      </div>
-    </div>
-    <div class="card-content">
-      <div class="results-table-wrapper">
-        <table class="inner-table results-table" id="resultsTable">
-          <thead>
-            <tr>
-              <th>Match</th>
-              <th>MD</th>
-              <th id="resultActionHeader" style="display:none;">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="resultsBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+  <!-- DYNAMIC CONTENT AREA (replaces the old card structure) -->
+  <div id="dynamicContent"></div>
 </div>
 
 <!-- Team Form -->
@@ -1225,6 +1073,7 @@
   let slideshowImages = [], slideshowDuration = 3000, slideInterval = null, currentSlideIdx = 0;
   let navbarLogoUrl = '';
   let tableCornerImageUrl = '';
+  let watchMatchEmbedCode = '';
 
   // Player map per season
   let playerMap = {};
@@ -1263,11 +1112,41 @@
 
   function renderTableCornerImage() {
     const container = document.getElementById('tableCornerImageContainer');
-    if (tableCornerImageUrl) {
-      container.innerHTML = `<img src="${tableCornerImageUrl}" class="table-corner-image" alt="Corner Image">`;
-    } else {
-      container.innerHTML = '';
+    if (container) {
+      if (tableCornerImageUrl) {
+        container.innerHTML = `<img src="${tableCornerImageUrl}" class="table-corner-image" alt="Corner Image">`;
+      } else {
+        container.innerHTML = '';
+      }
     }
+  }
+
+  // Load Watch Match embed
+  async function loadWatchMatchEmbed() {
+    const snap = await database.ref('premier_league/watchMatch/embedCode').once('value');
+    watchMatchEmbedCode = snap.val() || '';
+  }
+
+  async function updateWatchMatchEmbed() {
+    const embed = prompt("Paste YouTube embed code (iframe) or full URL:", watchMatchEmbedCode);
+    if (embed === null) return;
+    let finalEmbed = embed.trim();
+    if (finalEmbed.includes("youtube.com/watch?v=") || finalEmbed.includes("youtu.be/")) {
+      let videoId = "";
+      if (finalEmbed.includes("youtu.be/")) {
+        videoId = finalEmbed.split("youtu.be/")[1].split(/[?#]/)[0];
+      } else {
+        const urlParams = new URLSearchParams(new URL(finalEmbed).search);
+        videoId = urlParams.get('v');
+      }
+      if (videoId) {
+        finalEmbed = `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      }
+    }
+    await database.ref('premier_league/watchMatch/embedCode').set(finalEmbed);
+    watchMatchEmbedCode = finalEmbed;
+    alert("Watch Match content updated!");
+    if (document.querySelector('.tab-btn.active')?.dataset.tab === 'watch') renderWatchMatchTab();
   }
 
   async function loadSeasonsMetadata() {
@@ -1306,12 +1185,13 @@
   }
 
   function updateSeasonDisplay() {
-    document.getElementById('seasonNumberInput').value = `Season ${currentSeasonId}`;
+    const seasonInput = document.getElementById('seasonNumberInput');
+    if (seasonInput) seasonInput.value = `Season ${currentSeasonId}`;
     const prevBtn = document.getElementById('prevSeasonBtn');
     const nextBtn = document.getElementById('nextSeasonBtn');
     const idx = availableSeasons.indexOf(currentSeasonId);
-    prevBtn.disabled = availableSeasons.length === 0 || idx <= 0;
-    nextBtn.disabled = availableSeasons.length === 0 || idx >= availableSeasons.length-1;
+    if (prevBtn) prevBtn.disabled = availableSeasons.length === 0 || idx <= 0;
+    if (nextBtn) nextBtn.disabled = availableSeasons.length === 0 || idx >= availableSeasons.length-1;
     const adminDiv = document.getElementById('seasonAdminButtons');
     if (adminDiv) adminDiv.style.display = isAdminMode ? 'flex' : 'none';
   }
@@ -1324,6 +1204,7 @@
       updateSeasonDisplay();
       await loadCurrentSeasonData();
       await loadManagerNamesForSeason();
+      renderCurrentTab();
     }
   }
 
@@ -1335,6 +1216,7 @@
       updateSeasonDisplay();
       await loadCurrentSeasonData();
       await loadManagerNamesForSeason();
+      renderCurrentTab();
     } else if (isAdminMode && confirm(`Season ${seasonNum} does not exist. Create it?`)) {
       await database.ref(`seasons/season_${seasonNum}/table`).set({});
       await database.ref(`seasons/season_${seasonNum}/results`).set({});
@@ -1345,6 +1227,7 @@
       updateSeasonDisplay();
       await loadCurrentSeasonData();
       await loadManagerNamesForSeason();
+      renderCurrentTab();
     } else {
       alert(`Season ${seasonNum} does not exist.`);
     }
@@ -1380,6 +1263,7 @@
     updateSeasonDisplay();
     await loadCurrentSeasonData();
     await loadManagerNamesForSeason();
+    renderCurrentTab();
   }
 
   async function renameSeason() {
@@ -1410,6 +1294,7 @@
     updateSeasonDisplay();
     await loadCurrentSeasonData();
     await loadManagerNamesForSeason();
+    renderCurrentTab();
     alert(`Season renamed from ${oldNum} to ${newNum}`);
   }
 
@@ -1475,9 +1360,6 @@
   let showFormArrows = false;
   let showLast5 = true;
   let currentView = "team";
-  window.showFormArrows = showFormArrows;
-  window.showLast5 = showLast5;
-  window.currentView = currentView;
 
   function renderLegend() {
     const container = document.getElementById('legendContainer');
@@ -1624,7 +1506,6 @@
     const actionHeader = document.getElementById('resultActionHeader');
     if(actionHeader) actionHeader.style.display = isAdminMode ? 'table-cell' : 'none';
     tbody.innerHTML = '';
-    // Apply class to results table for column stretching
     const resultsTable = document.getElementById('resultsTable');
     if (resultsTable) {
       if (!isAdminMode) {
@@ -1633,7 +1514,6 @@
         resultsTable.classList.remove('no-admin-mode');
       }
     }
-    // Sort results - LATEST FIRST (newest on top)
     const sortedResults = [...resultsData].sort((a,b) => (b.md||0) - (a.md||0));
     
     sortedResults.forEach(r => {
@@ -1644,9 +1524,7 @@
       if (lower.includes("no contest") || lower.includes("f - f")) isForfeit = true;
       else if (lower.includes("forfeit")) isForfeit = true;
       
-      // Improved parsing for both normal and forfeit matches
       if (isForfeit && text.includes("F - F")) {
-        // Parse forfeit matches: "TeamA F - F TeamB"
         const forfeitParts = text.split(/\s*F\s*-\s*F\s*/i);
         if (forfeitParts.length >= 2) {
           homeTeam = forfeitParts[0].trim().replace(/\(.*\)/g, '').trim();
@@ -1655,13 +1533,10 @@
           awayScore = "F";
         }
       } else {
-        // Parse normal matches: "TeamA 3 - 1 TeamB"
         const scoreRegex = /(\d+)\s*-\s*(\d+)/;
         const match = text.match(scoreRegex);
-        
         if (match) {
-          homeScore = match[1]; 
-          awayScore = match[2];
+          homeScore = match[1]; awayScore = match[2];
           const parts = text.split(/\s+\d+\s*-\s*\d+\s+/);
           if (parts.length >= 2) {
             homeTeam = parts[0].trim();
@@ -1685,7 +1560,7 @@
       
       const row = tbody.insertRow();
       row.insertCell(0).innerHTML = matchHtml;
-      row.insertCell(1).innerHTML = `<span style="background:#1a1a1a; padding:0.5rem 1rem; border-radius:60px; color:#f5d742; font-size:1.2rem; font-weight:bold;">MD${r.md}</span>`;
+      row.insertCell(1).innerHTML = `<span style="background:var(--pl-purple-dark); padding:0.5rem 1rem; border-radius:60px; color:var(--pl-pink); font-size:1.2rem; font-weight:bold;">MD${r.md}</span>`;
       
       if(isAdminMode) {
         const actions = row.insertCell(2);
@@ -1789,7 +1664,6 @@
     document.getElementById('teamPts').value = data?.pts || '';
     document.getElementById('teamForm').classList.add('active');
   }
-  document.getElementById('addTeamBtn').onclick = () => openTeamForm(null);
   document.getElementById('saveTeamBtn').onclick = async () => {
     const name = document.getElementById('teamNameInput').value.trim();
     const p = parseInt(document.getElementById('teamP').value) || 0;
@@ -1856,7 +1730,6 @@
     document.getElementById('resultFormTitle').innerText = key ? "Edit Result" : "Add Result";
     document.getElementById('resultForm').classList.add('active');
   }
-  document.getElementById('addResultBtn').onclick = () => openResultForm(null);
   document.getElementById('saveResultBtn').onclick = async () => {
     const homeTeam = document.getElementById('resultHomeTeam').value;
     const awayTeam = document.getElementById('resultAwayTeam').value;
@@ -1900,25 +1773,27 @@
   let popup = null;
   const threeDot = document.getElementById('threeDotBtn');
   function closePopup() { if(popup) { popup.remove(); popup = null; } }
-  threeDot.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if(popup) { closePopup(); return; }
-    const rect = threeDot.getBoundingClientRect();
-    popup = document.createElement('div'); popup.className = 'popup-menu';
-    popup.style.position = 'absolute'; popup.style.top = (rect.bottom + window.scrollY + 5) + 'px'; popup.style.left = (rect.left + window.scrollX - 80) + 'px';
-    const playersOpt = document.createElement('div'); playersOpt.innerText = currentView === "team" ? "Manager names" : "Team View"; playersOpt.onclick = () => { currentView = currentView === "team" ? "player" : "team"; window.currentView = currentView; renderLeagueTable(); closePopup(); };
-    const formOpt = document.createElement('div'); formOpt.innerText = showFormArrows ? "Hide Form arrows" : "Show Form arrows"; formOpt.onclick = () => { showFormArrows = !showFormArrows; window.showFormArrows = showFormArrows; renderLeagueTable(); closePopup(); };
-    const last5Opt = document.createElement('div'); last5Opt.innerText = showLast5 ? "Hide Last 5" : "Show Last 5"; last5Opt.onclick = () => { showLast5 = !showLast5; window.showLast5 = showLast5; renderLeagueTable(); closePopup(); };
-    if (isAdminMode) {
-      const editManagersOpt = document.createElement('div');
-      editManagersOpt.innerText = 'Edit Manager Names';
-      editManagersOpt.onclick = () => { closePopup(); showEditManagersModal(); };
-      popup.appendChild(editManagersOpt);
-    }
-    popup.appendChild(playersOpt); popup.appendChild(formOpt); popup.appendChild(last5Opt);
-    document.body.appendChild(popup);
-  });
-  document.addEventListener('click', (e) => { if(popup && !popup.contains(e.target) && e.target !== threeDot) closePopup(); });
+  if (threeDot) {
+    threeDot.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if(popup) { closePopup(); return; }
+      const rect = threeDot.getBoundingClientRect();
+      popup = document.createElement('div'); popup.className = 'popup-menu';
+      popup.style.position = 'absolute'; popup.style.top = (rect.bottom + window.scrollY + 5) + 'px'; popup.style.left = (rect.left + window.scrollX - 80) + 'px';
+      const playersOpt = document.createElement('div'); playersOpt.innerText = currentView === "team" ? "Manager names" : "Team View"; playersOpt.onclick = () => { currentView = currentView === "team" ? "player" : "team"; renderLeagueTable(); closePopup(); };
+      const formOpt = document.createElement('div'); formOpt.innerText = showFormArrows ? "Hide Form arrows" : "Show Form arrows"; formOpt.onclick = () => { showFormArrows = !showFormArrows; renderLeagueTable(); closePopup(); };
+      const last5Opt = document.createElement('div'); last5Opt.innerText = showLast5 ? "Hide Last 5" : "Show Last 5"; last5Opt.onclick = () => { showLast5 = !showLast5; renderLeagueTable(); closePopup(); };
+      if (isAdminMode) {
+        const editManagersOpt = document.createElement('div');
+        editManagersOpt.innerText = 'Edit Manager Names';
+        editManagersOpt.onclick = () => { closePopup(); showEditManagersModal(); };
+        popup.appendChild(editManagersOpt);
+      }
+      popup.appendChild(playersOpt); popup.appendChild(formOpt); popup.appendChild(last5Opt);
+      document.body.appendChild(popup);
+    });
+    document.addEventListener('click', (e) => { if(popup && !popup.contains(e.target) && e.target !== threeDot) closePopup(); });
+  }
 
   function showEditManagersModal() {
     const modal = document.getElementById('modalOverlay');
@@ -1928,7 +1803,7 @@
     html += '<div style="max-height: 400px; overflow-y: auto; margin: 1rem 0;">';
     for (const team of currentSeasonTeams) {
       const manager = playerMap[team] || '';
-      html += `<div style="margin: 0.8rem 0;"><label style="display: block; font-weight: bold; margin-bottom: 0.4rem; font-size:1.1rem;">${team}</label><input type="text" id="manager_${team.replace(/\s/g, '_')}" value="${manager.replace(/"/g, '&quot;')}" style="width: 100%; padding: 0.8rem; background: #1a1a1a; color: #f5d742; border: 2px solid #f5d742; border-radius: 2rem; font-size:1rem;"></div>`;
+      html += `<div style="margin: 0.8rem 0;"><label style="display: block; font-weight: bold; margin-bottom: 0.4rem; font-size:1.1rem;">${team}</label><input type="text" id="manager_${team.replace(/\s/g, '_')}" value="${manager.replace(/"/g, '&quot;')}" style="width: 100%; padding: 0.8rem; background: var(--pl-purple-dark); color: var(--pl-pink); border: 2px solid var(--pl-pink); border-radius: 2rem; font-size:1rem;"></div>`;
     }
     html += '</div><button id="saveManagersBtn" class="modal-option">SAVE</button><button id="closeManagerModal" class="close-modal">CANCEL</button>';
     content.innerHTML = html;
@@ -1998,7 +1873,6 @@
     let slideshowHtml = `<div class="stats-popup-slideshow"><img id="statsPopupSlideshowImg" src="${images[0] || ''}" style="max-width:100%; max-height:400px; border-radius:2rem;"></div><div class="dots-container" id="statsPopupDots"></div>`;
     let listHtml = `<table class="stats-list"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>${type === 'scorer' ? 'Goals' : 'Assists'}</th>${isAdminMode ? '<th>Actions</th>' : ''}</tr></thead><tbody>`;
     list.sort((a,b) => (b.count||0) - (a.count||0)).forEach((item, idx) => {
-      // Team icon instead of team name
       let teamDisplay = '';
       const iconUrl = teamIconsCache[item.team];
       if (iconUrl) {
@@ -2043,7 +1917,6 @@
   function showAddEditStatsEntry(type, entry = null) {
     const modal = document.getElementById('modalOverlay');
     const content = document.getElementById('modalContent');
-    // Create team dropdown from current season teams
     const teamOptions = teamsData.map(t => t.name).sort();
     let teamSelectHtml = `<select id="entryTeam" style="width:100%; margin:0.8rem 0; padding:0.8rem; font-size:1rem;">`;
     teamSelectHtml += `<option value="">Select Team</option>`;
@@ -2150,8 +2023,6 @@
     document.getElementById('statsPopupOverlay').classList.remove('active');
     currentStatsType = null;
   };
-  document.getElementById('topScorerBtn').onclick = () => showStatsPopup('scorer');
-  document.getElementById('topAssistantBtn').onclick = () => showStatsPopup('assistant');
 
   // Slideshow main
   async function loadSlideshow() {
@@ -2192,6 +2063,7 @@
       options += `<div class="modal-option" id="addSlideBtn">MANAGE SLIDESHOW</div>`;
       options += `<div class="modal-option" id="manageNavbarLogoBtn">MANAGE NAVBAR LOGO</div>`;
       options += `<div class="modal-option" id="manageCornerBtn">MANAGE TABLE CORNER</div>`;
+      options += `<div class="modal-option" id="manageWatchMatchBtn">MANAGE WATCH MATCH</div>`;
     }
     options += `<div class="modal-option" id="homeBtn">HOME</div>`;
     options += `</div><button class="close-modal" id="closeModalBtn">CLOSE</button>`;
@@ -2202,6 +2074,7 @@
       document.getElementById('addSlideBtn').onclick = () => { document.getElementById('modalOverlay').classList.remove('active'); showSlideshowManager(); };
       document.getElementById('manageNavbarLogoBtn').onclick = () => { showNavbarLogoManager(); };
       document.getElementById('manageCornerBtn').onclick = () => { showTableCornerManager(); };
+      document.getElementById('manageWatchMatchBtn').onclick = () => { updateWatchMatchEmbed(); };
     }
     document.getElementById('homeBtn').onclick = () => window.location.href = 'feed.html';
     document.getElementById('closeModalBtn').onclick = () => document.getElementById('modalOverlay').classList.remove('active');
@@ -2318,26 +2191,186 @@
     modal.classList.add('active');
   }
 
-  document.getElementById('prevSeasonBtn').addEventListener('click', () => switchSeason(-1));
-  document.getElementById('nextSeasonBtn').addEventListener('click', () => switchSeason(1));
-  const seasonInput = document.getElementById('seasonNumberInput');
-  seasonInput.addEventListener('click', () => { if(isAdminMode) { const num = prompt("Enter season number:"); if(num) goToSeason(num); } });
-  document.getElementById('addSeasonBtn').addEventListener('click', () => { if(isAdminMode) addNewSeason(); });
-  document.getElementById('renameSeasonBtn').addEventListener('click', () => { if(isAdminMode) renameSeason(); });
-  document.getElementById('setActiveSeasonBtn').addEventListener('click', () => { if(isAdminMode) setActiveSeason(); });
+  // ========== TAB RENDERING ==========
+  function renderTableTab() {
+    return `
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <h2>
+              PREMIER LEAGUE
+              <span id="tableCornerImageContainer" style="display: inline-flex; vertical-align: middle;"></span>
+            </h2>
+            <div class="season-controls">
+              <button class="season-arrow" id="prevSeasonBtn">‹</button>
+              <input type="text" id="seasonNumberInput" class="season-number-input" value="Season ${currentSeasonId}" readonly>
+              <button class="season-arrow" id="nextSeasonBtn">›</button>
+            </div>
+            <div id="seasonAdminButtons" class="season-admin-buttons" style="display: ${isAdminMode ? 'flex' : 'none'};">
+              <button class="season-admin-btn" id="addSeasonBtn">+ New Season</button>
+              <button class="season-admin-btn" id="renameSeasonBtn">Edit Season #</button>
+              <button class="season-admin-btn" id="setActiveSeasonBtn">Set Active</button>
+            </div>
+            <button class="add-btn" id="addTeamBtn" style="display: ${isAdminMode ? 'inline-block' : 'none'};">+ Add Team</button>
+          </div>
+          <div class="card-header-right">
+            <button class="three-dot-menu" id="threeDotBtn">⋮</button>
+          </div>
+        </div>
+        <div class="card-content">
+          <div class="league-table-wrapper">
+            <table class="stats-table" id="leagueTable">
+              <thead>
+                <tr><th>Pos</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GS</th><th>GC</th><th>GD</th><th>Pts</th><th>Last 5</th><th id="actionHeader" style="display: ${isAdminMode ? 'table-cell' : 'none'};">Actions</th></tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+          <div class="legend-under-table" id="legendContainer"></div>
+        </div>
+      </div>
+    `;
+  }
 
-  loadSlideshow();
-  loadTeamIcons();
-  loadNavbarLogo();
-  loadTableCornerImage();
-  loadTopScorerData();
-  loadTopAssistantData();
-  loadSeasonsMetadata().then(() => {
+  function renderResultsTab() {
+    return `
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <h2>📝 RESULTS</h2>
+            <button class="add-btn" id="addResultBtn" style="display: ${isAdminMode ? 'inline-block' : 'none'};">+ Add Result</button>
+          </div>
+        </div>
+        <div class="card-content">
+          <div class="results-table-wrapper">
+            <table class="inner-table results-table" id="resultsTable">
+              <thead><tr><th>Match</th><th>MD</th><th id="resultActionHeader" style="display: ${isAdminMode ? 'table-cell' : 'none'};">Actions</th></tr></thead>
+              <tbody id="resultsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderWatchMatchTab() {
+    if (watchMatchEmbedCode) {
+      return `<div class="card"><div class="card-header"><h2>🎬 WATCH MATCH</h2></div><div class="card-content"><div class="video-wrapper">${watchMatchEmbedCode}</div></div></div>`;
+    } else {
+      return `<div class="card"><div class="card-header"><h2>🎬 WATCH MATCH</h2></div><div class="card-content"><div class="empty-state">No match video available yet.${isAdminMode ? ' Use menu to add.' : ''}</div></div></div>`;
+    }
+  }
+
+  function renderCurrentTab() {
+    const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
+    const dynamicDiv = document.getElementById('dynamicContent');
+    if (!dynamicDiv) return;
+
+    if (activeTab === 'table') {
+      dynamicDiv.innerHTML = renderTableTab();
+      renderTableCornerImage();
+      renderLeagueTable();
+      // Re-attach season controls
+      document.getElementById('prevSeasonBtn')?.addEventListener('click', () => switchSeason(-1));
+      document.getElementById('nextSeasonBtn')?.addEventListener('click', () => switchSeason(1));
+      const seasonInputElem = document.getElementById('seasonNumberInput');
+      if (seasonInputElem) {
+        seasonInputElem.addEventListener('click', () => { if(isAdminMode) { const num = prompt("Enter season number:"); if(num) goToSeason(num); } });
+      }
+      document.getElementById('addSeasonBtn')?.addEventListener('click', () => { if(isAdminMode) addNewSeason(); });
+      document.getElementById('renameSeasonBtn')?.addEventListener('click', () => { if(isAdminMode) renameSeason(); });
+      document.getElementById('setActiveSeasonBtn')?.addEventListener('click', () => { if(isAdminMode) setActiveSeason(); });
+      const addTeamBtn = document.getElementById('addTeamBtn');
+      if (addTeamBtn) addTeamBtn.onclick = () => openTeamForm(null);
+      const threeDotBtn = document.getElementById('threeDotBtn');
+      if (threeDotBtn) {
+        threeDotBtn.onclick = (e) => {
+          e.stopPropagation();
+          if(popup) { closePopup(); return; }
+          const rect = threeDotBtn.getBoundingClientRect();
+          popup = document.createElement('div'); popup.className = 'popup-menu';
+          popup.style.position = 'absolute'; popup.style.top = (rect.bottom + window.scrollY + 5) + 'px'; popup.style.left = (rect.left + window.scrollX - 80) + 'px';
+          const playersOpt = document.createElement('div'); playersOpt.innerText = currentView === "team" ? "Manager names" : "Team View"; playersOpt.onclick = () => { currentView = currentView === "team" ? "player" : "team"; renderLeagueTable(); closePopup(); };
+          const formOpt = document.createElement('div'); formOpt.innerText = showFormArrows ? "Hide Form arrows" : "Show Form arrows"; formOpt.onclick = () => { showFormArrows = !showFormArrows; renderLeagueTable(); closePopup(); };
+          const last5Opt = document.createElement('div'); last5Opt.innerText = showLast5 ? "Hide Last 5" : "Show Last 5"; last5Opt.onclick = () => { showLast5 = !showLast5; renderLeagueTable(); closePopup(); };
+          if (isAdminMode) {
+            const editManagersOpt = document.createElement('div');
+            editManagersOpt.innerText = 'Edit Manager Names';
+            editManagersOpt.onclick = () => { closePopup(); showEditManagersModal(); };
+            popup.appendChild(editManagersOpt);
+          }
+          popup.appendChild(playersOpt); popup.appendChild(formOpt); popup.appendChild(last5Opt);
+          document.body.appendChild(popup);
+        };
+      }
+    } else if (activeTab === 'fixtures') {
+      window.location.href = 'manager-calendar.html';
+      return;
+    } else if (activeTab === 'results') {
+      dynamicDiv.innerHTML = renderResultsTab();
+      renderResults();
+      document.getElementById('addResultBtn')?.addEventListener('click', () => openResultForm(null));
+    } else if (activeTab === 'topscorers') {
+      showStatsPopup('scorer');
+      dynamicDiv.innerHTML = '<div class="card"><div class="card-header"><h2>⚽ TOP SCORERS</h2></div><div class="card-content"><div class="empty-state">Loading...</div></div></div>';
+    } else if (activeTab === 'topassists') {
+      showStatsPopup('assistant');
+      dynamicDiv.innerHTML = '<div class="card"><div class="card-header"><h2>🅰️ TOP ASSISTANTS</h2></div><div class="card-content"><div class="empty-state">Loading...</div></div></div>';
+    } else if (activeTab === 'watch') {
+      dynamicDiv.innerHTML = renderWatchMatchTab();
+    }
+  }
+
+  // Tab switching event listeners
+  function initTabs() {
+    const tabs = document.querySelectorAll('.tab-btn');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        renderCurrentTab();
+      });
+    });
+  }
+
+  // Event listeners for season controls (will be re-attached after render)
+  function attachGlobalListeners() {
+    // Already handled inside renderCurrentTab for table tab, but for initial load:
+    document.getElementById('prevSeasonBtn')?.addEventListener('click', () => switchSeason(-1));
+    document.getElementById('nextSeasonBtn')?.addEventListener('click', () => switchSeason(1));
+    const seasonInputElem = document.getElementById('seasonNumberInput');
+    if (seasonInputElem) {
+      seasonInputElem.addEventListener('click', () => { if(isAdminMode) { const num = prompt("Enter season number:"); if(num) goToSeason(num); } });
+    }
+    document.getElementById('addSeasonBtn')?.addEventListener('click', () => { if(isAdminMode) addNewSeason(); });
+    document.getElementById('renameSeasonBtn')?.addEventListener('click', () => { if(isAdminMode) renameSeason(); });
+    document.getElementById('setActiveSeasonBtn')?.addEventListener('click', () => { if(isAdminMode) setActiveSeason(); });
+    const addTeamBtn = document.getElementById('addTeamBtn');
+    if (addTeamBtn) addTeamBtn.onclick = () => openTeamForm(null);
+  }
+
+  // Initialize everything
+  async function init() {
+    await loadSlideshow();
+    await loadTeamIcons();
+    await loadNavbarLogo();
+    await loadTableCornerImage();
+    await loadWatchMatchEmbed();
+    await loadTopScorerData();
+    await loadTopAssistantData();
+    await loadSeasonsMetadata();
+    
+    // Real-time listeners
     const tableRef = database.ref(getSeasonPath(currentSeasonId, 'table'));
     const resultsRef = database.ref(getSeasonPath(currentSeasonId, 'results'));
     tableRef.on('value', snap => { teamsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderLeagueTable(); });
     resultsRef.on('value', snap => { resultsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; renderResults(); renderLeagueTable(); });
-  });
+    
+    initTabs();
+    renderCurrentTab();
+  }
+
+  init();
 </script>
 </body>
 </html>
