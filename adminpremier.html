@@ -209,11 +209,6 @@
     .empty-state p { font-size: 2rem; font-weight: 500; font-family: 'Rajdhani', sans-serif; }
 
     /* ─── LEAGUE TABLE (PINK BG, PURPLE TEXT) ─── */
-    .table-wrap {
-      max-height: 600px;
-      overflow-y: auto;
-      overflow-x: auto;
-    }
     .stats-table {
       width: 100%;
       border-collapse: collapse;
@@ -314,7 +309,7 @@
     .vbar-blue   { background: #0033cc; }
     .vbar-orange { background: #f97316; }
     .vbar-green  { background: #22c55e; }
-    .vbar-red    { background: #ef4444; }
+    .vbar-red    { background: #ef4444; }  /* red bar for relegation - restored */
     .team-cell-inner { display: flex; align-items: center; gap: 14px; }
     .team-icon {
       width: 80px; height: 80px; object-fit: contain;
@@ -924,7 +919,7 @@ function updateSlide() {
   });
 }
 
-// ─── RENDER TABLE (without banner or corner) ───
+// ─── RENDER TABLE (without banner or corner, full table, sticky header) ───
 function renderTable() {
   const sorted = [...teamsData].sort((a,b) => (b.pts||0)-(a.pts||0) || (b.gd||0)-(a.gd||0));
   
@@ -968,7 +963,7 @@ function renderTable() {
       if (pos <= 4) barClass = 'vbar-blue';
       else if (pos <= 8) barClass = 'vbar-orange';
       else if (pos <= 12) barClass = 'vbar-green';
-      else if (pos >= 18) barClass = 'vbar-red';
+      else if (pos >= 18) barClass = 'vbar-red';   // red bar for relegation - restored
       if (pos === 8) rowClass = 'dashed-sep';
       if (pos === 17) rowClass = 'dashed-sep-red';
     }
