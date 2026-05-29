@@ -303,13 +303,100 @@
     }
     .stat-team-cell { display: flex; align-items: center; gap: 16px; color: var(--pl-purple); }
 
+    /* TOP 3 BLOCKS */
+    .top3-container {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+    .top3-block {
+      text-align: center;
+      width: 280px;
+      background: rgba(56,0,60,0.3);
+      border-radius: 32px;
+      padding: 20px 16px 16px;
+      transition: transform 0.3s;
+    }
+    .top3-block:hover { transform: translateY(-8px); }
+    .top3-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--pl-white);
+      margin-bottom: 12px;
+      background: rgba(0,0,0,0.3);
+      display: inline-block;
+      padding: 4px 20px;
+      border-radius: 40px;
+    }
+    .player-image-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 3px solid var(--pl-pink);
+      background: #1a001c;
+      margin-bottom: 16px;
+    }
+    .player-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .medal-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      font-size: 3rem;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+      z-index: 2;
+    }
+    .team-icon-overlay {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      width: 56px;
+      height: 56px;
+      background: rgba(0,0,0,0.4);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+      padding: 6px;
+      z-index: 2;
+    }
+    .team-icon-overlay img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .top3-count {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.4rem;
+      color: var(--pl-pink);
+      background: rgba(0,0,0,0.3);
+      display: inline-block;
+      padding: 8px 24px;
+      border-radius: 60px;
+      letter-spacing: 2px;
+    }
+    .rest-table-wrapper {
+      margin-top: 20px;
+      border-top: 2px solid var(--pl-pink);
+      padding-top: 24px;
+    }
+
     /* Other existing styles unchanged */
     .pos-bar-wrap { display: flex; align-items: center; gap: 8px; }
     .vbar { width: 6px; height: 28px; border-radius: 3px; }
     .vbar-blue   { background: #0033cc; }
     .vbar-orange { background: #f97316; }
     .vbar-green  { background: #22c55e; }
-    .vbar-red    { background: #ef4444; }  /* red bar for relegation - restored */
+    .vbar-red    { background: #ef4444; }
     .team-cell-inner { display: flex; align-items: center; gap: 14px; }
     .team-icon {
       width: 80px; height: 80px; object-fit: contain;
@@ -338,11 +425,11 @@
     }
     .circle-result:hover { transform: scale(1.2); }
     .cW { background: #22c55e; color: white; }
-    .cL { background: #b91c1c; color: white; }      /* darker red */
+    .cL { background: #b91c1c; color: white; }
     .cD { background: #6b7280; color: white; }
-    .cF { background: #b91c1c; color: white; }      /* darker red for forfeit */
+    .cF { background: #b91c1c; color: white; }
     .cWF{ background: #22c55e; color: white; }
-    .cLF{ background: #b91c1c; color: white; }      /* darker red for forfeit loss */
+    .cLF{ background: #b91c1c; color: white; }
     .cBlank { background: rgba(56,0,60,0.2); }
     .arrow-up   { color: #0033cc; font-size: 1.6rem; }
     .arrow-down { color: #b91c1c; font-size: 1.6rem; }
@@ -726,7 +813,7 @@ async function loadNavbarLogo() {
     : `<div class="navbar-logo-placeholder">⚽ PREMIER LEAGUE</div>`;
 }
 
-// ─── Table header bg (legacy, kept for compatibility but not used) ───
+// ─── Table header bg (legacy) ───
 async function loadTableHeaderBgImage() {
   const snap = await database.ref('premier_league_table_header_bg').once('value');
   tableHeaderBgImageUrl = snap.val() || '';
@@ -747,7 +834,7 @@ async function loadTeamIcons() {
   }
 }
 
-// ─── Seasons ───
+// ─── Seasons & Migration ───
 async function loadSeasonsMetadata() {
   const snapshot = await database.ref('seasons').once('value');
   const seasons = snapshot.val() || {};
@@ -768,6 +855,22 @@ async function loadSeasonsMetadata() {
     availableSeasons.push(2); activeSeasonId = 2;
   }
   if (!availableSeasons.includes(1)) { await database.ref('seasons/season_1/table').set({}); await database.ref('seasons/season_1/results').set({}); await database.ref('seasons/season_1/active').set(false); availableSeasons.push(1); }
+  
+  // Migrate old top scorers/assistants to season 3 (once)
+  const migrationFlag = await database.ref('migrationDone').once('value');
+  if (!migrationFlag.val()) {
+    const oldScorers = await database.ref('topScorer/list').once('value');
+    const oldAssists = await database.ref('topAssistant/list').once('value');
+    if (oldScorers.exists()) {
+      await database.ref('seasons/season_3/topScorers/list').set(oldScorers.val());
+    }
+    if (oldAssists.exists()) {
+      await database.ref('seasons/season_3/topAssistants/list').set(oldAssists.val());
+    }
+    await database.ref('migrationDone').set(true);
+    console.log('Migrated old stats to season 3');
+  }
+  
   availableSeasons.sort((a,b)=>a-b);
   if (!availableSeasons.includes(activeSeasonId) && availableSeasons.length) activeSeasonId = availableSeasons[0];
   currentSeasonId = activeSeasonId;
@@ -798,12 +901,24 @@ async function loadManagerNamesForSeason() {
   playerMap = snap.val() || {};
 }
 
+async function loadTopScorerData() {
+  const snap = await database.ref(getSeasonPath(currentSeasonId, 'topScorers/list')).once('value');
+  topScorerList = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : [];
+}
+
+async function loadTopAssistantData() {
+  const snap = await database.ref(getSeasonPath(currentSeasonId, 'topAssistants/list')).once('value');
+  topAssistantList = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : [];
+}
+
 async function switchSeason(delta) {
   const idx = availableSeasons.indexOf(currentSeasonId);
   const nIdx = idx + delta;
   if (nIdx < 0 || nIdx >= availableSeasons.length) return;
   currentSeasonId = availableSeasons[nIdx];
-  updateSeasonUI(); await loadCurrentSeasonData(); await loadManagerNamesForSeason(); renderCurrentTab();
+  updateSeasonUI(); await loadCurrentSeasonData(); await loadManagerNamesForSeason(); 
+  await loadTopScorerData(); await loadTopAssistantData();
+  renderCurrentTab();
 }
 
 async function addNewSeason() {
@@ -814,29 +929,35 @@ async function addNewSeason() {
   await database.ref(`seasons/season_${id}/table`).set({});
   await database.ref(`seasons/season_${id}/results`).set({});
   await database.ref(`seasons/season_${id}/managerMap`).set({});
+  await database.ref(`seasons/season_${id}/topScorers/list`).set({});
+  await database.ref(`seasons/season_${id}/topAssistants/list`).set({});
   availableSeasons.push(id); availableSeasons.sort((a,b)=>a-b);
-  currentSeasonId = id; updateSeasonUI(); await loadCurrentSeasonData(); await loadManagerNamesForSeason(); renderCurrentTab();
+  currentSeasonId = id; updateSeasonUI(); await loadCurrentSeasonData(); await loadManagerNamesForSeason(); await loadTopScorerData(); await loadTopAssistantData(); renderCurrentTab();
 }
 
 async function renameSeason() {
   const raw = prompt(`New number for Season ${currentSeasonId}:`); if (!raw) return;
   const id = parseInt(raw); if (isNaN(id)) return;
   if (availableSeasons.includes(id) && id !== currentSeasonId) { alert("Number taken"); return; }
-  const [t, r, m] = await Promise.all([
+  const [t, r, m, ts, ta] = await Promise.all([
     database.ref(getSeasonPath(currentSeasonId,'table')).once('value'),
     database.ref(getSeasonPath(currentSeasonId,'results')).once('value'),
     database.ref(getSeasonPath(currentSeasonId,'managerMap')).once('value'),
+    database.ref(getSeasonPath(currentSeasonId,'topScorers')).once('value'),
+    database.ref(getSeasonPath(currentSeasonId,'topAssistants')).once('value'),
   ]);
   const wasActive = activeSeasonId === currentSeasonId;
   await database.ref(getSeasonPath(id,'table')).set(t.val()||{});
   await database.ref(getSeasonPath(id,'results')).set(r.val()||{});
   await database.ref(getSeasonPath(id,'managerMap')).set(m.val()||{});
+  await database.ref(getSeasonPath(id,'topScorers')).set(ts.val()||{});
+  await database.ref(getSeasonPath(id,'topAssistants')).set(ta.val()||{});
   if (wasActive) await database.ref(`seasons/season_${id}/active`).set(true);
   await database.ref(getSeasonPath(currentSeasonId)).remove();
   availableSeasons = availableSeasons.filter(s=>s!==currentSeasonId);
   availableSeasons.push(id); availableSeasons.sort((a,b)=>a-b);
   if (activeSeasonId === currentSeasonId) activeSeasonId = id;
-  currentSeasonId = id; updateSeasonUI(); await loadCurrentSeasonData(); await loadManagerNamesForSeason(); renderCurrentTab();
+  currentSeasonId = id; updateSeasonUI(); await loadCurrentSeasonData(); await loadManagerNamesForSeason(); await loadTopScorerData(); await loadTopAssistantData(); renderCurrentTab();
 }
 
 async function setActiveSeason() {
@@ -844,16 +965,6 @@ async function setActiveSeason() {
   availableSeasons.forEach(s => { updates[`seasons/season_${s}/active`] = (s === currentSeasonId); });
   await database.ref().update(updates); activeSeasonId = currentSeasonId;
   alert(`Season ${currentSeasonId} set as active.`);
-}
-
-// ─── Top Scorer/Assistant Data ───
-async function loadTopScorerData() {
-  const snap = await database.ref('topScorer/list').once('value');
-  topScorerList = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : [];
-}
-async function loadTopAssistantData() {
-  const snap = await database.ref('topAssistant/list').once('value');
-  topAssistantList = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : [];
 }
 
 // ─── Form / Last5 helpers ───
@@ -919,7 +1030,7 @@ function updateSlide() {
   });
 }
 
-// ─── RENDER TABLE (without banner or corner, full table, sticky header) ───
+// ─── RENDER TABLE (unchanged) ───
 function renderTable() {
   const sorted = [...teamsData].sort((a,b) => (b.pts||0)-(a.pts||0) || (b.gd||0)-(a.gd||0));
   
@@ -938,10 +1049,10 @@ function renderTable() {
           <tr>
             <th>Pos</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GS</th><th>GC</th><th>GD</th><th>Pts</th><th>Last 5</th>
             ${isAdminMode ? '<th>Actions</th>' : ''}
-          </tr>
+           </tr>
         </thead>
         <tbody id="tableBody"></tbody>
-      </table>
+       </table>
     </div>
     <div class="legend-row" id="legendContainer"></div>
   `;
@@ -963,7 +1074,7 @@ function renderTable() {
       if (pos <= 4) barClass = 'vbar-blue';
       else if (pos <= 8) barClass = 'vbar-orange';
       else if (pos <= 12) barClass = 'vbar-green';
-      else if (pos >= 18) barClass = 'vbar-red';   // red bar for relegation - restored
+      else if (pos >= 18) barClass = 'vbar-red';
       if (pos === 8) rowClass = 'dashed-sep';
       if (pos === 17) rowClass = 'dashed-sep-red';
     }
@@ -1174,29 +1285,55 @@ function renderFixtures() {
   window.location.href = 'manager-calendar.html';
 }
 
-// ─── RENDER TOP SCORERS (unchanged) ───
+// ─── RENDER TOP SCORERS (new design with 3 blocks) ───
 function renderTopScorers() {
   const sorted = [...topScorerList].sort((a,b) => (b.count||0)-(a.count||0));
-  const medals = ['🥇','🥈','🥉'];
-  let rows = sorted.map((p, i) => {
-    const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
-    return `<tr>
-      <td>${medals[i] || (i+1)}</td>
-      <td style="font-size:1.5rem;">${p.name || ''}</td>
-      <td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${p.team || ''}</span></div></td>
-      <td><span class="count-badge">${p.count || 0}</span></td>
-      ${isAdminMode ? `<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>` : ''}
-    </tr>`;
-  }).join('');
-  let html = `
-    <div class="stats-list-wrap">
-      <table class="stats-list">
+  const top3 = sorted.slice(0,3);
+  const rest = sorted.slice(3);
+  
+  let top3Html = '';
+  if (top3.length) {
+    top3Html = '<div class="top3-container">';
+    top3.forEach((player, idx) => {
+      const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
+      const teamIconUrl = teamIconsCache[player.team] || '';
+      const playerImageUrl = player.imageUrl || '';
+      top3Html += `
+        <div class="top3-block">
+          <div class="top3-name">${player.name || ''}</div>
+          <div class="player-image-wrapper">
+            ${medal ? `<div class="medal-badge">${medal}</div>` : ''}
+            <img class="player-img" src="${playerImageUrl || 'https://via.placeholder.com/280x280?text=No+Image'}" alt="${player.name}" onerror="this.src='https://via.placeholder.com/280x280?text=No+Image'">
+            ${teamIconUrl ? `<div class="team-icon-overlay"><img src="${teamIconUrl}" alt="${player.team}"></div>` : ''}
+          </div>
+          <div class="top3-count">⚽ ${player.count || 0}</div>
+        </div>
+      `;
+    });
+    top3Html += '</div>';
+  }
+  
+  let restHtml = '';
+  if (rest.length) {
+    restHtml = `<div class="rest-table-wrapper"><table class="stats-list">
         <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Goals</th>${isAdminMode?'<th>Actions</th>':''}</tr></thead>
-        <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,0.4);padding:40px;">No data yet</td></tr>'}</tbody>
-      </table>
-    </div>
-    ${isAdminMode ? `<button class="add-btn-main" id="addScorerBtn">+ Add Scorer</button>` : ''}
-  `;
+        <tbody>`;
+    rest.forEach((p, i) => {
+      const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
+      restHtml += `<tr>
+        <td>${i+4}</td>
+        <td style="font-size:1.5rem;">${p.name || ''}</td>
+        <td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${p.team || ''}</span></div></td>
+        <td><span class="count-badge">${p.count || 0}</span></td>
+        ${isAdminMode ? `<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>` : ''}
+      </tr>`;
+    });
+    restHtml += `</tbody></table></div>`;
+  }
+  
+  let html = top3Html + restHtml;
+  if (!sorted.length) html = '<div class="empty-state"><div class="empty-icon">⚽</div><p>No scorers yet</p></div>';
+  if (isAdminMode) html += `<button class="add-btn-main" id="addScorerBtn">+ Add Scorer</button>`;
   document.getElementById('contentCard').innerHTML = html;
   if (isAdminMode) {
     document.getElementById('addScorerBtn')?.addEventListener('click', () => openStatModal('scorer'));
@@ -1205,34 +1342,60 @@ function renderTopScorers() {
       if (e) btn.onclick = () => openStatModal('scorer', e);
     });
     document.querySelectorAll('.btn-delete[data-id]').forEach(btn => {
-      btn.onclick = async () => { if (confirm('Delete?')) { await database.ref(`topScorer/list/${btn.dataset.id}`).remove(); await loadTopScorerData(); renderTopScorers(); } };
+      btn.onclick = async () => { if (confirm('Delete?')) { await database.ref(getSeasonPath(currentSeasonId, `topScorers/list/${btn.dataset.id}`)).remove(); await loadTopScorerData(); renderTopScorers(); } };
     });
   }
 }
 
-// ─── RENDER TOP ASSISTANTS (unchanged) ───
+// ─── RENDER TOP ASSISTANTS (same design) ───
 function renderTopAssistants() {
   const sorted = [...topAssistantList].sort((a,b) => (b.count||0)-(a.count||0));
-  const medals = ['🥇','🥈','🥉'];
-  let rows = sorted.map((p, i) => {
-    const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
-    return `<tr>
-      <td>${medals[i] || (i+1)}</td>
-      <td style="font-size:1.5rem;">${p.name || ''}</td>
-      <td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${p.team || ''}</span></div></td>
-      <td><span class="count-badge">${p.count || 0}</span></td>
-      ${isAdminMode ? `<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>` : ''}
-    </tr>`;
-  }).join('');
-  let html = `
-    <div class="stats-list-wrap">
-      <table class="stats-list">
+  const top3 = sorted.slice(0,3);
+  const rest = sorted.slice(3);
+  
+  let top3Html = '';
+  if (top3.length) {
+    top3Html = '<div class="top3-container">';
+    top3.forEach((player, idx) => {
+      const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
+      const teamIconUrl = teamIconsCache[player.team] || '';
+      const playerImageUrl = player.imageUrl || '';
+      top3Html += `
+        <div class="top3-block">
+          <div class="top3-name">${player.name || ''}</div>
+          <div class="player-image-wrapper">
+            ${medal ? `<div class="medal-badge">${medal}</div>` : ''}
+            <img class="player-img" src="${playerImageUrl || 'https://via.placeholder.com/280x280?text=No+Image'}" alt="${player.name}" onerror="this.src='https://via.placeholder.com/280x280?text=No+Image'">
+            ${teamIconUrl ? `<div class="team-icon-overlay"><img src="${teamIconUrl}" alt="${player.team}"></div>` : ''}
+          </div>
+          <div class="top3-count">🎯 ${player.count || 0}</div>
+        </div>
+      `;
+    });
+    top3Html += '</div>';
+  }
+  
+  let restHtml = '';
+  if (rest.length) {
+    restHtml = `<div class="rest-table-wrapper"><table class="stats-list">
         <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Assists</th>${isAdminMode?'<th>Actions</th>':''}</tr></thead>
-        <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,0.4);padding:40px;">No data yet</td></tr>'}</tbody>
-      </table>
-    </div>
-    ${isAdminMode ? `<button class="add-btn-main" id="addAssistBtn">+ Add Assistant</button>` : ''}
-  `;
+        <tbody>`;
+    rest.forEach((p, i) => {
+      const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
+      restHtml += `<tr>
+        <td>${i+4}</td>
+        <td style="font-size:1.5rem;">${p.name || ''}</td>
+        <td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${p.team || ''}</span></div></td>
+        <td><span class="count-badge">${p.count || 0}</span></td>
+        ${isAdminMode ? `<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>` : ''}
+      </tr>`;
+    });
+    restHtml += `</tbody></table></div>`;
+  }
+  
+  let html = top3Html + restHtml;
+  if (!sorted.length) html = '<div class="empty-state"><div class="empty-icon">🎯</div><p>No assistants yet</p></div>';
+  if (isAdminMode) html += `<button class="add-btn-main" id="addAssistBtn">+ Add Assistant</button>`;
   document.getElementById('contentCard').innerHTML = html;
   if (isAdminMode) {
     document.getElementById('addAssistBtn')?.addEventListener('click', () => openStatModal('assistant'));
@@ -1241,7 +1404,7 @@ function renderTopAssistants() {
       if (e) btn.onclick = () => openStatModal('assistant', e);
     });
     document.querySelectorAll('.btn-delete[data-id]').forEach(btn => {
-      btn.onclick = async () => { if (confirm('Delete?')) { await database.ref(`topAssistant/list/${btn.dataset.id}`).remove(); await loadTopAssistantData(); renderTopAssistants(); } };
+      btn.onclick = async () => { if (confirm('Delete?')) { await database.ref(getSeasonPath(currentSeasonId, `topAssistants/list/${btn.dataset.id}`)).remove(); await loadTopAssistantData(); renderTopAssistants(); } };
     });
   }
 }
@@ -1469,32 +1632,55 @@ function renderScorerList(side) {
   });
 }
 
-// ─── Stat Modal (scorer/assistant) unchanged ───
+// ─── Stat Modal (scorer/assistant) with photo upload ───
 async function openStatModal(type, entry = null) {
+  const isScorer = type === 'scorer';
+  const currentImageUrl = entry?.imageUrl || '';
   showModal(`
-    <h3>${entry ? 'Edit' : 'Add'} ${type === 'scorer' ? 'Top Scorer' : 'Top Assistant'}</h3>
+    <h3>${entry ? 'Edit' : 'Add'} ${isScorer ? 'Top Scorer' : 'Top Assistant'}</h3>
     <label>Player Name</label>
     <input id="statName" placeholder="Player Name" value="${entry?.name || ''}">
     <label>Team</label>
     <input id="statTeam" placeholder="Team" value="${entry?.team || ''}">
-    <label>${type === 'scorer' ? 'Goals' : 'Assists'}</label>
+    <label>${isScorer ? 'Goals' : 'Assists'}</label>
     <input id="statCount" type="number" value="${entry?.count || 0}">
+    <label>Player Photo (upload will remove background automatically)</label>
+    <input type="file" id="statPhoto" accept="image/*">
+    <div id="photoPreview" style="margin-top:10px;">${currentImageUrl ? `<img src="${currentImageUrl}" style="max-width:120px; border-radius:12px;">` : 'No photo'}</div>
     <div class="modal-btns">
       <button class="modal-btn-primary" id="saveStatBtn">Save</button>
       <button class="modal-btn-cancel" id="cancelStatBtn">Cancel</button>
     </div>
   `);
   document.getElementById('cancelStatBtn').onclick = closeModal;
+  const fileInput = document.getElementById('statPhoto');
+  const previewDiv = document.getElementById('photoPreview');
+  fileInput.onchange = async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    previewDiv.innerHTML = '<div class="status-msg status-loading">Processing image (remove.bg)...</div>';
+    try {
+      let processedBlob;
+      try { processedBlob = await removeBackground(file); }
+      catch(e) { processedBlob = file; }
+      const url = await uploadToImgBB(processedBlob);
+      previewDiv.innerHTML = `<img src="${url}" style="max-width:120px; border-radius:12px;"><div class="status-msg status-success">Photo ready</div>`;
+      fileInput.dataset.uploadedUrl = url;
+    } catch(e) { previewDiv.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`; }
+  };
   document.getElementById('saveStatBtn').onclick = async () => {
     const name = document.getElementById('statName').value.trim();
     const team = document.getElementById('statTeam').value.trim();
     const count = parseInt(document.getElementById('statCount').value) || 0;
     if (!name || !team) { alert("Fill all fields"); return; }
-    const path = type === 'scorer' ? 'topScorer/list' : 'topAssistant/list';
-    if (entry?.key) await database.ref(`${path}/${entry.key}`).set({ name, team, count });
-    else await database.ref(path).push({ name, team, count });
+    let imageUrl = currentImageUrl;
+    if (fileInput.files.length && fileInput.dataset.uploadedUrl) imageUrl = fileInput.dataset.uploadedUrl;
+    const data = { name, team, count, imageUrl };
+    const path = isScorer ? getSeasonPath(currentSeasonId, 'topScorers/list') : getSeasonPath(currentSeasonId, 'topAssistants/list');
+    if (entry?.key) await database.ref(`${path}/${entry.key}`).set(data);
+    else await database.ref(path).push(data);
     closeModal();
-    if (type === 'scorer') { await loadTopScorerData(); renderTopScorers(); }
+    if (isScorer) { await loadTopScorerData(); renderTopScorers(); }
     else { await loadTopAssistantData(); renderTopAssistants(); }
   };
 }
@@ -1555,7 +1741,7 @@ function showEditManagersModal() {
   };
 }
 
-// ─── Admin Settings (removed banner and corner uploads) ───
+// ─── Admin Settings (unchanged) ───
 function openAdminSettings() {
   showModal(`
     <h3>⚙️ Admin Settings</h3>
@@ -1718,6 +1904,8 @@ function attachRealtimeListeners() {
     if (activeTab === 'results') renderResults();
     if (activeTab === 'table') renderTable();
   });
+  database.ref(getSeasonPath(currentSeasonId, 'topScorers/list')).on('value', async () => { await loadTopScorerData(); if (document.querySelector('.tab-btn.active')?.dataset.tab === 'topscorers') renderTopScorers(); });
+  database.ref(getSeasonPath(currentSeasonId, 'topAssistants/list')).on('value', async () => { await loadTopAssistantData(); if (document.querySelector('.tab-btn.active')?.dataset.tab === 'topassists') renderTopAssistants(); });
 }
 
 // ─── Init ───
@@ -1727,9 +1915,9 @@ async function init() {
   await loadNavbarLogo();
   await loadTableHeaderBgImage();
   await loadWatchMatchEmbed();
+  await loadSeasonsMetadata();
   await loadTopScorerData();
   await loadTopAssistantData();
-  await loadSeasonsMetadata();
   attachRealtimeListeners();
   renderCurrentTab();
 }
