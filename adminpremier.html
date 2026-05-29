@@ -239,6 +239,12 @@
       font-weight: 600;
       white-space: nowrap;
     }
+    /* Double the size of numeric cells (Pos, P, W, D, L, GS, GC, GD, Pts) */
+    .stats-table td.stat-number {
+      font-size: 2.6rem !important;
+      font-weight: 800;
+      line-height: 1.2;  /* keep row height compact */
+    }
     .stats-table td:first-child { position: sticky; left: 0; background: var(--pl-pink); z-index: 5; width: 64px; }
     .stats-table td:nth-child(2) {
       position: sticky;
@@ -417,6 +423,48 @@
       transition: all 0.2s; letter-spacing: 1px;
     }
     .add-btn-main:hover { background: var(--pl-pink); color: var(--pl-white); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(233,0,82,0.4); }
+
+    /* Full‑width banner image */
+    .table-banner {
+      width: 100%;
+      border-radius: 20px 20px 0 0;
+      margin-bottom: 0;
+      display: block;
+    }
+    .table-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .add-btn {
+      background: rgba(233,0,82,0.15);
+      border: 2px solid var(--pl-pink);
+      color: var(--pl-white);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 1.2rem;
+      padding: 10px 24px;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .add-btn:hover { background: var(--pl-pink); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(233,0,82,0.4); }
+    .three-dot-btn {
+      background: rgba(233,0,82,0.15);
+      border: 2px solid var(--pl-pink);
+      color: var(--pl-white);
+      font-size: 2.2rem;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .three-dot-btn:hover { background: var(--pl-pink); }
 
     /* ─── WATCH MATCH ─── */
     .inline-media { width: 100%; border-radius: 32px; overflow: hidden; background: #000; }
@@ -612,6 +660,7 @@ let slideshowImages = [], slideshowDuration = 3000, slideInterval = null, curren
 let navbarLogoUrl = '';
 let tableHeaderBgImageUrl = '';
 let tableCornerImageUrl = '';
+let tableBannerUrl = '';          // new full‑width banner
 let watchMatchEmbedCode = '';
 let playerMap = {};
 let topScorerList = [], topAssistantList = [];
@@ -677,16 +726,22 @@ async function loadNavbarLogo() {
     : `<div class="navbar-logo-placeholder">⚽ PREMIER LEAGUE</div>`;
 }
 
-// ─── Table corner ───
+// ─── Table corner (legacy, not used for banner) ───
 async function loadTableCornerImage() {
   const snap = await database.ref('premier_league_table_corner').once('value');
   tableCornerImageUrl = snap.val() || '';
 }
 
-// ─── Table header bg ───
+// ─── Table header bg (legacy) ───
 async function loadTableHeaderBgImage() {
   const snap = await database.ref('premier_league_table_header_bg').once('value');
   tableHeaderBgImageUrl = snap.val() || '';
+}
+
+// ─── Full‑width table banner ───
+async function loadTableBanner() {
+  const snap = await database.ref('premier_league_table_banner').once('value');
+  tableBannerUrl = snap.val() || '';
 }
 
 // ─── Watch Match ───
@@ -876,18 +931,27 @@ function updateSlide() {
   });
 }
 
-// ─── RENDER TABLE ───
+// ─── RENDER TABLE (with full‑width banner and doubled numbers) ───
 function renderTable() {
   const sorted = [...teamsData].sort((a,b) => (b.pts||0)-(a.pts||0) || (b.gd||0)-(a.gd||0));
-  let cornerHtml = tableCornerImageUrl ? `<img src="${tableCornerImageUrl}" style="width:70px;height:70px;object-fit:contain;" alt="">` : '';
-  let html = `
-    <div class="table-header-row">
-      <div class="table-title">PREMIER LEAGUE ${cornerHtml}</div>
-      <div class="table-actions">
-        ${isAdminMode ? `<button class="add-btn" id="addTeamBtnInner">+ Add Team</button>` : ''}
-        <button class="three-dot-btn" id="threeDotBtn">⋮</button>
-      </div>
+  
+  // Build actions row (buttons only)
+  let actionsHtml = `
+    <div class="table-actions">
+      ${isAdminMode ? `<button class="add-btn" id="addTeamBtnInner">+ Add Team</button>` : ''}
+      <button class="three-dot-btn" id="threeDotBtn">⋮</button>
     </div>
+  `;
+  
+  // Full‑width banner image
+  let bannerHtml = '';
+  if (tableBannerUrl) {
+    bannerHtml = `<img src="${tableBannerUrl}" class="table-banner" alt="Table Banner">`;
+  }
+  
+  let html = `
+    ${actionsHtml}
+    ${bannerHtml}
     <div class="table-wrap">
       <table class="stats-table">
         <thead>
@@ -903,7 +967,6 @@ function renderTable() {
   `;
   document.getElementById('contentCard').innerHTML = html;
 
-  // fill tbody
   const tbody = document.getElementById('tableBody');
   sorted.forEach((team, idx) => {
     const pos = idx + 1;
@@ -927,14 +990,14 @@ function renderTable() {
     const row = document.createElement('tr');
     if (rowClass) row.className = rowClass;
 
-    // pos
+    // Pos cell (numeric, double size)
     const posCell = document.createElement('td');
-    posCell.className = 'rank-cell';
+    posCell.className = 'rank-cell stat-number';  // added stat-number for double size
     if (barClass) posCell.innerHTML = `<div class="pos-bar-wrap"><span class="vbar ${barClass}"></span>${pos}</div>`;
     else posCell.textContent = pos;
     row.appendChild(posCell);
 
-    // club
+    // Club cell (team name – not doubled)
     let arrowHtml = '';
     if (showFormArrows) {
       const a = getLatestArrow(team.name);
@@ -949,21 +1012,33 @@ function renderTable() {
     clubCell.innerHTML = `<div class="team-cell-inner">${arrowHtml}${iconHtml}<span class="team-name-text">${displayName}</span></div>`;
     row.appendChild(clubCell);
 
-    // stats
-    const mkCell = (val) => { const td = document.createElement('td'); td.textContent = val; return td; };
-    row.appendChild(mkCell(team.p || 0));
+    // Helper to create a numeric cell with double size class
+    function mkNumCell(val) {
+      const td = document.createElement('td');
+      td.textContent = val;
+      td.className = 'stat-number';
+      return td;
+    }
+    
+    row.appendChild(mkNumCell(team.p || 0));
     const w = currentSeasonId === 2 ? '🤷‍♂️' : (team.w || 0);
     const d = currentSeasonId === 2 ? '🤷‍♂️' : (team.d || 0);
     const l = currentSeasonId === 2 ? '🤷‍♂️' : (team.l || 0);
-    row.appendChild(mkCell(w)); row.appendChild(mkCell(d)); row.appendChild(mkCell(l));
+    row.appendChild(mkNumCell(w));
+    row.appendChild(mkNumCell(d));
+    row.appendChild(mkNumCell(l));
     const gs = (currentSeasonId === 1 || currentSeasonId === 2) ? '🤷‍♂️' : (team.gs || 0);
     const gc = (currentSeasonId === 1 || currentSeasonId === 2) ? '🤷‍♂️' : (team.gc || 0);
-    row.appendChild(mkCell(gs)); row.appendChild(mkCell(gc));
+    row.appendChild(mkNumCell(gs));
+    row.appendChild(mkNumCell(gc));
     const gd = team.gd || 0;
-    row.appendChild(mkCell(gd > 0 ? `+${gd}` : `${gd}`));
-    const ptsCell = document.createElement('td'); ptsCell.className = 'pts-cell'; ptsCell.textContent = team.pts || 0; row.appendChild(ptsCell);
+    row.appendChild(mkNumCell(gd > 0 ? `+${gd}` : `${gd}`));
+    const ptsCell = document.createElement('td');
+    ptsCell.className = 'pts-cell stat-number';
+    ptsCell.textContent = team.pts || 0;
+    row.appendChild(ptsCell);
 
-    // last5
+    // Last5 (not numeric, keep normal size)
     const last5Cell = document.createElement('td');
     if (showLast5) {
       const last5 = getTeamLast5(team.name);
@@ -983,7 +1058,7 @@ function renderTable() {
     }
     row.appendChild(last5Cell);
 
-    // admin actions
+    // Admin actions (buttons)
     if (isAdminMode) {
       const actCell = document.createElement('td');
       actCell.innerHTML = `<button class="btn-sm btn-edit" data-key="${team.key}">✏️</button> <button class="btn-sm btn-delete" data-key="${team.key}">🗑️</button>`;
@@ -992,7 +1067,7 @@ function renderTable() {
     tbody.appendChild(row);
   });
 
-  // legend
+  // Legend
   const legend = document.getElementById('legendContainer');
   let legendHtml = '';
   if (currentSeasonId === 1) {
@@ -1008,7 +1083,7 @@ function renderTable() {
   }
   legend.innerHTML = legendHtml;
 
-  // attach admin actions
+  // Attach admin actions
   if (isAdminMode) {
     document.getElementById('addTeamBtnInner')?.addEventListener('click', () => openTeamForm(null));
     document.querySelectorAll('.btn-edit[data-key]').forEach(btn => {
@@ -1022,7 +1097,7 @@ function renderTable() {
   attachThreeDotHandler();
 }
 
-// ─── RENDER RESULTS ───
+// ─── RENDER RESULTS (unchanged) ───
 function parseResultCard(r) {
   let homeTeam = '', awayTeam = '', homeScore = '', awayScore = '', isForfeit = false, forfeitType = '';
   const text = r.matchText || '';
@@ -1069,12 +1144,10 @@ function renderResults() {
       } else {
         scoreHtml = `<div class="score-display">${homeScore} — ${awayScore}</div>`;
       }
-      // goal scorers from extended data
       const homeScorers = r.goalScorers?.home || [];
       const awayScorers = r.goalScorers?.away || [];
       const homeScorersHtml = homeScorers.map(s => `<span class="goal-scorer-item">⚽ ${s.player}${s.goals>1?` (${s.goals})`:''}</span>`).join('');
       const awayScorersHtml = awayScorers.map(s => `<span class="goal-scorer-item">⚽ ${s.player}${s.goals>1?` (${s.goals})`:''}</span>`).join('');
-      // aggregate
       const aggHtml = r.aggregate ? `<div class="aggregate-text">Agg: ${r.aggregate}</div>` : '';
       html += `
         <div class="match-card">
@@ -1128,7 +1201,7 @@ function renderFixtures() {
   window.location.href = 'manager-calendar.html';
 }
 
-// ─── RENDER TOP SCORERS inline ───
+// ─── RENDER TOP SCORERS (unchanged) ───
 function renderTopScorers() {
   const sorted = [...topScorerList].sort((a,b) => (b.count||0)-(a.count||0));
   const medals = ['🥇','🥈','🥉'];
@@ -1164,7 +1237,7 @@ function renderTopScorers() {
   }
 }
 
-// ─── RENDER TOP ASSISTANTS inline ───
+// ─── RENDER TOP ASSISTANTS (unchanged) ───
 function renderTopAssistants() {
   const sorted = [...topAssistantList].sort((a,b) => (b.count||0)-(a.count||0));
   const medals = ['🥇','🥈','🥉'];
@@ -1200,7 +1273,7 @@ function renderTopAssistants() {
   }
 }
 
-// ─── RENDER WATCH MATCH inline ───
+// ─── RENDER WATCH MATCH (unchanged) ───
 function renderWatchMatch() {
   let html = '';
   if (watchMatchEmbedCode) {
@@ -1241,7 +1314,7 @@ function renderCurrentTab() {
   else if (tab === 'watch') { renderWatchMatch(); }
 }
 
-// ─── Team Form ───
+// ─── Team Form (unchanged) ───
 let editingTeamKey = null;
 function openTeamForm(key, data) {
   editingTeamKey = key;
@@ -1276,7 +1349,7 @@ document.getElementById('saveTeamBtn').onclick = async () => {
 };
 document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamForm').classList.remove('active');
 
-// ─── Result Form ───
+// ─── Result Form (unchanged, but uses teamsData) ───
 function formatResultText(homeTeam, homeScore, awayTeam, awayScore, forfeitType) {
   if (forfeitType === "no_contest") return `${homeTeam} F - F ${awayTeam} (No Contest)`;
   if (forfeitType === "forfeit_no_reply") return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam} (Forfeited - No Reply)`;
@@ -1423,7 +1496,7 @@ function renderScorerList(side) {
   });
 }
 
-// ─── Stat Modal (scorer/assistant) ───
+// ─── Stat Modal (scorer/assistant) unchanged ───
 async function openStatModal(type, entry = null) {
   showModal(`
     <h3>${entry ? 'Edit' : 'Add'} ${type === 'scorer' ? 'Top Scorer' : 'Top Assistant'}</h3>
@@ -1453,7 +1526,7 @@ async function openStatModal(type, entry = null) {
   };
 }
 
-// ─── Three-dot popup (table) ───
+// ─── Three-dot popup (table) unchanged ───
 function attachThreeDotHandler() {
   const btn = document.getElementById('threeDotBtn');
   if (!btn) return;
@@ -1509,7 +1582,7 @@ function showEditManagersModal() {
   };
 }
 
-// ─── Admin Settings ───
+// ─── Admin Settings (added upload for table banner) ───
 function openAdminSettings() {
   showModal(`
     <h3>⚙️ Admin Settings</h3>
@@ -1517,8 +1590,9 @@ function openAdminSettings() {
       <button class="settings-btn" id="setLogoBtn">🖼️ Upload Navbar Logo</button>
       <button class="settings-btn" id="manageSlideBtn">🎞️ Manage Main Slideshow</button>
       <button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button>
-      <button class="settings-btn" id="manageCornerBtn">🏆 Table Corner Image</button>
-      <button class="settings-btn" id="manageHeaderBgBtn">🖼️ Table Header Background</button>
+      <button class="settings-btn" id="manageCornerBtn">🏆 Table Corner Image (legacy)</button>
+      <button class="settings-btn" id="manageHeaderBgBtn">🖼️ Table Header Background (legacy)</button>
+      <button class="settings-btn" id="uploadTableBannerBtn">📸 Upload Full‑Width Table Banner</button>
       <button class="settings-btn" id="setWatchBtnAdmin">🎥 Set Watch Match Embed</button>
     </div>
     <div class="modal-btns"><button class="modal-btn-cancel" id="closeAdminBtn" style="width:100%;">Close</button></div>
@@ -1529,7 +1603,19 @@ function openAdminSettings() {
   document.getElementById('addIconBtn').onclick = () => uploadTeamIcon();
   document.getElementById('manageCornerBtn').onclick = () => uploadCornerImage();
   document.getElementById('manageHeaderBgBtn').onclick = () => uploadHeaderBgImage();
+  document.getElementById('uploadTableBannerBtn').onclick = () => uploadTableBannerImage();
   document.getElementById('setWatchBtnAdmin').onclick = () => { closeModal(); updateWatchMatchEmbed(); };
+}
+
+async function uploadTableBannerImage() {
+  const file = await pickFile('image/*'); if (!file) return;
+  try {
+    const url = await uploadToImgBB(file);
+    await database.ref('premier_league_table_banner').set(url);
+    tableBannerUrl = url; closeModal();
+    if (document.querySelector('.tab-btn.active')?.dataset.tab === 'table') renderTable();
+    alert('Table banner updated!');
+  } catch(e) { alert('Upload failed: ' + e.message); }
 }
 
 async function uploadNavbarLogo() {
@@ -1694,6 +1780,7 @@ async function init() {
   await loadNavbarLogo();
   await loadTableCornerImage();
   await loadTableHeaderBgImage();
+  await loadTableBanner();          // load full‑width banner
   await loadWatchMatchEmbed();
   await loadTopScorerData();
   await loadTopAssistantData();
