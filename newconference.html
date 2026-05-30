@@ -262,8 +262,38 @@
       border-radius: 48px;
       padding: 48px 64px;
       transition: all 0.2s;
+      position: relative;
     }
     .match-card:hover { background: rgba(0,0,0,0.7); border-color: var(--conf-green-light); }
+
+    /* Order controls for fixtures (admin only) */
+    .order-controls {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 12px;
+      z-index: 10;
+    }
+    .order-btn {
+      background: rgba(0,0,0,0.7);
+      border: 1px solid var(--conf-green);
+      color: var(--conf-green);
+      font-size: 1.8rem;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .order-btn:hover {
+      background: var(--conf-green);
+      color: black;
+      transform: scale(1.05);
+    }
 
     .match-row {
       display: flex;
@@ -919,7 +949,8 @@ async function loadSeasonData() {
     db.ref(`${base}/topScorers`).once('value'),
     db.ref(`${base}/topAssists`).once('value'),
   ]);
-  fixtures   = fSnap.val() ? Object.entries(fSnap.val()).map(([k,v])=>({id:k,...v})) : [];
+  // Load fixtures with order (default 99999 for old entries)
+  fixtures = fSnap.val() ? Object.entries(fSnap.val()).map(([k,v]) => ({ id: k, ...v, order: v.order !== undefined ? v.order : 99999 })) : [];
   results    = rSnap.val() ? Object.entries(rSnap.val()).map(([k,v])=>({id:k,...v})) : [];
   topScorers = sSnap.val() ? Object.entries(sSnap.val()).map(([k,v])=>({id:k,...v})) : [];
   topAssists = aSnap.val() ? Object.entries(aSnap.val()).map(([k,v])=>({id:k,...v})) : [];
@@ -955,6 +986,33 @@ function sortFixturesByDate(fixturesList) {
   past.sort((a,b) => (parseDateToTimestamp(a.date)||0) - (parseDateToTimestamp(b.date)||0));
   noDate.sort((a,b) => (a.md||0) - (b.md||0));
   return [...upcoming, ...past, ...noDate];
+}
+
+// NEW: Sort fixtures by custom order (admin-controlled)
+function sortFixturesByOrder(fixturesList) {
+  return [...fixturesList].sort((a,b) => (a.order || 99999) - (b.order || 99999));
+}
+
+// NEW: Swap order between two fixtures
+async function swapFixtureOrder(fixtureA, fixtureB) {
+  const aOrder = fixtureA.order || 99999;
+  const bOrder = fixtureB.order || 99999;
+  const path = `${BASE_PATH}/seasons/season_${currentSeasonId}/fixtures`;
+  await db.ref(`${path}/${fixtureA.id}/order`).set(bOrder);
+  await db.ref(`${path}/${fixtureB.id}/order`).set(aOrder);
+  await loadSeasonData(); // reload to reflect new order
+}
+
+// NEW: Move fixture up/down in order list
+async function moveFixtureUpDown(fixtureId, direction) {
+  const ordered = sortFixturesByOrder(fixtures);
+  const idx = ordered.findIndex(f => f.id === fixtureId);
+  if (idx === -1) return;
+  let otherIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (otherIdx < 0 || otherIdx >= ordered.length) return;
+  const fixtureA = ordered[idx];
+  const fixtureB = ordered[otherIdx];
+  await swapFixtureOrder(fixtureA, fixtureB);
 }
 
 async function switchSeason(delta) {
@@ -999,7 +1057,7 @@ async function setActiveSeason() {
   alert(`Season ${currentSeasonId} is now active`);
 }
 
-// ========== FIXTURE MODAL (unchanged) ==========
+// ========== FIXTURE MODAL (UPGRADED: added aggregate field) ==========
 async function openFixtureModal(item = null) {
   showModal(`
     <h3>${item ? 'Edit Fixture' : 'Add Fixture'}</h3>
@@ -1015,6 +1073,8 @@ async function openFixtureModal(item = null) {
     <textarea id="fDesc">${item?.description || ''}</textarea>
     <label>Matchday</label>
     <input id="fMd" type="number" placeholder="Matchday" value="${item?.md || 0}">
+    <label>Aggregate Score (optional, e.g. 4-2)</label>
+    <input id="fAgg" placeholder="Aggregate" value="${item?.aggregate || ''}">
     <div class="modal-btns">
       <button class="modal-btn-primary" id="saveFixtureBtn">Save Fixture</button>
       <button class="modal-btn-cancel" id="cancelFixtureBtn">Cancel</button>
@@ -1028,8 +1088,17 @@ async function openFixtureModal(item = null) {
     const venue       = document.getElementById('fVenue').value.trim();
     const description = document.getElementById('fDesc').value.trim();
     const md          = parseInt(document.getElementById('fMd').value) || 0;
+    const aggregate   = document.getElementById('fAgg').value.trim() || null;
     if (!homeTeam || !awayTeam) { alert("Both teams required"); return; }
-    const data = { homeTeam, awayTeam, date, venue, description, md };
+    const data = { homeTeam, awayTeam, date, venue, description, md, aggregate };
+    // If editing, preserve existing order; if new, assign a high default order (will be updated manually later)
+    if (!item && isAdmin) {
+      // For new fixtures, give a default order that puts them at the bottom (max existing order + 10)
+      const maxOrder = fixtures.reduce((max, f) => Math.max(max, f.order || 0), 0);
+      data.order = maxOrder + 10;
+    } else if (item && item.order !== undefined) {
+      data.order = item.order;
+    }
     const path = `${BASE_PATH}/seasons/season_${currentSeasonId}/fixtures`;
     if (item?.id) await db.ref(`${path}/${item.id}`).set(data);
     else await db.ref(path).push(data);
@@ -1279,9 +1348,11 @@ function renderStatsInline(type) {
       const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
       const teamIconUrl = teamIcons[p.team] || '';
       const playerImageUrl = p.imageUrl || '';
+      // CHANGE 3: Only show edit pencil if admin mode is active
+      const editButtonHtml = isAdmin ? `<div class="edit-block-btn" data-id="${p.id}" data-type="${type}">✏️</div>` : '';
       top3Html += `
         <div class="top3-block">
-          <div class="edit-block-btn" data-id="${p.id}" data-type="${type}">✏️</div>
+          ${editButtonHtml}
           <div class="top3-name">${escapeHtml(p.name)}</div>
           <div class="player-image-wrapper">
             ${medal ? `<div class="medal-badge">${medal}</div>` : ''}
@@ -1354,23 +1425,39 @@ function escapeHtml(str) {
   });
 }
 
-// ========== RENDER FIXTURES (unchanged) ==========
+// ========== RENDER FIXTURES (UPGRADED: display aggregate, order controls, sort by order) ==========
 function renderFixtures() {
-  const sorted = sortFixturesByDate(fixtures);
+  // Always sort by custom order when admin mode is active, otherwise by date.
+  // To keep the UI consistent for admins, we sort by order regardless.
+  // For non-admins, they see the admin-defined order as well (makes sense).
+  const sorted = sortFixturesByOrder(fixtures);
   let html = '';
   if (sorted.length === 0) {
     html = '<div class="empty-state"><div class="empty-icon">📅</div><p>No fixtures scheduled yet</p></div>';
   } else {
     html = '<div class="matches-list">';
-    sorted.forEach(f => {
+    sorted.forEach((f, index) => {
+      // Display aggregate if present
+      const aggHtml = f.aggregate ? `<div class="aggregate-text">Agg: ${f.aggregate}</div>` : '';
+      // Order controls (up/down buttons) only for admin
+      const orderControls = isAdmin ? `
+        <div class="order-controls">
+          ${index > 0 ? `<button class="order-btn up-btn" data-id="${f.id}" data-direction="up">⬆️</button>` : ''}
+          ${index < sorted.length - 1 ? `<button class="order-btn down-btn" data-id="${f.id}" data-direction="down">⬇️</button>` : ''}
+        </div>
+      ` : '';
       html += `
-        <div class="match-card">
+        <div class="match-card" data-fixture-id="${f.id}">
+          ${orderControls}
           <div class="match-row">
             <div class="team-side home">
               ${teamIconHtml(f.homeTeam)}
               <span class="team-name">${f.homeTeam}</span>
             </div>
-            <div class="match-center"><span class="vs-text">VS</span></div>
+            <div class="match-center">
+              <span class="vs-text">VS</span>
+              ${aggHtml}
+            </div>
             <div class="team-side away">
               ${teamIconHtml(f.awayTeam)}
               <span class="team-name">${f.awayTeam}</span>
@@ -1412,6 +1499,15 @@ function attachFixtureHandlers() {
   document.querySelectorAll('.btn-add-result[data-id]').forEach(btn => {
     const f = fixtures.find(x => x.id === btn.dataset.id);
     if (f) btn.onclick = () => openResultModal(null, f);
+  });
+  // Attach order button handlers
+  document.querySelectorAll('.order-btn.up-btn, .order-btn.down-btn').forEach(btn => {
+    btn.onclick = async (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      const direction = btn.classList.contains('up-btn') ? 'up' : 'down';
+      await moveFixtureUpDown(id, direction);
+    };
   });
 }
 
