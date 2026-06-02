@@ -663,10 +663,88 @@
     }
     .add-result-top-btn:hover { background: var(--pl-pink-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(233,0,82,0.4); }
 
-    /* ─── WATCH MATCH ─── */
-    .inline-media { width: 100%; border-radius: 32px; overflow: hidden; background: #000; }
-    .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; }
-    .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+    /* ─── WATCH MATCH FEED ─── */
+    .watch-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      max-height: 70vh;
+      overflow-y: auto;
+      padding-right: 12px;
+    }
+    .watch-feed::-webkit-scrollbar {
+      width: 8px;
+    }
+    .watch-feed::-webkit-scrollbar-track {
+      background: rgba(233,0,82,0.2);
+      border-radius: 10px;
+    }
+    .watch-feed::-webkit-scrollbar-thumb {
+      background: var(--pl-pink);
+      border-radius: 10px;
+    }
+    .watch-card {
+      background: rgba(0,0,0,0.4);
+      border-radius: 28px;
+      overflow: hidden;
+      border: 1px solid var(--pl-pink);
+      transition: transform 0.2s, box-shadow 0.2s;
+      animation: cardSlideIn 0.4s ease both;
+    }
+    .watch-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(233,0,82,0.3);
+    }
+    .video-wrapper {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+    }
+    .video-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .watch-card-info {
+      padding: 20px 28px;
+      background: rgba(26,0,28,0.9);
+      border-top: 1px solid var(--pl-pink);
+    }
+    .watch-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem;
+      color: var(--pl-pink);
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .watch-date {
+      font-size: 1.2rem;
+      color: rgba(255,255,255,0.6);
+      font-family: 'Inter', sans-serif;
+    }
+    .admin-video-controls {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+    .video-move-btn {
+      background: rgba(56,0,60,0.5);
+      border: 1px solid var(--pl-pink);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .video-move-btn:hover {
+      background: var(--pl-pink);
+    }
 
     /* ─── MODAL ─── */
     .modal-overlay {
@@ -897,7 +975,7 @@ let teamIconsCache = {};
 let slideshowImages = [], slideshowDuration = 3000, slideInterval = null, currentSlideIdx = 0;
 let navbarLogoUrl = '';
 let tableHeaderBgImageUrl = '';
-let watchMatchEmbedCode = '';
+let watchMatchVideos = []; // array of {id, title, embedCode, date}
 let playerMap = {};
 let topScorerList = [], topAssistantList = [];
 let calendarEventsData = {};
@@ -975,9 +1053,18 @@ async function loadTableHeaderBgImage() {
   tableHeaderBgImageUrl = snap.val() || '';
 }
 
-async function loadWatchMatchEmbed() {
-  const snap = await database.ref('premier_league/watchMatch/embedCode').once('value');
-  watchMatchEmbedCode = snap.val() || '';
+// ─── Watch Match Videos ───
+async function loadWatchMatchVideos() {
+  const snap = await database.ref('premier_league/watchMatch/videos').once('value');
+  const videosObj = snap.val() || {};
+  watchMatchVideos = Object.entries(videosObj).map(([id, data]) => ({ id, ...data }));
+  // sort by order field or date
+  watchMatchVideos.sort((a,b) => (a.order || 0) - (b.order || 0));
+}
+async function saveWatchMatchVideos() {
+  const videosObj = {};
+  watchMatchVideos.forEach((v, idx) => { v.order = idx; videosObj[v.id] = { title: v.title, embedCode: v.embedCode, date: v.date, order: idx }; });
+  await database.ref('premier_league/watchMatch/videos').set(videosObj);
 }
 
 async function loadTeamIcons() {
@@ -1720,7 +1807,7 @@ function renderTopScorers() {
         <td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td>
         <td><span class="count-badge">${p.count||0}</span></td>
         ${isAdminMode?`<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>`:''}
-      </tr>`;
+      </table>`;
     });
     restHtml += `</tbody></table></div>`;
   }
@@ -1826,33 +1913,152 @@ function escapeHtml(str) {
   return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;');
 }
 
-// ─── RENDER WATCH MATCH ───
+// ─── RENDER WATCH MATCH (Multiple Videos Feed) ───
 function renderWatchMatch() {
-  let html = '';
-  if (watchMatchEmbedCode) {
-    html = `<div class="inline-media"><div class="video-wrapper">${watchMatchEmbedCode}</div></div>`;
+  let html = '<div class="watch-feed">';
+  if (watchMatchVideos.length === 0) {
+    html = '<div class="empty-state"><div class="empty-icon">🎬</div><p>No match videos available yet.</p></div>';
   } else {
-    html = `<div class="empty-state"><div class="empty-icon">🎬</div><p>No match video available yet.</p></div>`;
+    watchMatchVideos.forEach((video, idx) => {
+      let embedHtml = '';
+      const embedCode = video.embedCode || '';
+      if (embedCode.includes('iframe')) {
+        embedHtml = embedCode;
+      } else {
+        // try to convert URL to embed
+        let videoId = '';
+        if (embedCode.includes('youtu.be/')) {
+          videoId = embedCode.split('youtu.be/')[1].split(/[?#]/)[0];
+        } else if (embedCode.includes('youtube.com/watch?v=')) {
+          const urlParams = new URLSearchParams(new URL(embedCode).search);
+          videoId = urlParams.get('v');
+        }
+        if (videoId) {
+          embedHtml = `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+        } else {
+          embedHtml = `<div class="empty-state" style="padding:20px;">Invalid video URL/embed</div>`;
+        }
+      }
+      html += `
+        <div class="watch-card" data-id="${video.id}">
+          <div class="video-wrapper">
+            ${embedHtml}
+          </div>
+          <div class="watch-card-info">
+            <div class="watch-title">${escapeHtml(video.title || 'Match Video')}</div>
+            ${video.date ? `<div class="watch-date">📅 ${escapeHtml(video.date)}</div>` : ''}
+            ${isAdminMode ? `
+            <div class="admin-video-controls">
+              ${idx > 0 ? `<button class="video-move-btn move-up" data-id="${video.id}">⬆️ Move Up</button>` : ''}
+              ${idx < watchMatchVideos.length-1 ? `<button class="video-move-btn move-down" data-id="${video.id}">⬇️ Move Down</button>` : ''}
+              <button class="video-move-btn edit-video" data-id="${video.id}">✏️ Edit</button>
+              <button class="video-move-btn delete-video" data-id="${video.id}">🗑️ Delete</button>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
   }
-  if (isAdminMode) html += `<button class="add-btn-main" id="setWatchBtn">🎥 Update Match Video</button>`;
+  if (isAdminMode) {
+    html += `<button class="add-btn-main" id="addVideoBtn">🎥 + Add Match Video</button>`;
+  }
   document.getElementById('contentCard').innerHTML = html;
-  if (isAdminMode) document.getElementById('setWatchBtn')?.addEventListener('click', updateWatchMatchEmbed);
+
+  if (isAdminMode) {
+    document.getElementById('addVideoBtn')?.addEventListener('click', () => openVideoModal());
+    document.querySelectorAll('.edit-video').forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.dataset.id;
+        const video = watchMatchVideos.find(v => v.id === id);
+        if (video) openVideoModal(video);
+      };
+    });
+    document.querySelectorAll('.delete-video').forEach(btn => {
+      btn.onclick = async () => {
+        if (confirm('Delete this video?')) {
+          watchMatchVideos = watchMatchVideos.filter(v => v.id !== btn.dataset.id);
+          await saveWatchMatchVideos();
+          await loadWatchMatchVideos();
+          renderWatchMatch();
+        }
+      };
+    });
+    document.querySelectorAll('.move-up').forEach(btn => {
+      btn.onclick = async () => {
+        const id = btn.dataset.id;
+        const idx = watchMatchVideos.findIndex(v => v.id === id);
+        if (idx > 0) {
+          [watchMatchVideos[idx-1], watchMatchVideos[idx]] = [watchMatchVideos[idx], watchMatchVideos[idx-1]];
+          await saveWatchMatchVideos();
+          await loadWatchMatchVideos();
+          renderWatchMatch();
+        }
+      };
+    });
+    document.querySelectorAll('.move-down').forEach(btn => {
+      btn.onclick = async () => {
+        const id = btn.dataset.id;
+        const idx = watchMatchVideos.findIndex(v => v.id === id);
+        if (idx < watchMatchVideos.length-1) {
+          [watchMatchVideos[idx+1], watchMatchVideos[idx]] = [watchMatchVideos[idx], watchMatchVideos[idx+1]];
+          await saveWatchMatchVideos();
+          await loadWatchMatchVideos();
+          renderWatchMatch();
+        }
+      };
+    });
+  }
 }
 
-async function updateWatchMatchEmbed() {
-  const embed = prompt("Paste YouTube embed code (iframe) or full URL:", watchMatchEmbedCode);
-  if (embed === null) return;
-  let finalEmbed = embed.trim();
-  if (finalEmbed.includes("youtube.com/watch?v=") || finalEmbed.includes("youtu.be/")) {
-    let videoId = '';
-    if (finalEmbed.includes("youtu.be/")) videoId = finalEmbed.split("youtu.be/")[1].split(/[?#]/)[0];
-    else { const u = new URLSearchParams(new URL(finalEmbed).search); videoId = u.get('v'); }
-    if (videoId) finalEmbed = `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-  }
-  await database.ref('premier_league/watchMatch/embedCode').set(finalEmbed);
-  watchMatchEmbedCode = finalEmbed;
-  alert("Watch Match updated!");
-  if (document.querySelector('.tab-btn.active')?.dataset.tab === 'watch') renderWatchMatch();
+async function openVideoModal(video = null) {
+  showModal(`
+    <h3>${video ? 'Edit Match Video' : 'Add New Match Video'}</h3>
+    <label>Title</label>
+    <input id="videoTitle" value="${escapeHtml(video?.title || '')}" placeholder="e.g. Liverpool vs Manchester United - Final">
+    <label>YouTube URL or Embed Code</label>
+    <textarea id="videoEmbed" rows="3" placeholder="Paste YouTube share URL (e.g. https://youtu.be/...) or full embed iframe code">${escapeHtml(video?.embedCode || '')}</textarea>
+    <label>Date (optional)</label>
+    <input id="videoDate" value="${escapeHtml(video?.date || '')}" placeholder="e.g. 15 May 2025">
+    <div class="modal-btns">
+      <button class="modal-btn-primary" id="saveVideoBtn">Save</button>
+      <button class="modal-btn-cancel" id="cancelVideoBtn">Cancel</button>
+    </div>
+  `);
+  document.getElementById('cancelVideoBtn').onclick = closeModal;
+  document.getElementById('saveVideoBtn').onclick = async () => {
+    const title = document.getElementById('videoTitle').value.trim();
+    let embedCode = document.getElementById('videoEmbed').value.trim();
+    const date = document.getElementById('videoDate').value.trim();
+    if (!title) { alert('Title is required'); return; }
+    if (!embedCode) { alert('YouTube URL or embed code is required'); return; }
+    // Auto-convert YouTube URL to embed iframe
+    if (!embedCode.includes('iframe')) {
+      let videoId = '';
+      if (embedCode.includes('youtu.be/')) {
+        videoId = embedCode.split('youtu.be/')[1].split(/[?#]/)[0];
+      } else if (embedCode.includes('youtube.com/watch?v=')) {
+        const urlParams = new URLSearchParams(new URL(embedCode).search);
+        videoId = urlParams.get('v');
+      }
+      if (videoId) {
+        embedCode = `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      }
+    }
+    if (video) {
+      video.title = title;
+      video.embedCode = embedCode;
+      video.date = date;
+    } else {
+      const newId = Date.now().toString();
+      watchMatchVideos.push({ id: newId, title, embedCode, date });
+    }
+    await saveWatchMatchVideos();
+    await loadWatchMatchVideos();
+    closeModal();
+    renderWatchMatch();
+  };
 }
 
 // ─── renderCurrentTab ───
@@ -2173,7 +2379,7 @@ function openAdminSettings() {
       <button class="settings-btn" id="manageSlideBtn">🎞️ Manage Main Slideshow</button>
       <button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button>
       <button class="settings-btn" id="manageHeaderBgBtn">🖼️ Table Header Background (legacy)</button>
-      <button class="settings-btn" id="setWatchBtnAdmin">🎥 Set Watch Match Embed</button>
+      <button class="settings-btn" id="setWatchBtnAdmin">🎥 Manage Watch Match Videos</button>
     </div>
     <div class="modal-btns"><button class="modal-btn-cancel" id="closeAdminBtn" style="width:100%;">Close</button></div>
   `);
@@ -2182,7 +2388,7 @@ function openAdminSettings() {
   document.getElementById('manageSlideBtn').onclick = () => manageSlideshowUI();
   document.getElementById('addIconBtn').onclick = () => uploadTeamIcon();
   document.getElementById('manageHeaderBgBtn').onclick = () => uploadHeaderBgImage();
-  document.getElementById('setWatchBtnAdmin').onclick = () => { closeModal(); updateWatchMatchEmbed(); };
+  document.getElementById('setWatchBtnAdmin').onclick = () => { closeModal(); openVideoModal(); };
 }
 
 async function uploadNavbarLogo() {
@@ -2209,7 +2415,10 @@ async function uploadTeamIcon() {
     const url = await uploadToImgBB(transparentBlob);
     await database.ref(`teamIcons/${teamName}`).set({ imageUrl: url, updatedAt: Date.now() });
     teamIconsCache[teamName] = url;
-    renderCurrentTab(); closeModal();
+    // Re-render fixtures if that tab is active, because team icons should update there
+    if (document.querySelector('.tab-btn.active')?.dataset.tab === 'fixtures') renderFixtures();
+    renderCurrentTab(); // refresh current tab (might be table or scorers)
+    closeModal();
     alert(`Icon saved for "${teamName}"!`);
   } catch(e) { alert('Failed: ' + e.message); closeModal(); }
 }
@@ -2287,7 +2496,7 @@ document.getElementById('overlay').onclick = closeMenu;
 document.getElementById('homeBtn').onclick = () => window.location.href = 'feed.html';
 document.getElementById('adminModeBtn').onclick = () => {
   const key = prompt("Enter admin key:");
-  if (key === "admin@100") {
+  if (key === "admin@epl") {
     isAdminMode = true; alert("Admin mode activated ✅");
     document.getElementById('seasonAdminPanel').style.display = 'flex';
     renderCurrentTab();
@@ -2333,6 +2542,10 @@ function attachRealtimeListeners() {
     calendarEventsData = snap.val() || {};
     if (document.querySelector('.tab-btn.active')?.dataset.tab === 'fixtures') renderFixtures();
   });
+  database.ref('premier_league/watchMatch/videos').on('value', async () => {
+    await loadWatchMatchVideos();
+    if (document.querySelector('.tab-btn.active')?.dataset.tab === 'watch') renderWatchMatch();
+  });
 }
 
 // ─── Init ───
@@ -2341,7 +2554,7 @@ async function init() {
   await loadTeamIcons();
   await loadNavbarLogo();
   await loadTableHeaderBgImage();
-  await loadWatchMatchEmbed();
+  await loadWatchMatchVideos();
   await loadCalendarEvents();
   await loadSeasonsMetadata();
   await loadTopScorerData();
