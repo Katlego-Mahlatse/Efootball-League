@@ -1,1 +1,2265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Emirates FA Cup · Admin</title>
+  <!-- Firebase SDKs (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
+    body {
+      background: #b91c1c;
+      background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+      font-family: 'Segoe UI', 'Poppins', system-ui, 'Inter', sans-serif;
+      padding-bottom: 2rem;
+      min-height: 100vh;
+    }
+
+    @keyframes redGlow {
+      0%, 100% { box-shadow: 0 0 8px rgba(220, 38, 38, 0.5), 0 0 16px rgba(255, 255, 255, 0.3); }
+      50% { box-shadow: 0 0 16px rgba(220, 38, 38, 0.8), 0 0 28px rgba(255, 255, 255, 0.5); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Navbar with Emirates logo */
+    .fa-navbar {
+      background: white;
+      padding: 0.4rem 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.8rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 3px solid #b91c1c;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .navbar-logo {
+      height: 40px;
+      max-width: 150px;
+      object-fit: contain;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .navbar-logo:hover {
+      transform: scale(1.05);
+    }
+
+    .navbar-logo-placeholder {
+      height: 40px;
+      width: 120px;
+      background: linear-gradient(135deg, #b91c1c, #dc2626);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: bold;
+      border: 2px solid white;
+    }
+
+    .hamburger-btn {
+      background: #b91c1c;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      border: 1.5px solid white;
+      transition: transform 0.3s ease, background 0.3s ease;
+    }
+
+    .hamburger-btn:hover {
+      transform: scale(1.1) rotate(90deg);
+      background: #7f1d1d;
+    }
+
+    .hamburger-btn span {
+      width: 18px;
+      height: 2.5px;
+      background: white;
+      border-radius: 2px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 200;
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.3s ease;
+    }
+    .modal-overlay.active { visibility: visible; opacity: 1; pointer-events: auto; }
+    .modal-content {
+      background: white;
+      border: 2px solid #b91c1c;
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+      min-width: 280px;
+      max-width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      text-align: center;
+      color: #b91c1c;
+      animation: slideIn 0.3s ease;
+    }
+    .modal-option {
+      background: #b91c1c;
+      padding: 0.6rem 1rem;
+      border-radius: 40px;
+      color: white;
+      font-weight: bold;
+      display: block;
+      margin: 0.6rem 0;
+      border: 1px solid white;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .modal-option:hover { background: #7f1d1d; transform: translateX(5px); }
+    .close-modal {
+      background: #b91c1c;
+      color: white;
+      border: none;
+      padding: 0.5rem 1.2rem;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+
+    .dashboard {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    /* Slideshow - reduced margin-bottom */
+    .slideshow-container {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .slideshow-img {
+      max-width: 100%;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      border: 3px solid white;
+      transition: transform 0.3s ease;
+    }
+    .slideshow-img:hover {
+      transform: scale(1.02);
+    }
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: white;
+      margin: 0 4px;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: all 0.3s ease;
+    }
+    .dot.active { background: #b91c1c; opacity: 1; transform: scale(1.2); }
+    .dot:hover { transform: scale(1.1); }
+
+    /* Emirates Animation Section */
+    .emirates-section {
+      perspective: 1000px;
+      margin: 1rem auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 120px;
+    }
+
+    .flip-container {
+      width: 200px;
+      height: 100px;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: verticalFlip 4s ease-in-out infinite;
+    }
+
+    @keyframes verticalFlip {
+      0%, 45% { transform: rotateX(0deg); }
+      50%, 95% { transform: rotateX(180deg); }
+      100% { transform: rotateX(360deg); }
+    }
+
+    .flip-card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+    }
+
+    .flip-card-front { transform: rotateX(0deg); }
+    .flip-card-back { transform: rotateX(180deg); }
+
+    .emirates-logo-placeholder,
+    .emirates-slogan-placeholder {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .placeholder-text {
+      color: white;
+      font-weight: bold;
+      font-size: 0.8rem;
+      text-align: center;
+      padding: 0.5rem;
+      background: rgba(0,0,0,0.4);
+      border-radius: 8px;
+    }
+
+    /* Season Controls */
+    .season-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      background: rgba(255,255,255,0.2);
+      padding: 0.2rem 0.8rem;
+      border-radius: 40px;
+      transition: all 0.3s ease;
+    }
+    
+    .season-controls:hover {
+      background: rgba(255,255,255,0.3);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+    
+    .season-arrow {
+      background: white;
+      color: #b91c1c;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+    
+    .season-arrow:hover { 
+      background: #f5f5f5; 
+      transform: scale(1.15);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+    
+    .season-arrow:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    
+    .season-number-input {
+      font-weight: bold;
+      font-size: 1.1rem;
+      width: 110px;
+      text-align: center;
+      background: white;
+      border: 1px solid #b91c1c;
+      border-radius: 30px;
+      color: #b91c1c;
+      padding: 0.3rem 0.5rem;
+      transition: all 0.3s ease;
+    }
+    
+    .season-number-input:focus {
+      outline: none;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+    }
+    
+    .season-admin-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-left: 0.5rem;
+    }
+    
+    .season-admin-btn {
+      background: white;
+      border: 1px solid #b91c1c;
+      border-radius: 30px;
+      padding: 0.3rem 0.8rem;
+      color: #b91c1c;
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .season-admin-btn:hover {
+      background: #f5f5f5;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(185, 28, 28, 0.4);
+    }
+
+    /* Tabs at bottom */
+    .tabs-section {
+      margin-top: 3rem;
+    }
+
+    .tabs-container {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .tab-btn {
+      background: white;
+      border: none;
+      padding: 0.7rem 1.8rem;
+      border-radius: 40px;
+      font-weight: bold;
+      font-size: 1rem;
+      color: #b91c1c;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .tab-btn.active {
+      background: #b91c1c;
+      color: white;
+      box-shadow: 0 4px 12px rgba(220,38,38,0.5);
+    }
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s;
+    }
+    .tab-content.active-tab { display: block; }
+
+    /* Cards */
+    .card {
+      background: white;
+      border-radius: 1.8rem;
+      margin-bottom: 2rem;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      border: 1px solid rgba(185,28,28,0.3);
+      position: relative;
+      animation: slideIn 0.5s ease;
+    }
+
+    .card:hover {
+      box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+    }
+
+    /* Static corner image in header-right */
+    .group-corner-static {
+      width: 50px;
+      height: 50px;
+      object-fit: contain;
+      border-radius: 8px;
+      margin-left: 10px;
+    }
+
+    .card-header {
+      background: #b91c1c;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+      cursor: pointer;
+      transition: 0.2s;
+      position: relative;
+    }
+    .card-header h2, .card-header h3 { color: white; margin: 0; }
+    .card-header-left { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .card-header-right { display: flex; align-items: center; gap: 0.8rem; }
+    .add-btn {
+      background: white;
+      border: none;
+      border-radius: 2rem;
+      padding: 0.4rem 1.2rem;
+      color: #b91c1c;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .add-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    .card-content {
+      transition: max-height 0.3s ease;
+      max-height: 3000px;
+      overflow: hidden;
+    }
+    .card-content.collapsed { max-height: 0; }
+    .toggle-icon { font-size: 1.2rem; transition: transform 0.2s; color: white; }
+
+    /* Tables */
+    .group-table-wrapper { overflow-x: auto; padding: 0.5rem; }
+    .group-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .group-table th, .group-table td {
+      padding: 0.7rem 0.5rem;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .group-table th {
+      background: #fef2f2;
+      color: #b91c1c;
+      font-weight: 700;
+    }
+    .group-table td {
+      color: #7f1d1d;
+    }
+
+    /* Position indicators */
+    .rank-cell { 
+      font-weight: 700; 
+      width: 50px; 
+    }
+    
+    .pos-with-bar { 
+      display: flex; 
+      align-items: center; 
+      gap: 4px; 
+    }
+    
+    .vertical-bar { 
+      width: 4px; 
+      height: 18px; 
+      border-radius: 2px;
+    }
+    
+    .blue-bar-vertical { background: #3b82f6; }
+    .red-bar-vertical { background: #ef4444; }
+    
+    .dashed-separator-blue { border-bottom: 2px dashed #3b82f6 !important; }
+    .dashed-separator-red { border-bottom: 2px dashed #ef4444 !important; }
+
+    .team-icon-sm { width: 28px; height: 28px; object-fit: contain; margin-right: 8px; vertical-align: middle; transition: transform 0.3s ease; }
+    .team-icon-sm:hover { transform: scale(1.15); }
+    
+    .form-circles { display: flex; gap: 4px; flex-wrap: wrap; }
+    .circle-result {
+      width: 22px; height: 22px; border-radius: 50%; display: inline-flex;
+      align-items: center; justify-content: center; font-size: 11px; font-weight: bold;
+      transition: transform 0.2s ease;
+    }
+    .circle-result:hover { transform: scale(1.2); }
+    .circle-win { background: #22c55e; color: white; }
+    .circle-loss { background: #ef4444; color: white; }
+    .circle-draw { background: #6b7280; color: white; }
+    .circle-blank { background: #e5e7eb; }
+
+    .edit-btn, .delete-btn {
+      background: #b91c1c;
+      border: none;
+      color: white;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      margin: 0 0.2rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .edit-btn:hover, .delete-btn:hover {
+      background: #7f1d1d;
+      transform: scale(1.1);
+    }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+    /* Legend */
+    .legend-under-table {
+      background: #fef2f2; 
+      padding: 0.8rem 1.2rem; 
+      border-radius: 1rem; 
+      margin-top: 1rem;
+      display: flex; 
+      gap: 1.5rem; 
+      justify-content: center; 
+      flex-wrap: wrap;
+      font-size: 0.75rem;
+      border: 1px solid rgba(185,28,28,0.2);
+    }
+    
+    .legend-item { 
+      display: inline-flex; 
+      align-items: center; 
+      gap: 6px;
+      color: #7f1d1d;
+      font-weight: 600;
+    }
+    
+    .legend-vertical-bar { 
+      width: 4px; 
+      height: 16px; 
+      border-radius: 2px; 
+      display: inline-block; 
+    }
+    
+    .legend-blue { background: #3b82f6; }
+    .legend-red { background: #ef4444; }
+
+    /* Forms */
+    .form-overlay {
+      position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9);
+      display: flex; align-items: center; justify-content: center; visibility: hidden; opacity:0;
+      z-index: 300; transition: 0.2s;
+    }
+    .form-overlay.active { visibility: visible; opacity:1; }
+    .form-card {
+      background: white; border-radius: 2rem; padding: 1.5rem; width: 90%; max-width: 500px;
+      color: #b91c1c; border: 2px solid #b91c1c;
+      animation: slideIn 0.4s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .form-card h3 {
+      margin-bottom: 1rem;
+      font-size: 1.4rem;
+    }
+    .form-card input, .form-card select {
+      width: 100%; padding: 0.6rem; margin: 0.5rem 0;
+      background: #fef2f2; border: 1px solid #b91c1c; border-radius: 2rem;
+      transition: all 0.3s ease;
+    }
+    .form-card input:focus, .form-card select:focus {
+      outline: none;
+      box-shadow: 0 0 10px rgba(185,28,28,0.3);
+    }
+    .form-card button {
+      background: #b91c1c; color: white; border: none; border-radius: 2rem;
+      padding: 0.5rem 1.2rem; margin-top: 0.5rem; margin-right: 0.5rem; cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .form-card button:hover {
+      background: #7f1d1d;
+      transform: translateY(-2px);
+    }
+    .knockout-list {
+      padding: 1rem;
+    }
+    .knockout-match {
+      background: #fef2f2;
+      margin: 0.8rem;
+      padding: 0.8rem;
+      border-radius: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      border: 1px solid rgba(185,28,28,0.2);
+    }
+
+    /* Image preview styles */
+    .image-preview-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 1rem 0;
+      justify-content: center;
+    }
+
+    .image-preview-item {
+      position: relative;
+      width: 100px;
+      height: 100px;
+    }
+
+    .image-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #b91c1c;
+    }
+
+    .delete-preview-btn {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .delete-preview-btn:hover {
+      background: #dc2626;
+      transform: scale(1.1);
+    }
+
+    .status-message {
+      margin-top: 1rem;
+      padding: 0.5rem;
+      border-radius: 8px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .status-success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .status-loading {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    /* Stats Popup (Top Scorer / Assistant) */
+    .stats-popup {
+      background: white;
+      border: 3px solid #b91c1c;
+      border-radius: 2rem;
+      width: 85%;
+      max-width: 1000px;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+      animation: slideIn 0.4s ease;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stats-popup-header {
+      display: flex;
+      justify-content: flex-end;
+      padding: 0.8rem 1rem;
+      border-bottom: 2px solid #b91c1c;
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 20;
+    }
+
+    .close-popup {
+      background: #b91c1c;
+      color: white;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .close-popup:hover {
+      transform: scale(1.1);
+      background: #7f1d1d;
+    }
+
+    .stats-popup-content {
+      padding: 1rem 1.5rem 1.5rem;
+    }
+
+    .stats-popup-slideshow {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .stats-popup-slideshow img {
+      max-width: 100%;
+      max-height: 300px;
+      border-radius: 1.5rem;
+      border: 2px solid #b91c1c;
+    }
+
+    .stats-popup h2 {
+      text-align: center;
+      margin: 1rem 0;
+      font-size: 1.8rem;
+      color: #b91c1c;
+    }
+
+    .stats-list {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .stats-list th, .stats-list td {
+      padding: 0.7rem;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    .stats-list th {
+      background: #fef2f2;
+      color: #b91c1c;
+      font-weight: bold;
+    }
+
+    .admin-stats-controls {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 0.8rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons for top scorer/assistant */
+    .stats-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin: 1.5rem 0 2rem 0;
+      flex-wrap: wrap;
+    }
+
+    .stats-btn {
+      background: white;
+      border: none;
+      padding: 0.6rem 1.5rem;
+      border-radius: 40px;
+      font-weight: bold;
+      font-size: 1rem;
+      color: #b91c1c;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .stats-btn:hover {
+      background: #b91c1c;
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 700px) {
+      .group-table th, .group-table td { font-size: 0.7rem; padding: 0.4rem; }
+      .flip-container { width: 150px; height: 75px; }
+      .group-corner-static { width: 35px; height: 35px; }
+      .navbar-logo-placeholder { width: 100px; height: 35px; font-size: 0.6rem; }
+      .card-header { padding: 0.8rem 1rem; }
+      .stats-list th, .stats-list td { font-size: 0.75rem; padding: 0.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="fa-navbar">
+  <div id="navbarLogoContainer"></div>
+  <div class="hamburger-btn" id="hamburgerBtn"><span></span><span></span><span></span></div>
+</div>
+<div class="modal-overlay" id="modalOverlay"><div class="modal-content" id="modalContent"></div></div>
+
+<div class="dashboard">
+  <!-- Slideshow -->
+  <div class="slideshow-container">
+    <img id="slideshow-img" class="slideshow-img" alt="FA Cup Slideshow">
+    <div class="dots-container" id="dotsContainer"></div>
+  </div>
+
+  <!-- Emirates Animation Section -->
+  <div class="emirates-section">
+    <div class="flip-container">
+      <div class="flip-card-face flip-card-front">
+        <div id="emiratesLogoContainer"></div>
+      </div>
+      <div class="flip-card-face flip-card-back">
+        <div id="emiratesSloganContainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Groups Stage with Season Controls -->
+  <div id="groupsSection">
+    <div class="flex-between" style="margin-bottom: 1rem;">
+      <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <h2 style="color:white;">Groups Stage</h2>
+        <!-- Season Navigation Controls -->
+        <div class="season-controls">
+          <button class="season-arrow" id="prevSeasonBtn">‹</button>
+          <input type="text" id="seasonNumberInput" class="season-number-input" value="Season 3" inputmode="text" readonly>
+          <button class="season-arrow" id="nextSeasonBtn">›</button>
+        </div>
+        <!-- Admin Season Management Buttons -->
+        <div id="seasonAdminButtons" class="season-admin-buttons" style="display:none;">
+          <button class="season-admin-btn" id="addSeasonBtn">+ New Season</button>
+          <button class="season-admin-btn" id="renameSeasonBtn">Edit Season #</button>
+          <button class="season-admin-btn" id="setActiveSeasonBtn">Set Active</button>
+        </div>
+      </div>
+      <button id="globalAddGroupBtn" class="add-btn" style="display:none;">+ New Group</button>
+    </div>
+    <div id="groupsContainer"></div>
+  </div>
+
+  <!-- Top Scorer / Top Assistant Buttons -->
+  <div class="stats-buttons">
+    <button class="stats-btn" id="topScorerBtn">⭐ Top Scorers</button>
+    <button class="stats-btn" id="topAssistantBtn">🅰️ Top Assists</button>
+  </div>
+
+  <!-- Tabs Section -->
+  <div class="tabs-section">
+    <div class="tabs-container">
+      <button class="tab-btn active" data-tab="knockout">🥇 KNOCKOUT</button>
+      <button class="tab-btn" data-tab="fixtures">📅 FIXTURES</button>
+      <button class="tab-btn" data-tab="results">📋 RESULTS</button>
+    </div>
+
+    <!-- KNOCKOUT TAB -->
+    <div id="knockoutTab" class="tab-content active-tab">
+      <div class="card">
+        <div class="card-header">
+          <h3>🏆 Knockout Matches</h3>
+          <button id="addKnockoutMatchBtn" class="add-btn" style="display:none;">+ Add Match</button>
+        </div>
+        <div class="card-content" id="knockoutList"></div>
+      </div>
+    </div>
+
+    <!-- FIXTURES TAB - direct redirect -->
+    <div id="fixturesTab" class="tab-content"></div>
+
+    <!-- RESULTS TAB (group stage results) - Add Result button moved to left next to heading -->
+    <div id="resultsTab" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <h3>📝 Group Stage Results</h3>
+            <button id="globalAddResultBtn" class="add-btn" style="display:none;">+ Add Result</button>
+          </div>
+          <div class="card-header-right"></div>
+        </div>
+        <div class="card-content" id="globalResultsList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Team Form -->
+<div id="teamFormModal" class="form-overlay"><div class="form-card"><h3>Add / Edit Team</h3>
+  <input type="text" id="teamName" placeholder="Team name"><input type="number" id="teamP" placeholder="P"><input type="number" id="teamW" placeholder="W"><input type="number" id="teamD" placeholder="D"><input type="number" id="teamL" placeholder="L"><input type="number" id="teamGS" placeholder="GS"><input type="number" id="teamGC" placeholder="GC"><input type="number" id="teamGD" placeholder="GD"><input type="number" id="teamPts" placeholder="Pts"><button id="saveTeamBtn">Save</button><button id="cancelTeamBtn">Cancel</button>
+</div></div>
+
+<!-- Result Form -->
+<div id="resultFormModal" class="form-overlay"><div class="form-card"><h3>Add / Edit Group Result</h3>
+  <select id="resultGroupSelect"><option value="">Select Group</option></select>
+  <select id="resultHomeTeam"><option value="">Home Team</option></select>
+  <input type="number" id="resultHomeScore" placeholder="Home Score" value="0">
+  <select id="resultAwayTeam"><option value="">Away Team</option></select>
+  <input type="number" id="resultAwayScore" placeholder="Away Score" value="0">
+  <select id="resultForfeitType">
+    <option value="none">Normal Result</option>
+    <option value="no_contest">No Contest (F - F)</option>
+    <option value="forfeit">Forfeit</option>
+  </select>
+  <input type="number" id="resultMd" placeholder="Matchday"><button id="saveResultBtn">Save</button><button id="cancelResultBtn">Cancel</button>
+</div></div>
+
+<!-- Knockout Match Form -->
+<div id="koFormModal" class="form-overlay"><div class="form-card"><h3>Knockout Match</h3>
+  <input type="text" id="koRound" placeholder="Round (R16, QF, SF, Final)"><select id="koHomeTeam"><option value="">Home Team</option></select><select id="koAwayTeam"><option value="">Away Team</option></select>
+  <input type="text" id="koScore" placeholder="Score (e.g. 2-1)"><select id="koForfeit"><option value="none">Normal</option><option value="forfeit">Forfeit</option></select>
+  <button id="saveKoBtn">Save</button><button id="cancelKoBtn">Cancel</button>
+</div></div>
+
+<!-- Stats Popup (Top Scorer / Assistant) -->
+<div id="statsPopupOverlay" class="modal-overlay" style="z-index: 400;">
+  <div class="stats-popup" id="statsPopupContent">
+    <div class="stats-popup-header">
+      <button class="close-popup" id="closeStatsPopup">✕</button>
+    </div>
+    <div class="stats-popup-content" id="statsPopupInner">
+      <!-- dynamic content -->
+    </div>
+  </div>
+</div>
+
+<script>
+  // ========================================
+  // FIREBASE CONFIGURATION
+  // ========================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
+    authDomain: "efootball-412.firebaseapp.com",
+    databaseURL: "https://efootball-412-default-rtdb.firebaseio.com",
+    projectId: "efootball-412",
+    storageBucket: "efootball-412.firebasestorage.app",
+    messagingSenderId: "596548424249",
+    appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
+
+  // ========================================
+  // SEASON MANAGEMENT VARIABLES
+  // ========================================
+  let currentSeasonId = 3;
+  let availableSeasons = [];
+  let activeSeasonId = 3;
+  let isAdmin = false;
+
+  // ========================================
+  // DATA STORAGE VARIABLES
+  // ========================================
+  let groupsData = {};
+  let knockoutMatches = [];
+  let teamIconsCache = {};
+  let slideshowImages = [], slideshowDuration = 3000, slideInterval = null, currentSlideIdx = 0;
+  let navbarLogoUrl = '';
+  let emiratesLogoUrl = '';
+  let emiratesSloganUrl = '';
+  let groupCornerImageUrl = '';
+
+  // Top Scorer & Top Assistant data
+  let topScorerList = [];
+  let topAssistantList = [];
+  let topScorerSlideshowImages = [], topScorerSlideshowDuration = 3000, topScorerInterval = null, topScorerSlideIdx = 0;
+  let topAssistantSlideshowImages = [], topAssistantSlideshowDuration = 3000, topAssistantInterval = null, topAssistantSlideIdx = 0;
+  let currentStatsType = null; // 'scorer' or 'assistant'
+
+  const basePath = 'fa_cup';
+
+  // ========================================
+  // HELPER: Get Firebase path for season
+  // ========================================
+  function getSeasonPath(seasonNum, subPath = "") {
+    return `${basePath}/seasons/season_${seasonNum}${subPath ? "/" + subPath : ""}`;
+  }
+
+  // ========================================
+  // SEASON METADATA LOADING
+  // ========================================
+  async function loadSeasonsMetadata() {
+    const snapshot = await db.ref(`${basePath}/seasons`).once('value');
+    const seasons = snapshot.val() || {};
+    availableSeasons = [];
+    
+    for (const key in seasons) {
+      if (key.startsWith('season_')) {
+        const id = parseInt(key.split('_')[1]);
+        if (!isNaN(id)) availableSeasons.push(id);
+        if (seasons[key].active === true) activeSeasonId = id;
+      }
+    }
+    
+    const season3Exists = availableSeasons.includes(3);
+    const oldGroups = await db.ref(`${basePath}/groups`).once('value');
+    
+    if (!season3Exists && oldGroups.exists()) {
+      console.log("Migrating existing data to Season 3...");
+      const oldKnockout = await db.ref(`${basePath}/knockout_matches`).once('value');
+      await db.ref(getSeasonPath(3, 'groups')).set(oldGroups.val() || {});
+      await db.ref(getSeasonPath(3, 'knockout_matches')).set(oldKnockout.val() || {});
+      await db.ref(`${basePath}/seasons/season_3/active`).set(true);
+      if (!availableSeasons.includes(3)) availableSeasons.push(3);
+      activeSeasonId = 3;
+    }
+    
+    if (!availableSeasons.includes(3)) {
+      await db.ref(getSeasonPath(3, 'groups')).set({});
+      await db.ref(getSeasonPath(3, 'knockout_matches')).set({});
+      await db.ref(`${basePath}/seasons/season_3/active`).set(true);
+      availableSeasons.push(3);
+      activeSeasonId = 3;
+    }
+    
+    availableSeasons.sort((a,b)=>a-b);
+    if (availableSeasons.indexOf(activeSeasonId) === -1 && availableSeasons.length) activeSeasonId = availableSeasons[0];
+    currentSeasonId = activeSeasonId;
+    updateSeasonDisplay();
+    await loadCurrentSeasonData();
+  }
+
+  function updateSeasonDisplay() {
+    document.getElementById('seasonNumberInput').value = `Season ${currentSeasonId}`;
+    const prevBtn = document.getElementById('prevSeasonBtn');
+    const nextBtn = document.getElementById('nextSeasonBtn');
+    const idx = availableSeasons.indexOf(currentSeasonId);
+    prevBtn.disabled = availableSeasons.length === 0 || idx <= 0;
+    nextBtn.disabled = availableSeasons.length === 0 || idx >= availableSeasons.length-1;
+    const adminDiv = document.getElementById('seasonAdminButtons');
+    if (adminDiv) adminDiv.style.display = isAdmin ? 'flex' : 'none';
+  }
+
+  async function switchSeason(delta) {
+    const idx = availableSeasons.indexOf(currentSeasonId);
+    const newIdx = idx + delta;
+    if (newIdx >= 0 && newIdx < availableSeasons.length) {
+      currentSeasonId = availableSeasons[newIdx];
+      updateSeasonDisplay();
+      await loadCurrentSeasonData();
+    }
+  }
+
+  async function goToSeason(seasonNum) {
+    seasonNum = parseInt(seasonNum);
+    if (isNaN(seasonNum)) return;
+    if (availableSeasons.includes(seasonNum)) {
+      currentSeasonId = seasonNum;
+      updateSeasonDisplay();
+      await loadCurrentSeasonData();
+    } else if (isAdmin && confirm(`Season ${seasonNum} does not exist. Create it?`)) {
+      await db.ref(getSeasonPath(seasonNum, 'groups')).set({});
+      await db.ref(getSeasonPath(seasonNum, 'knockout_matches')).set({});
+      availableSeasons.push(seasonNum);
+      availableSeasons.sort((a,b)=>a-b);
+      currentSeasonId = seasonNum;
+      updateSeasonDisplay();
+      await loadCurrentSeasonData();
+    } else {
+      alert(`Season ${seasonNum} does not exist.`);
+    }
+  }
+
+  async function loadCurrentSeasonData() {
+    await loadGroups();
+    await loadKnockout();
+  }
+
+  async function addNewSeason() {
+    let newId = prompt("Enter season number (e.g., 4):");
+    if (!newId) return;
+    newId = parseInt(newId);
+    if (isNaN(newId)) { alert("Invalid number"); return; }
+    if (availableSeasons.includes(newId)) { alert("Season already exists"); return; }
+    await db.ref(getSeasonPath(newId, 'groups')).set({});
+    await db.ref(getSeasonPath(newId, 'knockout_matches')).set({});
+    availableSeasons.push(newId);
+    availableSeasons.sort((a,b)=>a-b);
+    currentSeasonId = newId;
+    updateSeasonDisplay();
+    await loadCurrentSeasonData();
+  }
+
+  async function renameSeason() {
+    let seasonList = availableSeasons.map(s => `Season ${s}`).join(', ');
+    let oldNum = prompt(`Enter current season number to rename (existing: ${seasonList}):`);
+    if (!oldNum) return;
+    oldNum = parseInt(oldNum);
+    if (!availableSeasons.includes(oldNum)) { alert("Season not found"); return; }
+    let newNum = prompt(`Enter new season number for Season ${oldNum}:`);
+    if (!newNum) return;
+    newNum = parseInt(newNum);
+    if (isNaN(newNum)) { alert("Invalid number"); return; }
+    if (availableSeasons.includes(newNum) && newNum !== oldNum) { alert("A season with that number already exists"); return; }
+    const oldGroups = await db.ref(getSeasonPath(oldNum, 'groups')).once('value');
+    const oldKnockout = await db.ref(getSeasonPath(oldNum, 'knockout_matches')).once('value');
+    const wasActive = (activeSeasonId === oldNum);
+    await db.ref(getSeasonPath(newNum, 'groups')).set(oldGroups.val() || {});
+    await db.ref(getSeasonPath(newNum, 'knockout_matches')).set(oldKnockout.val() || {});
+    if (wasActive) await db.ref(`${basePath}/seasons/season_${newNum}/active`).set(true);
+    await db.ref(getSeasonPath(oldNum)).remove();
+    availableSeasons = availableSeasons.filter(s => s !== oldNum);
+    availableSeasons.push(newNum);
+    availableSeasons.sort((a,b)=>a-b);
+    if (currentSeasonId === oldNum) currentSeasonId = newNum;
+    if (activeSeasonId === oldNum) activeSeasonId = newNum;
+    updateSeasonDisplay();
+    await loadCurrentSeasonData();
+    alert(`Season renamed from ${oldNum} to ${newNum}`);
+  }
+
+  async function setActiveSeason() {
+    const updates = {};
+    for (let sid of availableSeasons) {
+      updates[`${basePath}/seasons/season_${sid}/active`] = (sid === currentSeasonId);
+    }
+    await db.ref().update(updates);
+    activeSeasonId = currentSeasonId;
+    alert(`Season ${currentSeasonId} set as active.`);
+  }
+
+  // ========================================
+  // LOAD IMAGES & ICONS
+  // ========================================
+  async function loadNavbarLogo() {
+    const snap = await db.ref(`${basePath}/navbar_logo`).once('value');
+    navbarLogoUrl = snap.val() || '';
+    renderNavbarLogo();
+  }
+  function renderNavbarLogo() {
+    const container = document.getElementById('navbarLogoContainer');
+    if (navbarLogoUrl) {
+      container.innerHTML = `<img src="${navbarLogoUrl}" class="navbar-logo" alt="Emirates Logo">`;
+    } else {
+      container.innerHTML = '<div class="navbar-logo-placeholder">EMIRATES LOGO</div>';
+    }
+  }
+
+  async function loadEmiratesAnimation() {
+    const logoSnap = await db.ref(`${basePath}/emirates_logo`).once('value');
+    const sloganSnap = await db.ref(`${basePath}/emirates_slogan`).once('value');
+    emiratesLogoUrl = logoSnap.val() || '';
+    emiratesSloganUrl = sloganSnap.val() || '';
+    renderEmiratesAnimation();
+  }
+  function renderEmiratesAnimation() {
+    const logoContainer = document.getElementById('emiratesLogoContainer');
+    const sloganContainer = document.getElementById('emiratesSloganContainer');
+    if (emiratesLogoUrl) {
+      logoContainer.innerHTML = `<img src="${emiratesLogoUrl}" class="emirates-logo-placeholder" alt="Emirates Logo">`;
+    } else {
+      logoContainer.innerHTML = '<div class="placeholder-text">EMIRATES LOGO<br>(Upload in Admin)</div>';
+    }
+    if (emiratesSloganUrl) {
+      sloganContainer.innerHTML = `<img src="${emiratesSloganUrl}" class="emirates-slogan-placeholder" alt="Fly Better">`;
+    } else {
+      sloganContainer.innerHTML = '<div class="placeholder-text">FLY BETTER<br>(Upload in Admin)</div>';
+    }
+  }
+
+  async function loadGroupCornerImage() {
+    const snap = await db.ref(`${basePath}/group_corner_image`).once('value');
+    groupCornerImageUrl = snap.val() || '';
+    renderAllGroups();
+  }
+
+  async function loadTeamIcons() {
+    const snap = await db.ref(`${basePath}/teamIcons`).once('value');
+    const data = snap.val() || {};
+    for (const [team, value] of Object.entries(data)) {
+      if (value.imageUrl) teamIconsCache[team] = value.imageUrl;
+    }
+    renderAllGroups();
+  }
+
+  function getTeamIconHtml(team, cls="team-icon-sm") {
+    let url = teamIconsCache[team];
+    return url ? `<img class="${cls}" src="${url}" onerror="this.style.display='none';">` : '';
+  }
+
+  // ========================================
+  // GROUPS RENDERING
+  // ========================================
+  async function loadGroups() {
+    const snap = await db.ref(getSeasonPath(currentSeasonId, 'groups')).once('value');
+    groupsData = snap.val() || {};
+    renderAllGroups();
+    populateGroupSelects();
+  }
+
+  function renderAllGroups() {
+    const container = document.getElementById('groupsContainer');
+    if(!container) return;
+    container.innerHTML = '';
+    
+    for(let gid in groupsData) {
+      const group = groupsData[gid];
+      const groupName = group.name || gid;
+      const teamsObj = group.teams || {};
+      const teams = Object.entries(teamsObj).map(([key,val])=>({key, ...val}));
+      const sorted = [...teams].sort((a,b)=>(b.pts||0)-(a.pts||0) || (b.gd||0)-(a.gd||0));
+      
+      const groupCard = document.createElement('div'); 
+      groupCard.className = 'card';
+      
+      let cornerHtml = '';
+      if (groupCornerImageUrl) {
+        cornerHtml = `<img src="${groupCornerImageUrl}" class="group-corner-static" alt="Corner">`;
+      }
+      
+      groupCard.innerHTML = `
+        <div class="card-header">
+          <div class="card-header-left">
+            <h3>${groupName}</h3>
+            ${isAdmin ? `<button class="add-btn edit-group-name" data-gid="${gid}">✏️ Rename</button><button class="add-btn delete-group" data-gid="${gid}">🗑️ Delete</button>` : ''}
+          </div>
+          <div class="card-header-right">
+            ${cornerHtml}
+            ${isAdmin ? `<button class="add-btn add-team-to-group" data-gid="${gid}">+ Add Team</button>` : ''}
+          </div>
+        </div>
+        <div class="card-content"><div class="group-table-wrapper"><table class="group-table"><thead><tr><th>Pos</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GS</th><th>GC</th><th>GD</th><th>Pts</th><th>Last 5</th>${isAdmin ? '<th>Actions</th>' : ''}</tr></thead><tbody id="group-${gid}-body"></tbody></table></div>
+        <div class="legend-under-table">
+          <span class="legend-item"><span class="legend-vertical-bar legend-blue"></span><span>Top 4 - Qualify for R16</span></span>
+          <span class="legend-item"><span class="legend-vertical-bar legend-red"></span><span>5th+ - Relegated</span></span>
+        </div>
+        </div>
+      `;
+      container.appendChild(groupCard);
+      
+      const tbody = document.getElementById(`group-${gid}-body`);
+      tbody.innerHTML = '';
+      sorted.forEach((team, idx) => {
+        const row = tbody.insertRow();
+        const pos = idx + 1;
+        const posCell = row.insertCell(0);
+        posCell.className = "rank-cell";
+        let barClass = "";
+        if (pos <= 4) {
+          barClass = "blue-bar-vertical";
+          if (pos === 4) row.classList.add("dashed-separator-blue");
+        } else {
+          barClass = "red-bar-vertical";
+        }
+        if (barClass) {
+          posCell.innerHTML = `<div class="pos-with-bar"><span class="vertical-bar ${barClass}"></span>${pos}</div>`;
+        } else {
+          posCell.innerText = pos;
+        }
+        
+        const iconHtml = getTeamIconHtml(team.name);
+        row.insertCell(1).innerHTML = `<div style="display:flex;align-items:center;">${iconHtml} ${team.name}</div>`;
+        row.insertCell(2).innerText = team.p || 0;
+        row.insertCell(3).innerText = team.w || 0;
+        row.insertCell(4).innerText = team.d || 0;
+        row.insertCell(5).innerText = team.l || 0;
+        row.insertCell(6).innerText = team.gs || 0;
+        row.insertCell(7).innerText = team.gc || 0;
+        row.insertCell(8).innerText = (team.gd || 0) > 0 ? `+${team.gd||0}` : `${team.gd||0}`;
+        row.insertCell(9).innerText = team.pts || 0;
+        row.insertCell(10).innerHTML = `<div class="form-circles"><span class="circle-blank">—</span></div>`;
+        
+        if(isAdmin) {
+          const actions = row.insertCell(11);
+          const editBtn = document.createElement('button'); editBtn.innerText='✏️'; editBtn.className='edit-btn';
+          editBtn.onclick = () => openTeamForm(gid, team.key, team);
+          const delBtn = document.createElement('button'); delBtn.innerText='🗑️'; delBtn.className='delete-btn';
+          delBtn.onclick = async () => { if(confirm('Delete team?')) await db.ref(getSeasonPath(currentSeasonId, `groups/${gid}/teams/${team.key}`)).remove(); };
+          actions.appendChild(editBtn); actions.appendChild(delBtn);
+        }
+      });
+      
+      groupCard.querySelectorAll('.edit-group-name').forEach(btn => btn.addEventListener('click',()=>renameGroup(gid)));
+      groupCard.querySelectorAll('.delete-group').forEach(btn => btn.addEventListener('click',()=>deleteGroup(gid)));
+      groupCard.querySelectorAll('.add-team-to-group').forEach(btn => btn.addEventListener('click',()=>openTeamForm(gid, null)));
+    }
+  }
+
+  async function renameGroup(gid) {
+    let newName = prompt('New group name', groupsData[gid]?.name || gid);
+    if(newName) await db.ref(getSeasonPath(currentSeasonId, `groups/${gid}/name`)).set(newName);
+    loadGroups();
+  }
+  
+  async function deleteGroup(gid) { 
+    if(confirm('Delete group and all its data?')) {
+      await db.ref(getSeasonPath(currentSeasonId, `groups/${gid}`)).remove(); 
+      loadGroups(); 
+    }
+  }
+
+  // ========================================
+  // TEAM FORM
+  // ========================================
+  let currentGroupForTeam = null, currentTeamKey = null;
+  
+  function openTeamForm(groupId, teamKey, teamData=null) {
+    currentGroupForTeam = groupId;
+    currentTeamKey = teamKey;
+    document.getElementById('teamName').value = teamData?.name || '';
+    document.getElementById('teamP').value = teamData?.p || 0;
+    document.getElementById('teamW').value = teamData?.w || 0;
+    document.getElementById('teamD').value = teamData?.d || 0;
+    document.getElementById('teamL').value = teamData?.l || 0;
+    document.getElementById('teamGS').value = teamData?.gs || 0;
+    document.getElementById('teamGC').value = teamData?.gc || 0;
+    document.getElementById('teamGD').value = teamData?.gd || 0;
+    document.getElementById('teamPts').value = teamData?.pts || 0;
+    document.getElementById('teamFormModal').classList.add('active');
+  }
+  
+  document.getElementById('saveTeamBtn').onclick = async () => {
+    const name = document.getElementById('teamName').value.trim();
+    if(!name) return alert('Team name required');
+    const data = {
+      name, 
+      p: +document.getElementById('teamP').value, 
+      w: +document.getElementById('teamW').value, 
+      d: +document.getElementById('teamD').value,
+      l: +document.getElementById('teamL').value, 
+      gs: +document.getElementById('teamGS').value, 
+      gc: +document.getElementById('teamGC').value,
+      gd: +document.getElementById('teamGD').value, 
+      pts: +document.getElementById('teamPts').value
+    };
+    if(currentTeamKey) {
+      await db.ref(getSeasonPath(currentSeasonId, `groups/${currentGroupForTeam}/teams/${currentTeamKey}`)).set(data);
+    } else {
+      await db.ref(getSeasonPath(currentSeasonId, `groups/${currentGroupForTeam}/teams`)).push(data);
+    }
+    document.getElementById('teamFormModal').classList.remove('active');
+    loadGroups();
+  };
+  
+  document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamFormModal').classList.remove('active');
+
+  async function addNewGroup() {
+    let name = prompt('Group name (e.g. Group A)');
+    if(!name) return;
+    await db.ref(getSeasonPath(currentSeasonId, 'groups')).push({ name, teams:{}, results:{} });
+    loadGroups();
+  }
+  document.getElementById('globalAddGroupBtn').onclick = addNewGroup;
+
+  function populateGroupSelects() {
+    const sel = document.getElementById('resultGroupSelect');
+    if(!sel) return;
+    sel.innerHTML = '<option value="">Select Group</option>';
+    for(let gid in groupsData) { 
+      let opt = document.createElement('option'); 
+      opt.value = gid; 
+      opt.innerText = groupsData[gid].name || gid; 
+      sel.appendChild(opt); 
+    }
+  }
+
+  // ========================================
+  // RESULT FORM & AUTO STATS UPDATE
+  // ========================================
+  let editingResultKey = null, editingResultGroup = null;
+  
+  async function openResultForm(groupId, resultKey=null, resultData=null) {
+    editingResultKey = resultKey; 
+    editingResultGroup = groupId;
+    await populateTeamsInGroup(groupId);
+    if(resultData) {
+      document.getElementById('resultHomeTeam').value = resultData.homeTeam || '';
+      document.getElementById('resultAwayTeam').value = resultData.awayTeam || '';
+      document.getElementById('resultHomeScore').value = resultData.homeScore || 0;
+      document.getElementById('resultAwayScore').value = resultData.awayScore || 0;
+      document.getElementById('resultForfeitType').value = resultData.forfeitType || 'none';
+      document.getElementById('resultMd').value = resultData.md || 1;
+    } else {
+      document.getElementById('resultHomeTeam').value = ''; 
+      document.getElementById('resultAwayTeam').value = ''; 
+      document.getElementById('resultHomeScore').value = 0; 
+      document.getElementById('resultAwayScore').value = 0;
+      document.getElementById('resultForfeitType').value = 'none'; 
+      document.getElementById('resultMd').value = 1;
+    }
+    document.getElementById('resultFormModal').classList.add('active');
+  }
+  
+  async function populateTeamsInGroup(groupId) {
+    const group = groupsData[groupId]; 
+    if(!group) return;
+    const teams = group.teams || {};
+    const teamNames = Object.values(teams).map(t=>t.name);
+    const homeSel = document.getElementById('resultHomeTeam'); 
+    const awaySel = document.getElementById('resultAwayTeam');
+    homeSel.innerHTML = '<option value="">Home</option>'; 
+    awaySel.innerHTML = '<option value="">Away</option>';
+    teamNames.forEach(t => { 
+      homeSel.innerHTML += `<option value="${t}">${t}</option>`; 
+      awaySel.innerHTML += `<option value="${t}">${t}</option>`; 
+    });
+  }
+  
+  document.getElementById('resultGroupSelect').addEventListener('change', (e) => { 
+    if(e.target.value) populateTeamsInGroup(e.target.value); 
+  });
+  
+  async function updateGroupTeamStats(groupId, homeTeam, awayTeam, hScore, aScore, forfeit) {
+    const groupRef = db.ref(getSeasonPath(currentSeasonId, `groups/${groupId}`));
+    const snap = await groupRef.child('teams').once('value');
+    let teams = snap.val() || {};
+    let homeKey = null, awayKey = null, homeData=null, awayData=null;
+    
+    for(let [k,v] of Object.entries(teams)) { 
+      if(v.name===homeTeam) { homeKey=k; homeData=v; } 
+      if(v.name===awayTeam) { awayKey=k; awayData=v; } 
+    }
+    
+    if(!homeData) homeData = { name: homeTeam, p:0,w:0,d:0,l:0,gs:0,gc:0,gd:0,pts:0 };
+    if(!awayData) awayData = { name: awayTeam, p:0,w:0,d:0,l:0,gs:0,gc:0,gd:0,pts:0 };
+    
+    homeData.p = (homeData.p||0)+1; 
+    awayData.p = (awayData.p||0)+1;
+    
+    if(forfeit === 'no_contest') {
+      // no stats change
+    } else if(forfeit === 'forfeit') {
+      if(hScore>aScore) { 
+        homeData.pts+=3; homeData.w++; awayData.l++; 
+        awayData.gd = (awayData.gd || 0) - 3;
+        awayData.gc = (awayData.gc || 0) + 3;
+      } else if(aScore>hScore) { 
+        awayData.pts+=3; awayData.w++; homeData.l++; 
+        homeData.gd = (homeData.gd || 0) - 3;
+        homeData.gc = (homeData.gc || 0) + 3;
+      }
+    } else {
+      homeData.gs+=hScore; homeData.gc+=aScore; awayData.gs+=aScore; awayData.gc+=hScore;
+      homeData.gd = homeData.gs-homeData.gc; awayData.gd = awayData.gs-awayData.gc;
+      if(hScore>aScore) { homeData.pts+=3; homeData.w++; awayData.l++; } 
+      else if(aScore>hScore) { awayData.pts+=3; awayData.w++; homeData.l++; } 
+      else { homeData.pts+=1; awayData.pts+=1; homeData.d++; awayData.d++; }
+    }
+    
+    if(!homeKey) homeKey = groupRef.child('teams').push().key;
+    if(!awayKey) awayKey = groupRef.child('teams').push().key;
+    await groupRef.child(`teams/${homeKey}`).set(homeData);
+    await groupRef.child(`teams/${awayKey}`).set(awayData);
+  }
+  
+  document.getElementById('saveResultBtn').onclick = async () => {
+    const groupId = document.getElementById('resultGroupSelect').value;
+    if(!groupId) return alert('Select group');
+    const home = document.getElementById('resultHomeTeam').value, away = document.getElementById('resultAwayTeam').value;
+    const hScore = parseInt(document.getElementById('resultHomeScore').value)||0, aScore = parseInt(document.getElementById('resultAwayScore').value)||0;
+    const forfeit = document.getElementById('resultForfeitType').value;
+    const md = parseInt(document.getElementById('resultMd').value)||1;
+    if(!home || !away) return alert('Select teams');
+    
+    const matchText = `${home} ${hScore} - ${aScore} ${away}${forfeit!=='none'? ' ('+forfeit+')':''}`;
+    const resultObj = { matchText, homeTeam: home, awayTeam: away, homeScore: hScore, awayScore: aScore, forfeitType: forfeit, md };
+    
+    if(editingResultKey) {
+      await db.ref(getSeasonPath(currentSeasonId, `groups/${groupId}/results/${editingResultKey}`)).set(resultObj);
+    } else {
+      await db.ref(getSeasonPath(currentSeasonId, `groups/${groupId}/results`)).push(resultObj);
+    }
+    
+    await updateGroupTeamStats(groupId, home, away, hScore, aScore, forfeit);
+    
+    document.getElementById('resultFormModal').classList.remove('active');
+    loadGroups();
+    loadAllResults();
+  };
+  
+  document.getElementById('cancelResultBtn').onclick = () => document.getElementById('resultFormModal').classList.remove('active');
+
+  async function loadAllResults() {
+    const container = document.getElementById('globalResultsList');
+    if(!container) return;
+    container.innerHTML = '';
+    
+    for(let gid in groupsData) {
+      const resultsSnap = await db.ref(getSeasonPath(currentSeasonId, `groups/${gid}/results`)).once('value');
+      const results = resultsSnap.val() ? Object.entries(resultsSnap.val()).map(([k,v])=>({key:k, groupId:gid, ...v})) : [];
+      
+      for(let r of results) {
+        const div = document.createElement('div'); 
+        div.className = 'knockout-match';
+        div.innerHTML = `<span><strong>${r.matchText}</strong> (MD${r.md})</span>${isAdmin? `<div><button class="edit-btn" data-g="${r.groupId}" data-key="${r.key}">✏️</button><button class="delete-btn" data-g="${r.groupId}" data-key="${r.key}">🗑️</button></div>`:''}`;
+        container.appendChild(div);
+        
+        if(isAdmin) {
+          div.querySelector('.edit-btn')?.addEventListener('click',()=> openResultForm(r.groupId, r.key, r));
+          div.querySelector('.delete-btn')?.addEventListener('click', async ()=> { 
+            if(confirm('Delete result?')) {
+              await db.ref(getSeasonPath(currentSeasonId, `groups/${r.groupId}/results/${r.key}`)).remove(); 
+              loadAllResults(); 
+              loadGroups(); 
+            }
+          });
+        }
+      }
+    }
+  }
+
+  // ========================================
+  // KNOCKOUT MATCHES
+  // ========================================
+  async function loadKnockout() {
+    const snap = await db.ref(getSeasonPath(currentSeasonId, 'knockout_matches')).once('value');
+    knockoutMatches = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k, ...v})) : [];
+    renderKnockout();
+  }
+  
+  function renderKnockout() {
+    const container = document.getElementById('knockoutList'); 
+    if(!container) return;
+    container.innerHTML = '';
+    knockoutMatches.forEach(m => {
+      const div = document.createElement('div'); 
+      div.className = 'knockout-match';
+      div.innerHTML = `<span><strong>${m.round || 'KO'}</strong> ${m.homeTeam} ${m.score || '?'} ${m.awayTeam}</span>${isAdmin? `<div><button class="edit-ko" data-key="${m.key}">✏️</button><button class="delete-ko" data-key="${m.key}">🗑️</button></div>`:''}`;
+      container.appendChild(div);
+      if(isAdmin) {
+        div.querySelector('.edit-ko')?.addEventListener('click',()=>openKoForm(m.key,m));
+        div.querySelector('.delete-ko')?.addEventListener('click',async()=>{ 
+          if(confirm('Delete?')) {
+            await db.ref(getSeasonPath(currentSeasonId, `knockout_matches/${m.key}`)).remove(); 
+            loadKnockout(); 
+          }
+        });
+      }
+    });
+  }
+  
+  let editingKoKey = null;
+  async function openKoForm(key=null, data=null) {
+    editingKoKey = key;
+    const teamsList = [];
+    for(let gid in groupsData) { 
+      let teams = groupsData[gid].teams || {}; 
+      Object.values(teams).forEach(t=>teamsList.push(t.name)); 
+    }
+    const homeSel = document.getElementById('koHomeTeam'); 
+    const awaySel = document.getElementById('koAwayTeam');
+    homeSel.innerHTML = '<option value="">Home</option>'; 
+    awaySel.innerHTML = '<option value="">Away</option>';
+    teamsList.forEach(t=>{ 
+      homeSel.innerHTML+=`<option value="${t}">${t}</option>`; 
+      awaySel.innerHTML+=`<option value="${t}">${t}</option>`; 
+    });
+    if(data) {
+      document.getElementById('koRound').value = data.round||'';
+      document.getElementById('koHomeTeam').value = data.homeTeam||'';
+      document.getElementById('koAwayTeam').value = data.awayTeam||'';
+      document.getElementById('koScore').value = data.score||'';
+      document.getElementById('koForfeit').value = data.forfeit||'none';
+    } else {
+      document.getElementById('koRound').value=''; 
+      document.getElementById('koScore').value='';
+    }
+    document.getElementById('koFormModal').classList.add('active');
+  }
+  
+  document.getElementById('saveKoBtn').onclick = async () => {
+    const round = document.getElementById('koRound').value; 
+    const home = document.getElementById('koHomeTeam').value; 
+    const away = document.getElementById('koAwayTeam').value;
+    const score = document.getElementById('koScore').value; 
+    const forfeit = document.getElementById('koForfeit').value;
+    if(!round||!home||!away) return alert('Fill all');
+    const koObj = { round, homeTeam: home, awayTeam: away, score, forfeit };
+    if(editingKoKey) {
+      await db.ref(getSeasonPath(currentSeasonId, `knockout_matches/${editingKoKey}`)).set(koObj);
+    } else {
+      await db.ref(getSeasonPath(currentSeasonId, 'knockout_matches')).push(koObj);
+    }
+    document.getElementById('koFormModal').classList.remove('active');
+    loadKnockout();
+  };
+  
+  document.getElementById('cancelKoBtn').onclick = () => document.getElementById('koFormModal').classList.remove('active');
+  document.getElementById('addKnockoutMatchBtn').onclick = () => openKoForm();
+
+  // ========================================
+  // TOP SCORER & TOP ASSISTANT FUNCTIONS
+  // ========================================
+  async function loadTopScorerData() {
+    const listSnap = await db.ref(`${basePath}/topScorer/list`).once('value');
+    topScorerList = listSnap.val() ? Object.entries(listSnap.val()).map(([k,v])=>({key:k,...v})) : [];
+    const slidesSnap = await db.ref(`${basePath}/topScorer/slideshow/images`).once('value');
+    topScorerSlideshowImages = slidesSnap.val() || [];
+    const durSnap = await db.ref(`${basePath}/topScorer/slideshow/duration`).once('value');
+    topScorerSlideshowDuration = durSnap.val() || 3000;
+    if (topScorerInterval) clearInterval(topScorerInterval);
+    if (topScorerSlideshowImages.length) {
+      topScorerSlideIdx = 0;
+      topScorerInterval = setInterval(() => { 
+        topScorerSlideIdx = (topScorerSlideIdx+1)%topScorerSlideshowImages.length; 
+        if (document.getElementById('statsPopupOverlay').classList.contains('active') && currentStatsType === 'scorer') updateStatsPopupSlideshow(); 
+      }, topScorerSlideshowDuration);
+    }
+  }
+
+  async function loadTopAssistantData() {
+    const listSnap = await db.ref(`${basePath}/topAssistant/list`).once('value');
+    topAssistantList = listSnap.val() ? Object.entries(listSnap.val()).map(([k,v])=>({key:k,...v})) : [];
+    const slidesSnap = await db.ref(`${basePath}/topAssistant/slideshow/images`).once('value');
+    topAssistantSlideshowImages = slidesSnap.val() || [];
+    const durSnap = await db.ref(`${basePath}/topAssistant/slideshow/duration`).once('value');
+    topAssistantSlideshowDuration = durSnap.val() || 3000;
+    if (topAssistantInterval) clearInterval(topAssistantInterval);
+    if (topAssistantSlideshowImages.length) {
+      topAssistantSlideIdx = 0;
+      topAssistantInterval = setInterval(() => { 
+        topAssistantSlideIdx = (topAssistantSlideIdx+1)%topAssistantSlideshowImages.length; 
+        if (document.getElementById('statsPopupOverlay').classList.contains('active') && currentStatsType === 'assistant') updateStatsPopupSlideshow(); 
+      }, topAssistantSlideshowDuration);
+    }
+  }
+
+  function updateStatsPopupSlideshow() {
+    const slideshowImg = document.getElementById('statsPopupSlideshowImg');
+    if (!slideshowImg) return;
+    let images = currentStatsType === 'scorer' ? topScorerSlideshowImages : topAssistantSlideshowImages;
+    let idx = currentStatsType === 'scorer' ? topScorerSlideIdx : topAssistantSlideIdx;
+    if (images.length) slideshowImg.src = images[idx];
+  }
+
+  async function showStatsPopup(type) {
+    currentStatsType = type;
+    await loadTopScorerData();
+    await loadTopAssistantData();
+    const list = type === 'scorer' ? topScorerList : topAssistantList;
+    const images = type === 'scorer' ? topScorerSlideshowImages : topAssistantSlideshowImages;
+    const title = type === 'scorer' ? 'TOP SCORERS' : 'TOP ASSISTS';
+    const inner = document.getElementById('statsPopupInner');
+    let slideshowHtml = `<div class="stats-popup-slideshow"><img id="statsPopupSlideshowImg" src="${images[0] || ''}" style="max-width:100%; max-height:300px; border-radius:1rem;"></div><div class="dots-container" id="statsPopupDots"></div>`;
+    let listHtml = `<table class="stats-list"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>${type === 'scorer' ? 'Goals' : 'Assists'}</th>${isAdmin ? '<th>Actions</th>' : ''}</tr></thead><tbody>`;
+    list.sort((a,b) => (b.count||0) - (a.count||0)).forEach((item, idx) => {
+      let teamDisplay = '';
+      const iconUrl = teamIconsCache[item.team];
+      if (iconUrl) {
+        teamDisplay = `<img src="${iconUrl}" style="width: 28px; height: 28px; object-fit: contain; vertical-align: middle;" title="${item.team}">`;
+      } else {
+        teamDisplay = item.team || '';
+      }
+      listHtml += `<tr><td>${idx+1}</td><td>${item.name || ''}</td><td>${teamDisplay}</td><td>${item.count || 0}</td>${isAdmin ? `<td><button class="edit-btn stats-edit" data-key="${item.key}">✏️</button> <button class="delete-btn stats-delete" data-key="${item.key}">🗑️</button></td>` : ''}</tr>`;
+    });
+    listHtml += `</tbody></table>`;
+    let adminControls = '';
+    if (isAdmin) {
+      adminControls = `<div class="admin-stats-controls"><button id="addStatsEntryBtn" class="add-btn">+ Add Entry</button>
+      <button id="manageStatsSlideshowBtn" class="add-btn">Manage Slideshow</button></div>`;
+    }
+    inner.innerHTML = `<h2>${title}</h2>${slideshowHtml}${listHtml}${adminControls}`;
+    if (images.length) {
+      const dotsContainer = document.getElementById('statsPopupDots');
+      if (dotsContainer) {
+        dotsContainer.innerHTML = '';
+        images.forEach((_, i) => {
+          const dot = document.createElement('span'); dot.classList.add('dot'); if(i===0) dot.classList.add('active');
+          dot.onclick = () => { if (type === 'scorer') topScorerSlideIdx = i; else topAssistantSlideIdx = i; updateStatsPopupSlideshow(); };
+          dotsContainer.appendChild(dot);
+        });
+      }
+    }
+    document.getElementById('statsPopupOverlay').classList.add('active');
+    if (isAdmin) {
+      document.getElementById('addStatsEntryBtn')?.addEventListener('click', () => showAddEditStatsEntry(type));
+      document.getElementById('manageStatsSlideshowBtn')?.addEventListener('click', () => manageStatsSlideshow(type));
+      document.querySelectorAll('.stats-edit').forEach(btn => {
+        btn.addEventListener('click', (e) => { const key = btn.dataset.key; const item = list.find(i=>i.key===key); showAddEditStatsEntry(type, item); });
+      });
+      document.querySelectorAll('.stats-delete').forEach(btn => {
+        btn.addEventListener('click', async (e) => { if(confirm('Delete?')) { await db.ref(`${basePath}/${type === 'scorer' ? 'topScorer/list' : 'topAssistant/list'}/${btn.dataset.key}`).remove(); showStatsPopup(type); } });
+      });
+    }
+    updateStatsPopupSlideshow();
+  }
+
+  function showAddEditStatsEntry(type, entry = null) {
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    // Collect all teams from current season groups
+    let allTeams = [];
+    for (let gid in groupsData) {
+      const teams = groupsData[gid].teams || {};
+      Object.values(teams).forEach(t => { if(t.name) allTeams.push(t.name); });
+    }
+    allTeams = [...new Set(allTeams)].sort();
+    let teamSelectHtml = `<select id="entryTeam" style="width:100%; margin:0.5rem 0; padding:0.5rem; border-radius:2rem; border:1px solid #b91c1c;"><option value="">Select Team</option>`;
+    allTeams.forEach(team => {
+      const selected = (entry && entry.team === team) ? 'selected' : '';
+      teamSelectHtml += `<option value="${team}" ${selected}>${team}</option>`;
+    });
+    teamSelectHtml += `</select>`;
+    content.innerHTML = `<h3>${entry ? 'Edit' : 'Add'} ${type === 'scorer' ? 'Top Scorer' : 'Top Assistant'}</h3>
+      <input type="text" id="entryName" placeholder="Player Name" value="${entry?.name || ''}" style="width:100%; margin:0.5rem 0; padding:0.5rem; border-radius:2rem; border:1px solid #b91c1c;">
+      ${teamSelectHtml}
+      <input type="number" id="entryCount" placeholder="${type === 'scorer' ? 'Goals' : 'Assists'}" value="${entry?.count || 0}" style="width:100%; margin:0.5rem 0; padding:0.5rem; border-radius:2rem; border:1px solid #b91c1c;">
+      <button id="saveStatsEntryBtn" class="modal-option">Save</button>
+      <button id="closeStatsEntry" class="close-modal">Cancel</button>`;
+    modal.classList.add('active');
+    document.getElementById('saveStatsEntryBtn').onclick = async () => {
+      const name = document.getElementById('entryName').value.trim();
+      const team = document.getElementById('entryTeam').value;
+      const count = parseInt(document.getElementById('entryCount').value) || 0;
+      if (!name) { alert("Player name required"); return; }
+      if (!team) { alert("Select a team"); return; }
+      const data = { name, team, count };
+      if (entry && entry.key) {
+        await db.ref(`${basePath}/${type === 'scorer' ? 'topScorer/list' : 'topAssistant/list'}/${entry.key}`).set(data);
+      } else {
+        await db.ref(`${basePath}/${type === 'scorer' ? 'topScorer/list' : 'topAssistant/list'}`).push(data);
+      }
+      modal.classList.remove('active');
+      showStatsPopup(type);
+    };
+    document.getElementById('closeStatsEntry').onclick = () => modal.classList.remove('active');
+  }
+
+  function manageStatsSlideshow(type) {
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    let images = type === 'scorer' ? [...topScorerSlideshowImages] : [...topAssistantSlideshowImages];
+    let duration = type === 'scorer' ? topScorerSlideshowDuration/1000 : topAssistantSlideshowDuration/1000;
+    const renderManage = () => {
+      let previewHtml = '<div class="image-preview-grid" id="slideshowPreviewGrid">';
+      images.forEach((url, idx) => {
+        previewHtml += `<div class="image-preview-item"><img src="${url}"><button class="delete-preview-btn" data-idx="${idx}">✕</button></div>`;
+      });
+      previewHtml += '</div>';
+      content.innerHTML = `<h3>Manage ${type === 'scorer' ? 'Top Scorer' : 'Top Assistant'} Slideshow</h3>
+        ${previewHtml}
+        <input type="file" id="newSlideFile" accept="image/*" style="width:100%; margin:0.5rem 0;">
+        <button class="modal-option" id="uploadSlideBtn">Add Slide</button>
+        <div style="margin:10px 0;"><label>Duration (seconds):</label><input type="number" id="slideDurationSec" min="1" max="10" step="0.5" value="${duration}" style="width:80px; margin-left:0.5rem; border-radius:1rem; padding:0.2rem;"></div>
+        <button class="modal-option" id="saveDurBtn">Set Duration</button>
+        <button class="close-modal" id="closeSlideManager">Close</button>
+        <div id="slideStatus"></div>`;
+      modal.classList.add('active');
+      attachSlideEvents();
+    };
+    const attachSlideEvents = () => {
+      const grid = document.getElementById('slideshowPreviewGrid');
+      if (grid) {
+        grid.querySelectorAll('.delete-preview-btn').forEach(btn => {
+          btn.onclick = async () => {
+            const idx = parseInt(btn.dataset.idx);
+            images.splice(idx, 1);
+            await db.ref(`${basePath}/${type === 'scorer' ? 'topScorer/slideshow/images' : 'topAssistant/slideshow/images'}`).set(images);
+            if (type === 'scorer') topScorerSlideshowImages = images; else topAssistantSlideshowImages = images;
+            renderManage();
+          };
+        });
+      }
+      document.getElementById('uploadSlideBtn').onclick = async () => {
+        const file = document.getElementById('newSlideFile').files[0];
+        const statusDiv = document.getElementById('slideStatus');
+        if (!file) { statusDiv.innerHTML = '<div class="status-message status-error">Select file</div>'; return; }
+        try {
+          statusDiv.innerHTML = '<div class="status-message status-loading">Uploading...</div>';
+          const fd = new FormData(); fd.append('image', file);
+          const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: fd });
+          const data = await resp.json();
+          if (!data.success) throw new Error(data.error?.message);
+          const url = data.data.url;
+          images.push(url);
+          await db.ref(`${basePath}/${type === 'scorer' ? 'topScorer/slideshow/images' : 'topAssistant/slideshow/images'}`).set(images);
+          if (type === 'scorer') topScorerSlideshowImages = images; else topAssistantSlideshowImages = images;
+          statusDiv.innerHTML = '<div class="status-message status-success">✓ Added</div>';
+          document.getElementById('newSlideFile').value = '';
+          renderManage();
+        } catch(e) { statusDiv.innerHTML = '<div class="status-message status-error">Error: '+e.message+'</div>'; }
+      };
+      document.getElementById('saveDurBtn').onclick = async () => {
+        let sec = parseFloat(document.getElementById('slideDurationSec').value);
+        if (isNaN(sec)) sec = 3;
+        sec = Math.min(10, Math.max(1, sec));
+        const newDur = sec * 1000;
+        await db.ref(`${basePath}/${type === 'scorer' ? 'topScorer/slideshow/duration' : 'topAssistant/slideshow/duration'}`).set(newDur);
+        if (type === 'scorer') { topScorerSlideshowDuration = newDur; if (topScorerInterval) clearInterval(topScorerInterval); if (topScorerSlideshowImages.length) { topScorerSlideIdx = 0; topScorerInterval = setInterval(() => { topScorerSlideIdx = (topScorerSlideIdx+1)%topScorerSlideshowImages.length; if (document.getElementById('statsPopupOverlay').classList.contains('active') && currentStatsType === 'scorer') updateStatsPopupSlideshow(); }, topScorerSlideshowDuration); } }
+        else { topAssistantSlideshowDuration = newDur; if (topAssistantInterval) clearInterval(topAssistantInterval); if (topAssistantSlideshowImages.length) { topAssistantSlideIdx = 0; topAssistantInterval = setInterval(() => { topAssistantSlideIdx = (topAssistantSlideIdx+1)%topAssistantSlideshowImages.length; if (document.getElementById('statsPopupOverlay').classList.contains('active') && currentStatsType === 'assistant') updateStatsPopupSlideshow(); }, topAssistantSlideshowDuration); } }
+        document.getElementById('slideStatus').innerHTML = '<div class="status-message status-success">Duration set to '+sec+'s</div>';
+      };
+      document.getElementById('closeSlideManager').onclick = () => modal.classList.remove('active');
+    };
+    renderManage();
+  }
+
+  document.getElementById('closeStatsPopup').onclick = () => {
+    document.getElementById('statsPopupOverlay').classList.remove('active');
+    currentStatsType = null;
+  };
+  document.getElementById('topScorerBtn').onclick = () => showStatsPopup('scorer');
+  document.getElementById('topAssistantBtn').onclick = () => showStatsPopup('assistant');
+
+  // ========================================
+  // SLIDESHOW
+  // ========================================
+  async function loadSlideshow() { 
+    const snap = await db.ref(`${basePath}/slideshow/images`).once('value'); 
+    slideshowImages=snap.val()||[]; 
+    const dur=await db.ref(`${basePath}/slideshow/duration`).once('value'); 
+    slideshowDuration=dur.val()||3000; 
+    startSlideshow(); 
+  }
+  
+  function startSlideshow() { 
+    if(slideInterval) clearInterval(slideInterval); 
+    if(!slideshowImages.length) return; 
+    currentSlideIdx=0; 
+    updateSlide(); 
+    slideInterval=setInterval(()=>{ 
+      currentSlideIdx=(currentSlideIdx+1)%slideshowImages.length; 
+      updateSlide(); 
+    }, slideshowDuration); 
+  }
+  
+  function updateSlide(){ 
+    document.getElementById('slideshow-img').src=slideshowImages[currentSlideIdx]||''; 
+    updateDots();
+  }
+  
+  function updateDots(){ 
+    const c=document.getElementById('dotsContainer'); 
+    if(!c) return; 
+    c.innerHTML=''; 
+    slideshowImages.forEach((_,i)=>{ 
+      let d=document.createElement('span'); 
+      d.classList.add('dot'); 
+      if(i===currentSlideIdx) d.classList.add('active'); 
+      d.onclick=()=>{ 
+        currentSlideIdx=i; 
+        updateSlide(); 
+        if(slideInterval){
+          clearInterval(slideInterval); 
+          slideInterval=setInterval(()=>{ 
+            currentSlideIdx=(currentSlideIdx+1)%slideshowImages.length; 
+            updateSlide();
+          },slideshowDuration);
+        }
+      }; 
+      c.appendChild(d);
+    });
+  }
+
+  async function uploadToImgBB(file) {
+    const fd = new FormData();
+    fd.append('image', file);
+    const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: fd });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error?.message || 'Upload failed');
+    return data.data.url;
+  }
+
+  // ========================================
+  // HAMBURGER MENU & ADMIN MODALS
+  // ========================================
+  function activateAdminMode(pwd) { 
+    if(pwd==='admin@100'){ 
+      isAdmin=true; 
+      document.querySelectorAll('.add-btn').forEach(b=>b.style.display='inline-block'); 
+      document.getElementById('seasonAdminButtons').style.display = 'flex';
+      renderAllGroups(); 
+      loadAllResults(); 
+      renderKnockout(); 
+      alert('Admin active'); 
+    } else alert('Wrong key'); 
+  }
+
+  function buildHamburgerModal(){
+    const modalOverlay = document.getElementById('modalOverlay');
+    const mc = document.getElementById('modalContent'); 
+    let html = `<h3>⚽ FA CUP MENU</h3><div class="modal-option" id="adminModeOption">🔐 ADMIN MODE</div>`;
+    if(isAdmin) {
+      html += `<div class="modal-option" id="addIconBtn">🖼️ ADD TEAM ICON</div>`;
+      html += `<div class="modal-option" id="addSlideBtn">🎞️ MANAGE SLIDESHOW</div>`;
+      html += `<div class="modal-option" id="manageNavbarLogoBtn">🏷️ MANAGE NAVBAR LOGO</div>`;
+      html += `<div class="modal-option" id="manageEmiratesBtn">✈️ MANAGE EMIRATES ANIMATION</div>`;
+      html += `<div class="modal-option" id="manageCornerBtn">🖼️ MANAGE GROUP CORNER IMAGE</div>`;
+    }
+    html += `<div class="modal-option" id="rulesBtn">📜 RULES</div><div class="modal-option" id="homeBtn">🏠 HOME</div><button class="close-modal" id="closeModalBtn">CLOSE</button>`;
+    mc.innerHTML = html; 
+    
+    document.getElementById('adminModeOption').onclick = () => { 
+      let p = prompt('Admin key:'); 
+      activateAdminMode(p); 
+      modalOverlay.classList.remove('active'); 
+    };
+    
+    if(isAdmin){ 
+      document.getElementById('addIconBtn').onclick = () => { 
+        modalOverlay.classList.remove('active'); 
+        showUploadIconModal(); 
+      }; 
+      document.getElementById('addSlideBtn').onclick = () => { 
+        modalOverlay.classList.remove('active');
+        showSlideshowManager(); 
+      };
+      document.getElementById('manageNavbarLogoBtn').onclick = () => { 
+        modalOverlay.classList.remove('active');
+        showNavbarLogoManager(); 
+      };
+      document.getElementById('manageEmiratesBtn').onclick = () => { 
+        modalOverlay.classList.remove('active');
+        showEmiratesManager(); 
+      };
+      document.getElementById('manageCornerBtn').onclick = () => { 
+        modalOverlay.classList.remove('active');
+        showCornerImageManager(); 
+      };
+    }
+    
+    document.getElementById('rulesBtn').onclick = () => alert('🏆 FA Cup Rules: Group stage → top 4 qualify for knockout R16, 5th+ relegated. Knockout matches are single elimination.'); 
+    document.getElementById('homeBtn').onclick = () => location.reload(); 
+    document.getElementById('closeModalBtn').onclick = () => modalOverlay.classList.remove('active');
+    
+    modalOverlay.classList.add('active');
+  }
+
+  async function showUploadIconModal(){
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+      <h3>Add Team Icon</h3>
+      <input type="text" id="iconTeamName" placeholder="Team Name (exact match)" 
+             style="width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: #fef2f2; 
+                    border: 1px solid #b91c1c; border-radius: 2rem; color: #b91c1c;">
+      <input type="file" id="iconFile" accept="image/*" 
+             style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;">
+      <button class="modal-option" id="uploadIconSave">UPLOAD</button>
+      <button class="close-modal" id="closeIconModal">Cancel</button>
+      <div id="iconStatus"></div>
+    `;
+    
+    document.getElementById('uploadIconSave').onclick = async () => {
+      const teamName = document.getElementById('iconTeamName').value.trim();
+      const file = document.getElementById('iconFile').files[0];
+      const statusDiv = document.getElementById('iconStatus');
+      
+      if(!teamName) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Enter team name</div>'; 
+        return; 
+      }
+      if(!file) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Select an image</div>'; 
+        return; 
+      }
+      
+      try {
+        statusDiv.innerHTML = '<div class="status-message status-loading">Uploading...</div>';
+        const url = await uploadToImgBB(file);
+        await db.ref(`${basePath}/teamIcons/${teamName}`).set({ imageUrl: url, updatedAt: Date.now() });
+        teamIconsCache[teamName] = url;
+        renderAllGroups();
+        statusDiv.innerHTML = '<div class="status-message status-success">✓ Icon saved for ' + teamName + '</div>';
+        setTimeout(() => modal.classList.remove('active'), 1500);
+      } catch(err) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Error: ' + err.message + '</div>'; 
+      }
+    };
+    
+    document.getElementById('closeIconModal').onclick = () => modal.classList.remove('active');
+    modal.classList.add('active');
+  }
+
+  async function showSlideshowManager() {
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    const currentDurSec = slideshowDuration / 1000;
+    
+    content.innerHTML = `
+      <h3>Manage Slideshow</h3>
+      <div id="slidePreviewList" class="image-preview-grid"></div>
+      <input type="file" id="newSlideFile" accept="image/*" 
+             style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;">
+      <button class="modal-option" id="uploadSlideBtn">Add Slide</button>
+      <div style="margin: 10px 0;">
+        <label style="font-weight: bold;">Duration (seconds):</label>
+        <input type="number" id="slideDurationSec" min="1" max="10" step="0.5" value="${currentDurSec}" 
+               style="width: 80px; padding: 0.4rem; background: #fef2f2; color: #b91c1c; 
+                      border: 1px solid #b91c1c; border-radius: 1rem; margin-left: 0.5rem;">
+      </div>
+      <button class="modal-option" id="saveDurBtn">Set Duration</button>
+      <button class="close-modal" id="closeSlideModal">Close</button>
+      <div id="slideStatus"></div>
+    `;
+    
+    const previewDiv = document.getElementById('slidePreviewList');
+    
+    function refreshPreviews() {
+      previewDiv.innerHTML = slideshowImages.map((url, idx) => `
+        <div class="image-preview-item">
+          <img src="${url}">
+          <button class="delete-preview-btn" data-idx="${idx}">✕</button>
+        </div>
+      `).join('');
+      
+      previewDiv.querySelectorAll('.delete-preview-btn').forEach(btn => {
+        btn.onclick = async () => {
+          const idx = parseInt(btn.dataset.idx);
+          slideshowImages.splice(idx, 1);
+          await db.ref(`${basePath}/slideshow/images`).set(slideshowImages);
+          loadSlideshow();
+          refreshPreviews();
+        };
+      });
+    }
+    
+    refreshPreviews();
+    
+    document.getElementById('uploadSlideBtn').onclick = async () => {
+      const file = document.getElementById('newSlideFile').files[0];
+      const statusDiv = document.getElementById('slideStatus');
+      if(!file) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Select file</div>'; 
+        return; 
+      }
+      try {
+        statusDiv.innerHTML = '<div class="status-message status-loading">Uploading...</div>';
+        const url = await uploadToImgBB(file);
+        slideshowImages.push(url);
+        await db.ref(`${basePath}/slideshow/images`).set(slideshowImages);
+        loadSlideshow();
+        refreshPreviews();
+        statusDiv.innerHTML = '<div class="status-message status-success">✓ Added</div>';
+        document.getElementById('newSlideFile').value = '';
+      } catch(e) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Error: ' + e.message + '</div>'; 
+      }
+    };
+    
+    document.getElementById('saveDurBtn').onclick = async () => {
+      let sec = parseFloat(document.getElementById('slideDurationSec').value);
+      if(isNaN(sec)) sec = 3;
+      sec = Math.min(10, Math.max(1, sec));
+      await db.ref(`${basePath}/slideshow/duration`).set(sec * 1000);
+      slideshowDuration = sec * 1000;
+      startSlideshow();
+      document.getElementById('slideStatus').innerHTML = '<div class="status-message status-success">Duration set to ' + sec + 's</div>';
+    };
+    
+    document.getElementById('closeSlideModal').onclick = () => modal.classList.remove('active');
+    modal.classList.add('active');
+  }
+
+  async function showNavbarLogoManager() {
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+      <h3>Manage Navbar Logo</h3>
+      <p style="margin: 1rem 0;">Current logo:</p>
+      <div style="background: #fef2f2; padding: 1rem; border-radius: 1rem; margin: 1rem 0;">
+        ${navbarLogoUrl ? `<img src="${navbarLogoUrl}" style="max-width: 150px; max-height: 50px;">` : '<p>No logo set</p>'}
+      </div>
+      <input type="file" id="navbarLogoFile" accept="image/*" 
+             style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;">
+      <button class="modal-option" id="uploadNavbarLogoBtn">Upload New Logo</button>
+      <button class="close-modal" id="closeNavbarModal">Close</button>
+      <div id="navbarStatus"></div>
+    `;
+    
+    document.getElementById('uploadNavbarLogoBtn').onclick = async () => {
+      const file = document.getElementById('navbarLogoFile').files[0];
+      const statusDiv = document.getElementById('navbarStatus');
+      if(!file) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Select an image</div>'; 
+        return; 
+      }
+      try {
+        statusDiv.innerHTML = '<div class="status-message status-loading">Uploading...</div>';
+        const url = await uploadToImgBB(file);
+        await db.ref(`${basePath}/navbar_logo`).set(url);
+        navbarLogoUrl = url;
+        renderNavbarLogo();
+        statusDiv.innerHTML = '<div class="status-message status-success">✓ Logo updated</div>';
+        setTimeout(() => modal.classList.remove('active'), 1500);
+      } catch(e) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Error: ' + e.message + '</div>'; 
+      }
+    };
+    
+    document.getElementById('closeNavbarModal').onclick = () => modal.classList.remove('active');
+    modal.classList.add('active');
+  }
+
+  async function showEmiratesManager() {
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+      <h3>Manage Emirates Animation</h3>
+      
+      <div style="margin: 1rem 0;">
+        <p style="font-weight: bold; margin-bottom: 0.5rem;">Emirates Logo (Front):</p>
+        <div style="background: #fef2f2; padding: 1rem; border-radius: 1rem; margin-bottom: 0.5rem;">
+          ${emiratesLogoUrl ? `<img src="${emiratesLogoUrl}" style="max-width: 200px; max-height: 100px;">` : '<p>No logo set</p>'}
+        </div>
+        <input type="file" id="emiratesLogoFile" accept="image/*" 
+               style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;">
+        <button class="modal-option" id="uploadEmiratesLogoBtn">Upload Logo</button>
+      </div>
+      
+      <div style="margin: 1rem 0;">
+        <p style="font-weight: bold; margin-bottom: 0.5rem;">Fly Better Slogan (Back):</p>
+        <div style="background: #fef2f2; padding: 1rem; border-radius: 1rem; margin-bottom: 0.5rem;">
+          ${emiratesSloganUrl ? `<img src="${emiratesSloganUrl}" style="max-width: 200px; max-height: 100px;">` : '<p>No slogan set</p>'}
+        </div>
+        <input type="file" id="emiratesSloganFile" accept="image/*" 
+               style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;">
+        <button class="modal-option" id="uploadEmiratesSloganBtn">Upload Slogan</button>
+      </div>
+      
+      <button class="close-modal" id="closeEmiratesModal">Close</button>
+      <div id="emiratesStatus"></div>
+    `;
+    
+    document.getElementById('uploadEmiratesLogoBtn').onclick = async () => {
+      const file = document.getElementById('emiratesLogoFile').files[0];
+      const statusDiv = document.getElementById('emiratesStatus');
+      if(!file) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Select an image</div>'; 
+        return; 
+      }
+      try {
+        statusDiv.innerHTML = '<div class="status-message status-loading">Uploading logo...</div>';
+        const url = await uploadToImgBB(file);
+        await db.ref(`${basePath}/emirates_logo`).set(url);
+        emiratesLogoUrl = url;
+        renderEmiratesAnimation();
+        statusDiv.innerHTML = '<div class="status-message status-success">✓ Logo updated</div>';
+      } catch(e) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Error: ' + e.message + '</div>'; 
+      }
+    };
+    
+    document.getElementById('uploadEmiratesSloganBtn').onclick = async () => {
+      const file = document.getElementById('emiratesSloganFile').files[0];
+      const statusDiv = document.getElementById('emiratesStatus');
+      if(!file) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Select an image</div>'; 
+        return; 
+      }
+      try {
+        statusDiv.innerHTML = '<div class="status-message status-loading">Uploading slogan...</div>';
+        const url = await uploadToImgBB(file);
+        await db.ref(`${basePath}/emirates_slogan`).set(url);
+        emiratesSloganUrl = url;
+        renderEmiratesAnimation();
+        statusDiv.innerHTML = '<div class="status-message status-success">✓ Slogan updated</div>';
+      } catch(e) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Error: ' + e.message + '</div>'; 
+      }
+    };
+    
+    document.getElementById('closeEmiratesModal').onclick = () => modal.classList.remove('active');
+    modal.classList.add('active');
+  }
+
+  async function showCornerImageManager() {
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+      <h3>Manage Group Corner Image</h3>
+      <p style="margin: 1rem 0; font-size: 0.9rem;">This image will appear in the top-right corner of all group cards.</p>
+      <div style="background: #fef2f2; padding: 1rem; border-radius: 1rem; margin-bottom: 1rem; text-align:center;">
+        ${groupCornerImageUrl ? `<img src="${groupCornerImageUrl}" style="max-width: 100px; max-height: 100px; border-radius: 8px;">` : '<p>No image set</p>'}
+      </div>
+      <input type="file" id="cornerImageFile" accept="image/*" 
+             style="width: 100%; padding: 0.5rem; margin: 0.5rem 0;">
+      <button class="modal-option" id="uploadCornerBtn">Upload / Replace Image</button>
+      ${groupCornerImageUrl ? '<button class="modal-option" id="removeCornerBtn">Remove Image</button>' : ''}
+      <button class="close-modal" id="closeCornerModal">Close</button>
+      <div id="cornerStatus"></div>
+    `;
+    
+    document.getElementById('uploadCornerBtn').onclick = async () => {
+      const file = document.getElementById('cornerImageFile').files[0];
+      const statusDiv = document.getElementById('cornerStatus');
+      if(!file) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Select an image</div>'; 
+        return; 
+      }
+      try {
+        statusDiv.innerHTML = '<div class="status-message status-loading">Uploading...</div>';
+        const url = await uploadToImgBB(file);
+        await db.ref(`${basePath}/group_corner_image`).set(url);
+        groupCornerImageUrl = url;
+        loadGroupCornerImage();
+        statusDiv.innerHTML = '<div class="status-message status-success">✓ Corner image updated</div>';
+        setTimeout(() => modal.classList.remove('active'), 1500);
+      } catch(e) { 
+        statusDiv.innerHTML = '<div class="status-message status-error">Error: ' + e.message + '</div>'; 
+      }
+    };
+    
+    if (groupCornerImageUrl) {
+      document.getElementById('removeCornerBtn')?.addEventListener('click', async () => {
+        await db.ref(`${basePath}/group_corner_image`).remove();
+        groupCornerImageUrl = '';
+        loadGroupCornerImage();
+        modal.classList.remove('active');
+      });
+    }
+    
+    document.getElementById('closeCornerModal').onclick = () => modal.classList.remove('active');
+    modal.classList.add('active');
+  }
+
+  // ========================================
+  // TAB SWITCHING
+  // ========================================
+  document.querySelectorAll('.tab-btn').forEach(btn=>{ 
+    btn.addEventListener('click',()=>{ 
+      if(btn.dataset.tab === 'fixtures') {
+        window.location.href = 'manager-calendar.html';
+        return;
+      }
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); 
+      btn.classList.add('active'); 
+      document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active-tab')); 
+      document.getElementById(btn.dataset.tab+'Tab').classList.add('active-tab'); 
+    }); 
+  });
+
+  document.getElementById('globalAddResultBtn').onclick = () => { 
+    if(isAdmin) openResultForm(''); 
+    else alert('Admin only'); 
+  };
+  
+  document.getElementById('hamburgerBtn').onclick = () => {
+    buildHamburgerModal();
+  };
+
+  document.getElementById('prevSeasonBtn').addEventListener('click', () => switchSeason(-1));
+  document.getElementById('nextSeasonBtn').addEventListener('click', () => switchSeason(1));
+  
+  const seasonInput2 = document.getElementById('seasonNumberInput');
+  seasonInput2.addEventListener('click', () => {
+    if (!isAdmin) return;
+    const num = prompt("Enter season number:");
+    if (num) goToSeason(num);
+  });
+  
+  document.getElementById('addSeasonBtn').addEventListener('click', () => { if(isAdmin) addNewSeason(); });
+  document.getElementById('renameSeasonBtn').addEventListener('click', () => { if(isAdmin) renameSeason(); });
+  document.getElementById('setActiveSeasonBtn').addEventListener('click', () => { if(isAdmin) setActiveSeason(); });
+
+  // ========================================
+  // INITIALIZATION
+  // ========================================
+  (async ()=>{
+    await loadNavbarLogo();
+    await loadEmiratesAnimation();
+    await loadSeasonsMetadata();
+    await loadTeamIcons(); 
+    await loadSlideshow(); 
+    await loadAllResults();
+    await loadGroupCornerImage();
+    await loadTopScorerData();
+    await loadTopAssistantData();
+    
+    document.getElementById('globalAddGroupBtn').style.display = 'none'; 
+    document.getElementById('globalAddResultBtn').style.display = 'none'; 
+    document.getElementById('addKnockoutMatchBtn').style.display = 'none';
+  })();
+</script>
+</body>
+</html>
