@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>eFootball Fan Hub - Manager Ranks</title>
+    <title>eFootball Fan Hub - Manager Ranks V3</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -33,7 +33,6 @@
             min-height: 100vh;
             overflow-x: hidden;
         }
-
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: var(--bg); }
         ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
@@ -178,15 +177,31 @@
         .score-label { font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; }
         .score-value { font-size:1.4rem; font-weight:700; color:var(--gold); font-family:'Bebas Neue',sans-serif; letter-spacing:1px; }
 
-        .stats-row {
-            display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:16px;
+        /* New 3x3 stats grid */
+        .stats-grid-3x3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
         }
-        .stat-box {
-            background:var(--bg3); border-radius:var(--radius);
-            padding:10px 8px; text-align:center;
+        .stat-cell {
+            background:var(--bg3);
+            border-radius:var(--radius);
+            padding: 10px 4px;
+            text-align: center;
         }
-        .stat-label { font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
-        .stat-val { font-size:1rem; font-weight:700; }
+        .stat-label-small {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
 
         .card-actions { display:flex; gap:8px; flex-wrap:wrap; }
         .btn-view {
@@ -338,26 +353,44 @@
         }
         .empty-text { color:var(--text-dim); font-size:0.8rem; font-style:italic; }
 
-        .current-club-block {
-            display:flex; flex-direction:column; align-items:center;
-            gap:10px; padding:20px;
-            background:var(--bg2); border:1px solid var(--border);
-            border-radius:var(--radius-lg);
+        /* New simple current teams tag list */
+        .simple-team-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
         }
-        .club-icon-lg {
-            width:64px; height:64px; border-radius:50%;
-            object-fit:contain; background:var(--bg3);
-            border:1px solid var(--border); padding:6px;
+        .simple-team-tag {
+            background: var(--bg3);
+            border: 1px solid var(--border-gold);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.75rem;
+            color: var(--gold);
         }
-        .club-icon-placeholder-lg {
-            width:64px; height:64px; border-radius:50%;
-            background:var(--bg3); border:1px solid var(--border);
-            display:flex; align-items:center; justify-content:center;
-            font-size:1.2rem; font-weight:700; color:var(--gold);
+
+        /* Forfeit stats row */
+        .forfeit-stats-row {
+            display: flex;
+            justify-content: space-around;
+            background: var(--bg2);
+            border-radius: var(--radius);
+            padding: 12px;
+            margin-top: 16px;
+            margin-bottom: 8px;
         }
-        .club-name-lg { font-size:1rem; font-weight:700; }
-        .club-meta { font-size:0.75rem; color:var(--text-muted); }
-        .club-status-badge { font-size:0.7rem; padding:3px 10px; border-radius:20px; }
+        .forfeit-stat {
+            text-align: center;
+        }
+        .forfeit-stat .label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+        .forfeit-stat .value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
 
         .prev-clubs-list { display:flex; flex-direction:column; gap:8px; }
         .prev-club-item {
@@ -369,12 +402,6 @@
             width:36px; height:36px; border-radius:50%;
             object-fit:contain; background:var(--bg3);
             border:1px solid var(--border); padding:4px; flex-shrink:0;
-        }
-        .club-icon-placeholder-sm {
-            width:36px; height:36px; border-radius:50%;
-            background:var(--bg3); border:1px solid var(--border);
-            display:flex; align-items:center; justify-content:center;
-            font-size:0.7rem; font-weight:700; color:var(--gold); flex-shrink:0;
         }
         .prev-club-info { flex:1; }
         .prev-club-name { font-size:0.875rem; font-weight:600; }
@@ -407,10 +434,6 @@
         }
         .match-team { display:flex; align-items:center; gap:8px; }
         .match-team.away { flex-direction:row-reverse; }
-        .match-team-icon {
-            width:28px; height:28px; border-radius:50%; object-fit:contain;
-            background:var(--bg3); border:1px solid var(--border); padding:3px; flex-shrink:0;
-        }
         .match-team-name { font-size:0.8rem; font-weight:600; }
         .match-center-block { text-align:center; }
         .match-score { font-size:1rem; font-weight:700; color:var(--gold); font-family:'Bebas Neue',sans-serif; letter-spacing:2px; }
@@ -438,42 +461,17 @@
 
         .picker-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 
-        .medals-list { display:flex; flex-direction:column; gap:8px; }
-        .medal-item {
-            background:var(--bg2); border-radius:var(--radius); padding:12px 16px;
-            display:flex; justify-content:space-between; align-items:center;
-        }
-        .medal-gold { border-left:3px solid #FFD700; }
-        .medal-silver { border-left:3px solid #C0C0C0; }
-        .medal-bronze { border-left:3px solid #CD7F32; }
-
-        .awards-list { display:flex; flex-direction:column; gap:8px; }
-        .award-item {
-            background:var(--bg2); border:1px solid var(--border);
-            border-radius:var(--radius); padding:12px 16px;
-            display:flex; justify-content:space-between; align-items:center;
-        }
-
-        .debug-box { font-family:monospace; font-size:0.75rem; line-height:1.7; color:var(--text-muted); }
-        .debug-ok { color:#4ade80; }
-        .debug-warn { color:#fbbf24; }
-        .debug-err { color:#f87171; }
-        .debug-section { margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:12px; }
-        .debug-section:last-child { border-bottom:none; }
-
         .empty-state { text-align:center; padding:60px 20px; color:var(--text-dim); }
-
         @media(max-width:600px) {
-            .stats-row { grid-template-columns:repeat(3,1fr); }
+            .stats-grid-3x3 { gap: 4px; }
+            .stat-value { font-size: 0.9rem; }
             .match-item { grid-template-columns:1fr; }
             .match-team.away { flex-direction:row; }
             .comp-picker { grid-template-columns:1fr; }
         }
 
         .icons-grid { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
-        .icon-item {
-            position:relative; width:60px; text-align:center;
-        }
+        .icon-item { position:relative; width:60px; text-align:center; }
         .icon-item img { width:44px; height:44px; object-fit:contain; background:var(--bg3); border-radius:50%; padding:4px; border:1px solid var(--border); }
         .icon-label { font-size:0.6rem; color:var(--text-muted); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .icon-del { position:absolute; top:-4px; right:2px; background:#ef4444; color:white; border:none; border-radius:50%; width:16px; height:16px; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
@@ -504,7 +502,7 @@
 <div class="toast" id="toast"></div>
 
 <div class="navbar">
-    <div class="navbar-logo">Manager Ranks</div>
+    <div class="navbar-logo">Manager Ranks V3</div>
     <div class="menu-icon" onclick="toggleMenu()">
         <span></span><span></span><span></span>
     </div>
@@ -896,9 +894,7 @@ async function getMatchStats(teamEntry) {
             continue;
         }
 
-        // Removed the season skip condition for Premier League and FA Cup
-        // Now all seasons are processed regardless of number
-
+        // No season skip for Premier League and FA Cup - all seasons processed
         let resultsPath = '';
         if(competition === 'premier_league') resultsPath = `seasons/season_${s}/results`;
         else if(competition === 'fa_cup') resultsPath = `fa_cup/seasons/season_${s}/groups`;
@@ -989,7 +985,8 @@ async function getMatchStats(teamEntry) {
     const gd = totalGS - totalGC;
     const games = totalW + totalD + totalL;
     const winRate = games > 0 ? ((totalW/games)*100).toFixed(1) : '0.0';
-    return { w:totalW, d:totalD, l:totalL, gs:totalGS, gc:totalGC, gd, fw:totalFW, fl:totalFL, mp:totalMP, winRate:parseFloat(winRate), matchHistory };
+    const lossRate = games > 0 ? ((totalL/games)*100).toFixed(1) : '0.0';
+    return { w:totalW, d:totalD, l:totalL, gs:totalGS, gc:totalGC, gd, fw:totalFW, fl:totalFL, mp:totalMP, winRate:parseFloat(winRate), lossRate:parseFloat(lossRate), matchHistory };
 }
 
 async function calculateManagerStats(currentTeams, previousTeams, manualStats) {
@@ -1013,6 +1010,7 @@ async function calculateManagerStats(currentTeams, previousTeams, manualStats) {
     totals.gd = totals.gs - totals.gc;
     const games = totals.w + totals.d + totals.l;
     totals.winRate = games > 0 ? parseFloat(((totals.w/games)*100).toFixed(1)) : 0;
+    totals.lossRate = games > 0 ? parseFloat(((totals.l/games)*100).toFixed(1)) : 0;
     totals.matchHistory.sort((a,b)=>(b.season*1000+(b.md||0))-(a.season*1000+(a.md||0)));
     return totals;
 }
@@ -1101,6 +1099,11 @@ function renderCards() {
             <button class="btn-admin danger" onclick="deleteManager('${m.id}')">🗑️</button>
         ` : '';
 
+        // Calculate loss rate and titles count
+        const totalGames = stats.w + stats.d + stats.l;
+        const lossRate = totalGames > 0 ? ((stats.l / totalGames) * 100).toFixed(1) : '0.0';
+        const titlesCount = (m.trophies || []).length;
+
         return `<div class="manager-card" style="animation-delay:${idx*0.05}s">
             <div class="card-top">
                 <div class="card-avatar-wrap">
@@ -1119,12 +1122,17 @@ function renderCards() {
                 <span class="score-label">🏆 Total Score</span>
                 <span class="score-value">${scores.totalScore.toFixed(1)}</span>
             </div>
-            <div class="stats-row">
-                <div class="stat-box"><div class="stat-label">Wins</div><div class="stat-val">${stats.w||0}</div></div>
-                <div class="stat-box"><div class="stat-label">Draws</div><div class="stat-val">${stats.d||0}</div></div>
-                <div class="stat-box"><div class="stat-label">Losses</div><div class="stat-val">${stats.l||0}</div></div>
-                <div class="stat-box"><div class="stat-label">GD</div><div class="stat-val" style="color:${(stats.gd||0)>=0?'#4ade80':'#f87171'}">${stats.gd>=0?'+':''}${stats.gd||0}</div></div>
-                <div class="stat-box"><div class="stat-label">Win %</div><div class="stat-val">${stats.winRate||0}%</div></div>
+            <!-- New 3x3 stats grid -->
+            <div class="stats-grid-3x3">
+                <div class="stat-cell"><div class="stat-label-small">Wins</div><div class="stat-value">${stats.w||0}</div></div>
+                <div class="stat-cell"><div class="stat-label-small">Draws</div><div class="stat-value">${stats.d||0}</div></div>
+                <div class="stat-cell"><div class="stat-label-small">Losses</div><div class="stat-value">${stats.l||0}</div></div>
+                <div class="stat-cell"><div class="stat-label-small">GS</div><div class="stat-value">${stats.gs||0}</div></div>
+                <div class="stat-cell"><div class="stat-label-small">GD</div><div class="stat-value" style="color:${(stats.gd||0)>=0?'#4ade80':'#f87171'}">${stats.gd>=0?'+':''}${stats.gd||0}</div></div>
+                <div class="stat-cell"><div class="stat-label-small">GC</div><div class="stat-value">${stats.gc||0}</div></div>
+                <div class="stat-cell"><div class="stat-label-small">Win %</div><div class="stat-value">${stats.winRate||0}%</div></div>
+                <div class="stat-cell"><div class="stat-label-small">Titles</div><div class="stat-value">${titlesCount}</div></div>
+                <div class="stat-cell"><div class="stat-label-small">Loss %</div><div class="stat-value">${lossRate}%</div></div>
             </div>
             <div class="card-actions">
                 <button class="btn-view" onclick="openStatsPopup('${m.id}')">📊 View More Statistics</button>
@@ -1154,7 +1162,7 @@ async function openStatsPopup(managerId) {
 
     document.getElementById('popupLoadText').textContent = 'Loading match history...';
     const fullStats = await calculateManagerStats(manager.currentTeams, manager.previousTeams, manager.manualStats);
-    const m = { ...manager, stats: { ...manager.stats, matchHistory: fullStats.matchHistory } };
+    const m = { ...manager, stats: { ...manager.stats, matchHistory: fullStats.matchHistory, fw: fullStats.fw, fl: fullStats.fl, mp: fullStats.mp } };
 
     document.getElementById('popupLoadText').textContent = 'Building profile...';
     await new Promise(r=>setTimeout(r,100));
@@ -1170,6 +1178,9 @@ function renderStatsPopup(m) {
     const previousTeams = m.previousTeams || [];
     const matchHistory = m.stats?.matchHistory || [];
     const cabinet = m.trophyCabinet?.slideshow || { images:[], duration:3000 };
+    const fw = m.stats?.fw || 0;
+    const fl = m.stats?.fl || 0;
+    const mp = m.stats?.mp || 0;
 
     let html = '';
 
@@ -1237,6 +1248,7 @@ function renderStatsPopup(m) {
         </div>`;
     }
 
+    // Description section
     html += `<div class="popup-section">
         <div class="popup-section-title">📝 Description</div>
         ${m.description
@@ -1245,29 +1257,36 @@ function renderStatsPopup(m) {
         ${isAdmin ? `<button class="btn-add-section" onclick="openDescriptionEditor()" style="margin-top:8px;">✏️ Edit Description</button>` : ''}
     </div>`;
 
+    // Forfeit Wins, Forfeit Losses, Matches Played
     html += `<div class="popup-section">
-        <div class="popup-section-title">⚽ Current Club</div>`;
+        <div class="popup-section-title">📊 Extended Stats</div>
+        <div class="forfeit-stats-row">
+            <div class="forfeit-stat"><div class="label">Forfeit Wins (FW)</div><div class="value">${fw}</div></div>
+            <div class="forfeit-stat"><div class="label">Forfeit Losses (FL)</div><div class="value">${fl}</div></div>
+            <div class="forfeit-stat"><div class="label">Matches Played (MP)</div><div class="value">${mp}</div></div>
+        </div>
+    </div>`;
+
+    // Current Clubs - now as simple tag list
+    html += `<div class="popup-section">
+        <div class="popup-section-title">⚽ Current Clubs</div>`;
     if(currentTeams.length) {
-        html += currentTeams.map(ct=>{
+        html += `<div class="simple-team-list">`;
+        currentTeams.forEach(ct => {
             const compObj = COMPETITIONS.find(c=>c.id===ct.competition);
             const compName = compObj ? compObj.name : ct.competition;
-            let typeLabel = '';
-            if(ct.managerType==='interim') typeLabel = `Interim (from Matchday ${ct.fromMatchday})`;
-            else if(ct.managerType==='sacked') typeLabel = `Sacked (Matchday ${ct.toMatchday})`;
-            else typeLabel = 'Manager';
-            const icon = teamIconHtml(ct.name, 64);
-            return `<div class="current-club-block">
-                ${icon}
-                <div class="club-name-lg">${escapeHtml(ct.name)}</div>
-                <div class="club-meta">${compName} · Season ${ct.season}</div>
-                <div class="club-meta">${typeLabel}</div>
-            </div>`;
-        }).join('<div style="height:8px;"></div>');
+            let extra = '';
+            if(ct.managerType==='interim') extra = ` (Interim MD${ct.fromMatchday}+)`;
+            else if(ct.managerType==='sacked') extra = ` (Sacked MD${ct.toMatchday})`;
+            html += `<span class="simple-team-tag">${escapeHtml(ct.name)} · ${compName} · S${ct.season}${extra}</span>`;
+        });
+        html += `</div>`;
     } else {
         html += `<p class="empty-text">No current club</p>`;
     }
     html += `</div>`;
 
+    // Previous Clubs (keep as is, it's already compact)
     if(previousTeams.length) {
         html += `<div class="popup-section">
             <div class="popup-section-title">📋 Previous Clubs</div>
@@ -1277,8 +1296,8 @@ function renderStatsPopup(m) {
                 const compName = compObj ? compObj.name : pt.competition;
                 const seasonStr = pt.seasonFrom === pt.seasonTo ? `Season ${pt.seasonFrom}` : `Season ${pt.seasonFrom} – Season ${pt.seasonTo}`;
                 let typeLabel = '';
-                if(pt.managerType==='interim') typeLabel = ` · Interim from Matchday ${pt.fromMatchday}`;
-                else if(pt.managerType==='sacked') typeLabel = ` · Until Matchday ${pt.toMatchday}`;
+                if(pt.managerType==='interim') typeLabel = ` · Interim from MD${pt.fromMatchday}`;
+                else if(pt.managerType==='sacked') typeLabel = ` · Until MD${pt.toMatchday}`;
                 const icon = teamIconHtml(pt.name, 36);
                 return `<div class="prev-club-item">
                     ${icon}
@@ -1291,6 +1310,7 @@ function renderStatsPopup(m) {
             `</div></div>`;
     }
 
+    // Records
     html += `<div class="popup-section">
         <div class="popup-section-title">📊 Records</div>`;
     if(records.length) {
@@ -1312,6 +1332,7 @@ function renderStatsPopup(m) {
     if(isAdmin) html += `<button class="btn-add-section" onclick="openRecordModal()" style="margin-top:8px;">+ Add Record</button>`;
     html += `</div>`;
 
+    // Match History
     html += `<div class="popup-section">
         <div class="popup-section-title">📅 Match History</div>`;
     if(matchHistory.length) {
@@ -1389,7 +1410,7 @@ function jumpToSlide(i) {
 }
 
 // ═══════════════════════════════════════════════
-//  ADD/EDIT MANAGER MODAL
+//  ADD/EDIT MANAGER MODAL (unchanged from previous working version)
 // ═══════════════════════════════════════════════
 let tempCurrentTeams = [], tempPrevTeams = [], tempTrophies = [], tempMedals = [], tempAwards = [];
 let tempProfilePhotoUrl = null;
@@ -2000,7 +2021,9 @@ async function saveManualStats() {
     const ms = {};
     keys.forEach(k=>ms[k]=parseInt(document.getElementById(`ms_${k}`).value)||0);
     ms.gd = ms.gs - ms.gc;
-    ms.winRate = (ms.w+ms.d+ms.l)>0 ? parseFloat(((ms.w/(ms.w+ms.d+ms.l))*100).toFixed(1)) : 0;
+    const games = ms.w + ms.d + ms.l;
+    ms.winRate = games > 0 ? parseFloat(((ms.w/games)*100).toFixed(1)) : 0;
+    ms.lossRate = games > 0 ? parseFloat(((ms.l/games)*100).toFixed(1)) : 0;
     await database.ref(`ranks/${currentStatsManagerId}/manualStats`).set(ms);
     await refreshData();
     closeGenericModal();
