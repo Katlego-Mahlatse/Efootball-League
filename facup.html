@@ -27,8 +27,9 @@
       --fa-red-dark: #7f1d1d;
       --fa-red-deeper: #450a0a;
       --fa-white: #ffffff;
-      --glass-bg: rgba(185,28,28,0.10);
-      --glass-border: rgba(185,28,28,0.30);
+      --glass-bg: rgba(255,255,255,0.07);
+      --glass-border: rgba(255,255,255,0.15);
+      --glass-blur: blur(12px);
     }
 
     @keyframes fadeInDown { from { opacity:0; transform:translateY(-24px); } to { opacity:1; transform:translateY(0); } }
@@ -54,31 +55,49 @@
       padding-bottom:3rem;
     }
 
-    /* NAVBAR */
+    body.has-bg::before {
+      content:'';
+      position:fixed;
+      inset:0;
+      background-image:var(--bg-image);
+      background-size:cover;
+      background-position:center;
+      background-repeat:no-repeat;
+      z-index:-2;
+    }
+    body.has-bg::after {
+      content:'';
+      position:fixed;
+      inset:0;
+      background:rgba(69,10,10,0.65);
+      z-index:-1;
+    }
+
+    /* NAVBAR - WHITE */
     .navbar {
-      background:var(--fa-red);
-      border-bottom:3px solid var(--fa-red-dark);
-      padding:0 2rem;
-      height:100px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      position:sticky;
-      top:0;
-      z-index:100;
-      box-shadow:0 4px 24px rgba(0,0,0,0.4);
-      animation:fadeInDown 0.5s ease both;
+      background: #ffffff;
+      border-bottom: 2px solid #e5e7eb;
+      padding: 0 2rem;
+      height: 100px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      animation: fadeInDown 0.5s ease both;
     }
     .navbar-logo { height:74px; max-width:260px; object-fit:contain; cursor:pointer; transition:transform 0.3s; }
     .navbar-logo:hover { transform:scale(1.05); }
     .navbar-logo-placeholder {
       font-family:'Bebas Neue',sans-serif;
       font-size:2.2rem; letter-spacing:3px;
-      color:white; cursor:pointer; font-weight:bold;
+      color: var(--fa-red-dark); cursor:pointer; font-weight:bold;
     }
     .menu-btn {
-      background:var(--fa-red-dark);
-      border:2px solid rgba(255,255,255,0.4);
+      background: var(--fa-red-dark);
+      border: 2px solid rgba(255,255,255,0.4);
       width:70px; height:70px; border-radius:20px;
       display:flex; flex-direction:column;
       justify-content:center; align-items:center; gap:8px;
@@ -113,14 +132,14 @@
     .slideshow-frame {
       width:100%; max-width:1100px; border-radius:32px; overflow:hidden;
       box-shadow:0 8px 40px rgba(185,28,28,0.35);
-      border:2px solid var(--fa-red);
+      border:1px solid rgba(255,255,255,0.2);
       background:#1a0000; display:flex; justify-content:center; align-items:center;
     }
     .slideshow-img { width:100%; height:auto; max-height:520px; object-fit:contain; display:block; transition:opacity 0.5s ease; }
     .dots-container { margin-top:20px; display:flex; gap:12px; }
-    .dot { width:14px; height:14px; border-radius:50%; background:rgba(185,28,28,0.35); cursor:pointer; transition:all 0.25s; }
-    .dot.active { background:var(--fa-red); transform:scale(1.4); box-shadow:0 0 12px rgba(185,28,28,0.7); }
-    .dot:hover { background:var(--fa-red-light); }
+    .dot { width:14px; height:14px; border-radius:50%; background:rgba(255,255,255,0.3); cursor:pointer; transition:all 0.25s; }
+    .dot.active { background:white; transform:scale(1.4); }
+    .dot:hover { background:rgba(255,255,255,0.7); }
 
     /* EMIRATES FLIP ANIMATION */
     .emirates-section {
@@ -151,41 +170,47 @@
       padding:0.5rem; background:rgba(0,0,0,0.4); border-radius:8px;
     }
 
-    /* SEASON BAR */
+    /* SEASON BAR - WHITE OVAL */
     .season-bar { display:flex; justify-content:center; margin:24px 0 16px; }
     .season-controls {
       display:flex; align-items:center; gap:20px;
-      background:rgba(69,10,10,0.85); border:2px solid var(--fa-red);
-      padding:12px 32px; border-radius:80px; backdrop-filter:blur(8px);
+      background:#ffffff;
+      border:2px solid rgba(185,28,28,0.2);
+      padding:12px 32px; border-radius:80px;
+      box-shadow:0 4px 16px rgba(0,0,0,0.15);
     }
     .season-arrow {
-      background:rgba(185,28,28,0.2); border:1px solid var(--fa-red);
+      background: var(--fa-red);
+      border: none;
       width:56px; height:56px; border-radius:50%;
       font-size:2rem; cursor:pointer; color:white;
       font-weight:bold; transition:all 0.2s; line-height:1;
+      display:flex; align-items:center; justify-content:center;
     }
-    .season-arrow:hover:not(:disabled) { background:var(--fa-red); transform:scale(1.1); }
+    .season-arrow:hover:not(:disabled) { background:var(--fa-red-light); transform:scale(1.1); }
     .season-arrow:disabled { opacity:0.3; cursor:not-allowed; }
     .season-number {
       font-family:'Bebas Neue',sans-serif;
       font-size:2.2rem; letter-spacing:3px;
-      color:white; min-width:180px; text-align:center;
+      color: var(--fa-red); min-width:180px; text-align:center;
     }
     .season-admin-btns { display:flex; gap:10px; margin-left:10px; }
     .season-admin-btn {
-      background:rgba(185,28,28,0.2); border:1px solid var(--fa-red);
+      background:rgba(185,28,28,0.1); border:1px solid var(--fa-red);
       padding:8px 20px; border-radius:40px; font-weight:600;
-      cursor:pointer; color:white; font-size:1.1rem;
+      cursor:pointer; color:var(--fa-red); font-size:1.1rem;
       font-family:'Rajdhani',sans-serif; transition:all 0.2s;
     }
-    .season-admin-btn:hover { background:var(--fa-red); }
+    .season-admin-btn:hover { background:var(--fa-red); color:white; }
 
-    /* TABS */
+    /* TABS - active = white oval red text */
     .tabs-container {
       display:flex; flex-direction:column; align-items:center; gap:10px;
       margin:28px 36px 0;
-      background:rgba(69,10,10,0.8); border:2px solid var(--fa-red);
-      border-radius:80px; padding:12px 20px; backdrop-filter:blur(8px);
+      background:var(--glass-bg);
+      backdrop-filter:var(--glass-blur);
+      border:1px solid var(--glass-border);
+      border-radius:80px; padding:12px 20px;
       max-width:1100px; margin-left:auto; margin-right:auto;
       animation:fadeInUp 0.5s ease 0.3s both;
     }
@@ -198,14 +223,34 @@
       color:rgba(255,255,255,0.6); border-radius:60px;
       letter-spacing:0.5px; transition:all 0.25s; white-space:nowrap;
     }
-    .tab-btn.active { background:var(--fa-red); color:white; }
-    .tab-btn:hover:not(.active) { color:white; background:rgba(185,28,28,0.3); }
+    .tab-btn.active { background:#ffffff; color:var(--fa-red); }
+    .tab-btn:hover:not(.active) { color:white; background:rgba(255,255,255,0.15); }
 
-    /* CONTENT CARD */
+    /* SUB TABS for fixtures */
+    .sub-tabs-row {
+      display:flex; gap:8px; margin-bottom:24px;
+      justify-content:center;
+    }
+    .sub-tab-btn {
+      background:rgba(255,255,255,0.08);
+      border:1px solid rgba(255,255,255,0.2);
+      font-family:'Rajdhani',sans-serif;
+      font-size:1.2rem; font-weight:700;
+      padding:8px 28px; cursor:pointer;
+      color:rgba(255,255,255,0.6); border-radius:60px;
+      letter-spacing:0.5px; transition:all 0.25s; white-space:nowrap;
+    }
+    .sub-tab-btn.active { background:#ffffff; color:var(--fa-red); }
+    .sub-tab-btn:hover:not(.active) { color:white; background:rgba(255,255,255,0.2); }
+
+    /* CONTENT CARD - GLASS */
     .content-card {
       margin:24px 36px 40px;
-      background:var(--glass-bg); backdrop-filter:blur(12px);
-      border:1px solid var(--glass-border); border-radius:32px;
+      background:var(--glass-bg);
+      backdrop-filter:var(--glass-blur);
+      -webkit-backdrop-filter:var(--glass-blur);
+      border:1px solid var(--glass-border);
+      border-radius:32px;
       padding:32px;
       min-height:200px;
       animation:fadeInUp 0.5s ease 0.4s both;
@@ -213,7 +258,7 @@
 
     /* LOADING */
     .loading-spinner { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:80px; gap:24px; }
-    .spinner { width:60px; height:60px; border:5px solid rgba(185,28,28,0.2); border-top-color:var(--fa-red); border-radius:50%; animation:spin 0.8s linear infinite; }
+    .spinner { width:60px; height:60px; border:5px solid rgba(255,255,255,0.2); border-top-color:white; border-radius:50%; animation:spin 0.8s linear infinite; }
     .loading-spinner span { color:rgba(255,255,255,0.6); font-size:1.4rem; }
 
     /* EMPTY STATE */
@@ -221,40 +266,52 @@
     .empty-state .empty-icon { font-size:5rem; margin-bottom:20px; }
     .empty-state p { font-size:2rem; font-weight:500; }
 
+    /* COMING SOON */
+    .coming-soon {
+      text-align:center; padding:80px 20px;
+      color:rgba(255,255,255,0.7);
+    }
+    .coming-soon .cs-icon { font-size:5rem; margin-bottom:20px; }
+    .coming-soon h2 {
+      font-family:'Bebas Neue',sans-serif;
+      font-size:3rem; letter-spacing:4px; color:white; margin-bottom:12px;
+    }
+    .coming-soon p { font-size:1.6rem; color:rgba(255,255,255,0.5); }
+
     /* TABLE */
     .table-scroll-wrap { overflow-x:auto; border-radius:20px; position:relative; }
     .stats-table {
       width:100%; border-collapse:collapse;
       font-family:'Rajdhani',sans-serif;
       min-width:900px;
-      background:var(--fa-red);
+      background:rgba(255,255,255,0.06);
       color:white;
     }
     .stats-table thead th {
-      background:rgba(127,29,29,0.5);
+      background:rgba(0,0,0,0.3);
       color:white;
       font-size:1.3rem; font-weight:800;
       text-transform:uppercase; letter-spacing:1px;
       padding:16px 18px;
-      border-bottom:2px solid var(--fa-red-dark);
+      border-bottom:2px solid rgba(255,255,255,0.15);
       white-space:nowrap;
     }
     .stats-table th:first-child,
     .stats-table td:first-child {
       position:sticky; left:0; z-index:25;
-      background:var(--fa-red); width:64px; min-width:64px;
+      background:rgba(30,5,5,0.7); width:64px; min-width:64px;
     }
-    .stats-table thead th:first-child { background:rgba(185,28,28,0.97); z-index:30; }
+    .stats-table thead th:first-child { background:rgba(0,0,0,0.4); z-index:30; }
     .stats-table th:nth-child(2),
     .stats-table td:nth-child(2) {
       position:sticky; left:64px; z-index:24;
-      background:var(--fa-red);
-      box-shadow:4px 0 8px -2px rgba(69,10,10,0.5);
-      border-right:2px solid rgba(127,29,29,0.5);
+      background:rgba(30,5,5,0.7);
+      box-shadow:4px 0 8px -2px rgba(0,0,0,0.4);
+      border-right:1px solid rgba(255,255,255,0.1);
     }
-    .stats-table thead th:nth-child(2) { background:rgba(185,28,28,0.97); z-index:30; }
-    .stats-table tbody tr { border-bottom:1px solid rgba(127,29,29,0.35); transition:background 0.2s; }
-    .stats-table tbody tr:hover { background:rgba(127,29,29,0.25); }
+    .stats-table thead th:nth-child(2) { background:rgba(0,0,0,0.4); z-index:30; }
+    .stats-table tbody tr { border-bottom:1px solid rgba(255,255,255,0.07); transition:background 0.2s; }
+    .stats-table tbody tr:hover { background:rgba(255,255,255,0.05); }
     .stats-table td { padding:14px 18px; color:white; font-size:1.3rem; font-weight:600; white-space:nowrap; }
     .stats-table td.stat-number { font-size:2.4rem !important; font-weight:800; line-height:1.2; }
     .team-name-text { font-weight:700; font-size:2.4rem !important; color:white; }
@@ -262,33 +319,35 @@
     .rank-cell { font-weight:700; color:white; font-family:'Bebas Neue',sans-serif; font-size:1.6rem; }
 
     .table-actions {
-      display:flex; justify-content:flex-end; gap:12px;
-      padding:14px 18px; background:var(--fa-red);
+      display:flex; justify-content:center; gap:12px;
+      padding:14px 18px;
+      background:rgba(0,0,0,0.3);
       border-radius:20px 20px 0 0;
-      border:2px solid rgba(127,29,29,0.3);
-      border-bottom:3px solid var(--fa-red-dark);
+      border:1px solid rgba(255,255,255,0.1);
+      border-bottom:2px solid rgba(255,255,255,0.15);
       align-items:center;
     }
     .table-actions-title {
       font-family:'Bebas Neue',sans-serif;
-      font-size:1.6rem; color:white; letter-spacing:2px; flex:1;
+      font-size:1.6rem; color:white; letter-spacing:2px;
+      text-align:center; flex:1;
     }
     .add-btn {
-      background:rgba(255,255,255,0.15);
-      border:2px solid white; color:white;
+      background:rgba(255,255,255,0.1);
+      border:1px solid rgba(255,255,255,0.3); color:white;
       font-family:'Rajdhani',sans-serif; font-weight:700;
       font-size:1.2rem; padding:10px 24px;
       border-radius:40px; cursor:pointer; transition:all 0.2s;
     }
-    .add-btn:hover { background:white; color:var(--fa-red); transform:translateY(-2px); }
+    .add-btn:hover { background:rgba(255,255,255,0.25); }
 
     /* GROUP TABLE legend */
     .legend-row {
       margin-top:24px; padding:16px 20px;
-      background:rgba(69,10,10,0.5); border-radius:20px;
+      background:rgba(0,0,0,0.2); border-radius:20px;
       display:flex; gap:28px; flex-wrap:wrap; justify-content:center;
     }
-    .legend-item { display:inline-flex; align-items:center; gap:8px; color:rgba(255,255,255,0.7); font-size:1.1rem; }
+    .legend-item { display:inline-flex; align-items:center; gap:8px; color:rgba(255,255,255,0.85); font-size:1.5rem; font-weight:600; }
     .vbar { width:6px; height:28px; border-radius:3px; display:inline-block; }
     .vbar-blue  { background:#3b82f6; }
     .vbar-red   { background:#ef4444; }
@@ -296,7 +355,7 @@
     .dashed-sep-blue td { border-bottom:3px dashed #3b82f6 !important; }
     .dashed-sep-red  td { border-bottom:3px dashed #ef4444 !important; }
 
-    /* TEAM ICONS */
+    /* TEAM ICONS - transparent, no circle */
     .team-cell-inner { display:flex; align-items:center; gap:14px; }
     .team-icon-sm { width:60px; height:60px; object-fit:contain; background:transparent; border:none; border-radius:0; transition:transform 0.25s; }
     .team-icon-sm:hover { transform:scale(1.1); }
@@ -305,8 +364,7 @@
 
     /* FORM CIRCLES */
     .form-circles { display:flex; gap:6px; align-items:center; }
-    .circle-result { width:30px; height:30px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:1rem; font-weight:bold; transition:transform 0.2s; }
-    .circle-result:hover { transform:scale(1.2); }
+    .circle-result { width:30px; height:30px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:1rem; font-weight:bold; }
     .cW  { background:#22c55e; color:white; }
     .cL  { background:#ef4444; color:white; }
     .cD  { background:#6b7280; color:white; }
@@ -316,199 +374,189 @@
     .filters-bar {
       display:flex; flex-wrap:wrap; gap:20px; align-items:flex-end;
       margin-bottom:30px; padding:20px;
-      background:rgba(69,10,10,0.5); border-radius:28px;
+      background:rgba(0,0,0,0.2); border-radius:28px;
+      border:1px solid rgba(255,255,255,0.1);
     }
     .filter-group { display:flex; flex-direction:column; gap:8px; }
     .filter-group label { font-size:1rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:rgba(255,255,255,0.6); }
     .filter-group select, .filter-group button {
-      background:rgba(69,10,10,0.9); border:1px solid var(--fa-red);
+      background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2);
       border-radius:40px; padding:12px 20px;
       font-family:'Rajdhani',sans-serif; font-size:1.2rem;
       font-weight:600; color:white;
       cursor:pointer; transition:all 0.2s;
     }
-    .filter-group select:hover, .filter-group button:hover { background:var(--fa-red); border-color:white; }
+    .filter-group select:hover, .filter-group button:hover { background:rgba(255,255,255,0.1); }
     .filter-stats { font-size:1rem; color:rgba(255,255,255,0.5); margin-left:auto; align-self:center; }
     .view-calendar-btn {
-      background:rgba(185,28,28,0.2); border:2px solid var(--fa-red);
+      background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3);
       color:white; font-family:'Rajdhani',sans-serif;
       font-weight:700; font-size:1.2rem; padding:12px 28px;
       border-radius:40px; cursor:pointer; transition:all 0.25s;
       display:flex; align-items:center; gap:8px; white-space:nowrap;
       align-self:flex-end; text-decoration:none;
     }
-    .view-calendar-btn:hover { background:var(--fa-red); transform:translateY(-2px); box-shadow:0 8px 24px rgba(185,28,28,0.4); }
+    .view-calendar-btn:hover { background:rgba(255,255,255,0.2); transform:translateY(-2px); }
 
-    /* FIXTURE CARDS */
+    /* FIXTURE CARDS - GLASS */
     .fixture-date-group { margin-bottom:32px; animation:cardSlideIn 0.4s ease both; }
     .fixture-date-label {
       font-family:'Bebas Neue',sans-serif; font-size:1.8rem; letter-spacing:3px; color:white;
       margin-bottom:14px; padding:10px 20px;
-      background:rgba(185,28,28,0.3); border-radius:50px;
-      border-left:4px solid var(--fa-red); display:inline-block;
+      background:rgba(255,255,255,0.08); border-radius:50px;
+      border-left:4px solid rgba(255,255,255,0.4); display:inline-block;
     }
     .fixture-card {
-      background:var(--fa-red); border-radius:28px; padding:28px 40px; margin-bottom:16px;
+      background:rgba(255,255,255,0.06);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      border-radius:28px; padding:28px 40px; margin-bottom:16px;
       transition:all 0.25s; animation:cardSlideIn 0.4s ease both;
-      border:1px solid rgba(127,29,29,0.4);
+      border:1px solid rgba(255,255,255,0.1);
     }
-    .fixture-card:hover { transform:translateY(-4px); box-shadow:0 12px 40px rgba(185,28,28,0.4); }
+    .fixture-card:hover { background:rgba(255,255,255,0.1); transform:translateY(-4px); box-shadow:0 12px 40px rgba(0,0,0,0.3); }
     .fixture-tournament-label { font-size:1rem; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px; }
     .fixture-match-row { display:flex; align-items:center; justify-content:space-between; gap:24px; }
     .fixture-team-side { display:flex; flex-direction:column; align-items:center; gap:12px; flex:1; text-align:center; }
     .fixture-team-name { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:2.2rem; color:white; }
     .fixture-vs { font-family:'Bebas Neue',sans-serif; font-size:3rem; color:white; letter-spacing:4px; flex-shrink:0; opacity:0.6; }
 
-    /* MATCH CARDS */
+    /* MATCH CARDS - GLASS */
     .matches-list { display:flex; flex-direction:column; gap:24px; }
     .match-card {
-      background:var(--fa-red); border-radius:28px; padding:32px 48px;
+      background:rgba(255,255,255,0.06);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      border-radius:28px; padding:32px 48px;
       transition:all 0.25s; animation:cardSlideIn 0.4s ease both;
-      border:1px solid rgba(127,29,29,0.3);
+      border:1px solid rgba(255,255,255,0.1);
     }
-    .match-card:hover { transform:translateY(-4px); box-shadow:0 12px 40px rgba(185,28,28,0.4); }
+    .match-card:hover { background:rgba(255,255,255,0.1); transform:translateY(-4px); box-shadow:0 12px 40px rgba(0,0,0,0.3); }
     .match-row { display:flex; align-items:center; justify-content:space-between; gap:32px; }
     .team-side { display:flex; flex-direction:column; align-items:center; gap:16px; flex:1; text-align:center; }
     .team-name-big { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:2.8rem; color:white; letter-spacing:0.3px; }
     .match-center { display:flex; flex-direction:column; align-items:center; gap:8px; flex-shrink:0; min-width:180px; }
     .score-display {
       font-family:'Bebas Neue',sans-serif; font-size:4.5rem; color:white; letter-spacing:6px;
-      background:rgba(127,29,29,0.4); padding:14px 42px;
+      background:rgba(0,0,0,0.3); padding:14px 42px;
       border-radius:80px; border:2px solid rgba(255,255,255,0.2);
     }
     .forfeit-display {
       font-family:'Bebas Neue',sans-serif; font-size:3rem; color:rgba(255,200,200,0.9); letter-spacing:4px;
-      background:rgba(127,29,29,0.4); padding:12px 28px;
+      background:rgba(0,0,0,0.3); padding:12px 28px;
       border-radius:60px; border:2px solid rgba(255,255,255,0.2);
     }
     .aggregate-text { font-size:1.4rem; color:rgba(255,255,255,0.65); font-family:'Rajdhani',sans-serif; }
     .goal-scorers { margin-top:12px; }
     .goal-scorer-item {
-      display:inline-block; background:rgba(127,29,29,0.4);
-      border:1px solid rgba(255,255,255,0.2);
+      display:inline-block; background:rgba(0,0,0,0.3);
+      border:1px solid rgba(255,255,255,0.15);
       padding:5px 14px; border-radius:30px;
       margin:3px; font-size:1.2rem; color:white;
     }
     .match-meta { display:flex; gap:16px; flex-wrap:wrap; margin-top:24px; justify-content:center; }
     .meta-tag {
       font-size:1.3rem; font-weight:500; color:white;
-      background:rgba(127,29,29,0.35); padding:10px 24px;
-      border-radius:50px; border:1px solid rgba(255,255,255,0.2);
+      background:rgba(0,0,0,0.25); padding:10px 24px;
+      border-radius:50px; border:1px solid rgba(255,255,255,0.15);
     }
     .admin-row { display:flex; gap:16px; justify-content:flex-end; margin-top:24px; }
     .btn-sm { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:1.4rem; padding:10px 28px; border-radius:50px; border:none; cursor:pointer; transition:all 0.2s; letter-spacing:1px; }
-    .btn-edit   { background:rgba(255,255,255,0.15); color:white; border:1px solid rgba(255,255,255,0.4); }
-    .btn-edit:hover   { background:white; color:var(--fa-red); }
+    .btn-edit   { background:rgba(255,255,255,0.12); color:white; border:1px solid rgba(255,255,255,0.3); }
+    .btn-edit:hover   { background:rgba(255,255,255,0.25); }
     .btn-delete { background:rgba(100,0,0,0.3); color:rgba(255,180,180,0.9); border:1px solid rgba(200,50,50,0.4); }
     .btn-delete:hover { background:#7a0000; color:white; }
     .add-result-top-btn {
       display:inline-flex; align-items:center; gap:10px;
-      background:white; border:2px solid white;
-      color:var(--fa-red); font-family:'Rajdhani',sans-serif;
+      background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.3);
+      color:white; font-family:'Rajdhani',sans-serif;
       font-weight:700; font-size:1.2rem; padding:12px 28px;
       border-radius:40px; cursor:pointer; transition:all 0.2s; white-space:nowrap;
     }
-    .add-result-top-btn:hover { background:var(--fa-red-dark); color:white; border-color:var(--fa-red-dark); transform:translateY(-2px); }
+    .add-result-top-btn:hover { background:rgba(255,255,255,0.25); transform:translateY(-2px); }
     .add-btn-main {
       display:inline-flex; align-items:center; gap:14px;
-      background:rgba(127,29,29,0.5); border:2px solid var(--fa-red);
-      color:var(--fa-red-light); font-family:'Rajdhani',sans-serif;
+      background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.25);
+      color:white; font-family:'Rajdhani',sans-serif;
       font-weight:700; font-size:2rem; padding:20px 56px;
       border-radius:100px; cursor:pointer; margin-top:40px; transition:all 0.2s;
     }
-    .add-btn-main:hover { background:var(--fa-red); color:white; transform:translateY(-3px); box-shadow:0 12px 40px rgba(185,28,28,0.4); }
+    .add-btn-main:hover { background:rgba(255,255,255,0.18); transform:translateY(-3px); box-shadow:0 12px 40px rgba(0,0,0,0.3); }
 
     /* TOP 3 BLOCKS */
     .top3-container { display:flex; justify-content:center; gap:0; margin-bottom:40px; width:100%; }
     .top3-block {
       position:relative; text-align:center; flex:1;
-      background:rgba(127,29,29,0.4); border-radius:0;
+      background:rgba(255,255,255,0.06);
+      backdrop-filter:blur(12px);
+      border-radius:0;
       transition:transform 0.3s; min-width:0;
+      border:1px solid rgba(255,255,255,0.1);
     }
     .top3-block:first-child { border-top-left-radius:32px; border-bottom-left-radius:32px; }
     .top3-block:last-child  { border-top-right-radius:32px; border-bottom-right-radius:32px; }
     .top3-block:hover { transform:translateY(-8px); z-index:5; }
     .player-image-wrapper {
       position:relative; width:100%; aspect-ratio:1/1; overflow:hidden;
-      border:3px solid var(--fa-red); background:#2a0000; margin:0; border-radius:0;
+      background:rgba(0,0,0,0.2); margin:0; border-radius:0;
     }
-    .top3-block:first-child .player-image-wrapper { border-top-left-radius:32px; border-bottom-left-radius:32px; }
-    .top3-block:last-child  .player-image-wrapper { border-top-right-radius:32px; border-bottom-right-radius:32px; }
+    .top3-block:first-child .player-image-wrapper { border-top-left-radius:32px; }
+    .top3-block:last-child  .player-image-wrapper { border-top-right-radius:32px; }
     .player-img { width:100%; height:100%; object-fit:cover; }
     .medal-badge { position:absolute; top:12px; left:12px; font-size:3rem; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5)); z-index:2; }
     .edit-block-btn {
       position:absolute; top:12px; right:12px;
-      background:rgba(0,0,0,0.6); border:1px solid var(--fa-red);
+      background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.3);
       border-radius:50%; width:40px; height:40px;
       display:flex; align-items:center; justify-content:center;
       cursor:pointer; font-size:1.6rem; color:white; transition:all 0.2s; z-index:3;
     }
-    .edit-block-btn:hover { background:var(--fa-red); transform:scale(1.1); }
+    .edit-block-btn:hover { background:rgba(255,255,255,0.2); transform:scale(1.1); }
     .player-name-overlay {
       position:absolute; bottom:16px; left:16px;
       background:linear-gradient(90deg,rgba(0,0,0,0.7),rgba(0,0,0,0.3));
       color:white; font-family:'Rajdhani',sans-serif;
       font-weight:800; font-size:1.6rem; padding:6px 16px;
       border-radius:40px; backdrop-filter:blur(4px); z-index:2;
-      letter-spacing:0.5px; border-left:3px solid var(--fa-red); pointer-events:none;
+      letter-spacing:0.5px; border-left:3px solid rgba(255,255,255,0.5); pointer-events:none;
     }
     .team-icon-overlay {
       position:absolute; bottom:12px; right:12px;
-      width:56px; height:56px; background:rgba(0,0,0,0.4);
-      border-radius:50%; display:flex; align-items:center; justify-content:center;
-      backdrop-filter:blur(4px); padding:6px; z-index:2;
+      width:56px; height:56px;
+      display:flex; align-items:center; justify-content:center;
+      z-index:2; padding:6px;
     }
     .team-icon-overlay img { width:100%; height:100%; object-fit:contain; }
     .top3-count {
-      font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--fa-red-light);
-      background:rgba(0,0,0,0.3); display:inline-block;
+      font-family:'Bebas Neue',sans-serif; font-size:2rem; color:white;
+      background:rgba(0,0,0,0.2); display:inline-block;
       padding:8px 20px; border-radius:60px; letter-spacing:2px;
       margin-top:12px; margin-bottom:16px;
     }
-    .rest-table-wrapper { margin-top:20px; border-top:2px solid var(--fa-red); padding-top:24px; }
+    .rest-table-wrapper { margin-top:20px; border-top:1px solid rgba(255,255,255,0.15); padding-top:24px; }
 
     /* STATS LIST TABLE */
     .stats-list {
       width:100%; border-collapse:collapse;
       font-family:'Rajdhani',sans-serif;
-      background:var(--fa-red); color:white;
+      background:rgba(255,255,255,0.04); color:white;
     }
     .stats-list thead th {
-      background:rgba(127,29,29,0.4); color:white;
+      background:rgba(0,0,0,0.3); color:white;
       font-size:1.4rem; font-weight:800; text-transform:uppercase; letter-spacing:1px;
-      padding:18px 22px; border-bottom:2px solid var(--fa-red-dark);
+      padding:18px 22px; border-bottom:1px solid rgba(255,255,255,0.15);
     }
-    .stats-list tbody tr { border-bottom:1px solid rgba(127,29,29,0.35); transition:background 0.2s; }
-    .stats-list tbody tr:hover { background:rgba(127,29,29,0.25); }
+    .stats-list tbody tr { border-bottom:1px solid rgba(255,255,255,0.07); transition:background 0.2s; }
+    .stats-list tbody tr:hover { background:rgba(255,255,255,0.05); }
     .stats-list td { padding:18px 22px; color:white; font-size:1.4rem; font-weight:600; }
     .stats-list td:first-child { font-family:'Bebas Neue',sans-serif; font-size:2rem; font-weight:bold; }
     .count-badge {
-      background:rgba(127,29,29,0.4); border:1px solid rgba(255,255,255,0.3);
+      background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.3);
       color:white; padding:6px 22px; border-radius:50px; font-weight:700; font-size:1.4rem;
     }
     .stat-team-cell { display:flex; align-items:center; gap:16px; color:white; }
 
-    /* KNOCKOUT CARDS */
-    .knockout-match {
-      background:var(--fa-red); border-radius:20px;
-      padding:24px 32px; margin-bottom:16px;
-      display:flex; justify-content:space-between; align-items:center;
-      border:1px solid rgba(127,29,29,0.35);
-      transition:all 0.25s;
-    }
-    .knockout-match:hover { transform:translateY(-3px); box-shadow:0 8px 30px rgba(185,28,28,0.35); }
-    .knockout-round {
-      font-family:'Bebas Neue',sans-serif; font-size:1.4rem;
-      letter-spacing:2px; color:rgba(255,255,255,0.6); margin-bottom:6px;
-    }
-    .knockout-teams { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:2rem; color:white; }
-    .knockout-score {
-      font-family:'Bebas Neue',sans-serif; font-size:3rem; letter-spacing:4px;
-      background:rgba(127,29,29,0.4); padding:10px 32px;
-      border-radius:60px; border:2px solid rgba(255,255,255,0.2); color:white;
-    }
-
-    /* GROUP STAGE SECTION */
+    /* GROUP BLOCK */
     .group-block { margin-bottom:36px; }
 
     /* MODAL */
@@ -519,50 +567,50 @@
     }
     .modal-overlay.active { display:flex; }
     .modal-card {
-      background:rgba(69,10,10,0.98); border:2px solid var(--fa-red);
+      background:rgba(10,10,20,0.97); border:1px solid rgba(255,255,255,0.2);
       border-radius:40px; padding:44px;
       max-width:860px; width:100%; max-height:88vh; overflow-y:auto;
       font-family:'Rajdhani',sans-serif;
       animation:fadeInUp 0.35s ease both;
     }
-    .modal-card h3 { font-family:'Bebas Neue',sans-serif; font-size:2.8rem; color:var(--fa-red-light); letter-spacing:2px; margin-bottom:28px; }
+    .modal-card h3 { font-family:'Bebas Neue',sans-serif; font-size:2.8rem; color:white; letter-spacing:2px; margin-bottom:28px; }
     .modal-card label { display:block; color:rgba(255,255,255,0.55); font-size:1.2rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; margin-top:20px; }
     .modal-card input, .modal-card select, .modal-card textarea {
       width:100%; padding:16px 22px;
-      background:rgba(255,255,255,0.07); border:1px solid var(--fa-red);
+      background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.2);
       border-radius:28px; color:white;
       font-family:'Rajdhani',sans-serif; font-size:1.4rem; font-weight:500; outline:none;
     }
-    .modal-card input:focus, .modal-card select:focus { box-shadow:0 0 0 3px rgba(185,28,28,0.4); }
+    .modal-card input:focus, .modal-card select:focus { box-shadow:0 0 0 3px rgba(255,255,255,0.15); }
     .modal-card textarea { min-height:100px; }
     .modal-btns { display:flex; gap:18px; margin-top:28px; }
     .modal-btn-primary, .modal-btn-cancel { flex:1; padding:16px; border-radius:28px; font-family:'Bebas Neue',sans-serif; font-size:1.6rem; letter-spacing:1px; cursor:pointer; }
-    .modal-btn-primary { background:var(--fa-red); color:white; border:none; transition:background 0.2s; }
-    .modal-btn-primary:hover { background:var(--fa-red-light); }
-    .modal-btn-cancel { background:rgba(255,255,255,0.07); border:1px solid var(--fa-red); color:rgba(255,255,255,0.7); }
+    .modal-btn-primary { background:white; color:#1a0000; border:none; transition:background 0.2s; }
+    .modal-btn-primary:hover { background:#f0f0f0; }
+    .modal-btn-cancel { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.7); }
     .status-msg { margin-top:14px; padding:12px 18px; border-radius:14px; font-weight:bold; text-align:center; font-size:1.2rem; }
     .status-success { background:#dcfce7; color:#166534; }
     .status-error   { background:#fee2e2; color:#991b1b; }
     .status-loading { background:#fef3c7; color:#92400e; }
     .scorer-section { border-top:1px solid rgba(255,255,255,0.15); margin-top:18px; padding-top:18px; }
-    .scorer-section h4 { color:var(--fa-red-light); font-size:1.4rem; margin-bottom:12px; font-weight:700; }
+    .scorer-section h4 { color:rgba(255,255,255,0.8); font-size:1.4rem; margin-bottom:12px; font-weight:700; }
     .scorer-list { display:flex; flex-wrap:wrap; gap:10px; margin:10px 0; }
-    .scorer-badge { background:rgba(127,29,29,0.6); border:1px solid var(--fa-red); border-radius:32px; padding:7px 18px; font-size:1.1rem; display:inline-flex; align-items:center; gap:10px; color:white; }
+    .scorer-badge { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); border-radius:32px; padding:7px 18px; font-size:1.1rem; display:inline-flex; align-items:center; gap:10px; color:white; }
     .remove-scorer { background:#b91c1c; color:white; border:none; border-radius:50%; width:26px; height:26px; font-size:16px; cursor:pointer; }
     .settings-grid { display:flex; flex-direction:column; gap:16px; }
     .settings-btn {
-      background:rgba(127,29,29,0.4); border:1px solid var(--fa-red);
+      background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15);
       color:white; padding:18px 26px; border-radius:28px;
       cursor:pointer; font-family:'Rajdhani',sans-serif;
       font-size:1.5rem; font-weight:600; display:flex; align-items:center; gap:16px; transition:all 0.2s;
     }
-    .settings-btn:hover { background:var(--fa-red); }
+    .settings-btn:hover { background:rgba(255,255,255,0.15); }
     .img-preview-grid { display:flex; flex-wrap:wrap; gap:16px; margin:16px 0; justify-content:center; }
     .preview-thumb { position:relative; width:160px; height:160px; }
-    .preview-thumb img { width:100%; height:100%; object-fit:cover; border-radius:14px; border:2px solid var(--fa-red); }
+    .preview-thumb img { width:100%; height:100%; object-fit:cover; border-radius:14px; border:1px solid rgba(255,255,255,0.2); }
     .thumb-del { position:absolute; top:-10px; right:-10px; background:#ef4444; color:white; border:none; border-radius:50%; width:32px; height:32px; cursor:pointer; font-size:18px; font-weight:bold; display:flex; align-items:center; justify-content:center; }
 
-    footer { text-align:center; padding:36px; color:rgba(255,255,255,0.3); font-size:1.1rem; border-top:1px solid rgba(185,28,28,0.3); margin-top:24px; }
+    footer { text-align:center; padding:36px; color:rgba(255,255,255,0.3); font-size:1.1rem; border-top:1px solid rgba(255,255,255,0.08); margin-top:24px; }
   </style>
 </head>
 <body>
@@ -577,8 +625,8 @@
 <div class="overlay" id="overlay"></div>
 <div class="side-menu" id="sideMenu">
   <div class="close-menu" id="closeMenuBtn">&#x2715;</div>
-  <div class="menu-item" id="homeBtn">🏠 Home</div>
-  <div class="menu-item" id="adminModeBtn">🔐 Admin Mode</div>
+  <div class="menu-item" id="homeBtn">Home</div>
+  <div class="menu-item" id="adminModeBtn">Admin Mode</div>
 </div>
 
 <!-- SLIDESHOW -->
@@ -615,15 +663,14 @@
   </div>
 </div>
 
-<!-- TABS -->
+<!-- TABS (no Knockout tab) -->
 <div class="tabs-container">
   <div class="tabs-row">
-    <button class="tab-btn active" data-tab="groups">🏟️ GROUP STAGES</button>
-    <button class="tab-btn" data-tab="fixtures">📅 FIXTURES</button>
-    <button class="tab-btn" data-tab="results">📋 RESULTS</button>
-    <button class="tab-btn" data-tab="knockout">🏆 KNOCKOUT</button>
-    <button class="tab-btn" data-tab="topscorers">⭐ TOP SCORERS</button>
-    <button class="tab-btn" data-tab="topassists">🅰️ TOP ASSISTS</button>
+    <button class="tab-btn active" data-tab="groups">GROUP STAGES</button>
+    <button class="tab-btn" data-tab="fixtures">FIXTURES</button>
+    <button class="tab-btn" data-tab="results">RESULTS</button>
+    <button class="tab-btn" data-tab="topscorers">TOP SCORERS</button>
+    <button class="tab-btn" data-tab="topassists">TOP ASSISTS</button>
   </div>
 </div>
 
@@ -684,7 +731,6 @@ let availableSeasons = [];
 let activeSeasonId = 3;
 
 let groupsData = {};
-let knockoutMatches = [];
 let teamIconsCache = {};
 let slideshowImages = [], slideshowDuration = 3000, slideInterval = null, currentSlideIdx = 0;
 let navbarLogoUrl = '';
@@ -694,6 +740,9 @@ let groupCornerImageUrl = '';
 let calendarEventsData = {};
 let topScorerList = [], topAssistantList = [];
 let tempScorersHome = [], tempScorersAway = [];
+
+// Active fixture sub-tab
+let activeFixtureSubTab = 'group-stage';
 
 // ─── Season Path ───
 function sp(seasonNum, sub = "") {
@@ -736,9 +785,20 @@ function showModal(html) {
 }
 function closeModal() { document.getElementById('genericModal').classList.remove('active'); }
 
+// Team icon html - transparent, no circle
 function getTeamIconHtml(name, cls='team-icon-sm') {
   const url = teamIconsCache[name];
   return url ? `<img class="${cls}" src="${url}" alt="${name}" onerror="this.style.display='none';">` : '';
+}
+
+// ─── Background ───
+async function loadBgSettings() {
+  const snap = await db.ref(`${basePath}/settings/backgroundImage`).once('value');
+  const url = snap.val();
+  if (url) {
+    document.body.style.setProperty('--bg-image', `url(${url})`);
+    document.body.classList.add('has-bg');
+  }
 }
 
 // ─── Navbar Logo ───
@@ -748,7 +808,7 @@ async function loadNavbarLogo() {
   const c = document.getElementById('logoContainer');
   c.innerHTML = navbarLogoUrl
     ? `<img src="${navbarLogoUrl}" class="navbar-logo" alt="FA Cup Logo">`
-    : `<div class="navbar-logo-placeholder">🏆 EMIRATES FA CUP</div>`;
+    : `<div class="navbar-logo-placeholder">EMIRATES FA CUP</div>`;
 }
 
 // ─── Emirates Animation ───
@@ -775,7 +835,8 @@ async function loadTeamIcons() {
   const snap = await db.ref(`${basePath}/teamIcons`).once('value');
   const data = snap.val() || {};
   for (const [team, val] of Object.entries(data)) {
-    if (val.imageUrl) teamIconsCache[team] = val.imageUrl;
+    if (val && val.imageUrl) teamIconsCache[team] = val.imageUrl;
+    else if (typeof val === 'string') teamIconsCache[team] = val;
   }
 }
 
@@ -830,12 +891,9 @@ async function loadSeasonsMetadata() {
     if (seasons[key].active === true) activeSeasonId = id;
   }
 
-  // Migration: if season_3 doesn't exist but old groups do
   if (!availableSeasons.includes(3)) {
     const oldGroups = await db.ref(`${basePath}/groups`).once('value');
-    const oldKo = await db.ref(`${basePath}/knockout_matches`).once('value');
     await db.ref(sp(3, 'groups')).set(oldGroups.val() || {});
-    await db.ref(sp(3, 'knockout_matches')).set(oldKo.val() || {});
     await db.ref(`${basePath}/seasons/season_3/active`).set(true);
     availableSeasons.push(3); activeSeasonId = 3;
   }
@@ -858,8 +916,6 @@ function updateSeasonUI() {
 async function loadCurrentSeasonData() {
   const snap = await db.ref(sp(currentSeasonId, 'groups')).once('value');
   groupsData = snap.val() || {};
-  const koSnap = await db.ref(sp(currentSeasonId, 'knockout_matches')).once('value');
-  knockoutMatches = koSnap.val() ? Object.entries(koSnap.val()).map(([k,v])=>({key:k,...v})) : [];
 }
 
 async function loadTopScorerData() {
@@ -889,7 +945,6 @@ async function addNewSeason() {
   if (isNaN(id)) { alert("Invalid number"); return; }
   if (availableSeasons.includes(id)) { alert("Season already exists"); return; }
   await db.ref(sp(id, 'groups')).set({});
-  await db.ref(sp(id, 'knockout_matches')).set({});
   await db.ref(`${basePath}/seasons/season_${id}/active`).set(false);
   availableSeasons.push(id); availableSeasons.sort((a,b)=>a-b);
   currentSeasonId = id; updateSeasonUI();
@@ -900,13 +955,9 @@ async function renameSeason() {
   const raw = prompt(`New number for Season ${currentSeasonId}:`); if (!raw) return;
   const id = parseInt(raw); if (isNaN(id)) return;
   if (availableSeasons.includes(id) && id !== currentSeasonId) { alert("Number taken"); return; }
-  const [gSnap, koSnap] = await Promise.all([
-    db.ref(sp(currentSeasonId, 'groups')).once('value'),
-    db.ref(sp(currentSeasonId, 'knockout_matches')).once('value'),
-  ]);
+  const gSnap = await db.ref(sp(currentSeasonId, 'groups')).once('value');
   const wasActive = activeSeasonId === currentSeasonId;
   await db.ref(sp(id, 'groups')).set(gSnap.val() || {});
-  await db.ref(sp(id, 'knockout_matches')).set(koSnap.val() || {});
   if (wasActive) await db.ref(`${basePath}/seasons/season_${id}/active`).set(true);
   await db.ref(sp(currentSeasonId)).remove();
   availableSeasons = availableSeasons.filter(s => s !== currentSeasonId);
@@ -945,10 +996,10 @@ function renderGroups() {
 
     html += `<div class="group-block">
       <div class="table-actions">
-        <span class="table-actions-title">🏟️ ${escapeHtml(gname)}</span>
-        ${isAdmin ? `<button class="add-btn rename-group-btn" data-gid="${gid}">✏️ Rename</button>
+        <span class="table-actions-title">${escapeHtml(gname)}</span>
+        ${isAdmin ? `<button class="add-btn rename-group-btn" data-gid="${gid}">Rename</button>
                      <button class="add-btn add-team-btn" data-gid="${gid}">+ Team</button>
-                     <button class="btn-sm btn-delete delete-group-btn" data-gid="${gid}">🗑️</button>` : ''}
+                     <button class="btn-sm btn-delete delete-group-btn" data-gid="${gid}">Delete</button>` : ''}
       </div>
       <div class="table-scroll-wrap">
         <table class="stats-table">
@@ -964,8 +1015,8 @@ function renderGroups() {
 
     sorted.forEach((team, idx) => {
       const pos = idx + 1;
-      let barClass = pos <= 4 ? 'vbar-blue' : 'vbar-red';
-      let rowClass = pos === 4 ? 'dashed-sep-blue' : (pos === 5 && sorted.length > 5 ? 'dashed-sep-red' : '');
+      const barClass = pos <= 4 ? 'vbar-blue' : 'vbar-red';
+      const rowClass = pos === 4 ? 'dashed-sep-blue' : (pos === 5 && sorted.length > 5 ? 'dashed-sep-red' : '');
       const iconHtml = getTeamIconHtml(team.name);
       const gd = team.gd || 0;
       html += `<tr class="${rowClass}">
@@ -981,10 +1032,10 @@ function renderGroups() {
         <td class="stat-number">${team.gc||0}</td>
         <td class="stat-number">${gd > 0 ? '+'+gd : gd}</td>
         <td class="pts-cell stat-number">${team.pts||0}</td>
-        <td><div class="form-circles"><span class="circle-result cBlank" style="width:30px;height:30px;border-radius:50%;"></span></div></td>
+        <td><div class="form-circles"><span class="circle-result cBlank"></span></div></td>
         ${isAdmin ? `<td>
-          <button class="btn-sm btn-edit edit-team-btn" data-gid="${gid}" data-key="${team.key}">✏️</button>
-          <button class="btn-sm btn-delete del-team-btn" data-gid="${gid}" data-key="${team.key}">🗑️</button>
+          <button class="btn-sm btn-edit edit-team-btn" data-gid="${gid}" data-key="${team.key}">Edit</button>
+          <button class="btn-sm btn-delete del-team-btn" data-gid="${gid}" data-key="${team.key}">Delete</button>
         </td>` : ''}
       </tr>`;
     });
@@ -1074,19 +1125,48 @@ document.getElementById('cancelTeamBtn').onclick = () => document.getElementById
 
 // ─── RENDER FIXTURES ───
 function renderFixtures() {
+  const card = document.getElementById('contentCard');
+
+  const subTabsHtml = `
+    <div class="sub-tabs-row">
+      <button class="sub-tab-btn ${activeFixtureSubTab === 'group-stage' ? 'active' : ''}" data-subtab="group-stage">Group Stage</button>
+      <button class="sub-tab-btn ${activeFixtureSubTab === 'knockout' ? 'active' : ''}" data-subtab="knockout">Knockout</button>
+    </div>
+  `;
+
+  if (activeFixtureSubTab === 'knockout') {
+    card.innerHTML = subTabsHtml + `
+      <div class="coming-soon">
+        <div class="cs-icon">🏆</div>
+        <h2>Knockout Round Coming Soon</h2>
+        <p>The knockout stage fixtures will be available shortly.</p>
+      </div>
+    `;
+    card.querySelectorAll('.sub-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeFixtureSubTab = btn.dataset.subtab;
+        renderFixtures();
+      });
+    });
+    return;
+  }
+
+  // Group stage fixtures from calendar events
   const allFixtures = [];
   const today = new Date(); today.setHours(0,0,0,0);
 
   for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
     if (!eventData?.title) continue;
-    if (eventData.title.toLowerCase().trim() !== 'emirates fa cup') continue;
+    // Exact match - case sensitive
+    if (eventData.title.trim() !== 'Emirates FA Cup') continue;
     const tournaments = eventData.tournaments || [];
     for (const tourn of tournaments) {
       for (const fix of (tourn.fixtures || [])) {
         allFixtures.push({
-          date: dateStr, tournament: tourn.name || 'Emirates FA Cup',
-          home: fix.home || '', homeIcon: fix.homeIcon || teamIconsCache[fix.home] || '',
-          away: fix.away || '', awayIcon: fix.awayIcon || teamIconsCache[fix.away] || '',
+          date: dateStr,
+          tournament: tourn.name || 'Emirates FA Cup',
+          home: fix.home || '',
+          away: fix.away || '',
         });
       }
     }
@@ -1103,12 +1183,12 @@ function renderFixtures() {
   const allTeams  = [...new Set(allFixtures.map(f=>[f.home,f.away]).flat().filter(Boolean))].sort();
   const allMonths = [...new Set(allFixtures.map(f=>f.date.substring(0,7)))].sort();
 
-  let teamF  = document.getElementById('fixTeamFilter')?.value  || 'all';
-  let monthF = document.getElementById('fixMonthFilter')?.value || 'all';
+  let teamF  = 'all';
+  let monthF = 'all';
+
+  const ML = {'01':'January','02':'February','03':'March','04':'April','05':'May','06':'June','07':'July','08':'August','09':'September','10':'October','11':'November','12':'December'};
 
   let filtered = [...allFixtures];
-  if (teamF  !== 'all') filtered = filtered.filter(f => f.home===teamF  || f.away===teamF);
-  if (monthF !== 'all') filtered = filtered.filter(f => f.date.startsWith(monthF));
 
   const grouped = {};
   for (const fix of filtered) {
@@ -1120,26 +1200,26 @@ function renderFixtures() {
     if (af&&bf) return da-db2; if (!af&&!bf) return da-db2; return af?-1:1;
   });
 
-  const ML = {'01':'January','02':'February','03':'March','04':'April','05':'May','06':'June','07':'July','08':'August','09':'September','10':'October','11':'November','12':'December'};
+  let html = subTabsHtml;
 
-  let html = `<div class="filters-bar">
+  html += `<div class="filters-bar">
     <div class="filter-group">
       <label>Team</label>
       <select id="fixTeamFilter">
         <option value="all">All Teams</option>
-        ${allTeams.map(t=>`<option value="${t}" ${teamF===t?'selected':''}>${t}</option>`).join('')}
+        ${allTeams.map(t=>`<option value="${t}">${t}</option>`).join('')}
       </select>
     </div>
     <div class="filter-group">
       <label>Month</label>
       <select id="fixMonthFilter">
         <option value="all">All Months</option>
-        ${allMonths.map(m=>{const[y,mo]=m.split('-');return`<option value="${m}" ${monthF===m?'selected':''}>${ML[mo]||mo} ${y}</option>`;}).join('')}
+        ${allMonths.map(m=>{const[y,mo]=m.split('-');return`<option value="${m}">${ML[mo]||mo} ${y}</option>`;}).join('')}
       </select>
     </div>
     <div class="filter-group"><button id="clearFixBtn">Clear Filters</button></div>
-    <div class="filter-stats">${filtered.length} fixture${filtered.length!==1?'s':''} found</div>
-    <a href="manager-calendar.html" class="view-calendar-btn">📅 View Calendar</a>
+    <div class="filter-stats" id="fixFilterStats">${filtered.length} fixture${filtered.length!==1?'s':''} found</div>
+    <a href="manager-calendar.html" class="view-calendar-btn">View Calendar</a>
   </div>`;
 
   if (!sortedDates.length) {
@@ -1151,16 +1231,23 @@ function renderFixtures() {
       const [y,mo] = dateStr.split('-');
       const isPast = d < today;
       html += `<div class="fixture-date-group">
-        <div class="fixture-date-label">📅 ${days[d.getDay()]}, ${d.getDate()} ${ML[mo]||mo} ${y}${isPast?' · Played':''}</div>`;
+        <div class="fixture-date-label">${days[d.getDay()]}, ${d.getDate()} ${ML[mo]||mo} ${y}${isPast?' · Played':''}</div>`;
       for (const fix of grouped[dateStr]) {
-        const hIco = fix.homeIcon ? `<img src="${fix.homeIcon}" class="team-icon-lg" alt="${fix.home}" onerror="this.style.display='none';">` : getTeamIconHtml(fix.home,'team-icon-lg');
-        const aIco = fix.awayIcon ? `<img src="${fix.awayIcon}" class="team-icon-lg" alt="${fix.away}" onerror="this.style.display='none';">` : getTeamIconHtml(fix.away,'team-icon-lg');
+        // Only show uploaded team icons, no fallback
+        const hIco = getTeamIconHtml(fix.home, 'team-icon-lg');
+        const aIco = getTeamIconHtml(fix.away, 'team-icon-lg');
         html += `<div class="fixture-card">
-          <div class="fixture-tournament-label">🏆 ${escapeHtml(fix.tournament)}</div>
+          <div class="fixture-tournament-label">${escapeHtml(fix.tournament)}</div>
           <div class="fixture-match-row">
-            <div class="fixture-team-side">${hIco}<span class="fixture-team-name">${escapeHtml(fix.home)}</span></div>
+            <div class="fixture-team-side">
+              ${hIco}
+              <span class="fixture-team-name">${escapeHtml(fix.home)}</span>
+            </div>
             <div class="fixture-vs">VS</div>
-            <div class="fixture-team-side">${aIco}<span class="fixture-team-name">${escapeHtml(fix.away)}</span></div>
+            <div class="fixture-team-side">
+              ${aIco}
+              <span class="fixture-team-name">${escapeHtml(fix.away)}</span>
+            </div>
           </div>
         </div>`;
       }
@@ -1168,19 +1255,82 @@ function renderFixtures() {
     }
   }
 
-  document.getElementById('contentCard').innerHTML = html;
-  document.getElementById('fixTeamFilter')?.addEventListener('change', () => renderFixtures());
-  document.getElementById('fixMonthFilter')?.addEventListener('change', () => renderFixtures());
+  card.innerHTML = html;
+
+  // Sub-tab listeners
+  card.querySelectorAll('.sub-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeFixtureSubTab = btn.dataset.subtab;
+      renderFixtures();
+    });
+  });
+
+  // Filter logic
+  function applyFixtureFilters() {
+    const tf = document.getElementById('fixTeamFilter')?.value || 'all';
+    const mf = document.getElementById('fixMonthFilter')?.value || 'all';
+    let f = [...allFixtures];
+    if (tf !== 'all') f = f.filter(x => x.home===tf || x.away===tf);
+    if (mf !== 'all') f = f.filter(x => x.date.startsWith(mf));
+    document.getElementById('fixFilterStats').textContent = `${f.length} fixture${f.length!==1?'s':''} found`;
+    // Re-render visible fixture cards
+    const grp = {};
+    for (const fix of f) {
+      if (!grp[fix.date]) grp[fix.date] = [];
+      grp[fix.date].push(fix);
+    }
+    const container = card.querySelector('.fixture-date-group')?.parentElement;
+    // Remove existing date groups
+    card.querySelectorAll('.fixture-date-group').forEach(el => el.remove());
+    const filtersBar = card.querySelector('.filters-bar');
+    const sortedD = Object.keys(grp).sort((a,b) => {
+      const da=new Date(a), db2=new Date(b), af=da>=today, bf=db2>=today;
+      if (af&&bf) return da-db2; if (!af&&!bf) return da-db2; return af?-1:1;
+    });
+    if (!sortedD.length) {
+      const emp = document.createElement('div');
+      emp.className='empty-state'; emp.innerHTML='<div class="empty-icon">📅</div><p>No fixtures found</p>';
+      filtersBar.after(emp);
+    } else {
+      let insertAfter = filtersBar;
+      for (const dateStr of sortedD) {
+        const d = new Date(dateStr);
+        const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        const [y,mo] = dateStr.split('-');
+        const isPast = d < today;
+        const dateGroup = document.createElement('div');
+        dateGroup.className = 'fixture-date-group';
+        let dgHtml = `<div class="fixture-date-label">${days[d.getDay()]}, ${d.getDate()} ${ML[mo]||mo} ${y}${isPast?' · Played':''}</div>`;
+        for (const fix of grp[dateStr]) {
+          const hIco = getTeamIconHtml(fix.home, 'team-icon-lg');
+          const aIco = getTeamIconHtml(fix.away, 'team-icon-lg');
+          dgHtml += `<div class="fixture-card">
+            <div class="fixture-tournament-label">${escapeHtml(fix.tournament)}</div>
+            <div class="fixture-match-row">
+              <div class="fixture-team-side">${hIco}<span class="fixture-team-name">${escapeHtml(fix.home)}</span></div>
+              <div class="fixture-vs">VS</div>
+              <div class="fixture-team-side">${aIco}<span class="fixture-team-name">${escapeHtml(fix.away)}</span></div>
+            </div>
+          </div>`;
+        }
+        dateGroup.innerHTML = dgHtml;
+        insertAfter.after(dateGroup);
+        insertAfter = dateGroup;
+      }
+    }
+  }
+
+  document.getElementById('fixTeamFilter')?.addEventListener('change', applyFixtureFilters);
+  document.getElementById('fixMonthFilter')?.addEventListener('change', applyFixtureFilters);
   document.getElementById('clearFixBtn')?.addEventListener('click', () => {
     document.getElementById('fixTeamFilter').value = 'all';
     document.getElementById('fixMonthFilter').value = 'all';
-    renderFixtures();
+    applyFixtureFilters();
   });
 }
 
 // ─── RENDER RESULTS ───
 async function renderResults() {
-  // Gather all results across all groups for this season
   const allResults = [];
   for (const gid in groupsData) {
     const rSnap = await db.ref(sp(currentSeasonId, `groups/${gid}/results`)).once('value');
@@ -1218,7 +1368,7 @@ async function renderResults() {
     </div>
     <div class="filter-group"><button id="clearResultsBtn">Clear Filters</button></div>
     <div class="filter-stats">${filtered.length} match${filtered.length!==1?'es':''} found</div>
-    ${isAdmin ? `<button class="add-result-top-btn" id="addResultBtn">⚽ + Add Result</button>` : ''}
+    ${isAdmin ? `<button class="add-result-top-btn" id="addResultBtn">+ Add Result</button>` : ''}
   </div>`;
 
   if (!filtered.length) {
@@ -1235,21 +1385,28 @@ async function renderResults() {
       } else {
         scoreHtml = `<div class="score-display">${r.homeScore??'?'} — ${r.awayScore??'?'}</div>`;
       }
+      // Only use uploaded icons, no fallback
       const hIco = getTeamIconHtml(r.homeTeam, 'team-icon-lg');
       const aIco = getTeamIconHtml(r.awayTeam, 'team-icon-lg');
       html += `<div class="match-card" style="animation-delay:${i*0.05}s">
         <div class="match-row">
-          <div class="team-side">${hIco}<span class="team-name-big">${escapeHtml(r.homeTeam||'')}</span></div>
+          <div class="team-side">
+            ${hIco}
+            <span class="team-name-big">${escapeHtml(r.homeTeam||'')}</span>
+          </div>
           <div class="match-center">${scoreHtml}</div>
-          <div class="team-side">${aIco}<span class="team-name-big">${escapeHtml(r.awayTeam||'')}</span></div>
+          <div class="team-side">
+            ${aIco}
+            <span class="team-name-big">${escapeHtml(r.awayTeam||'')}</span>
+          </div>
         </div>
         <div class="match-meta">
           ${r.md ? `<span class="meta-tag">MD ${r.md}</span>` : ''}
-          <span class="meta-tag">📁 ${escapeHtml(r.groupName)}</span>
+          <span class="meta-tag">${escapeHtml(r.groupName)}</span>
         </div>
         ${isAdmin ? `<div class="admin-row">
-          <button class="btn-sm btn-edit" data-gid="${r.groupId}" data-key="${r.key}">✏️ Edit</button>
-          <button class="btn-sm btn-delete" data-gid="${r.groupId}" data-key="${r.key}">🗑️ Delete</button>
+          <button class="btn-sm btn-edit" data-gid="${r.groupId}" data-key="${r.key}">Edit</button>
+          <button class="btn-sm btn-delete" data-gid="${r.groupId}" data-key="${r.key}">Delete</button>
         </div>` : ''}
       </div>`;
     });
@@ -1292,12 +1449,10 @@ async function openResultForm(r) {
   tempScorersHome = r?.goalScorers?.home ? [...r.goalScorers.home] : [];
   tempScorersAway = r?.goalScorers?.away ? [...r.goalScorers.away] : [];
 
-  // Build group options
   const groupOpts = Object.entries(groupsData).map(([gid, g]) =>
     `<option value="${gid}" ${editingResultGroupId===gid?'selected':''}>${escapeHtml(g.name||gid)}</option>`
   ).join('');
 
-  // Build initial team options for selected group
   let homeOpts = '<option value="">Home Team</option>';
   let awayOpts = '<option value="">Away Team</option>';
   if (editingResultGroupId && groupsData[editingResultGroupId]) {
@@ -1329,7 +1484,7 @@ async function openResultForm(r) {
     <label>Matchday</label>
     <input id="rMd" type="number" value="${r?.md || ''}">
     <div class="scorer-section">
-      <h4>⚽ Home Scorers</h4>
+      <h4>Home Scorers</h4>
       <div style="display:flex;gap:10px;margin-bottom:10px;">
         <input type="text" id="homeScorerName" placeholder="Player name" style="flex:2;">
         <input type="number" id="homeScorerGoals" placeholder="Goals" value="1" style="width:90px;">
@@ -1338,7 +1493,7 @@ async function openResultForm(r) {
       <div id="homeScorerList" class="scorer-list"></div>
     </div>
     <div class="scorer-section">
-      <h4>⚽ Away Scorers</h4>
+      <h4>Away Scorers</h4>
       <div style="display:flex;gap:10px;margin-bottom:10px;">
         <input type="text" id="awayScorerName" placeholder="Player name" style="flex:2;">
         <input type="number" id="awayScorerGoals" placeholder="Goals" value="1" style="width:90px;">
@@ -1354,7 +1509,6 @@ async function openResultForm(r) {
 
   renderScorerList('home'); renderScorerList('away');
 
-  // Repopulate teams when group changes
   document.getElementById('rGroup').addEventListener('change', e => {
     const gid = e.target.value;
     const teams = gid && groupsData[gid] ? Object.values(groupsData[gid].teams||{}).map(t=>t.name).sort() : [];
@@ -1410,7 +1564,6 @@ async function openResultForm(r) {
     if (editingResultKey) await db.ref(`${path}/${editingResultKey}`).set(resultObj);
     else await db.ref(path).push(resultObj);
 
-    // Auto update team stats for new results
     if (!editingResultKey) await updateGroupTeamStats(gid, home, away, hs, as2, forfeit);
 
     closeModal();
@@ -1424,8 +1577,8 @@ function renderScorerList(side) {
   const container = document.getElementById(`${side}ScorerList`);
   if (!container) return;
   container.innerHTML = list.map((s, idx) => `
-    <div class="scorer-badge">⚽ ${escapeHtml(s.player)} (${s.goals})
-      <button class="remove-scorer" data-side="${side}" data-idx="${idx}">✖</button>
+    <div class="scorer-badge">${escapeHtml(s.player)} (${s.goals})
+      <button class="remove-scorer" data-side="${side}" data-idx="${idx}">x</button>
     </div>`).join('');
   container.querySelectorAll('.remove-scorer').forEach(btn => {
     btn.onclick = () => {
@@ -1468,108 +1621,6 @@ async function updateGroupTeamStats(gid, homeTeam, awayTeam, hScore, aScore, for
   await db.ref(sp(currentSeasonId, `groups/${gid}/teams/${aKey}`)).set(aData);
 }
 
-// ─── RENDER KNOCKOUT ───
-function renderKnockout() {
-  const card = document.getElementById('contentCard');
-  if (!knockoutMatches.length) {
-    card.innerHTML = `<div class="empty-state"><div class="empty-icon">🏆</div><p>No knockout matches yet</p></div>` +
-      (isAdmin ? `<button class="add-btn-main" id="addKoMain">+ Add Match</button>` : '');
-    if (isAdmin) document.getElementById('addKoMain')?.addEventListener('click', () => openKoForm(null));
-    return;
-  }
-
-  let html = isAdmin ? `<div style="display:flex;justify-content:flex-end;margin-bottom:20px;"><button class="add-btn" id="addKoTop">+ Add Match</button></div>` : '';
-
-  const rounds = ['Final','Third Place','SF','QF','R16','R32','R64','Group'];
-  const sorted = [...knockoutMatches].sort((a,b) => {
-    const ai = rounds.indexOf(a.round), bi = rounds.indexOf(b.round);
-    return (ai===-1?99:ai) - (bi===-1?99:bi);
-  });
-
-  sorted.forEach(m => {
-    const score = m.score || '? - ?';
-    html += `<div class="knockout-match" data-key="${m.key}">
-      <div>
-        <div class="knockout-round">${escapeHtml(m.round||'KO')}</div>
-        <div class="knockout-teams">${escapeHtml(m.homeTeam)} vs ${escapeHtml(m.awayTeam)}</div>
-        ${m.forfeit && m.forfeit!=='none' ? `<div style="font-size:1rem;color:rgba(255,200,200,0.8);margin-top:4px;">${m.forfeit}</div>` : ''}
-      </div>
-      <div style="display:flex;align-items:center;gap:16px;">
-        <div class="knockout-score">${escapeHtml(score)}</div>
-        ${isAdmin ? `<button class="btn-sm btn-edit ko-edit" data-key="${m.key}">✏️</button>
-                     <button class="btn-sm btn-delete ko-del"  data-key="${m.key}">🗑️</button>` : ''}
-      </div>
-    </div>`;
-  });
-
-  card.innerHTML = html;
-  if (isAdmin) {
-    document.getElementById('addKoTop')?.addEventListener('click', () => openKoForm(null));
-    card.querySelectorAll('.ko-edit').forEach(btn => {
-      const m = knockoutMatches.find(x => x.key === btn.dataset.key);
-      if (m) btn.onclick = () => openKoForm(m);
-    });
-    card.querySelectorAll('.ko-del').forEach(btn => {
-      btn.onclick = async () => {
-        if (!confirm('Delete match?')) return;
-        await db.ref(sp(currentSeasonId, `knockout_matches/${btn.dataset.key}`)).remove();
-        await loadCurrentSeasonData(); renderKnockout();
-      };
-    });
-  }
-}
-
-let editingKoKey = null;
-function openKoForm(m) {
-  editingKoKey = m?.key || null;
-  const allTeams = [];
-  for (const gid in groupsData) {
-    Object.values(groupsData[gid]?.teams||{}).forEach(t => { if(t.name) allTeams.push(t.name); });
-  }
-  const teamOpts = [...new Set(allTeams)].sort().map(t =>
-    `<option value="${t}" ${m?.homeTeam===t||m?.awayTeam===t?'':''} >${t}</option>`).join('');
-
-  showModal(`
-    <h3>${m ? 'Edit' : 'Add'} Knockout Match</h3>
-    <label>Round</label>
-    <input id="koRound" placeholder="e.g. R16, QF, SF, Final" value="${escapeHtml(m?.round||'')}">
-    <label>Home Team</label>
-    <select id="koHome"><option value="">Select</option>${teamOpts}</select>
-    <label>Away Team</label>
-    <select id="koAway"><option value="">Select</option>${teamOpts}</select>
-    <label>Score (e.g. 2-1)</label>
-    <input id="koScore" placeholder="2-1" value="${escapeHtml(m?.score||'')}">
-    <label>Forfeit</label>
-    <select id="koForfeit">
-      <option value="none"    ${(!m?.forfeit||m.forfeit==='none')?'selected':''}>Normal</option>
-      <option value="forfeit" ${m?.forfeit==='forfeit'?'selected':''}>Forfeit</option>
-    </select>
-    <div class="modal-btns">
-      <button class="modal-btn-primary" id="saveKoBtn">Save</button>
-      <button class="modal-btn-cancel"  id="cancelKoBtn">Cancel</button>
-    </div>
-  `);
-  if (m) {
-    document.getElementById('koHome').value = m.homeTeam || '';
-    document.getElementById('koAway').value = m.awayTeam || '';
-  }
-  document.getElementById('cancelKoBtn').onclick = closeModal;
-  document.getElementById('saveKoBtn').onclick = async () => {
-    const round   = document.getElementById('koRound').value.trim();
-    const home    = document.getElementById('koHome').value;
-    const away    = document.getElementById('koAway').value;
-    const score   = document.getElementById('koScore').value.trim();
-    const forfeit = document.getElementById('koForfeit').value;
-    if (!round||!home||!away) { alert('Fill all required fields'); return; }
-    const koObj = { round, homeTeam:home, awayTeam:away, score, forfeit };
-    const path = sp(currentSeasonId, 'knockout_matches');
-    if (editingKoKey) await db.ref(`${path}/${editingKoKey}`).set(koObj);
-    else await db.ref(path).push(koObj);
-    closeModal();
-    await loadCurrentSeasonData(); renderKnockout();
-  };
-}
-
 // ─── TOP SCORERS ───
 function renderTopScorers() {
   const sorted = [...topScorerList].sort((a,b)=>(b.count||0)-(a.count||0));
@@ -1589,7 +1640,7 @@ function renderTopScorers() {
           <div class="player-name-overlay">${escapeHtml(p.name||'')}</div>
           ${teamUrl ? `<div class="team-icon-overlay"><img src="${teamUrl}" alt="${escapeHtml(p.team||'')}"></div>` : ''}
         </div>
-        <div class="top3-count">⚽ ${p.count||0}</div>
+        <div class="top3-count">${p.count||0} Goals</div>
       </div>`;
     });
     html += '</div>';
@@ -1606,7 +1657,7 @@ function renderTopScorers() {
         <td style="font-size:1.5rem;">${escapeHtml(p.name||'')}</td>
         <td><div class="stat-team-cell">${ico}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td>
         <td><span class="count-badge">${p.count||0}</span></td>
-        ${isAdmin?`<td><button class="btn-sm btn-edit scorer-edit" data-key="${p.key}">✏️</button> <button class="btn-sm btn-delete scorer-del" data-key="${p.key}">🗑️</button></td>`:''}
+        ${isAdmin?`<td><button class="btn-sm btn-edit scorer-edit" data-key="${p.key}">Edit</button> <button class="btn-sm btn-delete scorer-del" data-key="${p.key}">Delete</button></td>`:''}
       </tr>`;
     });
     html += '</tbody></table></div>';
@@ -1650,7 +1701,7 @@ function renderTopAssists() {
           <div class="player-name-overlay">${escapeHtml(p.name||'')}</div>
           ${teamUrl ? `<div class="team-icon-overlay"><img src="${teamUrl}" alt="${escapeHtml(p.team||'')}"></div>` : ''}
         </div>
-        <div class="top3-count">🎯 ${p.count||0}</div>
+        <div class="top3-count">${p.count||0} Assists</div>
       </div>`;
     });
     html += '</div>';
@@ -1667,7 +1718,7 @@ function renderTopAssists() {
         <td style="font-size:1.5rem;">${escapeHtml(p.name||'')}</td>
         <td><div class="stat-team-cell">${ico}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td>
         <td><span class="count-badge">${p.count||0}</span></td>
-        ${isAdmin?`<td><button class="btn-sm btn-edit assist-edit" data-key="${p.key}">✏️</button> <button class="btn-sm btn-delete assist-del" data-key="${p.key}">🗑️</button></td>`:''}
+        ${isAdmin?`<td><button class="btn-sm btn-edit assist-edit" data-key="${p.key}">Edit</button> <button class="btn-sm btn-delete assist-del" data-key="${p.key}">Delete</button></td>`:''}
       </tr>`;
     });
     html += '</tbody></table></div>';
@@ -1721,7 +1772,7 @@ async function openStatModal(type, entry=null) {
       let blob;
       try { blob = await removeBackground(file); } catch(e) { blob = file; }
       const url = await uploadToImgBB(blob);
-      pd.innerHTML = `<img src="${url}" style="max-width:120px;border-radius:12px;"><div class="status-msg status-success">✓ Ready</div>`;
+      pd.innerHTML = `<img src="${url}" style="max-width:120px;border-radius:12px;"><div class="status-msg status-success">Ready</div>`;
       fi.dataset.uploadedUrl = url;
     } catch(e) { pd.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`; }
   };
@@ -1749,7 +1800,6 @@ function renderCurrentTab() {
   if      (tab === 'groups')     renderGroups();
   else if (tab === 'fixtures')   renderFixtures();
   else if (tab === 'results')    renderResults();
-  else if (tab === 'knockout')   renderKnockout();
   else if (tab === 'topscorers') renderTopScorers();
   else if (tab === 'topassists') renderTopAssists();
 }
@@ -1757,22 +1807,35 @@ function renderCurrentTab() {
 // ─── Admin Settings ───
 function openAdminSettings() {
   showModal(`
-    <h3>⚙️ Admin Settings</h3>
+    <h3>Admin Settings</h3>
     <div class="settings-grid">
-      <button class="settings-btn" id="setLogoBtn">🏷️ Upload Navbar Logo</button>
-      <button class="settings-btn" id="manageSlideBtn">🎞️ Manage Slideshow</button>
-      <button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button>
-      <button class="settings-btn" id="manageEmiratesBtn">✈️ Manage Emirates Animation</button>
-      <button class="settings-btn" id="manageCornerBtn">🖼️ Manage Group Corner Image</button>
+      <button class="settings-btn" id="setLogoBtn">Upload Navbar Logo</button>
+      <button class="settings-btn" id="setBgBtn">Set Background Image</button>
+      <button class="settings-btn" id="manageSlideBtn">Manage Slideshow</button>
+      <button class="settings-btn" id="addIconBtn">Add Team Icon</button>
+      <button class="settings-btn" id="manageEmiratesBtn">Manage Emirates Animation</button>
     </div>
     <div class="modal-btns"><button class="modal-btn-cancel" id="closeAdminBtn" style="width:100%;">Close</button></div>
   `);
   document.getElementById('closeAdminBtn').onclick = closeModal;
   document.getElementById('setLogoBtn').onclick      = () => uploadNavbarLogo();
+  document.getElementById('setBgBtn').onclick        = () => uploadBackgroundImage();
   document.getElementById('manageSlideBtn').onclick  = () => manageSlideshowUI();
   document.getElementById('addIconBtn').onclick      = () => uploadTeamIcon();
   document.getElementById('manageEmiratesBtn').onclick = () => manageEmiratesUI();
-  document.getElementById('manageCornerBtn').onclick   = () => manageCornerImageUI();
+}
+
+async function uploadBackgroundImage() {
+  const file = await pickFile('image/*'); if (!file) return;
+  showModal(`<h3>Uploading…</h3><div class="loading-spinner"><div class="spinner"></div><span>Please wait</span></div>`);
+  try {
+    const url = await uploadToImgBB(file);
+    await db.ref(`${basePath}/settings/backgroundImage`).set(url);
+    document.body.style.setProperty('--bg-image', `url(${url})`);
+    document.body.classList.add('has-bg');
+    closeModal();
+    alert('Background image updated!');
+  } catch(e) { closeModal(); alert('Upload failed: ' + e.message); }
 }
 
 async function uploadNavbarLogo() {
@@ -1805,13 +1868,13 @@ async function manageEmiratesUI() {
   const refresh = () => showModal(`
     <h3>Emirates Animation</h3>
     <label>Emirates Logo (Front)</label>
-    <div style="background:rgba(127,29,29,0.3);padding:1rem;border-radius:1rem;margin-bottom:1rem;text-align:center;">
+    <div style="background:rgba(255,255,255,0.05);padding:1rem;border-radius:1rem;margin-bottom:1rem;text-align:center;">
       ${emiratesLogoUrl ? `<img src="${emiratesLogoUrl}" style="max-height:80px;">` : '<p style="color:rgba(255,255,255,0.5);">Not set</p>'}
     </div>
     <input type="file" id="eLogoFile" accept="image/*">
     <button class="modal-btn-primary" id="uploadELogoBtn" style="margin-top:10px;">Upload Logo</button>
     <label style="margin-top:20px;">Fly Better Slogan (Back)</label>
-    <div style="background:rgba(127,29,29,0.3);padding:1rem;border-radius:1rem;margin-bottom:1rem;text-align:center;">
+    <div style="background:rgba(255,255,255,0.05);padding:1rem;border-radius:1rem;margin-bottom:1rem;text-align:center;">
       ${emiratesSloganUrl ? `<img src="${emiratesSloganUrl}" style="max-height:80px;">` : '<p style="color:rgba(255,255,255,0.5);">Not set</p>'}
     </div>
     <input type="file" id="eSloganFile" accept="image/*">
@@ -1828,7 +1891,7 @@ async function manageEmiratesUI() {
         const url = await uploadToImgBB(file);
         await db.ref(`${basePath}/emirates_logo`).set(url);
         emiratesLogoUrl = url; renderEmiratesAnimation();
-        document.getElementById('emiratesStatus').innerHTML = '<div class="status-msg status-success">✓ Logo updated</div>';
+        document.getElementById('emiratesStatus').innerHTML = '<div class="status-msg status-success">Logo updated</div>';
         refresh(); attach();
       } catch(e) { document.getElementById('emiratesStatus').innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`; }
     };
@@ -1839,7 +1902,7 @@ async function manageEmiratesUI() {
         const url = await uploadToImgBB(file);
         await db.ref(`${basePath}/emirates_slogan`).set(url);
         emiratesSloganUrl = url; renderEmiratesAnimation();
-        document.getElementById('emiratesStatus').innerHTML = '<div class="status-msg status-success">✓ Slogan updated</div>';
+        document.getElementById('emiratesStatus').innerHTML = '<div class="status-msg status-success">Slogan updated</div>';
         refresh(); attach();
       } catch(e) { document.getElementById('emiratesStatus').innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`; }
     };
@@ -1848,40 +1911,11 @@ async function manageEmiratesUI() {
   attach();
 }
 
-async function manageCornerImageUI() {
-  showModal(`
-    <h3>Group Corner Image</h3>
-    <p style="color:rgba(255,255,255,0.6);margin-bottom:1rem;">Appears in the top-right corner of group cards.</p>
-    <div style="background:rgba(127,29,29,0.3);padding:1rem;border-radius:1rem;margin-bottom:1rem;text-align:center;">
-      ${groupCornerImageUrl ? `<img src="${groupCornerImageUrl}" style="max-width:100px;max-height:100px;border-radius:8px;">` : '<p style="color:rgba(255,255,255,0.5);">Not set</p>'}
-    </div>
-    <input type="file" id="cornerFile" accept="image/*">
-    <div class="modal-btns">
-      <button class="modal-btn-primary" id="uploadCornerBtn">Upload / Replace</button>
-      <button class="modal-btn-cancel"  id="closeCornerBtn">Close</button>
-    </div>
-    <div id="cornerStatus"></div>
-  `);
-  document.getElementById('closeCornerBtn').onclick = closeModal;
-  document.getElementById('uploadCornerBtn').onclick = async () => {
-    const file = document.getElementById('cornerFile').files[0];
-    if (!file) { document.getElementById('cornerStatus').innerHTML = '<div class="status-msg status-error">Select a file</div>'; return; }
-    document.getElementById('cornerStatus').innerHTML = '<div class="status-msg status-loading">Uploading…</div>';
-    try {
-      const url = await uploadToImgBB(file);
-      await db.ref(`${basePath}/group_corner_image`).set(url);
-      groupCornerImageUrl = url;
-      document.getElementById('cornerStatus').innerHTML = '<div class="status-msg status-success">✓ Updated</div>';
-      setTimeout(closeModal, 1200);
-    } catch(e) { document.getElementById('cornerStatus').innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`; }
-  };
-}
-
 async function manageSlideshowUI() {
   const refresh = () => {
     let prev = '<div class="img-preview-grid">';
     slideshowImages.forEach((url, idx) => {
-      prev += `<div class="preview-thumb"><img src="${url}"><span class="thumb-del" data-idx="${idx}">✕</span></div>`;
+      prev += `<div class="preview-thumb"><img src="${url}"><span class="thumb-del" data-idx="${idx}">x</span></div>`;
     });
     prev += '</div>';
     showModal(`
@@ -1942,13 +1976,13 @@ document.getElementById('adminModeBtn').onclick = () => {
   const key = prompt("Enter admin key:");
   if (key === "admin@100") {
     isAdmin = true;
-    alert("Admin mode activated ✅");
+    alert("Admin mode activated");
     updateSeasonUI();
     renderCurrentTab();
     if (!document.getElementById('adminSettingsItem')) {
       const item = document.createElement('div');
       item.id = 'adminSettingsItem'; item.className = 'menu-item';
-      item.innerHTML = '⚙️ Admin Settings';
+      item.innerHTML = 'Admin Settings';
       item.onclick = () => { openAdminSettings(); closeMenu(); };
       document.getElementById('sideMenu').appendChild(item);
     }
@@ -1971,6 +2005,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 // ─── Init ───
 async function init() {
+  await loadBgSettings();
   await loadNavbarLogo();
   await loadEmiratesAnimation();
   await loadSlideshow();
