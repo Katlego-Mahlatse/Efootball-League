@@ -113,37 +113,6 @@
             right: 0;
         }
 
-        .profile-section {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 15px 20px;
-            margin-bottom: 20px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 12px;
-            border-left: 5px solid #000;
-        }
-        .profile-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #000;
-        }
-        .profile-info {
-            flex: 1;
-        }
-        .profile-name {
-            font-weight: 600;
-            font-size: 16px;
-            color: #000;
-        }
-        .profile-team {
-            font-size: 13px;
-            color: #333;
-            margin-top: 3px;
-        }
-
         .league-panel {
             position: fixed;
             top: 0;
@@ -225,8 +194,12 @@
 
         .league-premier { border-left-color: #3d195b; }
         .league-premier::before { background: #3d195b; }
+        .league-laliga { border-left-color: #ee3524; }
+        .league-laliga::before { background: #ee3524; }
         .league-facup { border-left-color: #cc0000; }
         .league-facup::before { background: #cc0000; }
+        .league-copadelrey { border-left-color: #c60b1e; }
+        .league-copadelrey::before { background: #c60b1e; }
         .league-ucl { border-left-color: #003399; }
         .league-ucl::before { background: #003399; }
         .league-uel { border-left-color: #f58220; }
@@ -243,6 +216,8 @@
         .league-wc::before { background: #d4a017; }
         .league-cs { border-left-color: #e60000; }
         .league-cs::before { background: #e60000; }
+        .league-supercopaesp { border-left-color: #c60b1e; }
+        .league-supercopaesp::before { background: #c60b1e; }
 
         .close-menu {
             cursor: pointer;
@@ -388,6 +363,11 @@
             scroll-behavior: smooth;
             scrollbar-width: none;
             -ms-overflow-style: none;
+            cursor: grab;
+        }
+
+        .carousel-track:active {
+            cursor: grabbing;
         }
 
         .carousel-track::-webkit-scrollbar {
@@ -1005,49 +985,6 @@
             color: #fff;
         }
 
-        .profile-list {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .profile-list-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 15px;
-            background: rgba(255, 215, 0, 0.05);
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border: 1px solid rgba(255, 215, 0, 0.2);
-        }
-        .profile-list-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #FFD700;
-        }
-        .profile-list-info {
-            flex: 1;
-        }
-        .profile-list-username {
-            color: #FFD700;
-            font-weight: bold;
-            font-size: 16px;
-        }
-        .profile-list-team {
-            color: #888;
-            font-size: 13px;
-            margin-top: 3px;
-        }
-        .profile-list-input {
-            padding: 8px 12px;
-            background: #0d0d0d;
-            border: 1px solid #FFD700;
-            border-radius: 5px;
-            color: #fff;
-            width: 150px;
-        }
-
         .post-selection-modal {
             position: fixed;
             top: 0;
@@ -1179,17 +1116,9 @@
     <div class="hamburger-menu" id="hamburgerMenu">
         <span class="close-menu" onclick="closeMenu()">✕</span>
         <div class="menu-items">
-            <div class="profile-section" id="profileSection">
-                <img id="menuProfileAvatar" class="profile-avatar" src="https://via.placeholder.com/50/333/FFD700?text=?" alt="Avatar">
-                <div class="profile-info">
-                    <div class="profile-name" id="menuProfileName">Guest</div>
-                    <div class="profile-team" id="menuProfileTeam">No team assigned</div>
-                </div>
-            </div>
             <div class="menu-item" onclick="window.location.href='rules.html'">Rules</div>
             <div class="menu-item" onclick="showDisclaimer()">Disclaimer</div>
             <div class="menu-item" onclick="promptAdminKey()">Admin Mode</div>
-            <div class="menu-item" onclick="openLoginModal()">Login / Profile</div>
             <div class="menu-item calendar-parent">
                 Calendar
                 <div class="calendar-dropdown">
@@ -1198,7 +1127,6 @@
                 </div>
             </div>
             <div class="menu-item" onclick="window.location.href='ranks.html'">Manager Ranks</div>
-            <div class="menu-item" id="viewProfilesMenuItem" style="display: none;" onclick="openViewProfilesModal()">View Profiles</div>
             <div class="menu-item" id="editLeagueIconsMenuItem" style="display: none;" onclick="openEditLeagueIconsModal()">Edit League Icons</div>
         </div>
     </div>
@@ -1348,111 +1276,6 @@
         </div>
     </div>
 
-    <div class="modal" id="loginModal">
-        <div class="modal-content">
-            <span class="modal-close" onclick="closeLoginModal()">✕</span>
-            <h2 id="loginModalTitle">Create Account / Login</h2>
-            <div id="loginError" class="error-message" style="display: none;"></div>
-            
-            <div id="loginSection">
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="loginUsername" placeholder="Enter username">
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="loginPassword" placeholder="Enter password">
-                </div>
-                <div class="form-buttons">
-                    <button class="btn-primary" onclick="attemptLogin()">Login</button>
-                    <button class="btn-secondary" onclick="showRegisterSection()">Register</button>
-                </div>
-                <div style="text-align: center; margin-top: 15px;">
-                    <a href="#" onclick="showPasswordReset()" style="color: #FFD700; text-decoration: none;">Forgot Password?</a>
-                </div>
-            </div>
-
-            <div id="registerSection" style="display: none;">
-                <div class="form-group">
-                    <label>Username *</label>
-                    <input type="text" id="registerUsername" placeholder="Choose a username">
-                </div>
-                <div class="form-group">
-                    <label>Password *</label>
-                    <input type="password" id="registerPassword" placeholder="Choose a password">
-                </div>
-                <div class="form-group">
-                    <label>Confirm Password *</label>
-                    <input type="password" id="registerPasswordConfirm" placeholder="Confirm password">
-                </div>
-                <div class="file-upload-wrapper">
-                    <label>Profile Photo *</label>
-                    <input type="file" id="registerPhotoUpload" accept="image/*">
-                    <label for="registerPhotoUpload" class="file-upload-label">📷 Upload Photo</label>
-                    <div id="registerPhotoPreview" class="preview-container" style="display: none;">
-                        <img id="registerPhotoPreviewImg" class="circle-preview">
-                    </div>
-                    <div id="registerPhotoStatus" class="upload-status"></div>
-                </div>
-                <div class="form-buttons">
-                    <button class="btn-primary" id="registerBtn" onclick="registerUser()">Register</button>
-                    <button class="btn-secondary" onclick="showLoginSection()">Back to Login</button>
-                </div>
-            </div>
-
-            <div id="passwordResetSection" style="display: none;">
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="resetUsername" placeholder="Enter your username">
-                </div>
-                <div class="form-group">
-                    <label>New Password</label>
-                    <input type="password" id="resetNewPassword" placeholder="Enter new password">
-                </div>
-                <div class="form-group">
-                    <label>Confirm New Password</label>
-                    <input type="password" id="resetNewPasswordConfirm" placeholder="Confirm new password">
-                </div>
-                <div class="form-buttons">
-                    <button class="btn-primary" onclick="resetPassword()">Reset Password</button>
-                    <button class="btn-secondary" onclick="showLoginSection()">Back to Login</button>
-                </div>
-            </div>
-
-            <div id="profileEditSection" style="display: none;">
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="profileEditUsername" disabled>
-                </div>
-                <div class="file-upload-wrapper">
-                    <label>Profile Photo</label>
-                    <input type="file" id="profileEditPhotoUpload" accept="image/*">
-                    <label for="profileEditPhotoUpload" class="file-upload-label">📷 Change Photo</label>
-                    <div id="profileEditPhotoPreview" class="preview-container" style="display: none;">
-                        <img id="profileEditPhotoPreviewImg" class="circle-preview">
-                    </div>
-                    <div id="profileEditPhotoStatus" class="upload-status"></div>
-                </div>
-                <div class="form-group">
-                    <label>Change Password</label>
-                    <input type="password" id="profileEditPassword" placeholder="New password (leave blank to keep current)">
-                </div>
-                <div class="form-buttons">
-                    <button class="btn-primary" onclick="updateProfile()">Update Profile</button>
-                    <button class="btn-secondary" onclick="logoutUser()">Logout</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="viewProfilesModal">
-        <div class="modal-content">
-            <span class="modal-close" onclick="closeViewProfilesModal()">✕</span>
-            <h2>Manage User Profiles</h2>
-            <div class="profile-list" id="profileList"></div>
-        </div>
-    </div>
-
     <div class="modal" id="editLeagueIconsModal">
         <div class="modal-content">
             <span class="modal-close" onclick="closeEditLeagueIconsModal()">✕</span>
@@ -1489,19 +1312,21 @@
         let stories = [];
         let currentStoryIndex = 0;
         let autoSlideInterval = null;
-        let isCarouselVisible = true; // assume visible initially
+        let isCarouselVisible = true;
+        let isUserScrollingCarousel = false;
+        let userScrollResumeTimer = null;
         let uploadedProfilePhotoUrl = null;
         let editUploadedProfilePhotoUrl = null;
         let currentEditPostId = null;
-        let currentUserId = null;
-        let currentUsername = null;
 
         let mediaItems = [];
         let editMediaItems = [];
 
         const defaultLeagues = [
             { id: 'premier', name: 'Premier League', url: 'adminpremier.html', color: '#3d195b', icon: 'https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg' },
+            { id: 'laliga', name: 'La Liga', url: 'laliga.html', color: '#ee3524', icon: 'https://upload.wikimedia.org/wikipedia/commons/1/13/LaLiga_logo_2023.svg' },
             { id: 'facup', name: 'FA Cup', url: 'facup.html', color: '#cc0000', icon: 'https://upload.wikimedia.org/wikipedia/en/4/4b/FA_Cup_2023.svg' },
+            { id: 'copadelrey', name: 'Copa del Rey', url: 'copadelrey.html', color: '#c60b1e', icon: 'https://upload.wikimedia.org/wikipedia/en/b/b1/Copa_del_Rey_logo.svg' },
             { id: 'ucl', name: 'UEFA Champions League', url: 'newchampion.html', color: '#003399', icon: 'https://upload.wikimedia.org/wikipedia/en/b/bf/UEFA_Champions_League_logo_2.svg' },
             { id: 'uel', name: 'UEFA Europa League', url: 'neweuropa.html', color: '#f58220', icon: 'https://upload.wikimedia.org/wikipedia/en/c/c5/UEFA_Europa_League_logo_2024.svg' },
             { id: 'uecl', name: 'UEFA Conference League', url: 'newconference.html', color: '#5db846', icon: 'https://upload.wikimedia.org/wikipedia/en/b/b5/UEFA_Europa_Conference_League.svg' },
@@ -1509,17 +1334,77 @@
             { id: 'nations', name: 'UEFA Nations League', url: 'nations.html', color: '#0057a8', icon: 'https://upload.wikimedia.org/wikipedia/en/7/76/UEFA_Nations_League.svg' },
             { id: 'cwc', name: 'FIFA Club World Cup', url: 'newclubworldcup.html', color: '#326295', icon: 'https://upload.wikimedia.org/wikipedia/en/9/93/2025_FIFA_Club_World_Cup_logo.svg' },
             { id: 'wc', name: 'FIFA World Cup', url: 'fwc.html', color: '#d4a017', icon: 'https://upload.wikimedia.org/wikipedia/en/6/67/2026_FIFA_World_Cup_logo.svg' },
-            { id: 'cs', name: 'Community Shield', url: 'cs.html', color: '#e60000', icon: 'https://upload.wikimedia.org/wikipedia/en/4/49/FA_Community_Shield_2023.svg' }
+            { id: 'cs', name: 'Community Shield', url: 'cs.html', color: '#e60000', icon: 'https://upload.wikimedia.org/wikipedia/en/4/49/FA_Community_Shield_2023.svg' },
+            { id: 'supercopaesp', name: 'Supercopa de España', url: 'supercopa.html', color: '#c60b1e', icon: 'https://upload.wikimedia.org/wikipedia/en/2/24/Supercopa_de_Espa%C3%B1a_logo.svg' }
         ];
 
-        window.onload = function() { 
-            loadStories(); 
-            loadPosts(); 
-            loadUserProfile(); 
+        window.onload = function() {
+            loadStories();
+            loadPosts();
             loadLeagues();
-            // Setup Intersection Observer to pause auto-scroll when carousel is not visible
             setupCarouselVisibilityObserver();
+            setupCarouselScrollListeners();
         };
+
+        // ── Carousel scroll interaction ──────────────────────────────────────
+        function setupCarouselScrollListeners() {
+            const track = document.getElementById('carouselTrack');
+            if (!track) return;
+
+            function onUserScrollStart() {
+                isUserScrollingCarousel = true;
+                // Stop auto-slide immediately
+                if (autoSlideInterval) {
+                    clearInterval(autoSlideInterval);
+                    autoSlideInterval = null;
+                }
+                // Clear any pending resume timer
+                if (userScrollResumeTimer) {
+                    clearTimeout(userScrollResumeTimer);
+                    userScrollResumeTimer = null;
+                }
+            }
+
+            function onUserScrollEnd() {
+                // Clear any existing resume timer then start a fresh 5-second one
+                if (userScrollResumeTimer) clearTimeout(userScrollResumeTimer);
+                userScrollResumeTimer = setTimeout(() => {
+                    isUserScrollingCarousel = false;
+                    // Sync currentStoryIndex to wherever the user left the carousel
+                    const track = document.getElementById('carouselTrack');
+                    const slides = track.querySelectorAll('.story-slide');
+                    if (slides.length > 0) {
+                        const slideWidth = slides[0].offsetWidth + 15; // width + gap
+                        currentStoryIndex = Math.round(track.scrollLeft / slideWidth);
+                        currentStoryIndex = Math.max(0, Math.min(currentStoryIndex, stories.length - 1));
+                    }
+                    if (isCarouselVisible && stories.length > 0) {
+                        startAutoSlide();
+                    }
+                    userScrollResumeTimer = null;
+                }, 5000);
+            }
+
+            // Mouse events
+            track.addEventListener('mousedown', onUserScrollStart);
+            track.addEventListener('mouseup', onUserScrollEnd);
+            track.addEventListener('mouseleave', () => {
+                // Only treat mouseleave as scroll-end if they were scrolling
+                if (isUserScrollingCarousel) onUserScrollEnd();
+            });
+
+            // Touch events
+            track.addEventListener('touchstart', onUserScrollStart, { passive: true });
+            track.addEventListener('touchend', onUserScrollEnd, { passive: true });
+
+            // Wheel / trackpad horizontal scroll
+            track.addEventListener('wheel', (e) => {
+                if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+                    onUserScrollStart();
+                    onUserScrollEnd();
+                }
+            }, { passive: true });
+        }
 
         function setupCarouselVisibilityObserver() {
             const carousel = document.getElementById('storiesCarousel');
@@ -1528,19 +1413,17 @@
                 entries.forEach(entry => {
                     isCarouselVisible = entry.isIntersecting;
                     if (isCarouselVisible) {
-                        // Restart auto-slide if it was stopped
-                        if (!autoSlideInterval) {
+                        if (!autoSlideInterval && !isUserScrollingCarousel) {
                             startAutoSlide();
                         }
                     } else {
-                        // Pause auto-slide
                         if (autoSlideInterval) {
                             clearInterval(autoSlideInterval);
                             autoSlideInterval = null;
                         }
                     }
                 });
-            }, { threshold: 0.1 }); // 10% visibility
+            }, { threshold: 0.1 });
             observer.observe(carousel);
         }
 
@@ -1614,376 +1497,6 @@
             }
         }
 
-        async function loadUserProfile() {
-            const savedUserId = localStorage.getItem('user_id');
-            const savedUsername = localStorage.getItem('user_username');
-            const savedPhoto = localStorage.getItem('user_photo');
-            const savedTeam = localStorage.getItem('user_team');
-            
-            if (savedUserId && savedUsername) {
-                currentUserId = savedUserId;
-                currentUsername = savedUsername;
-                document.getElementById('menuProfileName').innerText = savedUsername;
-                document.getElementById('menuProfileAvatar').src = savedPhoto || 'https://via.placeholder.com/50/333/FFD700?text=' + savedUsername.charAt(0).toUpperCase();
-                document.getElementById('menuProfileTeam').innerText = savedTeam ? `Manager: ${savedTeam}` : 'No team assigned';
-            } else {
-                document.getElementById('menuProfileName').innerText = 'Guest';
-                document.getElementById('menuProfileAvatar').src = 'https://via.placeholder.com/50/333/FFD700?text=?';
-                document.getElementById('menuProfileTeam').innerText = 'Not logged in';
-            }
-        }
-
-        function openLoginModal() {
-            const savedUserId = localStorage.getItem('user_id');
-            if (savedUserId) {
-                showProfileEditSection();
-            } else {
-                showLoginSection();
-            }
-            document.getElementById('loginModal').classList.add('active');
-        }
-
-        function closeLoginModal() {
-            document.getElementById('loginModal').classList.remove('active');
-        }
-
-        function showLoginSection() {
-            document.getElementById('loginSection').style.display = 'block';
-            document.getElementById('registerSection').style.display = 'none';
-            document.getElementById('passwordResetSection').style.display = 'none';
-            document.getElementById('profileEditSection').style.display = 'none';
-            document.getElementById('loginModalTitle').innerText = 'Login';
-        }
-
-        function showRegisterSection() {
-            document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('registerSection').style.display = 'block';
-            document.getElementById('passwordResetSection').style.display = 'none';
-            document.getElementById('profileEditSection').style.display = 'none';
-            document.getElementById('loginModalTitle').innerText = 'Create Account';
-            document.getElementById('registerPhotoUpload').value = '';
-            document.getElementById('registerPhotoPreview').style.display = 'none';
-        }
-
-        function showPasswordReset() {
-            document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('registerSection').style.display = 'none';
-            document.getElementById('passwordResetSection').style.display = 'block';
-            document.getElementById('profileEditSection').style.display = 'none';
-            document.getElementById('loginModalTitle').innerText = 'Reset Password';
-        }
-
-        async function showProfileEditSection() {
-            document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('registerSection').style.display = 'none';
-            document.getElementById('passwordResetSection').style.display = 'none';
-            document.getElementById('profileEditSection').style.display = 'block';
-            document.getElementById('loginModalTitle').innerText = 'Your Profile';
-            
-            const savedUserId = localStorage.getItem('user_id');
-            const savedUsername = localStorage.getItem('user_username');
-            const savedPhoto = localStorage.getItem('user_photo');
-            
-            document.getElementById('profileEditUsername').value = savedUsername;
-            document.getElementById('profileEditPhotoPreviewImg').src = savedPhoto;
-            document.getElementById('profileEditPhotoPreview').style.display = 'block';
-        }
-
-        let tempRegisterPhotoUrl = null;
-        document.getElementById('registerPhotoUpload')?.addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const previewImg = document.getElementById('registerPhotoPreviewImg');
-            const reader = new FileReader();
-            reader.onload = ev => {
-                previewImg.src = ev.target.result;
-                document.getElementById('registerPhotoPreview').style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-            const status = document.getElementById('registerPhotoStatus');
-            status.innerHTML = 'Uploading... <span class="loading-spinner"></span>';
-            try {
-                const url = await uploadToImgBB(file);
-                tempRegisterPhotoUrl = url;
-                status.innerHTML = '✅ Photo uploaded';
-            } catch(e) {
-                status.innerHTML = '❌ Upload failed';
-                tempRegisterPhotoUrl = null;
-            }
-        });
-
-        async function registerUser() {
-            const username = document.getElementById('registerUsername').value.trim();
-            const password = document.getElementById('registerPassword').value;
-            const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
-            
-            if (!username || !password || !tempRegisterPhotoUrl) {
-                alert('Please fill all fields and upload a photo');
-                return;
-            }
-            
-            if (password !== passwordConfirm) {
-                alert('Passwords do not match');
-                return;
-            }
-
-            const btn = document.getElementById('registerBtn');
-            btn.disabled = true;
-            btn.textContent = 'Creating...';
-
-            try {
-                const checkRes = await fetch(`${FIREBASE_CONFIG.databaseURL}/profiles.json?orderBy="username"&equalTo="${username}"`);
-                const existing = await checkRes.json();
-                if (existing && Object.keys(existing).length > 0) {
-                    alert('Username already taken');
-                    btn.disabled = false;
-                    btn.textContent = 'Register';
-                    return;
-                }
-
-                const userData = {
-                    username: username,
-                    password: password,
-                    profilePicture: tempRegisterPhotoUrl,
-                    team: ''
-                };
-
-                const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/profiles.json`, {
-                    method: 'POST',
-                    body: JSON.stringify(userData)
-                });
-                const result = await res.json();
-
-                localStorage.setItem('user_id', result.name);
-                localStorage.setItem('user_username', username);
-                localStorage.setItem('user_photo', tempRegisterPhotoUrl);
-                localStorage.setItem('user_team', '');
-
-                currentUserId = result.name;
-                currentUsername = username;
-
-                loadUserProfile();
-                closeLoginModal();
-                tempRegisterPhotoUrl = null;
-                alert('Account created successfully!');
-            } catch(e) {
-                alert('Registration failed: ' + e.message);
-            }
-            btn.disabled = false;
-            btn.textContent = 'Register';
-        }
-
-        async function attemptLogin() {
-            const username = document.getElementById('loginUsername').value.trim();
-            const password = document.getElementById('loginPassword').value;
-
-            if (!username || !password) {
-                alert('Please enter username and password');
-                return;
-            }
-
-            try {
-                const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/profiles.json?orderBy="username"&equalTo="${username}"`);
-                const data = await res.json();
-
-                if (!data || Object.keys(data).length === 0) {
-                    alert('User not found');
-                    return;
-                }
-
-                const userId = Object.keys(data)[0];
-                const userData = data[userId];
-
-                if (userData.password !== password) {
-                    alert('Incorrect password');
-                    return;
-                }
-
-                localStorage.setItem('user_id', userId);
-                localStorage.setItem('user_username', userData.username);
-                localStorage.setItem('user_photo', userData.profilePicture);
-                localStorage.setItem('user_team', userData.team || '');
-
-                currentUserId = userId;
-                currentUsername = userData.username;
-
-                loadUserProfile();
-                closeLoginModal();
-                alert('Login successful!');
-            } catch(e) {
-                alert('Login failed: ' + e.message);
-            }
-        }
-
-        async function resetPassword() {
-            const username = document.getElementById('resetUsername').value.trim();
-            const newPassword = document.getElementById('resetNewPassword').value;
-            const confirmPassword = document.getElementById('resetNewPasswordConfirm').value;
-
-            if (!username || !newPassword) {
-                alert('Please fill all fields');
-                return;
-            }
-
-            if (newPassword !== confirmPassword) {
-                alert('Passwords do not match');
-                return;
-            }
-
-            try {
-                const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/profiles.json?orderBy="username"&equalTo="${username}"`);
-                const data = await res.json();
-
-                if (!data || Object.keys(data).length === 0) {
-                    alert('User not found');
-                    return;
-                }
-
-                const userId = Object.keys(data)[0];
-
-                await fetch(`${FIREBASE_CONFIG.databaseURL}/profiles/${userId}.json`, {
-                    method: 'PATCH',
-                    body: JSON.stringify({ password: newPassword })
-                });
-
-                alert('Password reset successful! Please login.');
-                showLoginSection();
-            } catch(e) {
-                alert('Password reset failed: ' + e.message);
-            }
-        }
-
-        let tempProfileEditPhotoUrl = null;
-        document.getElementById('profileEditPhotoUpload')?.addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const previewImg = document.getElementById('profileEditPhotoPreviewImg');
-            const reader = new FileReader();
-            reader.onload = ev => {
-                previewImg.src = ev.target.result;
-                document.getElementById('profileEditPhotoPreview').style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-            const status = document.getElementById('profileEditPhotoStatus');
-            status.innerHTML = 'Uploading... <span class="loading-spinner"></span>';
-            try {
-                const url = await uploadToImgBB(file);
-                tempProfileEditPhotoUrl = url;
-                status.innerHTML = '✅ Photo uploaded';
-            } catch(e) {
-                status.innerHTML = '❌ Upload failed';
-                tempProfileEditPhotoUrl = null;
-            }
-        });
-
-        async function updateProfile() {
-            const newPassword = document.getElementById('profileEditPassword').value;
-            const userId = localStorage.getItem('user_id');
-
-            if (!userId) return;
-
-            const updateData = {};
-            if (tempProfileEditPhotoUrl) {
-                updateData.profilePicture = tempProfileEditPhotoUrl;
-            }
-            if (newPassword) {
-                updateData.password = newPassword;
-            }
-
-            if (Object.keys(updateData).length === 0) {
-                alert('No changes to save');
-                return;
-            }
-
-            try {
-                await fetch(`${FIREBASE_CONFIG.databaseURL}/profiles/${userId}.json`, {
-                    method: 'PATCH',
-                    body: JSON.stringify(updateData)
-                });
-
-                if (tempProfileEditPhotoUrl) {
-                    localStorage.setItem('user_photo', tempProfileEditPhotoUrl);
-                }
-
-                loadUserProfile();
-                closeLoginModal();
-                tempProfileEditPhotoUrl = null;
-                alert('Profile updated!');
-            } catch(e) {
-                alert('Update failed: ' + e.message);
-            }
-        }
-
-        function logoutUser() {
-            if (!confirm('Are you sure you want to logout?')) return;
-            
-            localStorage.removeItem('user_id');
-            localStorage.removeItem('user_username');
-            localStorage.removeItem('user_photo');
-            localStorage.removeItem('user_team');
-            
-            currentUserId = null;
-            currentUsername = null;
-            
-            loadUserProfile();
-            closeLoginModal();
-            alert('Logged out successfully');
-        }
-
-        async function openViewProfilesModal() {
-            if (!isAdminMode) return;
-            
-            try {
-                const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/profiles.json`);
-                const data = await res.json();
-                
-                const container = document.getElementById('profileList');
-                if (!data || Object.keys(data).length === 0) {
-                    container.innerHTML = '<p style="color: #888; text-align: center;">No users registered yet.</p>';
-                } else {
-                    const profiles = Object.keys(data).map(id => ({ id, ...data[id] }));
-                    container.innerHTML = profiles.map(profile => `
-                        <div class="profile-list-item">
-                            <img src="${profile.profilePicture}" class="profile-list-avatar">
-                            <div class="profile-list-info">
-                                <div class="profile-list-username">${escapeHtml(profile.username)}</div>
-                                <div class="profile-list-team">Manager: ${profile.team || 'Not assigned'}</div>
-                            </div>
-                            <input type="text" class="profile-list-input" placeholder="Assign team" value="${profile.team || ''}" 
-                                onchange="updateUserTeam('${profile.id}', this.value, '${profile.username}')">
-                        </div>
-                    `).join('');
-                }
-                
-                document.getElementById('viewProfilesModal').classList.add('active');
-            } catch(e) {
-                alert('Failed to load profiles: ' + e.message);
-            }
-        }
-
-        function closeViewProfilesModal() {
-            document.getElementById('viewProfilesModal').classList.remove('active');
-        }
-
-        async function updateUserTeam(userId, team, username) {
-            try {
-                await fetch(`${FIREBASE_CONFIG.databaseURL}/profiles/${userId}.json`, {
-                    method: 'PATCH',
-                    body: JSON.stringify({ team: team })
-                });
-
-                const currentId = localStorage.getItem('user_id');
-                if (currentId === userId) {
-                    localStorage.setItem('user_team', team);
-                    loadUserProfile();
-                }
-
-                alert(`Team updated for ${username}`);
-            } catch(e) {
-                alert('Update failed: ' + e.message);
-            }
-        }
-
         async function uploadToImgBB(file) {
             const formData = new FormData();
             formData.append("image", file);
@@ -2018,7 +1531,6 @@
                 isAdminMode = true;
                 document.getElementById('adminSlideControls').style.display = 'block';
                 document.getElementById('createPostSection').style.display = 'block';
-                document.getElementById('viewProfilesMenuItem').style.display = 'block';
                 document.getElementById('editLeagueIconsMenuItem').style.display = 'block';
                 renderPosts();
                 renderStories();
@@ -2078,35 +1590,33 @@
         }
 
         function viewStory(index) {
-            // Only scroll the carousel horizontally, never affect page scroll
             const track = document.getElementById('carouselTrack');
             const slides = track.querySelectorAll('.story-slide');
             if (!slides[index]) return;
             const slide = slides[index];
             const targetScrollLeft = slide.offsetLeft - (track.clientWidth / 2) + (slide.clientWidth / 2);
-            // Use scrollLeft property directly to avoid any browser interventions
             track.scrollLeft = Math.max(0, targetScrollLeft);
             currentStoryIndex = index;
         }
 
-        function nextStory() { 
-            if (!isCarouselVisible) return; // Don't advance if carousel isn't visible
+        function nextStory() {
+            if (!isCarouselVisible || isUserScrollingCarousel) return;
             currentStoryIndex = (currentStoryIndex + 1) % stories.length;
             viewStory(currentStoryIndex);
         }
-        
-        function startAutoSlide() { 
-            if (autoSlideInterval) clearInterval(autoSlideInterval); 
-            autoSlideInterval = setInterval(() => { 
-                if (stories.length > 0 && isCarouselVisible) nextStory(); 
-            }, 4000); 
+
+        function startAutoSlide() {
+            if (autoSlideInterval) clearInterval(autoSlideInterval);
+            autoSlideInterval = setInterval(() => {
+                if (stories.length > 0 && isCarouselVisible && !isUserScrollingCarousel) nextStory();
+            }, 4000);
         }
-        
-        function resetAutoSlideTimer() { 
-            if (autoSlideInterval) clearInterval(autoSlideInterval); 
-            autoSlideInterval = setInterval(() => { 
-                if (stories.length > 0 && isCarouselVisible) nextStory(); 
-            }, 4000); 
+
+        function resetAutoSlideTimer() {
+            if (autoSlideInterval) clearInterval(autoSlideInterval);
+            autoSlideInterval = setInterval(() => {
+                if (stories.length > 0 && isCarouselVisible && !isUserScrollingCarousel) nextStory();
+            }, 4000);
         }
 
         async function removeStory(storyId) {
