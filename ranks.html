@@ -167,6 +167,8 @@
         .status-active { background:rgba(34,197,94,0.12); color:#4ade80; border:1px solid rgba(34,197,94,0.2); }
         .status-interim { background:rgba(251,191,36,0.12); color:#fbbf24; border:1px solid rgba(251,191,36,0.2); }
         .status-sacked { background:rgba(239,68,68,0.12); color:#f87171; border:1px solid rgba(239,68,68,0.2); }
+        .status-retired { background:rgba(107,114,128,0.12); color:#9ca3af; border:1px solid rgba(107,114,128,0.2); }
+        .status-free-agent { background:rgba(59,130,246,0.12); color:#60a5fa; border:1px solid rgba(59,130,246,0.2); }
         .status-dot { width:5px; height:5px; border-radius:50%; background:currentColor; }
 
         .card-score-row {
@@ -643,10 +645,15 @@ const trophyList = [
     {id:"uel", name:"UEFA Europa League", points:70},
     {id:"pl", name:"Premier League", points:60},
     {id:"nations", name:"UEFA Nations League", points:55},
+    {id:"euros", name:"UEFA Euros", points:55},
+    {id:"laliga", name:"La Liga", points:60},
     {id:"uecl", name:"UEFA Conference League", points:50},
     {id:"facup", name:"FA Cup", points:45},
-    {id:"supercup", name:"UEFA Super Cup", points:40},
-    {id:"cs", name:"Community Shield", points:30}
+    {id:"copadel", name:"Copa del Rey", points:45},
+    {id:"supercup", name:"UEFA Super Cup", points:25},
+    {id:"supercopa", name:"Supercopa de España", points:25},
+    {id:"cs", name:"Community Shield", points:25},
+    {id:"dreamcup", name:"Dream Cup", points:30}
 ];
 
 const COMPETITIONS = [
@@ -655,7 +662,16 @@ const COMPETITIONS = [
     {id:'champions_league', name:'UEFA Champions League', emoji:'⭐', path:'champions_league/seasons'},
     {id:'europa_league', name:'UEFA Europa League', emoji:'🟠', path:'europa_league/seasons'},
     {id:'conference_league', name:'UEFA Conference League', emoji:'🟢', path:'conference_league/seasons'},
-    {id:'nations_league', name:'UEFA Nations League', emoji:'🌍', path:'nations_league/seasons'}
+    {id:'nations_league', name:'UEFA Nations League', emoji:'🌍', path:'nations_league/seasons'},
+    {id:'la_liga', name:'La Liga', emoji:'🇪🇸', path:'laliga/seasons'},
+    {id:'copa_del_rey', name:'Copa del Rey', emoji:'🏆', path:'copa_del_rey/seasons'},
+    {id:'fifa_club_world_cup', name:'FIFA Club World Cup', emoji:'🌎', path:'world_cup/seasons'},
+    {id:'fifa_world_cup', name:'FIFA World Cup', emoji:'🌍', path:'fifa_world_cup/seasons'},
+    {id:'supercopa_espana', name:'Supercopa de España', emoji:'🇪🇸', path:'supercopa/seasons'},
+    {id:'uefa_euros', name:'UEFA Euros', emoji:'⚽', path:'euros/seasons'},
+    {id:'dream_cup', name:'Dream Cup', emoji:'💤', path:'dream_cup/seasons'},
+    {id:'uefa_super_cup', name:'UEFA Super Cup', emoji:'🏅', path:'super_cup/seasons'},
+    {id:'community_shield', name:'Community Shield', emoji:'🛡️', path:'community_shield/seasons'}
 ];
 
 // ═══════════════════════════════════════════════
@@ -894,16 +910,24 @@ async function getMatchStats(teamEntry) {
             continue;
         }
 
-        // No season skip for Premier League and FA Cup - all seasons processed
         let resultsPath = '';
         if(competition === 'premier_league') resultsPath = `seasons/season_${s}/results`;
         else if(competition === 'fa_cup') resultsPath = `fa_cup/seasons/season_${s}/groups`;
         else if(competition === 'champions_league') resultsPath = `champions_league/seasons/season_${s}/results`;
         else if(competition === 'europa_league') resultsPath = `europa_league/seasons/season_${s}/results`;
         else if(competition === 'conference_league') resultsPath = `conference_league/seasons/season_${s}/results`;
+        else if(competition === 'la_liga') resultsPath = `laliga/seasons/season_${s}/results`;
+        else if(competition === 'copa_del_rey') resultsPath = `copa_del_rey/seasons/season_${s}/groups`;
+        else if(competition === 'fifa_club_world_cup') resultsPath = `world_cup/seasons/season_${s}/results`;
+        else if(competition === 'fifa_world_cup') resultsPath = `fifa_world_cup/seasons/season_${s}/results`;
+        else if(competition === 'supercopa_espana') resultsPath = `supercopa/seasons/season_${s}/results`;
+        else if(competition === 'uefa_euros') resultsPath = `euros/seasons/season_${s}/results`;
+        else if(competition === 'dream_cup') resultsPath = `dream_cup/seasons/season_${s}/results`;
+        else if(competition === 'uefa_super_cup') resultsPath = `super_cup/seasons/season_${s}/results`;
+        else if(competition === 'community_shield') resultsPath = `community_shield/seasons/season_${s}/results`;
         else continue;
 
-        if(competition === 'fa_cup') {
+        if(competition === 'fa_cup' || competition === 'copa_del_rey') {
             const snap = await database.ref(resultsPath).once('value');
             const groups = snap.val() || {};
             for(const gId in groups) {
@@ -931,7 +955,7 @@ async function getMatchStats(teamEntry) {
                     }
                     matchHistory.push({
                         home: homeTeam, away: awayTeam, homeScore, awayScore,
-                        tournament: 'FA Cup', md, season: s,
+                        tournament: competition === 'fa_cup' ? 'FA Cup' : 'Copa del Rey', md, season: s,
                         isForfeit: !!forf, isNoContest: !!nc
                     });
                 }
@@ -942,10 +966,19 @@ async function getMatchStats(teamEntry) {
             const compName = competition === 'premier_league' ? 'Premier League' :
                 competition === 'champions_league' ? 'UEFA Champions League' :
                 competition === 'europa_league' ? 'UEFA Europa League' :
-                'UEFA Conference League';
+                competition === 'conference_league' ? 'UEFA Conference League' :
+                competition === 'la_liga' ? 'La Liga' :
+                competition === 'fifa_club_world_cup' ? 'FIFA Club World Cup' :
+                competition === 'fifa_world_cup' ? 'FIFA World Cup' :
+                competition === 'supercopa_espana' ? 'Supercopa de España' :
+                competition === 'uefa_euros' ? 'UEFA Euros' :
+                competition === 'dream_cup' ? 'Dream Cup' :
+                competition === 'uefa_super_cup' ? 'UEFA Super Cup' :
+                'Community Shield';
+
             for(const rId in data) {
                 const r = data[rId];
-                if(competition === 'premier_league') {
+                if(competition === 'premier_league' || competition === 'la_liga') {
                     const mt = r.matchText || '';
                     if(!mt.includes(name)) continue;
                     const md = r.md || 0;
@@ -964,7 +997,7 @@ async function getMatchStats(teamEntry) {
                     const ms = isHome ? s1 : s2, mc = isHome ? s2 : s1;
                     if(forf) { if(ms>mc){totalW++;totalFW++;}else{totalL++;totalFL++;totalGC+=3;} }
                     else { totalGS+=ms; totalGC+=mc; if(ms>mc) totalW++; else if(ms===mc) totalD++; else totalL++; }
-                    matchHistory.push({ home:ht, away:at, homeScore:s1, awayScore:s2, tournament:'Premier League', md, season:s, isForfeit:forf, isNoContest:nc });
+                    matchHistory.push({ home:ht, away:at, homeScore:s1, awayScore:s2, tournament:compName, md, season:s, isForfeit:forf, isNoContest:nc });
                 } else {
                     const {homeTeam, awayTeam, homeScore, awayScore, md, resultType, forfeitTeam} = r;
                     if(homeTeam !== name && awayTeam !== name) continue;
@@ -1065,8 +1098,8 @@ function getStatusBadge(manager) {
 
     if(manager.overrideStatus) statusType = manager.overrideStatus;
 
-    const labels = { manager:'Active Manager', interim:'Interim Manager', sacked:'Sacked' };
-    const classes = { manager:'status-active', interim:'status-interim', sacked:'status-sacked' };
+    const labels = { manager:'Active Manager', interim:'Interim Manager', sacked:'Sacked', retired:'Retired', 'free-agent':'Free Agent' };
+    const classes = { manager:'status-active', interim:'status-interim', sacked:'status-sacked', retired:'status-retired', 'free-agent':'status-free-agent' };
     return `<div class="card-status ${classes[statusType]}"><span class="status-dot"></span>${labels[statusType]}</div>`;
 }
 
@@ -1099,7 +1132,6 @@ function renderCards() {
             <button class="btn-admin danger" onclick="deleteManager('${m.id}')">🗑️</button>
         ` : '';
 
-        // Calculate loss rate and titles count
         const totalGames = stats.w + stats.d + stats.l;
         const lossRate = totalGames > 0 ? ((stats.l / totalGames) * 100).toFixed(1) : '0.0';
         const titlesCount = (m.trophies || []).length;
@@ -1122,7 +1154,6 @@ function renderCards() {
                 <span class="score-label">🏆 Total Score</span>
                 <span class="score-value">${scores.totalScore.toFixed(1)}</span>
             </div>
-            <!-- New 3x3 stats grid -->
             <div class="stats-grid-3x3">
                 <div class="stat-cell"><div class="stat-label-small">Wins</div><div class="stat-value">${stats.w||0}</div></div>
                 <div class="stat-cell"><div class="stat-label-small">Draws</div><div class="stat-value">${stats.d||0}</div></div>
@@ -1248,7 +1279,6 @@ function renderStatsPopup(m) {
         </div>`;
     }
 
-    // Description section
     html += `<div class="popup-section">
         <div class="popup-section-title">📝 Description</div>
         ${m.description
@@ -1257,7 +1287,6 @@ function renderStatsPopup(m) {
         ${isAdmin ? `<button class="btn-add-section" onclick="openDescriptionEditor()" style="margin-top:8px;">✏️ Edit Description</button>` : ''}
     </div>`;
 
-    // Forfeit Wins, Forfeit Losses, Matches Played
     html += `<div class="popup-section">
         <div class="popup-section-title">📊 Extended Stats</div>
         <div class="forfeit-stats-row">
@@ -1267,7 +1296,6 @@ function renderStatsPopup(m) {
         </div>
     </div>`;
 
-    // Current Clubs - now as simple tag list
     html += `<div class="popup-section">
         <div class="popup-section-title">⚽ Current Clubs</div>`;
     if(currentTeams.length) {
@@ -1284,9 +1312,11 @@ function renderStatsPopup(m) {
     } else {
         html += `<p class="empty-text">No current club</p>`;
     }
+    if(isAdmin) {
+        html += `<button class="btn-add-section" onclick="openTransferClubModal()">🔄 Transfer Club</button>`;
+    }
     html += `</div>`;
 
-    // Previous Clubs (keep as is, it's already compact)
     if(previousTeams.length) {
         html += `<div class="popup-section">
             <div class="popup-section-title">📋 Previous Clubs</div>
@@ -1310,7 +1340,6 @@ function renderStatsPopup(m) {
             `</div></div>`;
     }
 
-    // Records
     html += `<div class="popup-section">
         <div class="popup-section-title">📊 Records</div>`;
     if(records.length) {
@@ -1332,7 +1361,6 @@ function renderStatsPopup(m) {
     if(isAdmin) html += `<button class="btn-add-section" onclick="openRecordModal()" style="margin-top:8px;">+ Add Record</button>`;
     html += `</div>`;
 
-    // Match History
     html += `<div class="popup-section">
         <div class="popup-section-title">📅 Match History</div>`;
     if(matchHistory.length) {
@@ -1410,7 +1438,7 @@ function jumpToSlide(i) {
 }
 
 // ═══════════════════════════════════════════════
-//  ADD/EDIT MANAGER MODAL (unchanged from previous working version)
+//  ADD/EDIT MANAGER MODAL
 // ═══════════════════════════════════════════════
 let tempCurrentTeams = [], tempPrevTeams = [], tempTrophies = [], tempMedals = [], tempAwards = [];
 let tempProfilePhotoUrl = null;
@@ -1785,6 +1813,7 @@ function openAwardPicker() {
                 <option value="golden_glove">🧤 Golden Glove (Best GK)</option>
                 <option value="ballon_dor">🌟 Ballon d'Or</option>
                 <option value="yashin">🏅 Yashin Trophy</option>
+                <option value="manager_of_season">👨‍💼 Manager of the Season</option>
             </select>
         </div>
         <div class="form-row" id="awardTournRow" style="display:none;">
@@ -1813,10 +1842,11 @@ function confirmAddAward() {
     if(type==='golden_boot'||type==='golden_glove') {
         const tournSel = document.getElementById('awardTournament');
         const trophy = trophyList.find(t=>t.id===tournSel.value);
-        pts = type==='golden_boot' ? trophy.points/4 : trophy.points/2;
+        pts = type==='golden_boot' ? trophy.points/2 : trophy.points/2;
         name = `${trophy.name} ${type==='golden_boot'?'Golden Boot':'Golden Glove'}`;
-    } else if(type==='ballon_dor') { pts=80; name="Ballon d'Or"; }
-    else { pts=80; name="Yashin Trophy"; }
+    } else if(type==='ballon_dor') { pts=50; name="Ballon d'Or"; }
+    else if(type==='yashin') { pts=45; name="Yashin Trophy"; }
+    else if(type==='manager_of_season') { pts=50; name="Manager of the Season"; }
     tempAwards.push({ type, name, points:pts, season });
     refreshAwardsUI();
     closeGenericModal();
@@ -1860,6 +1890,121 @@ async function confirmDeleteManager(id) {
     closeGenericModal();
     showToast('Manager deleted');
     await refreshData();
+}
+
+function openTransferClubModal() {
+    const m = managers.find(m=>m.id===currentStatsManagerId);
+    if(!m || !m.currentTeams || m.currentTeams.length === 0) {
+        showToast('No current clubs to transfer');
+        return;
+    }
+    
+    let selectedTeamIdx = 0;
+    let selectedComp = null;
+    let selectedNewTeam = '';
+    let selectedFromMD = null;
+    
+    openGenericModal('Transfer Club',
+        `<div class="form-row">
+            <label class="form-label">From Current Club</label>
+            <select class="form-select" id="transferFromTeam" onchange="updateTransferFromTeam()">
+                ${m.currentTeams.map((t, i) => {
+                    const compObj = COMPETITIONS.find(c=>c.id===t.competition);
+                    const compName = compObj ? compObj.name : t.competition;
+                    return `<option value="${i}">${t.name} (${compName}, Season ${t.season})</option>`;
+                }).join('')}
+            </select>
+        </div>
+        <div class="form-row">
+            <label class="form-label">Transfer Matchday (club cutoff)</label>
+            <input class="form-input" id="transferToMD" type="number" min="1" placeholder="e.g. 15">
+        </div>
+        <div class="form-row">
+            <label class="form-label">New Competition</label>
+            <div class="comp-picker" id="newTransferComp">
+                ${COMPETITIONS.map(c=>`<div class="comp-option" id="tcomp_${c.id}" onclick="selectTransferComp('${c.id}')">
+                    <div class="comp-icon">${c.emoji}</div>${c.name}
+                </div>`).join('')}
+            </div>
+        </div>
+        <div class="form-row">
+            <label class="form-label">New Team Name</label>
+            <input class="form-input" id="transferNewTeam" placeholder="Team name">
+        </div>
+        <div class="form-row">
+            <label class="form-label">New Team Season</label>
+            <input class="form-input" id="transferNewSeason" type="number" min="1" placeholder="e.g. 3">
+        </div>
+        <div class="form-row">
+            <label class="form-label">Starting from Matchday</label>
+            <input class="form-input" id="transferFromMD" type="number" min="1" placeholder="e.g. 1">
+        </div>`,
+        `<button class="btn-secondary" onclick="closeGenericModal()">Cancel</button>
+         <button class="btn-primary" onclick="confirmTransferClub()">Transfer</button>`
+    );
+    
+    window.selectTransferComp = (id) => {
+        selectedComp = id;
+        document.querySelectorAll('#newTransferComp .comp-option').forEach(el=>el.classList.remove('selected'));
+        document.getElementById(`tcomp_${id}`).classList.add('selected');
+    };
+    
+    window.updateTransferFromTeam = () => {
+        selectedTeamIdx = parseInt(document.getElementById('transferFromTeam').value);
+    };
+    
+    window.confirmTransferClub = () => {
+        const toMD = parseInt(document.getElementById('transferToMD').value);
+        const newTeam = document.getElementById('transferNewTeam').value.trim();
+        const newSeason = parseInt(document.getElementById('transferNewSeason').value);
+        const fromMD = parseInt(document.getElementById('transferFromMD').value);
+        
+        if(!toMD || !selectedComp || !newTeam || !newSeason || !fromMD) {
+            showToast('Fill all fields');
+            return;
+        }
+        
+        performTransfer(selectedTeamIdx, toMD, selectedComp, newTeam, newSeason, fromMD);
+    };
+}
+
+async function performTransfer(teamIdx, toMD, newComp, newTeam, newSeason, fromMD) {
+    const m = managers.find(m=>m.id===currentStatsManagerId);
+    const oldTeam = m.currentTeams[teamIdx];
+    
+    const updatedCurrent = [...m.currentTeams];
+    updatedCurrent[teamIdx] = { ...oldTeam, toMatchday: toMD };
+    
+    const newCurrentTeam = {
+        name: newTeam,
+        competition: newComp,
+        season: newSeason,
+        managerType: 'manager',
+        fromMatchday: fromMD,
+        toMatchday: null
+    };
+    
+    updatedCurrent.push(newCurrentTeam);
+    
+    const updatedPrevious = [...(m.previousTeams||[])];
+    updatedPrevious.push({
+        name: oldTeam.name,
+        competition: oldTeam.competition,
+        seasonFrom: oldTeam.season,
+        seasonTo: oldTeam.season,
+        managerType: 'sacked',
+        toMatchday: toMD
+    });
+    
+    await database.ref(`ranks/${currentStatsManagerId}`).update({
+        currentTeams: updatedCurrent,
+        previousTeams: updatedPrevious
+    });
+    
+    closeGenericModal();
+    showToast('Club transferred successfully');
+    await refreshData();
+    openStatsPopup(currentStatsManagerId);
 }
 
 function openDescriptionEditor() {
@@ -2053,10 +2198,11 @@ function showRankingMethod() {
             </ul>
             <h4>Individual Awards</h4>
             <ul>
-                <li>⚽ Golden Boot = Trophy Points ÷ 4</li>
+                <li>⚽ Golden Boot = Trophy Points ÷ 2</li>
                 <li>🧤 Golden Glove = Trophy Points ÷ 2</li>
-                <li>🌟 Ballon d'Or = 80 pts</li>
-                <li>🏅 Yashin Trophy = 80 pts</li>
+                <li>🌟 Ballon d'Or = 50 pts</li>
+                <li>🏅 Yashin Trophy = 45 pts</li>
+                <li>👨‍💼 Manager of the Season = 50 pts</li>
             </ul>
             <h4>Win Points</h4>
             <p>Each win = 1 point (including forfeit wins)</p>
