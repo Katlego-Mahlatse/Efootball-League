@@ -27,7 +27,7 @@
       --valentino: #360D3A;
       --white: #ffffff;
       --deep-blue: #0A2B5E;
-      --glass-bg: rgba(255,255,255,0.07);
+      --glass-bg: rgba(255,255,255,0.05);
       --glass-border: rgba(150,60,255,0.25);
       --glass-blur: blur(12px);
     }
@@ -94,9 +94,9 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ─── NAVBAR (gradient left to right) ─── */
+    /* ─── NAVBAR (blue → violet → pink gradient) ─── */
     .navbar {
-      background: linear-gradient(90deg, var(--electric-violet) 0%, var(--razzmatazz) 100%);
+      background: linear-gradient(90deg, var(--deep-blue) 0%, var(--electric-violet) 50%, var(--razzmatazz) 100%);
       border-bottom: 2px solid var(--white);
       padding: 0 2rem;
       height: 100px;
@@ -240,14 +240,14 @@
       position: relative;
     }
 
-    /* ─── LEAGUE TABLE (GLASS) ─── */
+    /* ─── LEAGUE TABLE (GLASS – UNIFORM OPACITY) ─── */
     .stats-table {
       width: 100%;
       border-collapse: collapse;
       font-family: 'Rajdhani', sans-serif;
       min-width: 900px;
-      background: rgba(255,255,255,0.05);
-      backdrop-filter: blur(4px);
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
       color: var(--white);
     }
     .stats-table thead th {
@@ -263,31 +263,31 @@
       z-index: 20;
     }
 
-    /* Sticky pos column */
+    /* Sticky pos column – same glass background */
     .stats-table th:first-child,
     .stats-table td:first-child {
       position: sticky;
       left: 0;
       z-index: 25;
-      background: rgba(0,0,0,0.5);
-      backdrop-filter: blur(4px);
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
       width: 64px;
       min-width: 64px;
     }
-    .stats-table thead th:first-child { background: rgba(150,60,255,0.5); z-index: 30; }
+    .stats-table thead th:first-child { background: rgba(150,60,255,0.3); z-index: 30; }
 
-    /* Sticky club column */
+    /* Sticky club column – same glass background */
     .stats-table th:nth-child(2),
     .stats-table td:nth-child(2) {
       position: sticky;
       left: 64px;
       z-index: 24;
-      background: rgba(0,0,0,0.5);
-      backdrop-filter: blur(4px);
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
       box-shadow: 4px 0 8px -2px rgba(0,0,0,0.45);
       border-right: 2px solid rgba(233,0,82,0.35);
     }
-    .stats-table thead th:nth-child(2) { background: rgba(150,60,255,0.5); z-index: 30; }
+    .stats-table thead th:nth-child(2) { background: rgba(150,60,255,0.3); z-index: 30; }
 
     .stats-table tbody tr { border-bottom: 1px solid rgba(233,0,82,0.2); transition: background 0.2s; }
     .stats-table tbody tr:hover { background: rgba(150,60,255,0.15); }
@@ -312,16 +312,6 @@
     .rank-cell { font-weight: 700; color: var(--white); font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; }
 
     /* ─── TABLE HEADER ROW ─── */
-    .table-header-row {
-      display: flex;
-      align-items: center;
-      background: rgba(150,60,255,0.3);
-      border-radius: 20px 20px 0 0;
-      padding: 0;
-      overflow: hidden;
-      border: 2px solid rgba(233,0,82,0.3);
-      border-bottom: none;
-    }
     .table-actions {
       display: flex;
       justify-content: flex-end;
@@ -374,8 +364,8 @@
       width: 100%;
       border-collapse: collapse;
       font-family: 'Rajdhani', sans-serif;
-      background: rgba(0,0,0,0.3);
-      backdrop-filter: blur(4px);
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
       color: var(--white);
     }
     .stats-list thead th {
@@ -547,8 +537,8 @@
       display: inline-block;
     }
     .fixture-card {
-      background: rgba(255,255,255,0.06);
-      backdrop-filter: blur(8px);
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
       border-radius: 28px;
       padding: 28px 40px;
       margin-bottom: 16px;
@@ -601,8 +591,8 @@
     /* ─── MATCH CARDS (glass) ─── */
     .matches-list { display: flex; flex-direction: column; gap: 24px; }
     .match-card {
-      background: rgba(255,255,255,0.06);
-      backdrop-filter: blur(8px);
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
       border-radius: 28px;
       padding: 32px 48px;
       transition: all 0.25s;
@@ -949,6 +939,8 @@ let currentFixMonthFilter = '';
 
 // Background image support
 let bgImageUrl = '';
+let bgSize = 'cover';
+let bgPosition = 'center';
 
 // ─── Helpers ───
 function getSeasonPath(seasonNum, subPath = "") {
@@ -1031,19 +1023,22 @@ async function loadCalendarEvents() {
 // ─── Background Image ───
 async function loadBackgroundImage() {
   const snap = await database.ref('premier_league/settings/backgroundImage').once('value');
-  bgImageUrl = snap.val() || '';
+  const settings = snap.val() || {};
+  bgImageUrl = settings.url || '';
+  bgSize = settings.size || 'cover';
+  bgPosition = settings.position || 'center';
   if (bgImageUrl) {
     document.body.style.setProperty('--bg-image', `url(${bgImageUrl})`);
-    document.body.style.setProperty('--bg-size', 'cover');
-    document.body.style.setProperty('--bg-pos', 'center');
+    document.body.style.setProperty('--bg-size', bgSize);
+    document.body.style.setProperty('--bg-pos', bgPosition);
     document.body.classList.add('has-bg');
   } else {
     document.body.classList.remove('has-bg');
   }
 }
 
-async function setBackgroundImage(url) {
-  await database.ref('premier_league/settings/backgroundImage').set(url);
+async function setBackgroundImage(url, size, position) {
+  await database.ref('premier_league/settings/backgroundImage').set({ url, size, position });
   await loadBackgroundImage();
 }
 
@@ -1281,7 +1276,7 @@ function updateSlide() {
   });
 }
 
-// ─── RENDER TABLE (glass) ───
+// ─── RENDER TABLE (glass – uniform) ───
 function renderTable() {
   const sorted = [...teamsData].sort((a,b) => (b.pts||0)-(a.pts||0) || (b.gd||0)-(a.gd||0));
 
@@ -1772,7 +1767,7 @@ function renderTopScorers() {
         ${isAdminMode?`<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>`:''}
       </tr>`;
     });
-    restHtml += `</tbody></table></div>`;
+    restHtml += `</tbody></tr></div>`;
   }
 
   let html = top3Html + restHtml;
@@ -1831,7 +1826,7 @@ function renderTopAssistants() {
   let restHtml = '';
   if (rest.length) {
     restHtml = `<div class="rest-table-wrapper"><table class="stats-list">
-      <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Assists</th>${isAdminMode?'<th>Actions</th>':''}</tr></thead>
+      <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Assists</th>${isAdminMode?'<th>Actions</th>':''}</table></thead>
       <tbody>`;
     rest.forEach((p, i) => {
       const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
@@ -2242,48 +2237,43 @@ async function openBgCropTool() {
   if (!file) return;
   const objectUrl = URL.createObjectURL(file);
   showModal(`
-    <h3>🌄 Crop Background</h3>
+    <h3>🌄 Set Background Image</h3>
     <div class="crop-container" id="cropContainer"><img class="crop-img" id="cropImg" src="${objectUrl}" draggable="false"></div>
-    <div class="crop-controls"><label>Zoom</label><input class="crop-slider" id="zoomSlider" type="range" min="0.5" max="3" step="0.01" value="1"></div>
+    <div class="crop-controls">
+      <label>Zoom</label>
+      <input class="crop-slider" id="zoomSlider" type="range" min="0.5" max="2" step="0.01" value="1">
+      <label>Horizontal Position</label>
+      <input class="crop-slider" id="posXSlider" type="range" min="0" max="100" step="1" value="50">
+      <label>Vertical Position</label>
+      <input class="crop-slider" id="posYSlider" type="range" min="0" max="100" step="1" value="50">
+    </div>
     <div class="modal-btns"><button class="modal-btn-primary" id="applyCropBtn">Apply Background</button><button class="modal-btn-cancel" id="cancelCropBtn">Cancel</button></div>
   `);
   const container = document.getElementById('cropContainer');
-  const img       = document.getElementById('cropImg');
-  const slider    = document.getElementById('zoomSlider');
-  cropState = { x:0, y:0, scale:1, dragging:false, startX:0, startY:0 };
-  img.onload = () => {
-    const cw = container.clientWidth, ch = container.clientHeight;
-    const fit = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
-    cropState.scale = fit;
-    slider.min = fit*0.8; slider.max = fit*4; slider.step = fit*0.01; slider.value = fit;
-    cropState.x = (cw - img.naturalWidth*fit)/2;
-    cropState.y = (ch - img.naturalHeight*fit)/2;
-    applyTransform();
-  };
-  function applyTransform() { img.style.transform = `translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale})`; }
-  slider.oninput = () => {
-    const old = cropState.scale, nw = parseFloat(slider.value);
-    const cx = container.clientWidth/2, cy = container.clientHeight/2;
-    cropState.x = cx - (cx - cropState.x)*(nw/old);
-    cropState.y = cy - (cy - cropState.y)*(nw/old);
-    cropState.scale = nw;
-    applyTransform();
-  };
-  const move = (e) => { if(cropState.dragging) { cropState.x = e.clientX - cropState.startX; cropState.y = e.clientY - cropState.startY; applyTransform(); } };
-  container.addEventListener('mousedown', e => { cropState.dragging = true; cropState.startX = e.clientX - cropState.x; cropState.startY = e.clientY - cropState.y; e.preventDefault(); });
-  document.addEventListener('mousemove', move);
-  document.addEventListener('mouseup', () => cropState.dragging = false);
-  document.getElementById('cancelCropBtn').onclick = closeModal;
+  const img = document.getElementById('cropImg');
+  const zoomSlider = document.getElementById('zoomSlider');
+  const posXSlider = document.getElementById('posXSlider');
+  const posYSlider = document.getElementById('posYSlider');
+  let zoom = 1, posX = 50, posY = 50;
+  
+  function updatePreview() {
+    const scale = zoom;
+    const px = (posX / 100) * (1 - 1/scale) * 100;
+    const py = (posY / 100) * (1 - 1/scale) * 100;
+    img.style.transform = `scale(${scale}) translate(${px}%, ${py}%)`;
+  }
+  zoomSlider.oninput = () => { zoom = parseFloat(zoomSlider.value); updatePreview(); };
+  posXSlider.oninput = () => { posX = parseFloat(posXSlider.value); updatePreview(); };
+  posYSlider.oninput = () => { posY = parseFloat(posYSlider.value); updatePreview(); };
+  img.onload = () => { updatePreview(); };
+  document.getElementById('cancelCropBtn').onclick = () => { URL.revokeObjectURL(objectUrl); closeModal(); };
   document.getElementById('applyCropBtn').onclick = async () => {
     document.getElementById('applyCropBtn').textContent = 'Uploading…';
     try {
-      const cw = container.clientWidth, ch = container.clientHeight;
-      const canvas = document.createElement('canvas'); canvas.width = cw*2; canvas.height = ch*2;
-      const ctx = canvas.getContext('2d'); ctx.scale(2,2);
-      ctx.drawImage(img, -cropState.x/cropState.scale, -cropState.y/cropState.scale, cw/cropState.scale, ch/cropState.scale, 0, 0, cw, ch);
-      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
-      const url = await uploadToImgBB(blob);
-      await setBackgroundImage(url);
+      const url = await uploadToImgBB(file);
+      const size = `cover`;  // we use cover to fill screen
+      const position = `${posX}% ${posY}%`;
+      await setBackgroundImage(url, size, position);
       closeModal();
       alert('Background applied!');
       URL.revokeObjectURL(objectUrl);
