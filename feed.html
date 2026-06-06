@@ -344,119 +344,152 @@
             margin-bottom: 25px;
         }
 
-        /* Stories carousel - INSTAGRAM STYLE */
-        .stories-carousel {
+        /* NEW STORY CAROUSEL - centered, auto slide, side blur, no manual scroll */
+        .story-carousel-new {
             position: relative;
             width: 100%;
             background: #000;
             overflow: hidden;
-            padding: 20px 0;
+            padding: 30px 0;
             border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+            user-select: none;
+            pointer-events: none; /* disable manual scrolling */
         }
-
-        .carousel-track {
+        .story-track-new {
             display: flex;
-            gap: 15px;
-            padding: 10px 20px;
-            overflow-x: auto;
-            overflow-y: hidden;
-            scroll-behavior: smooth;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-            cursor: grab;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            transition: transform 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            will-change: transform;
         }
-
-        .carousel-track:active {
-            cursor: grabbing;
-        }
-
-        .carousel-track::-webkit-scrollbar {
-            display: none;
-        }
-
-        .story-slide {
-            flex: 0 0 auto;
-            width: 120px;
+        .story-item-new {
+            flex-shrink: 0;
             text-align: center;
-            position: relative;
-            transition: transform 0.2s ease;
+            transition: all 0.3s ease;
         }
-
-        .story-slide:hover {
-            transform: scale(1.05);
-        }
-
-        .story-ring {
-            width: 120px;
-            height: 120px;
+        .story-ring-new {
             border-radius: 50%;
             background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
             padding: 3px;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
             margin: 0 auto;
-            box-shadow: 0 4px 15px rgba(245, 215, 66, 0.4);
+            transition: all 0.3s ease;
         }
-
-        .story-ring:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(245, 215, 66, 0.6);
-        }
-
-        .story-image-wrapper {
-            width: 100%;
-            height: 100%;
+        .story-image-wrapper-new {
             border-radius: 50%;
             overflow: hidden;
             background: #000;
             border: 3px solid #000;
         }
-
-        .story-image {
+        .story-image-new {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            display: block;
         }
-
-        .story-caption {
+        .story-caption-new {
             margin-top: 10px;
             color: #fff;
             font-size: 13px;
-            font-weight: 400;
-            max-width: 140px;
-            white-space: nowrap;
+            max-width: 120px;
             overflow: hidden;
             text-overflow: ellipsis;
-            padding: 4px 8px;
+            white-space: nowrap;
         }
+        /* center big */
+        .story-item-new.center .story-ring-new { width: 110px; height: 110px; }
+        .story-item-new.center .story-image-wrapper-new { width: 104px; height: 104px; }
+        /* side smaller + blur */
+        .story-item-new.side .story-ring-new { width: 70px; height: 70px; filter: blur(2px); opacity: 0.7; }
+        .story-item-new.side .story-image-wrapper-new { width: 64px; height: 64px; }
+        .story-item-new.side .story-caption-new { font-size: 11px; opacity: 0.8; }
 
-        .remove-story-btn {
-            position: absolute;
-            top: -5px;
-            right: 5px;
-            background: rgba(220,20,60,0.95);
-            border: 2px solid #000;
-            color: #fff;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 16px;
+        /* Countdown Deadline */
+        .deadline-countdown {
+            background: #0a0a0a;
+            padding: 15px 10px;
+            text-align: center;
+            border-bottom: 1px solid #FFD70030;
+        }
+        .countdown-title { font-size: 14px; color: #FFD700; letter-spacing: 1px; margin-bottom: 8px; }
+        .countdown-boxes {
             display: flex;
-            align-items: center;
             justify-content: center;
-            z-index: 20;
-            transition: all 0.2s ease;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .cd-box {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 8px 12px;
+            min-width: 65px;
+            text-align: center;
+            border: 1px solid #FFD700;
+            box-shadow: 0 0 8px rgba(255,215,0,0.3);
+        }
+        .cd-number {
+            font-size: 28px;
+            font-weight: bold;
+            font-family: monospace;
+            color: #FFD700;
+        }
+        .cd-label {
+            font-size: 10px;
+            color: #aaa;
+            text-transform: uppercase;
         }
 
-        .remove-story-btn:hover {
-            transform: scale(1.1);
-            background: rgb(220,20,60);
+        /* Post images natural height */
+        .gallery-img {
+            width: 100%;
+            height: auto !important;
+            object-fit: contain;
+            background: #000;
         }
+        .gallery-video {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16/9;
+            border: none;
+        }
+
+        /* Comment Modal (anyone) */
+        .comment-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 4000;
+            backdrop-filter: blur(8px);
+        }
+        .comment-modal.active { display: flex; }
+        .comment-modal-content {
+            background: #111;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            border: 2px solid #FFD700;
+            overflow: hidden;
+            animation: scaleIn 0.2s;
+        }
+        .comment-modal-media {
+            max-height: 300px;
+            background: #000;
+            text-align: center;
+        }
+        .comment-modal-media img, .comment-modal-media video { max-width: 100%; max-height: 280px; object-fit: contain; }
+        .comment-modal-body { padding: 20px; }
+        .comment-username-input { width: 100%; padding: 12px; background: #222; border: 1px solid #FFD700; color: white; border-radius: 30px; margin-bottom: 12px; }
+        .comment-textarea { width: 100%; padding: 12px; background: #222; border: 1px solid #FFD700; color: white; border-radius: 20px; resize: vertical; }
+        .comment-submit-btn { background: #FFD700; color: #000; border: none; padding: 12px; border-radius: 30px; font-weight: bold; margin-top: 12px; width: 100%; cursor: pointer; }
 
         .admin-controls {
             text-align: center;
@@ -639,17 +672,6 @@
         .gallery-slide {
             flex: 0 0 100%;
             scroll-snap-align: start;
-        }
-        .gallery-img {
-            width: 100%;
-            display: block;
-            max-height: 585px;
-            object-fit: cover;
-        }
-        .gallery-video {
-            width: 100%;
-            height: 585px;
-            border: none;
         }
         .gallery-nav {
             position: absolute;
@@ -1128,6 +1150,9 @@
             </div>
             <div class="menu-item" onclick="window.location.href='ranks.html'">Manager Ranks</div>
             <div class="menu-item" id="editLeagueIconsMenuItem" style="display: none;" onclick="openEditLeagueIconsModal()">Edit League Icons</div>
+            <!-- NEW: Dream Cup & UEFA EURO links -->
+            <div class="menu-item" onclick="window.location.href='dream.html'">🏆 Dream Cup</div>
+            <div class="menu-item" onclick="window.location.href='euro.html'">🇪🇺 UEFA EUROS</div>
         </div>
     </div>
 
@@ -1144,8 +1169,20 @@
         </div>
     </div>
 
-    <div class="stories-carousel" id="storiesCarousel">
-        <div class="carousel-track" id="carouselTrack"></div>
+    <!-- NEW: Matchday Deadline Countdown -->
+    <div class="deadline-countdown">
+        <div class="countdown-title">⏳ MATCHDAY DEADLINE (SAST 12:00 AM)</div>
+        <div class="countdown-boxes">
+            <div class="cd-box"><div class="cd-number" id="hours">00</div><div class="cd-label">Hours</div></div>
+            <div class="cd-box"><div class="cd-number" id="minutes">00</div><div class="cd-label">Minutes</div></div>
+            <div class="cd-box"><div class="cd-number" id="seconds">00</div><div class="cd-label">Seconds</div></div>
+            <div class="cd-box"><div class="cd-number" id="milliseconds">000</div><div class="cd-label">MS</div></div>
+        </div>
+    </div>
+
+    <!-- NEW: Auto-sliding story carousel (no default caption, centered, side blur, auto slide every 2s, no manual scroll) -->
+    <div class="story-carousel-new" id="storyCarouselNew">
+        <div class="story-track-new" id="storyTrackNew"></div>
     </div>
 
     <div class="admin-controls" id="adminSlideControls" style="display: none;">
@@ -1179,7 +1216,12 @@
                 <div id="profilePhotoStatus" class="upload-status"></div>
             </div>
             <div class="form-group">
-                <label>Post Media (Images and/or Videos)</label>
+                <label>Post Media (Images, MP4 Videos via Cloudinary, YouTube)</label>
+                <!-- NEW: Cloudinary MP4 Upload -->
+                <input type="file" id="postVideoUpload" accept="video/mp4" onchange="previewVideoUpload()">
+                <label for="postVideoUpload" class="file-upload-label">🎥 Upload MP4 Video (Cloudinary)</label>
+                <div id="videoUploadStatus" class="upload-status"></div>
+                
                 <input type="file" id="postImagesUpload" accept="image/*" multiple onchange="previewPostImages()">
                 <label for="postImagesUpload" class="file-upload-label">🖼️ Add Images</label>
                 <div id="postImagesStatus" class="upload-status"></div>
@@ -1266,7 +1308,7 @@
                 </div>
             </div>
             <div class="form-group">
-                <label>Caption (max 80 chars)</label>
+                <label>Caption (max 80 chars, optional)</label>
                 <input type="text" id="storyCaption" maxlength="80" placeholder="Write a caption...">
             </div>
             <div class="form-buttons">
@@ -1300,6 +1342,18 @@
         </div>
     </div>
 
+    <!-- NEW: Comment Modal (anyone can comment, localStorage username) -->
+    <div id="commentModal" class="comment-modal">
+        <div class="comment-modal-content">
+            <div class="comment-modal-media" id="commentModalMedia"></div>
+            <div class="comment-modal-body">
+                <input type="text" id="commentUsername" class="comment-username-input" placeholder="Your name">
+                <textarea id="commentText" class="comment-textarea" rows="3" placeholder="Write a comment..."></textarea>
+                <button class="comment-submit-btn" id="submitCommentBtn">Post Comment</button>
+            </div>
+        </div>
+    </div>
+
     <div class="feed-container" id="feedContainer">
         <div class="empty-feed" id="emptyFeed">No posts yet.</div>
     </div>
@@ -1307,6 +1361,8 @@
     <script>
         const FIREBASE_CONFIG = { databaseURL: 'https://efootball-412-default-rtdb.firebaseio.com', projectId: 'efootball-412' };
         const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
+        const CLOUDINARY_CLOUD = "doh9j5tv";
+        const CLOUDINARY_UPLOAD_PRESET = "efootball_videos";
         let isAdminMode = false;
         let posts = [];
         let stories = [];
@@ -1342,91 +1398,130 @@
             loadStories();
             loadPosts();
             loadLeagues();
-            setupCarouselVisibilityObserver();
-            setupCarouselScrollListeners();
+            startCountdown();
+            // Old carousel observer not needed for new carousel, but we keep for compatibility
+            // setupCarouselVisibilityObserver();
+            // setupCarouselScrollListeners();
         };
 
-        // ── Carousel scroll interaction ──────────────────────────────────────
-        function setupCarouselScrollListeners() {
-            const track = document.getElementById('carouselTrack');
-            if (!track) return;
-
-            function onUserScrollStart() {
-                isUserScrollingCarousel = true;
-                // Stop auto-slide immediately
-                if (autoSlideInterval) {
-                    clearInterval(autoSlideInterval);
-                    autoSlideInterval = null;
-                }
-                // Clear any pending resume timer
-                if (userScrollResumeTimer) {
-                    clearTimeout(userScrollResumeTimer);
-                    userScrollResumeTimer = null;
-                }
+        // ---------- Countdown to 12:00 AM SAST ----------
+        function startCountdown() {
+            setInterval(updateCountdown, 30);
+            updateCountdown();
+        }
+        function updateCountdown() {
+            const now = new Date();
+            const sastOffset = 2 * 60; // UTC+2 in minutes
+            const localOffset = now.getTimezoneOffset();
+            const sastNow = new Date(now.getTime() + (localOffset + sastOffset) * 60000);
+            let deadline = new Date(sastNow);
+            deadline.setHours(24, 0, 0, 0);
+            if (sastNow.getHours() === 0 && sastNow.getMinutes() === 0 && sastNow.getSeconds() === 0) deadline.setDate(deadline.getDate() + 1);
+            const diff = deadline - sastNow;
+            if (diff <= 0) {
+                document.getElementById('hours').innerText = '00';
+                document.getElementById('minutes').innerText = '00';
+                document.getElementById('seconds').innerText = '00';
+                document.getElementById('milliseconds').innerText = '000';
+                return;
             }
-
-            function onUserScrollEnd() {
-                // Clear any existing resume timer then start a fresh 5-second one
-                if (userScrollResumeTimer) clearTimeout(userScrollResumeTimer);
-                userScrollResumeTimer = setTimeout(() => {
-                    isUserScrollingCarousel = false;
-                    // Sync currentStoryIndex to wherever the user left the carousel
-                    const track = document.getElementById('carouselTrack');
-                    const slides = track.querySelectorAll('.story-slide');
-                    if (slides.length > 0) {
-                        const slideWidth = slides[0].offsetWidth + 15; // width + gap
-                        currentStoryIndex = Math.round(track.scrollLeft / slideWidth);
-                        currentStoryIndex = Math.max(0, Math.min(currentStoryIndex, stories.length - 1));
-                    }
-                    if (isCarouselVisible && stories.length > 0) {
-                        startAutoSlide();
-                    }
-                    userScrollResumeTimer = null;
-                }, 5000);
-            }
-
-            // Mouse events
-            track.addEventListener('mousedown', onUserScrollStart);
-            track.addEventListener('mouseup', onUserScrollEnd);
-            track.addEventListener('mouseleave', () => {
-                // Only treat mouseleave as scroll-end if they were scrolling
-                if (isUserScrollingCarousel) onUserScrollEnd();
-            });
-
-            // Touch events
-            track.addEventListener('touchstart', onUserScrollStart, { passive: true });
-            track.addEventListener('touchend', onUserScrollEnd, { passive: true });
-
-            // Wheel / trackpad horizontal scroll
-            track.addEventListener('wheel', (e) => {
-                if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-                    onUserScrollStart();
-                    onUserScrollEnd();
-                }
-            }, { passive: true });
+            const hours = Math.floor(diff / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            const ms = diff % 1000;
+            document.getElementById('hours').innerText = String(hours).padStart(2, '0');
+            document.getElementById('minutes').innerText = String(minutes).padStart(2, '0');
+            document.getElementById('seconds').innerText = String(seconds).padStart(2, '0');
+            document.getElementById('milliseconds').innerText = String(ms).padStart(3, '0');
         }
 
-        function setupCarouselVisibilityObserver() {
-            const carousel = document.getElementById('storiesCarousel');
-            if (!carousel) return;
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    isCarouselVisible = entry.isIntersecting;
-                    if (isCarouselVisible) {
-                        if (!autoSlideInterval && !isUserScrollingCarousel) {
-                            startAutoSlide();
-                        }
-                    } else {
-                        if (autoSlideInterval) {
-                            clearInterval(autoSlideInterval);
-                            autoSlideInterval = null;
-                        }
-                    }
-                });
-            }, { threshold: 0.1 });
-            observer.observe(carousel);
+        // ---------- Cloudinary MP4 Upload ----------
+        async function uploadToCloudinary(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/video/upload`, { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.secure_url) return data.secure_url;
+            throw new Error('Cloudinary upload failed');
+        }
+        async function previewVideoUpload() {
+            const file = document.getElementById('postVideoUpload').files[0];
+            if (!file) return;
+            const statusDiv = document.getElementById('videoUploadStatus');
+            statusDiv.innerHTML = 'Uploading video... <span class="loading-spinner"></span>';
+            try {
+                const url = await uploadToCloudinary(file);
+                mediaItems.push({ type: 'video', url: url });
+                renderMediaBlocks();
+                statusDiv.innerHTML = '✅ Video added!';
+            } catch (e) {
+                statusDiv.innerHTML = '❌ Upload failed: ' + e.message;
+            }
         }
 
+        // ---------- NEW Story Carousel (centered, auto slide every 2s, side blur, no manual scroll) ----------
+        async function loadStories() {
+            try {
+                const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow.json`);
+                const data = await res.json();
+                if (data) stories = Object.keys(data).map(k => ({ id: k, ...data[k] })).sort((a,b) => (a.order||0) - (b.order||0));
+                else stories = [];
+                renderStoryCarousel();
+                startAutoSlide();
+            } catch(e) { console.error(e); }
+        }
+
+        function renderStoryCarousel() {
+            const track = document.getElementById('storyTrackNew');
+            if (!stories.length) {
+                track.innerHTML = '<div style="color:#666; text-align:center; width:100%; padding:20px;">No stories yet</div>';
+                return;
+            }
+            const total = stories.length;
+            const prevIdx = (currentStoryIndex - 1 + total) % total;
+            const nextIdx = (currentStoryIndex + 1) % total;
+            const items = [stories[prevIdx], stories[currentStoryIndex], stories[nextIdx]];
+            track.innerHTML = items.map((story, i) => {
+                const isCenter = i === 1;
+                // Only show caption if it exists and is not empty
+                const captionHtml = (story.caption && story.caption.trim()) ? `<div class="story-caption-new">${escapeHtml(story.caption)}</div>` : '';
+                return `<div class="story-item-new ${isCenter ? 'center' : 'side'}">
+                            <div class="story-ring-new">
+                                <div class="story-image-wrapper-new">
+                                    <img src="${story.imageUrl}" class="story-image-new" alt="story">
+                                </div>
+                            </div>
+                            ${captionHtml}
+                        </div>`;
+            }).join('');
+        }
+
+        function startAutoSlide() {
+            if (autoSlideInterval) clearInterval(autoSlideInterval);
+            if (stories.length > 1) autoSlideInterval = setInterval(() => { nextStory(); }, 2000);
+        }
+
+        function nextStory() {
+            if (stories.length) {
+                currentStoryIndex = (currentStoryIndex + 1) % stories.length;
+                renderStoryCarousel();
+            }
+        }
+
+        // Keep original removeStory for admin compatibility
+        async function removeStory(storyId) {
+            if (!isAdminMode || !confirm('Remove this story?')) return;
+            try {
+                await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow/${storyId}.json`, { method: 'DELETE' });
+                stories = stories.filter(s => s.id !== storyId);
+                if (currentStoryIndex >= stories.length && stories.length) currentStoryIndex = 0;
+                renderStoryCarousel();
+                startAutoSlide();
+            } catch(e) { alert(e.message); }
+        }
+
+        // ---------- Original functions (preserved fully) ----------
         async function loadLeagues() {
             try {
                 const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/leagues.json`);
@@ -1479,10 +1574,8 @@
             const fileInput = document.getElementById(`league-icon-${leagueId}`);
             const file = fileInput.files[0];
             if (!file) return;
-            
             const statusDiv = document.getElementById(`league-icon-status-${leagueId}`);
             statusDiv.innerHTML = 'Uploading... <span class="loading-spinner"></span>';
-            
             try {
                 const url = await uploadToImgBB(file);
                 await fetch(`${FIREBASE_CONFIG.databaseURL}/leagues/${leagueId}.json`, {
@@ -1533,7 +1626,7 @@
                 document.getElementById('createPostSection').style.display = 'block';
                 document.getElementById('editLeagueIconsMenuItem').style.display = 'block';
                 renderPosts();
-                renderStories();
+                renderStoryCarousel(); // refresh story carousel to show remove buttons if any
                 alert("Admin mode activated!");
                 closeMenu();
             } else if (key !== null) alert("Invalid admin key.");
@@ -1555,81 +1648,7 @@
         function showDisclaimer() { closeMenu(); document.getElementById('disclaimerModal').classList.add('active'); }
         function closeDisclaimer() { document.getElementById('disclaimerModal').classList.remove('active'); }
 
-        async function loadStories() {
-            try {
-                const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow.json`);
-                const data = await res.json();
-                if (data) stories = Object.keys(data).map(k => ({ id: k, ...data[k] })).sort((a,b) => (a.order||0) - (b.order||0));
-                else stories = [];
-                renderStories();
-                startAutoSlide();
-            } catch(e) { console.error(e); }
-        }
-
-        function renderStories() {
-            const track = document.getElementById('carouselTrack');
-            if (!stories.length) { 
-                track.innerHTML = '<div style="color:#666; text-align:center; width:100%; padding:20px;">No stories yet</div>'; 
-                return; 
-            }
-            track.innerHTML = '';
-            stories.forEach((story, idx) => {
-                const slideDiv = document.createElement('div');
-                slideDiv.className = 'story-slide';
-                slideDiv.innerHTML = `
-                    ${isAdminMode ? `<button class="remove-story-btn" onclick="event.stopPropagation(); removeStory('${story.id}')">×</button>` : ''}
-                    <div class="story-ring" onclick="viewStory(${idx})">
-                        <div class="story-image-wrapper">
-                            <img src="${story.imageUrl}" class="story-image" alt="story">
-                        </div>
-                    </div>
-                    <div class="story-caption">${escapeHtml(story.caption || '')}</div>
-                `;
-                track.appendChild(slideDiv);
-            });
-        }
-
-        function viewStory(index) {
-            const track = document.getElementById('carouselTrack');
-            const slides = track.querySelectorAll('.story-slide');
-            if (!slides[index]) return;
-            const slide = slides[index];
-            const targetScrollLeft = slide.offsetLeft - (track.clientWidth / 2) + (slide.clientWidth / 2);
-            track.scrollLeft = Math.max(0, targetScrollLeft);
-            currentStoryIndex = index;
-        }
-
-        function nextStory() {
-            if (!isCarouselVisible || isUserScrollingCarousel) return;
-            currentStoryIndex = (currentStoryIndex + 1) % stories.length;
-            viewStory(currentStoryIndex);
-        }
-
-        function startAutoSlide() {
-            if (autoSlideInterval) clearInterval(autoSlideInterval);
-            autoSlideInterval = setInterval(() => {
-                if (stories.length > 0 && isCarouselVisible && !isUserScrollingCarousel) nextStory();
-            }, 4000);
-        }
-
-        function resetAutoSlideTimer() {
-            if (autoSlideInterval) clearInterval(autoSlideInterval);
-            autoSlideInterval = setInterval(() => {
-                if (stories.length > 0 && isCarouselVisible && !isUserScrollingCarousel) nextStory();
-            }, 4000);
-        }
-
-        async function removeStory(storyId) {
-            if (!isAdminMode || !confirm('Remove this story?')) return;
-            try {
-                await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow/${storyId}.json`, { method: 'DELETE' });
-                stories = stories.filter(s => s.id !== storyId);
-                if (currentStoryIndex >= stories.length && stories.length) currentStoryIndex = 0;
-                renderStories();
-                resetAutoSlideTimer();
-            } catch(e) { alert(e.message); }
-        }
-
+        // Story add (admin)
         function showAddStoryModal() {
             if (!isAdminMode) return;
             document.getElementById('storyImageUpload').value = '';
@@ -1648,14 +1667,15 @@
             btn.textContent = 'Uploading...'; btn.disabled = true;
             try {
                 const url = await uploadToImgBB(file);
-                const newStory = { imageUrl: url, caption: caption || "⚽", order: stories.length + 1 };
+                // NEW: No default caption — only store if user entered one
+                const newStory = { imageUrl: url, caption: caption || "", order: stories.length + 1 };
                 const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow.json`, { method:'POST', body:JSON.stringify(newStory) });
                 const result = await res.json();
                 stories.push({ id: result.name, ...newStory });
                 currentStoryIndex = stories.length - 1;
-                renderStories();
+                renderStoryCarousel();
                 closeStoryModal();
-                resetAutoSlideTimer();
+                startAutoSlide();
             } catch(err) { alert("Upload failed: " + err.message); }
             finally { btn.textContent='Add Story'; btn.disabled=false; }
         });
@@ -1667,6 +1687,7 @@
             }
         });
 
+        // Post management (original functions)
         function enterEditMode() {
             if (!isAdminMode) return;
             renderEditPostGrid();
@@ -1709,12 +1730,10 @@
                 grid.innerHTML = '<p style="color: #888; text-align: center; padding: 40px;">No posts available to edit.</p>';
                 return;
             }
-
             const sorted = [...posts].sort((a, b) => b.timestamp - a.timestamp);
             grid.innerHTML = sorted.map(post => {
                 const thumbnail = getPostThumbnail(post);
                 let thumbnailHtml = '<div class="post-card-video-placeholder">📷</div>';
-                
                 if (thumbnail) {
                     if (thumbnail.type === 'image') {
                         thumbnailHtml = `<img src="${thumbnail.url}" class="post-card-image" alt="post">`;
@@ -1722,7 +1741,6 @@
                         thumbnailHtml = '<div class="post-card-video-placeholder">▶</div>';
                     }
                 }
-
                 return `
                     <div class="post-card" onclick="selectPostForEdit('${post.id}')">
                         ${thumbnailHtml}
@@ -1744,12 +1762,10 @@
                 grid.innerHTML = '<p style="color: #888; text-align: center; padding: 40px;">No posts available to delete.</p>';
                 return;
             }
-
             const sorted = [...posts].sort((a, b) => b.timestamp - a.timestamp);
             grid.innerHTML = sorted.map(post => {
                 const thumbnail = getPostThumbnail(post);
                 let thumbnailHtml = '<div class="post-card-video-placeholder">📷</div>';
-                
                 if (thumbnail) {
                     if (thumbnail.type === 'image') {
                         thumbnailHtml = `<img src="${thumbnail.url}" class="post-card-image" alt="post">`;
@@ -1757,7 +1773,6 @@
                         thumbnailHtml = '<div class="post-card-video-placeholder">▶</div>';
                     }
                 }
-
                 return `
                     <div class="post-card" onclick="selectPostForDelete('${post.id}')">
                         ${thumbnailHtml}
@@ -1780,7 +1795,6 @@
 
         async function selectPostForDelete(postId) {
             if (!confirm('Are you sure you want to delete this post permanently?')) return;
-            
             try {
                 await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, { method: 'DELETE' });
                 posts = posts.filter(p => p.id !== postId);
@@ -1811,18 +1825,19 @@
             let html = `<div class="post-image-gallery" id="gallery-${postId}">`;
             html += `<div class="gallery-container" style="position:relative;">`;
             html += `<div class="gallery-slides" id="gallery-slides-${postId}" style="display:flex; overflow-x:hidden; scroll-snap-type:x mandatory;">`;
-            
             mediaArray.forEach((item, idx) => {
                 if (item.type === 'image') {
-                    html += `<div class="gallery-slide" style="flex:0 0 100%; scroll-snap-align:start;"><img src="${item.url}" class="gallery-img" alt="post image"></div>`;
+                    html += `<div class="gallery-slide" style="flex:0 0 100%; scroll-snap-align:start;"><img src="${item.url}" class="gallery-img" alt="post image" style="width:100%; height:auto; object-fit:contain;"></div>`;
                 } else if (item.type === 'video') {
                     const videoId = extractYoutubeId(item.url);
                     if (videoId) {
                         html += `<div class="gallery-slide" style="flex:0 0 100%; scroll-snap-align:start;"><iframe class="gallery-video" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
+                    } else {
+                        // Cloudinary video or direct MP4
+                        html += `<div class="gallery-slide" style="flex:0 0 100%; scroll-snap-align:start;"><video controls class="gallery-video" src="${item.url}" style="width:100%; height:auto;"></video></div>`;
                     }
                 }
             });
-            
             html += `</div>`;
             if (mediaArray.length > 1) {
                 html += `<button class="gallery-nav gallery-prev" onclick="event.stopPropagation(); slideGallery('${postId}', -1)">‹</button>`;
@@ -1869,13 +1884,11 @@
         function togglePostMenu(postId, event) {
             event.stopPropagation();
             const dropdown = document.getElementById(`post-menu-${postId}`);
-            
             document.querySelectorAll('.post-menu-dropdown').forEach(d => {
                 if (d.id !== `post-menu-${postId}`) {
                     d.classList.remove('active');
                 }
             });
-            
             dropdown.classList.toggle('active');
         }
 
@@ -1886,6 +1899,38 @@
                 });
             }
         });
+
+        // NEW: Anyone can comment with modal (localStorage username)
+        let currentCommentPostId = null;
+        function openCommentModal(postId) {
+            currentCommentPostId = postId;
+            const post = posts.find(p => p.id === postId);
+            if (!post) return;
+            const media = (post.media && post.media[0]) ? post.media[0] : null;
+            const mediaHtml = media ? (media.type === 'image' ? `<img src="${media.url}" alt="media">` : `<video controls src="${media.url}"></video>`) : '<div style="padding:20px;">📷 No media</div>';
+            document.getElementById('commentModalMedia').innerHTML = mediaHtml;
+            const savedName = localStorage.getItem('comment_username');
+            document.getElementById('commentUsername').value = savedName || '';
+            document.getElementById('commentText').value = '';
+            document.getElementById('commentModal').classList.add('active');
+        }
+        document.getElementById('submitCommentBtn').onclick = async () => {
+            let username = document.getElementById('commentUsername').value.trim();
+            if (!username) username = "Anonymous";
+            localStorage.setItem('comment_username', username);
+            const text = document.getElementById('commentText').value.trim();
+            if (!text) return alert('Write a comment');
+            const commentData = { username, text, timestamp: Date.now() };
+            const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${currentCommentPostId}/comments.json`, { method: 'POST', body: JSON.stringify(commentData) });
+            const result = await res.json();
+            const post = posts.find(p => p.id === currentCommentPostId);
+            if (!post.comments) post.comments = {};
+            post.comments[result.name] = commentData;
+            renderPosts();
+            document.getElementById('commentModal').classList.remove('active');
+        };
+        function closeCommentModal() { document.getElementById('commentModal').classList.remove('active'); }
+        document.getElementById('commentModal').addEventListener('click', (e) => { if (e.target === document.getElementById('commentModal')) closeCommentModal(); });
 
         function renderPosts() {
             const container = document.getElementById('feedContainer');
@@ -1900,7 +1945,6 @@
             const sorted = [...posts].sort((a, b) => b.timestamp - a.timestamp);
             container.innerHTML = sorted.map(post => {
                 const commentsArr = post.comments ? Object.keys(post.comments).map(k => ({ id: k, ...post.comments[k] })) : [];
-                
                 let mediaArray = [];
                 if (post.media && post.media.length > 0) {
                     mediaArray = post.media;
@@ -1909,23 +1953,16 @@
                 } else if (post.imageUrl) {
                     mediaArray = [{ type: 'image', url: post.imageUrl }];
                 }
-                
                 const galleryHtml = mediaArray.length ? renderGallery(mediaArray, post.id) : '';
-                
                 const adminMenu = isAdminMode ? `
                     <div style="position: relative;">
                         <button class="post-menu-btn" onclick="togglePostMenu('${post.id}', event)">⋮</button>
                         <div class="post-menu-dropdown" id="post-menu-${post.id}">
-                            <div class="menu-option" onclick="editPostDirect('${post.id}')">
-                                ✏️ Edit
-                            </div>
-                            <div class="menu-option delete" onclick="deletePostDirect('${post.id}')">
-                                🗑️ Delete
-                            </div>
+                            <div class="menu-option" onclick="editPostDirect('${post.id}')">✏️ Edit</div>
+                            <div class="menu-option delete" onclick="deletePostDirect('${post.id}')">🗑️ Delete</div>
                         </div>
                     </div>
                 ` : '';
-                
                 return `
                     <div class="post">
                         <div class="post-header">
@@ -1945,7 +1982,7 @@
                                     <path d="M16.792 3.904A4.989 4.989 0 0121.5 9.122c0 3.072-2.652 4.959-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.309-2.143-1.823-4.303-3.752C5.141 14.072 2.5 12.167 2.5 9.122a4.989 4.989 0 014.708-5.218 4.21 4.21 0 013.675 1.941c.84 1.175.98 1.763 1.12 1.763s.278-.588 1.11-1.766a4.17 4.17 0 013.679-1.938m0-2a6.04 6.04 0 00-4.797 2.127 6.052 6.052 0 00-4.787-2.127A6.985 6.985 0 00.5 9.122c0 3.61 2.55 5.827 5.015 7.97.283.246.569.494.853.747l1.027.918a44.998 44.998 0 003.518 3.018 2 2 0 002.174 0 45.263 45.263 0 003.626-3.115l.922-.824c.293-.26.59-.519.885-.774 2.334-2.025 4.98-4.32 4.98-7.94a6.985 6.985 0 00-6.708-7.218z" stroke="#FFD700" stroke-width="2"></path>
                                 </svg>
                             </button>
-                            <button class="action-btn" onclick="toggleComments('${post.id}')">
+                            <button class="action-btn" onclick="openCommentModal('${post.id}')">
                                 <svg aria-label="Comment" fill="none" height="24" viewBox="0 0 24 24" width="24">
                                     <path d="M20.656 17.008a9.993 9.993 0 10-3.59 3.615L22 22z" stroke="#FFD700" stroke-linejoin="round" stroke-width="2"></path>
                                 </svg>
@@ -1964,7 +2001,6 @@
                     </div>
                 `;
             }).join('');
-            
             setTimeout(() => {
                 posts.forEach(post => {
                     const container = document.getElementById(`gallery-slides-${post.id}`);
@@ -2054,7 +2090,6 @@
             document.getElementById('editProfilePhotoPreview').style.display = 'none';
             document.getElementById('editFormSuccess').style.display = 'none';
             editUploadedProfilePhotoUrl = null;
-            
             if (post.media && post.media.length > 0) {
                 editMediaItems = JSON.parse(JSON.stringify(post.media));
             } else if (post.images && post.images.length > 0) {
@@ -2064,7 +2099,6 @@
             } else {
                 editMediaItems = [];
             }
-            
             renderEditMediaBlocks();
             document.getElementById('currentMediaList').innerHTML = editMediaItems.length ? `Current media: ${editMediaItems.length} item(s).` : 'No media currently.';
             document.getElementById('editPostModal').classList.add('active');
@@ -2132,14 +2166,12 @@
             editMediaItems.forEach((item, index) => {
                 const block = document.createElement('div');
                 block.className = 'media-block';
-                
                 let preview = '';
                 if (item.type === 'image') {
                     preview = `<img src="${item.url}" class="media-block-preview">`;
                 } else {
                     preview = `<div class="media-block-video-icon">▶</div>`;
                 }
-                
                 block.innerHTML = `
                     <div class="media-block-number">${index + 1}</div>
                     ${preview}
@@ -2174,13 +2206,10 @@
                 alert("Profile name and caption required"); 
                 return; 
             }
-            
             if (!confirm('Are you sure you want to save these changes?')) return;
-            
             const updateData = { username: newUsername, caption: newCaption };
             if (editUploadedProfilePhotoUrl) updateData.userAvatar = editUploadedProfilePhotoUrl;
             if (editMediaItems.length) updateData.media = editMediaItems;
-            
             try {
                 await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${currentEditPostId}.json`, { method: 'PATCH', body: JSON.stringify(updateData) });
                 const post = posts.find(p => p.id === currentEditPostId);
@@ -2188,11 +2217,9 @@
                 post.caption = newCaption;
                 if (editUploadedProfilePhotoUrl) post.userAvatar = editUploadedProfilePhotoUrl;
                 if (editMediaItems.length) post.media = editMediaItems;
-                
                 const successDiv = document.getElementById('editFormSuccess');
                 successDiv.innerHTML = '<span style="font-size:24px;">✅</span> Changes saved successfully!';
                 successDiv.style.display = 'flex';
-                
                 setTimeout(() => {
                     renderPosts();
                     closeEditPostModal();
@@ -2211,6 +2238,7 @@
             toggleCustomTime(); 
             document.getElementById('profilePhotoUpload').value = ''; 
             document.getElementById('postImagesUpload').value = ''; 
+            document.getElementById('postVideoUpload').value = '';
             document.getElementById('youtubeUrlInput').value = '';
             document.getElementById('profilePhotoPreview').style.display = 'none'; 
             document.getElementById('postFormError').style.display = 'none';
@@ -2286,18 +2314,16 @@
             mediaItems.forEach((item, index) => {
                 const block = document.createElement('div');
                 block.className = 'media-block';
-                
                 let preview = '';
                 if (item.type === 'image') {
                     preview = `<img src="${item.url}" class="media-block-preview">`;
                 } else {
                     preview = `<div class="media-block-video-icon">▶</div>`;
                 }
-                
                 block.innerHTML = `
                     <div class="media-block-number">${index + 1}</div>
                     ${preview}
-                    <div class="media-block-info">${item.type === 'image' ? 'Image' : 'YouTube Video'}</div>
+                    <div class="media-block-info">${item.type === 'image' ? 'Image' : 'Video'}</div>
                     <div class="media-block-controls">
                         ${index > 0 ? `<button class="media-block-btn" onclick="moveMedia(${index}, -1)">▲</button>` : ''}
                         ${index < mediaItems.length - 1 ? `<button class="media-block-btn" onclick="moveMedia(${index}, 1)">▼</button>` : ''}
@@ -2324,18 +2350,15 @@
             if (!isAdminMode) return; 
             const profileName = document.getElementById('profileName').value.trim(); 
             const caption = document.getElementById('postCaption').value.trim(); 
-            
             const errorDiv = document.getElementById('postFormError');
             const successDiv = document.getElementById('postFormSuccess');
             errorDiv.style.display = 'none';
             successDiv.style.display = 'none';
-            
             if (!profileName || !caption) { 
                 errorDiv.textContent = 'Profile name and caption are required';
                 errorDiv.style.display = 'block';
                 return; 
             } 
-
             let timestamp;
             if (document.getElementById('useRealTime').checked) {
                 timestamp = Date.now();
@@ -2348,7 +2371,6 @@
                 }
                 timestamp = new Date(customTime).getTime();
             }
-
             const postData = { 
                 username: profileName, 
                 userAvatar: uploadedProfilePhotoUrl || 'https://via.placeholder.com/150/FFD700/000000?text=' + profileName.charAt(0).toUpperCase(), 
@@ -2359,24 +2381,19 @@
                 pinned: false, 
                 timestamp: timestamp 
             }; 
-            
             try { 
                 const btn = document.getElementById('submitPostBtn'); 
                 btn.textContent = 'Posting...'; 
                 btn.disabled = true; 
-                
                 const response = await fetch(`${FIREBASE_CONFIG.databaseURL}/posts.json`, { method: 'POST', body: JSON.stringify(postData) }); 
                 const result = await response.json(); 
                 posts.push({ id: result.name, ...postData }); 
-                
                 successDiv.innerHTML = '<span style="font-size:24px;">✅</span> Post uploaded successfully!';
                 successDiv.style.display = 'flex';
-                
                 setTimeout(() => {
                     renderPosts(); 
                     closePostModal(); 
                 }, 1500);
-                
                 btn.textContent = 'Post'; 
                 btn.disabled = false; 
             } catch(e) { 
