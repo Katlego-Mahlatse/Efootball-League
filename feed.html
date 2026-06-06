@@ -210,6 +210,8 @@
         .league-supercup::before { background: #0066cc; }
         .league-nations { border-left-color: #0057a8; }
         .league-nations::before { background: #0057a8; }
+        .league-euro { border-left-color: #0057a8; }
+        .league-euro::before { background: #0057a8; }
         .league-cwc { border-left-color: #326295; }
         .league-cwc::before { background: #326295; }
         .league-wc { border-left-color: #d4a017; }
@@ -218,6 +220,8 @@
         .league-cs::before { background: #e60000; }
         .league-supercopaesp { border-left-color: #c60b1e; }
         .league-supercopaesp::before { background: #c60b1e; }
+        .league-dream { border-left-color: #ffd700; }
+        .league-dream::before { background: #ffd700; }
 
         .close-menu {
             cursor: pointer;
@@ -344,7 +348,7 @@
             margin-bottom: 25px;
         }
 
-        /* NEW STORY CAROUSEL - centered, auto slide, side blur, no manual scroll */
+        /* NEW STORY CAROUSEL - professional sliding animation */
         .story-carousel-new {
             position: relative;
             width: 100%;
@@ -353,15 +357,15 @@
             padding: 30px 0;
             border-bottom: 1px solid rgba(255, 215, 0, 0.1);
             user-select: none;
-            pointer-events: none; /* disable manual scrolling */
         }
         .story-track-new {
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 20px;
-            transition: transform 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             will-change: transform;
+            padding: 0 20px;
         }
         .story-item-new {
             flex-shrink: 0;
@@ -1150,9 +1154,6 @@
             </div>
             <div class="menu-item" onclick="window.location.href='ranks.html'">Manager Ranks</div>
             <div class="menu-item" id="editLeagueIconsMenuItem" style="display: none;" onclick="openEditLeagueIconsModal()">Edit League Icons</div>
-            <!-- NEW: Dream Cup & UEFA EURO links -->
-            <div class="menu-item" onclick="window.location.href='dream.html'">🏆 Dream Cup</div>
-            <div class="menu-item" onclick="window.location.href='euro.html'">🇪🇺 UEFA EUROS</div>
         </div>
     </div>
 
@@ -1169,20 +1170,20 @@
         </div>
     </div>
 
+    <!-- NEW: Auto-sliding story carousel (centered, side blur, auto slide every 2s) -->
+    <div class="story-carousel-new" id="storyCarouselNew">
+        <div class="story-track-new" id="storyTrackNew"></div>
+    </div>
+
     <!-- NEW: Matchday Deadline Countdown -->
     <div class="deadline-countdown">
-        <div class="countdown-title">⏳ MATCHDAY DEADLINE (SAST 12:00 AM)</div>
+        <div class="countdown-title">MATCHDAY DEADLINE (SAST 12:00 AM)</div>
         <div class="countdown-boxes">
             <div class="cd-box"><div class="cd-number" id="hours">00</div><div class="cd-label">Hours</div></div>
             <div class="cd-box"><div class="cd-number" id="minutes">00</div><div class="cd-label">Minutes</div></div>
             <div class="cd-box"><div class="cd-number" id="seconds">00</div><div class="cd-label">Seconds</div></div>
             <div class="cd-box"><div class="cd-number" id="milliseconds">000</div><div class="cd-label">MS</div></div>
         </div>
-    </div>
-
-    <!-- NEW: Auto-sliding story carousel (no default caption, centered, side blur, auto slide every 2s, no manual scroll) -->
-    <div class="story-carousel-new" id="storyCarouselNew">
-        <div class="story-track-new" id="storyTrackNew"></div>
     </div>
 
     <div class="admin-controls" id="adminSlideControls" style="display: none;">
@@ -1217,7 +1218,7 @@
             </div>
             <div class="form-group">
                 <label>Post Media (Images, MP4 Videos via Cloudinary, YouTube)</label>
-                <!-- NEW: Cloudinary MP4 Upload -->
+                <!-- NEW: Cloudinary MP4 Upload with fixed endpoint -->
                 <input type="file" id="postVideoUpload" accept="video/mp4" onchange="previewVideoUpload()">
                 <label for="postVideoUpload" class="file-upload-label">🎥 Upload MP4 Video (Cloudinary)</label>
                 <div id="videoUploadStatus" class="upload-status"></div>
@@ -1388,10 +1389,12 @@
             { id: 'uecl', name: 'UEFA Conference League', url: 'newconference.html', color: '#5db846', icon: 'https://upload.wikimedia.org/wikipedia/en/b/b5/UEFA_Europa_Conference_League.svg' },
             { id: 'supercup', name: 'UEFA Super Cup', url: 'newsupercup.html', color: '#0066cc', icon: 'https://upload.wikimedia.org/wikipedia/en/7/73/UEFA_Super_Cup_Logo_2021.svg' },
             { id: 'nations', name: 'UEFA Nations League', url: 'nations.html', color: '#0057a8', icon: 'https://upload.wikimedia.org/wikipedia/en/7/76/UEFA_Nations_League.svg' },
+            { id: 'euro', name: 'UEFA Euro', url: 'euro.html', color: '#0057a8', icon: 'https://upload.wikimedia.org/wikipedia/en/7/76/UEFA_Nations_League.svg' },
             { id: 'cwc', name: 'FIFA Club World Cup', url: 'newclubworldcup.html', color: '#326295', icon: 'https://upload.wikimedia.org/wikipedia/en/9/93/2025_FIFA_Club_World_Cup_logo.svg' },
             { id: 'wc', name: 'FIFA World Cup', url: 'fwc.html', color: '#d4a017', icon: 'https://upload.wikimedia.org/wikipedia/en/6/67/2026_FIFA_World_Cup_logo.svg' },
             { id: 'cs', name: 'Community Shield', url: 'cs.html', color: '#e60000', icon: 'https://upload.wikimedia.org/wikipedia/en/4/49/FA_Community_Shield_2023.svg' },
-            { id: 'supercopaesp', name: 'Supercopa de España', url: 'supercopa.html', color: '#c60b1e', icon: 'https://upload.wikimedia.org/wikipedia/en/2/24/Supercopa_de_Espa%C3%B1a_logo.svg' }
+            { id: 'supercopaesp', name: 'Supercopa de España', url: 'supercopa.html', color: '#c60b1e', icon: 'https://upload.wikimedia.org/wikipedia/en/2/24/Supercopa_de_Espa%C3%B1a_logo.svg' },
+            { id: 'dream', name: '🏆 Dream Cup', url: 'dream.html', color: '#ffd700', icon: 'https://upload.wikimedia.org/wikipedia/en/2/24/Supercopa_de_Espa%C3%B1a_logo.svg' }
         ];
 
         window.onload = function() {
@@ -1399,9 +1402,6 @@
             loadPosts();
             loadLeagues();
             startCountdown();
-            // Old carousel observer not needed for new carousel, but we keep for compatibility
-            // setupCarouselVisibilityObserver();
-            // setupCarouselScrollListeners();
         };
 
         // ---------- Countdown to 12:00 AM SAST ----------
@@ -1411,7 +1411,7 @@
         }
         function updateCountdown() {
             const now = new Date();
-            const sastOffset = 2 * 60; // UTC+2 in minutes
+            const sastOffset = 2 * 60;
             const localOffset = now.getTimezoneOffset();
             const sastNow = new Date(now.getTime() + (localOffset + sastOffset) * 60000);
             let deadline = new Date(sastNow);
@@ -1435,15 +1435,15 @@
             document.getElementById('milliseconds').innerText = String(ms).padStart(3, '0');
         }
 
-        // ---------- Cloudinary MP4 Upload ----------
+        // ---------- Cloudinary MP4 Upload (FIXED: /auto/upload) ----------
         async function uploadToCloudinary(file) {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/video/upload`, { method: 'POST', body: formData });
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`, { method: 'POST', body: formData });
             const data = await res.json();
             if (data.secure_url) return data.secure_url;
-            throw new Error('Cloudinary upload failed');
+            throw new Error(data.error?.message || 'Cloudinary upload failed');
         }
         async function previewVideoUpload() {
             const file = document.getElementById('postVideoUpload').files[0];
@@ -1460,7 +1460,7 @@
             }
         }
 
-        // ---------- NEW Story Carousel (centered, auto slide every 2s, side blur, no manual scroll) ----------
+        // ---------- Story Carousel with Professional Sliding Animation ----------
         async function loadStories() {
             try {
                 const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow.json`);
@@ -1484,7 +1484,6 @@
             const items = [stories[prevIdx], stories[currentStoryIndex], stories[nextIdx]];
             track.innerHTML = items.map((story, i) => {
                 const isCenter = i === 1;
-                // Only show caption if it exists and is not empty
                 const captionHtml = (story.caption && story.caption.trim()) ? `<div class="story-caption-new">${escapeHtml(story.caption)}</div>` : '';
                 return `<div class="story-item-new ${isCenter ? 'center' : 'side'}">
                             <div class="story-ring-new">
@@ -1495,6 +1494,7 @@
                             ${captionHtml}
                         </div>`;
             }).join('');
+            track.style.transform = 'translateX(0)';
         }
 
         function startAutoSlide() {
@@ -1504,12 +1504,18 @@
 
         function nextStory() {
             if (stories.length) {
+                const track = document.getElementById('storyTrackNew');
+                track.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                track.style.transform = 'translateX(-150px)';
+                
                 currentStoryIndex = (currentStoryIndex + 1) % stories.length;
-                renderStoryCarousel();
+                setTimeout(() => {
+                    track.style.transition = 'none';
+                    renderStoryCarousel();
+                }, 800);
             }
         }
 
-        // Keep original removeStory for admin compatibility
         async function removeStory(storyId) {
             if (!isAdminMode || !confirm('Remove this story?')) return;
             try {
@@ -1626,7 +1632,7 @@
                 document.getElementById('createPostSection').style.display = 'block';
                 document.getElementById('editLeagueIconsMenuItem').style.display = 'block';
                 renderPosts();
-                renderStoryCarousel(); // refresh story carousel to show remove buttons if any
+                renderStoryCarousel();
                 alert("Admin mode activated!");
                 closeMenu();
             } else if (key !== null) alert("Invalid admin key.");
@@ -1667,7 +1673,6 @@
             btn.textContent = 'Uploading...'; btn.disabled = true;
             try {
                 const url = await uploadToImgBB(file);
-                // NEW: No default caption — only store if user entered one
                 const newStory = { imageUrl: url, caption: caption || "", order: stories.length + 1 };
                 const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow.json`, { method:'POST', body:JSON.stringify(newStory) });
                 const result = await res.json();
@@ -1833,7 +1838,6 @@
                     if (videoId) {
                         html += `<div class="gallery-slide" style="flex:0 0 100%; scroll-snap-align:start;"><iframe class="gallery-video" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
                     } else {
-                        // Cloudinary video or direct MP4
                         html += `<div class="gallery-slide" style="flex:0 0 100%; scroll-snap-align:start;"><video controls class="gallery-video" src="${item.url}" style="width:100%; height:auto;"></video></div>`;
                     }
                 }
@@ -1900,7 +1904,6 @@
             }
         });
 
-        // NEW: Anyone can comment with modal (localStorage username)
         let currentCommentPostId = null;
         function openCommentModal(postId) {
             currentCommentPostId = postId;
