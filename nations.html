@@ -4,13 +4,14 @@
   <meta charset="UTF-8">
   <script>
     (function() {
-      var designWidth = 1200;
+      // increased design width to accommodate larger orbit (1500px)
+      var designWidth = 1500;
       var screenWidth = window.screen.width;
       var scale = screenWidth / designWidth;
       scale = Math.min(1.0, Math.max(0.3, scale));
       var viewportMeta = document.createElement('meta');
       viewportMeta.name = 'viewport';
-      viewportMeta.content = 'width=1200, initial-scale=' + scale + ', user-scalable=yes';
+      viewportMeta.content = 'width=1500, initial-scale=' + scale + ', user-scalable=yes';
       document.head.appendChild(viewportMeta);
     })();
   </script>
@@ -46,8 +47,8 @@
       background: var(--nl-primary);
       min-height:100vh;
       overflow-x:auto;
-      min-width:1200px;
-      width:1200px;
+      min-width:1400px;
+      width:1400px;
       margin:0 auto;
       font-size:20px;
       padding-bottom:3rem;
@@ -77,7 +78,6 @@
       animation:fadeInDown 0.5s ease both;
       overflow:hidden;
     }
-    /* patterned strip top */
     .navbar::before {
       content:'';
       position:absolute;top:0;left:0;right:0;height:8px;
@@ -97,7 +97,6 @@
       background-size:160px 8px;
       animation:navStripe 3s linear infinite;
     }
-    /* patterned strip bottom */
     .navbar::after {
       content:'';
       position:absolute;bottom:0;left:0;right:0;height:8px;
@@ -157,7 +156,7 @@
     }
     .menu-item:hover { background:rgba(0,180,216,0.2);border-color:var(--nl-accent);transform:translateX(8px); }
 
-    /* ── ORBIT FLAGS SECTION ── */
+    /* ── ORBIT FLAGS SECTION (scaled up) ── */
     .orbit-section {
       display:flex;justify-content:center;align-items:center;
       padding:50px 0 30px;
@@ -165,9 +164,9 @@
     }
     .orbit-wrapper {
       position:relative;
-      width:480px;height:480px;
+      width:1200px;
+      height:1200px;
     }
-    /* orbit ring visual */
     .orbit-ring {
       position:absolute;inset:0;
       border-radius:50%;
@@ -180,7 +179,7 @@
     }
     .orbit-flag-item {
       position:absolute;
-      width:64px;height:64px;
+      width:80px;height:80px;
       border-radius:50%;
       overflow:hidden;
       border:3px solid rgba(255,255,255,0.3);
@@ -191,17 +190,17 @@
     }
     .orbit-flag-item:hover { border-color:var(--nl-accent);z-index:10; }
     .orbit-flag-item img { width:100%;height:100%;object-fit:cover;display:block; }
-    /* counter-rotate each flag so it stays upright */
     .orbit-flag-item .flag-inner {
       width:100%;height:100%;
       animation:counterRotate var(--orbit-duration,20s) linear infinite;
     }
-    /* CENTER */
+    /* CENTER - 3x bigger (was 200px, now 600px) */
     .orbit-center {
       position:absolute;
       top:50%;left:50%;
       transform:translate(-50%,-50%);
-      width:200px;height:200px;
+      width:600px;
+      height:600px;
       border-radius:50%;
       overflow:hidden;
       border:4px solid rgba(0,180,216,0.6);
@@ -219,16 +218,16 @@
       width:100%;height:100%;
       display:flex;align-items:center;justify-content:center;
       font-family:'Bebas Neue',sans-serif;
-      font-size:1.2rem;letter-spacing:2px;
+      font-size:2rem;letter-spacing:2px;
       color:rgba(255,255,255,0.4);
       text-align:center;padding:10px;
     }
     .center-dots {
-      position:absolute;bottom:-28px;left:50%;transform:translateX(-50%);
-      display:flex;gap:8px;
+      position:absolute;bottom:-32px;left:50%;transform:translateX(-50%);
+      display:flex;gap:10px;
     }
     .center-dot {
-      width:10px;height:10px;border-radius:50%;
+      width:12px;height:12px;border-radius:50%;
       background:rgba(255,255,255,0.3);cursor:pointer;transition:all 0.25s;
     }
     .center-dot.active { background:var(--nl-accent);transform:scale(1.4); }
@@ -273,7 +272,7 @@
       backdrop-filter:var(--glass-blur);
       border:1px solid var(--glass-border);
       border-radius:80px;padding:12px 20px;
-      max-width:1100px;margin-left:auto;margin-right:auto;
+      max-width:1300px;margin-left:auto;margin-right:auto;
       animation:fadeInUp 0.5s ease 0.3s both;
     }
     .tabs-row { display:flex;justify-content:center;gap:8px;flex-wrap:wrap; }
@@ -603,7 +602,6 @@
     .preview-thumb { position:relative;width:160px;height:160px; }
     .preview-thumb img { width:100%;height:100%;object-fit:cover;border-radius:14px;border:1px solid rgba(255,255,255,0.2); }
     .thumb-del { position:absolute;top:-10px;right:-10px;background:#ef4444;color:white;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:18px;font-weight:bold;display:flex;align-items:center;justify-content:center; }
-    /* flag preview circles in settings */
     .flag-preview-grid { display:flex;flex-wrap:wrap;gap:16px;margin:16px 0;justify-content:center; }
     .flag-thumb { position:relative;width:72px;height:72px;border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,0.3); }
     .flag-thumb img { width:100%;height:100%;object-fit:cover; }
@@ -632,7 +630,7 @@
   <div class="menu-item" id="adminModeBtn">🔑 Admin Mode</div>
 </div>
 
-<!-- ORBIT FLAGS SECTION -->
+<!-- ORBIT FLAGS SECTION (scaled up) -->
 <div class="orbit-section" id="orbitSection">
   <div class="orbit-wrapper" id="orbitWrapper">
     <div class="orbit-ring"></div>
@@ -810,7 +808,7 @@ async function loadCalendarEvents() {
   calendarEventsData = snap.val()||{};
 }
 
-// ─── ORBIT FLAGS ───
+// ─── ORBIT FLAGS (scaled positions) ───
 async function loadOrbitFlags() {
   const [flagsSnap, speedSnap] = await Promise.all([
     db.ref(`${basePath}/flags`).once('value'),
@@ -829,13 +827,17 @@ function renderOrbitFlags() {
   if (!orbitFlags.length) return;
 
   const count = orbitFlags.length;
-  const radius = 190; // px from center of orbit-wrapper (240) to flag center
+  const radius = 490; // radius from center (600/2 + 190) so flags orbit outside the 600px center
+  
+  // center of wrapper is 600,600 (wrapper 1200x1200)
+  const centerX = 600;
+  const centerY = 600;
 
   orbitFlags.forEach((url, i) => {
     const angle = (360 / count) * i;
     const rad = (angle * Math.PI) / 180;
-    const x = 240 + radius * Math.cos(rad) - 32; // 32 = half flag size
-    const y = 240 + radius * Math.sin(rad) - 32;
+    const x = centerX + radius * Math.cos(rad) - 40; // 40 = half flag width (80/2)
+    const y = centerY + radius * Math.sin(rad) - 40;
 
     const flagEl = document.createElement('div');
     flagEl.className = 'orbit-flag-item';
@@ -844,7 +846,6 @@ function renderOrbitFlags() {
     spinner.appendChild(flagEl);
   });
 
-  // The spinner rotates; each flag counter-rotates to stay upright
   spinner.style.animation = `orbitFlags ${orbitDuration}ms linear infinite`;
 }
 
@@ -976,7 +977,7 @@ async function setActiveSeason() {
   alert(`Season ${currentSeasonId} set as active.`);
 }
 
-// ─── RENDER GROUPS ───
+// ─── RENDER GROUPS (with Season 2 specific rule) ───
 function renderGroups() {
   const card=document.getElementById('contentCard');
   if(!groupsData||!Object.keys(groupsData).length) {
@@ -987,6 +988,7 @@ function renderGroups() {
   }
   let html='';
   if(isAdmin)html+=`<div style="display:flex;justify-content:flex-end;margin-bottom:20px;"><button class="add-btn" id="addGroupTopBtn">+ New Group</button></div>`;
+  const isSeason2 = (currentSeasonId === 2);
   for(const gid in groupsData){
     const group=groupsData[gid];
     const teamsObj=group.teams||{};
@@ -1007,12 +1009,33 @@ function renderGroups() {
             <th>P</th><th>W</th><th>D</th><th>L</th>
             <th>GS</th><th>GC</th><th>GD</th><th>Pts</th><th>Last 5</th>
             ${isAdmin?'<th>Actions</th>':''}
-          </tr></thead>
+           </tr</thead>
           <tbody>`;
     sorted.forEach((team,idx)=>{
       const pos=idx+1;
-      const barClass=pos<=4?'vbar-blue':'vbar-red';
-      const rowClass=pos===4?'dashed-sep-blue':(pos===5&&sorted.length>5?'dashed-sep-red':'');
+      let barClass = '';
+      let rowClass = '';
+      if (isSeason2) {
+        // Season 2: 1st-2nd qualify (blue), 3rd eliminated (red)
+        if (pos <= 2) {
+          barClass = 'vbar-blue';
+          if (pos === 2) rowClass = 'dashed-sep-blue';
+        } else if (pos === 3) {
+          barClass = 'vbar-red';
+          rowClass = 'dashed-sep-red';
+        } else {
+          barClass = 'vbar-red';
+        }
+      } else {
+        // Season 1: Top 4 qualify, 5th+ relegated
+        if (pos <= 4) {
+          barClass = 'vbar-blue';
+          if (pos === 4) rowClass = 'dashed-sep-blue';
+        } else {
+          barClass = 'vbar-red';
+          if (pos === 5 && sorted.length > 5) rowClass = 'dashed-sep-red';
+        }
+      }
       const iconHtml=getTeamIconHtml(team.name);
       const gd=team.gd||0;
       html+=`<tr class="${rowClass}">
@@ -1028,13 +1051,18 @@ function renderGroups() {
           <button class="btn-sm btn-edit edit-team-btn" data-gid="${gid}" data-key="${team.key}">Edit</button>
           <button class="btn-sm btn-delete del-team-btn" data-gid="${gid}" data-key="${team.key}">Delete</button>
         </td>`:''}
-      </tr>`;
+       </tr>`;
     });
     html+=`</tbody></table></div>
-      <div class="legend-row">
-        <span class="legend-item"><span class="vbar vbar-blue" style="display:inline-block;"></span> Top 4 — Qualify</span>
-        <span class="legend-item"><span class="vbar vbar-red" style="display:inline-block;"></span> 5th+ — Relegated</span>
-      </div></div>`;
+      <div class="legend-row">`;
+    if (isSeason2) {
+      html+=`<span class="legend-item"><span class="vbar vbar-blue" style="display:inline-block;"></span> 1st-2nd — Qualify</span>
+             <span class="legend-item"><span class="vbar vbar-red" style="display:inline-block;"></span> 3rd — Eliminated</span>`;
+    } else {
+      html+=`<span class="legend-item"><span class="vbar vbar-blue" style="display:inline-block;"></span> Top 4 — Qualify</span>
+             <span class="legend-item"><span class="vbar vbar-red" style="display:inline-block;"></span> 5th+ — Relegated</span>`;
+    }
+    html+=`</div></div>`;
   }
   card.innerHTML=html;
   if(isAdmin){
@@ -1060,7 +1088,7 @@ async function addNewGroup(){const name=prompt('Group name:');if(!name)return;aw
 async function renameGroup(gid){const n=prompt('New name:',groupsData[gid]?.name||gid);if(!n)return;await db.ref(sp(currentSeasonId,`groups/${gid}/name`)).set(n);await loadCurrentSeasonData();renderGroups();}
 async function deleteGroup(gid){if(!confirm('Delete group?'))return;await db.ref(sp(currentSeasonId,`groups/${gid}`)).remove();await loadCurrentSeasonData();renderGroups();}
 
-// ─── Team Form ───
+// ─── Team Form (unchanged) ───
 let editingTeamGid=null,editingTeamKey=null;
 function openTeamForm(gid,key,data){
   editingTeamGid=gid;editingTeamKey=key;
@@ -1090,7 +1118,7 @@ document.getElementById('saveTeamBtn').onclick=async()=>{
 };
 document.getElementById('cancelTeamBtn').onclick=()=>document.getElementById('teamForm').classList.remove('active');
 
-// ─── RENDER FIXTURES ───
+// ─── RENDER FIXTURES (unchanged) ───
 function renderFixtures(){
   const card=document.getElementById('contentCard');
   const subTabsHtml=`<div class="sub-tabs-row">
@@ -1185,7 +1213,7 @@ function renderFixtures(){
   document.getElementById('clearFixBtn')?.addEventListener('click',()=>{document.getElementById('fixTeamFilter').value='all';document.getElementById('fixMonthFilter').value='all';applyFixtureFilters();});
 }
 
-// ─── RENDER RESULTS ───
+// ─── RENDER RESULTS (unchanged) ───
 async function renderResults(){
   const allResults=[];
   for(const gid in groupsData){
@@ -1253,7 +1281,7 @@ async function renderResults(){
   }
 }
 
-// ─── Result Form ───
+// ─── Result Form (unchanged) ───
 let editingResultKey=null,editingResultGroupId=null;
 async function openResultForm(r){
   editingResultKey=r?.key||null;editingResultGroupId=r?.groupId||null;
@@ -1353,7 +1381,7 @@ async function updateGroupTeamStats(gid,homeTeam,awayTeam,hScore,aScore,forfeit)
   await db.ref(sp(currentSeasonId,`groups/${gid}/teams/${aKey}`)).set(aData);
 }
 
-// ─── TOP SCORERS ───
+// ─── TOP SCORERS (unchanged) ───
 function renderTopScorers(){
   const sorted=[...topScorerList].sort((a,b)=>(b.count||0)-(a.count||0));
   const top3=sorted.slice(0,3),rest=sorted.slice(3);
@@ -1378,7 +1406,7 @@ function renderTopScorers(){
   }
   if(rest.length){
     html+=`<div class="rest-table-wrapper"><table class="stats-list">
-      <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Goals</th>${isAdmin?'<th>Actions</th>':''}</tr></thead><tbody>`;
+      <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Goals</th>${isAdmin?'<th>Actions</th>':''} </tr></thead><tbody>`;
     rest.forEach((p,i)=>{
       const ico=getTeamIconHtml(p.team,'team-icon-sm');
       html+=`<tr><td>${i+4}</td><td style="font-size:1.5rem;">${escapeHtml(p.name||'')}</td>
@@ -1396,7 +1424,7 @@ function renderTopScorers(){
   document.getElementById('addScorerBtn')?.addEventListener('click',()=>openStatModal('scorer'));
 }
 
-// ─── TOP ASSISTS ───
+// ─── TOP ASSISTS (unchanged) ───
 function renderTopAssists(){
   const sorted=[...topAssistantList].sort((a,b)=>(b.count||0)-(a.count||0));
   const top3=sorted.slice(0,3),rest=sorted.slice(3);
@@ -1420,7 +1448,7 @@ function renderTopAssists(){
   }
   if(rest.length){
     html+=`<div class="rest-table-wrapper"><table class="stats-list">
-      <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Assists</th>${isAdmin?'<th>Actions</th>':''}</tr></thead><tbody>`;
+      <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Assists</th>${isAdmin?'<th>Actions</th>':''} </tr></thead><tbody>`;
     rest.forEach((p,i)=>{
       const ico=getTeamIconHtml(p.team,'team-icon-sm');
       html+=`<tr><td>${i+4}</td><td style="font-size:1.5rem;">${escapeHtml(p.name||'')}</td>
@@ -1438,7 +1466,7 @@ function renderTopAssists(){
   document.getElementById('addAssistBtn')?.addEventListener('click',()=>openStatModal('assistant'));
 }
 
-// ─── Stat Modal ───
+// ─── Stat Modal (unchanged) ───
 async function openStatModal(type,entry=null){
   const isScorer=type==='scorer';
   showModal(`
@@ -1486,7 +1514,7 @@ function renderCurrentTab(){
   else if(tab==='topassists')renderTopAssists();
 }
 
-// ─── Admin Settings ───
+// ─── Admin Settings (unchanged) ───
 function openAdminSettings(){
   showModal(`
     <h3>⚙️ Admin Settings</h3>
