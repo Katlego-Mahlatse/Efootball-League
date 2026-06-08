@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <script>
     (function() {
-      // increased design width to accommodate larger orbit (1500px)
-      var designWidth = 1500;
-      var screenWidth = window.screen.width;
-      var scale = screenWidth / designWidth;
-      scale = Math.min(1.0, Math.max(0.3, scale));
+      // Fixed zoom: fit the page's fixed width (1400px) into the viewport width
+      var pageWidth = 1400;               // matches body width
+      var viewportWidth = window.innerWidth;
+      var scale = viewportWidth / pageWidth;
+      scale = Math.min(1.0, Math.max(0.3, scale));   // never zoom in, only scale down if needed
       var viewportMeta = document.createElement('meta');
       viewportMeta.name = 'viewport';
-      viewportMeta.content = 'width=1500, initial-scale=' + scale + ', user-scalable=yes';
+      viewportMeta.content = 'width=' + pageWidth + ', initial-scale=' + scale + ', user-scalable=yes';
       document.head.appendChild(viewportMeta);
     })();
   </script>
@@ -1406,7 +1406,7 @@ function renderTopScorers(){
   }
   if(rest.length){
     html+=`<div class="rest-table-wrapper"><table class="stats-list">
-      <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Goals</th>${isAdmin?'<th>Actions</th>':''} </tr></thead><tbody>`;
+      <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Goals</th>${isAdmin?'<th>Actions</th>':''} </table></thead><tbody>`;
     rest.forEach((p,i)=>{
       const ico=getTeamIconHtml(p.team,'team-icon-sm');
       html+=`<tr><td>${i+4}</td><td style="font-size:1.5rem;">${escapeHtml(p.name||'')}</td>
