@@ -1,1 +1,1573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (function() {
+      var designWidth = 1200;
+      var screenWidth = window.screen.width;
+      var scale = screenWidth / designWidth;
+      scale = Math.min(1.0, Math.max(0.3, scale));
+      var viewportMeta = document.createElement('meta');
+      viewportMeta.name = 'viewport';
+      viewportMeta.content = 'width=1200, initial-scale=' + scale + ', user-scalable=yes';
+      document.head.appendChild(viewportMeta);
+    })();
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <style>
+    /* WORLD CUP THEME: BLACK + GOLD (unchanged) */
+    :root {
+      --world-gold: #FFD700;
+      --world-gold-light: #FFE44D;
+      --world-gold-dark: #CCAA00;
+      --world-black: #0A0A0A;
+      --world-black-light: #1A1A1A;
+      --world-black-dark: #000000;
+      --world-white: #FFFFFF;
+      --glass-bg: rgba(0,0,0,0.5);
+      --glass-border: rgba(255,255,255,0.12);
+      --glass-blur: blur(12px);
+    }
 
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--world-black-dark);
+      min-height: 100vh;
+      overflow-x: auto;
+      min-width: 1200px;
+      width: 1200px;
+      margin: 0 auto;
+      font-size: 32px;
+    }
+
+    body.has-bg::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: var(--bg-image);
+      background-size: var(--bg-size, cover);
+      background-position: var(--bg-pos, center);
+      background-repeat: no-repeat;
+      z-index: -2;
+    }
+    body.has-bg::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: -1;
+    }
+
+    .navbar, .slideshow-wrapper, .season-bar, .tabs-container, .content-card, footer {
+      font-size: 1rem;
+    }
+
+    /* NAVBAR (GOLD) */
+    .navbar {
+      background: var(--world-gold);
+      backdrop-filter: none;
+      border-bottom: 2px solid var(--world-white);
+      padding: 0 2rem;
+      height: 100px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .navbar-logo { height: 70px; max-width: 260px; object-fit: contain; cursor: pointer; }
+    .navbar-logo-placeholder {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      letter-spacing: 3px;
+      color: var(--world-black-dark);
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .menu-btn {
+      background: var(--world-black-dark);
+      border: 2px solid var(--world-gold-light);
+      width: 70px; height: 70px;
+      border-radius: 20px;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .menu-btn span { width: 32px; height: 4px; background: var(--world-gold); border-radius: 4px; }
+    .menu-btn:hover { background: var(--world-black-light); }
+
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 199; display: none; backdrop-filter: blur(2px); }
+    .overlay.active { display: block; }
+    .side-menu {
+      position: fixed; top: 0; right: -340px; width: 340px; height: 100%;
+      background: rgba(10,10,10,0.98);
+      backdrop-filter: blur(20px);
+      border-left: 1px solid var(--world-gold);
+      z-index: 200; padding: 40px 28px;
+      transition: right 0.35s cubic-bezier(.4,0,.2,1);
+    }
+    .side-menu.active { right: 0; }
+    .close-menu { text-align: right; font-size: 2.5rem; cursor: pointer; color: var(--world-white); margin-bottom: 40px; line-height: 1; }
+    .menu-item {
+      padding: 20px 28px; margin: 12px 0;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px; cursor: pointer;
+      font-weight: 600; font-size: 1.4rem;
+      color: var(--world-white);
+      transition: all 0.2s;
+    }
+    .menu-item:hover { background: var(--world-gold); border-color: var(--world-white); color: var(--world-black-dark); }
+
+    .slideshow-wrapper {
+      padding: 40px 40px 24px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .slideshow-frame {
+      width: 100%; max-width: 1100px;
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      border: 1px solid var(--world-gold);
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .slideshow-img {
+      width: 100%;
+      height: auto;
+      max-height: 500px;
+      object-fit: contain;
+      display: block;
+      transition: opacity 0.5s ease;
+    }
+    .dots-container { margin-top: 24px; display: flex; gap: 12px; }
+    .dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: rgba(255,255,255,0.3); cursor: pointer; transition: all 0.2s;
+    }
+    .dot.active { background: var(--world-gold); transform: scale(1.3); }
+
+    .season-bar {
+      display: flex; justify-content: center;
+      margin: 24px 0 16px;
+    }
+    .season-controls {
+      display: flex; align-items: center; gap: 20px;
+      background: rgba(10,10,10,0.7);
+      border: 1px solid var(--world-gold);
+      padding: 12px 32px; border-radius: 80px;
+      backdrop-filter: blur(8px);
+    }
+    .season-arrow {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid var(--world-gold);
+      width: 56px; height: 56px; border-radius: 50%;
+      font-size: 2rem; cursor: pointer;
+      color: var(--world-white); font-weight: bold;
+      transition: all 0.2s; line-height: 1;
+    }
+    .season-arrow:hover:not(:disabled) { background: var(--world-gold); color: var(--world-black-dark); }
+    .season-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+    .season-number {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem; letter-spacing: 2px;
+      color: var(--world-white); min-width: 180px; text-align: center;
+    }
+    .season-admin-btns { display: flex; gap: 10px; margin-left: 10px; }
+    .season-admin-btn {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid var(--world-gold);
+      padding: 8px 20px; border-radius: 40px;
+      font-weight: 600; cursor: pointer;
+      color: var(--world-white); font-size: 1rem;
+      font-family: 'Rajdhani', sans-serif;
+      transition: all 0.2s;
+    }
+    .season-admin-btn:hover { background: var(--world-gold); color: var(--world-black-dark); }
+
+    .tabs-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin: 30px 40px 0;
+      background: rgba(10,10,10,0.6);
+      border: 1px solid var(--world-gold);
+      border-radius: 80px;
+      padding: 12px 20px;
+      backdrop-filter: blur(8px);
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .tabs-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      padding: 10px 24px;
+      cursor: pointer;
+      color: rgba(255,255,255,0.6);
+      border-radius: 60px;
+      letter-spacing: 0.5px;
+      transition: all 0.25s;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      background: var(--world-gold);
+      color: var(--world-black-dark);
+    }
+    .tab-btn:hover:not(.active) { color: var(--world-white); background: rgba(255,255,255,0.1); }
+
+    .content-card {
+      margin: 24px 40px 40px;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: 32px;
+      padding: 32px;
+      min-height: 200px;
+    }
+
+    /* matches & results */
+    .matches-list { display: flex; flex-direction: column; gap: 40px; }
+    .match-card {
+      background: rgba(0,0,0,0.5);
+      border: 1px solid var(--world-gold);
+      border-radius: 48px;
+      padding: 48px 64px;
+      transition: all 0.2s;
+    }
+    .match-card:hover { background: rgba(0,0,0,0.7); border-color: var(--world-gold-light); }
+    .match-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 40px;
+    }
+    .team-side {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      flex: 1;
+      text-align: center;
+    }
+    .team-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700; font-size: 3.2rem;
+      color: var(--world-white);
+      letter-spacing: 0.3px;
+    }
+    .team-icon-wrap {
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      border: 2px solid var(--world-gold);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .team-icon-wrap img { width: 140px; height: 140px; object-fit: contain; }
+    .team-initials {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3rem; color: var(--world-white);
+      letter-spacing: 2px;
+    }
+    .match-center {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 8px;
+      flex-shrink: 0; min-width: 200px;
+    }
+    .vs-text {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 4rem; color: var(--world-gold);
+      letter-spacing: 8px;
+    }
+    .score-display {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 5rem; color: var(--world-gold);
+      letter-spacing: 6px;
+      background: rgba(0,0,0,0.6);
+      padding: 16px 48px; border-radius: 80px;
+      border: 2px solid var(--world-gold);
+    }
+    .forfeit-text {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3.5rem; color: #ff4444;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.8);
+      padding: 16px 32px; border-radius: 60px;
+      border: 2px solid #ff4444;
+    }
+    .aggregate-text {
+      font-size: 1.8rem;
+      color: rgba(255,255,255,0.7);
+      margin-top: 8px;
+      font-family: 'Rajdhani', sans-serif;
+    }
+    .goal-scorers {
+      margin-top: 16px;
+      font-size: 1.4rem;
+      font-weight: 500;
+      color: #ddd;
+    }
+    .goal-scorer-item {
+      display: inline-block;
+      background: rgba(0,0,0,0.5);
+      padding: 6px 16px;
+      border-radius: 40px;
+      margin: 4px 6px;
+      font-size: 1.2rem;
+    }
+    .match-meta {
+      display: flex; gap: 24px; flex-wrap: wrap;
+      margin-top: 32px; justify-content: center;
+    }
+    .meta-tag {
+      font-size: 2rem; font-weight: 500;
+      color: rgba(255,255,255,0.7);
+      background: rgba(0,0,0,0.5);
+      padding: 12px 32px; border-radius: 60px;
+      border: 1px solid var(--world-gold);
+      font-family: 'Inter', sans-serif;
+    }
+    .admin-row {
+      display: flex; gap: 24px; justify-content: flex-end;
+      margin-top: 32px;
+    }
+    .btn-sm {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700; font-size: 2rem;
+      padding: 16px 40px; border-radius: 60px;
+      border: none; cursor: pointer; transition: all 0.2s;
+      letter-spacing: 1px;
+    }
+    .btn-edit { background: rgba(255,255,255,0.15); color: var(--world-white); border: 1px solid var(--world-gold); }
+    .btn-edit:hover { background: var(--world-gold); color: var(--world-black-dark); }
+    .btn-delete { background: rgba(220,50,50,0.2); color: #ff6b6b; border: 1px solid rgba(220,50,50,0.3); }
+    .btn-delete:hover { background: #cc3333; color: white; }
+    .btn-add-result { background: rgba(50,200,100,0.2); color: #5dde8a; border: 1px solid rgba(50,200,100,0.3); }
+    .btn-add-result:hover { background: #22884a; color: white; }
+
+    .add-btn-main {
+      display: inline-flex; align-items: center; gap: 16px;
+      background: rgba(0,0,0,0.6);
+      border: 2px solid var(--world-gold);
+      color: var(--world-gold);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700; font-size: 2.4rem;
+      padding: 24px 64px; border-radius: 100px;
+      cursor: pointer; margin-top: 48px;
+      transition: all 0.2s; letter-spacing: 1px;
+    }
+    .add-btn-main:hover { background: var(--world-gold); color: var(--world-black-dark); }
+
+    /* stats table for top scorers & assists (inline) */
+    .stats-table-wrap { overflow-x: auto; }
+    .stats-table {
+      width: 100%; border-collapse: collapse;
+      font-family: 'Rajdhani', sans-serif;
+    }
+    .stats-table thead th {
+      background: rgba(0,0,0,0.6);
+      color: var(--world-gold);
+      font-size: 1.2rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      padding: 20px 24px;
+      border-bottom: 2px solid var(--world-gold);
+    }
+    .stats-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .stats-table tbody tr:hover { background: rgba(255,255,255,0.05); }
+    .stats-table td { padding: 20px 24px; color: var(--world-white); font-size: 1.4rem; font-weight: 500; }
+    .stats-table td:first-child { color: var(--world-gold); font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; }
+    .count-badge {
+      background: rgba(0,0,0,0.5);
+      border: 1px solid var(--world-gold);
+      color: var(--world-gold);
+      padding: 8px 24px; border-radius: 60px;
+      font-weight: 700; font-size: 1.4rem;
+    }
+    .team-cell { display: flex; align-items: center; gap: 20px; }
+
+    /* modal */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.9);
+      backdrop-filter: blur(6px);
+      display: none; justify-content: center; align-items: center;
+      z-index: 1000; padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-card {
+      background: rgba(10,10,10,0.98);
+      border: 1px solid var(--world-gold);
+      border-radius: 48px; padding: 48px;
+      max-width: 900px; width: 100%;
+      max-height: 88vh; overflow-y: auto;
+      font-family: 'Rajdhani', sans-serif;
+    }
+    .modal-card h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.5rem; color: var(--world-gold);
+      letter-spacing: 2px; margin-bottom: 32px;
+    }
+    .modal-card label {
+      display: block; color: rgba(255,255,255,0.6);
+      font-size: 1.2rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 8px; margin-top: 24px;
+    }
+    .modal-card input, .modal-card select, .modal-card textarea {
+      width: 100%; padding: 18px 24px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--world-gold);
+      border-radius: 32px; color: white;
+      font-family: 'Rajdhani', sans-serif; font-size: 1.4rem;
+      font-weight: 500; outline: none;
+    }
+    .modal-card textarea { min-height: 120px; }
+    .scorer-section {
+      border-top: 1px solid rgba(255,255,255,0.2);
+      margin-top: 20px;
+      padding-top: 20px;
+    }
+    .scorer-list {
+      display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0;
+    }
+    .scorer-badge {
+      background: rgba(0,0,0,0.6);
+      border: 1px solid var(--world-gold);
+      border-radius: 40px;
+      padding: 8px 20px;
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .remove-scorer {
+      background: #cc3333;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .modal-btns { display: flex; gap: 20px; margin-top: 32px; }
+    .modal-btn-primary, .modal-btn-cancel {
+      flex: 1; padding: 18px; border-radius: 32px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.6rem; letter-spacing: 1px; cursor: pointer;
+    }
+    .modal-btn-primary { background: var(--world-gold); color: var(--world-black-dark); border: none; }
+    .modal-btn-primary:hover { background: var(--world-gold-light); }
+    .modal-btn-cancel { background: rgba(255,255,255,0.08); border: 1px solid var(--world-gold); color: rgba(255,255,255,0.7); }
+
+    .inline-media {
+      width: 100%;
+      border-radius: 32px;
+      overflow: hidden;
+      background: #000;
+      text-align: center;
+    }
+    .inline-media img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+    .video-wrapper {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+    }
+    .video-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .empty-state { text-align: center; padding: 80px 20px; color: rgba(255,255,255,0.4); }
+    .empty-state .empty-icon { font-size: 5rem; margin-bottom: 20px; }
+    .empty-state p { font-size: 1.8rem; font-weight: 500; }
+
+    .settings-grid { display: flex; flex-direction: column; gap: 20px; }
+    .settings-btn {
+      background: rgba(0,0,0,0.5);
+      border: 1px solid var(--world-gold);
+      color: var(--world-white);
+      padding: 20px 28px;
+      border-radius: 32px;
+      cursor: pointer;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .settings-btn:hover { background: var(--world-gold); color: var(--world-black-dark); border-color: var(--world-white); }
+
+    .loading-spinner { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px; gap: 24px; }
+    .spinner { width: 60px; height: 60px; border: 5px solid rgba(255,255,255,0.2); border-top-color: var(--world-gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    footer { text-align: center; padding: 40px; color: rgba(255,255,255,0.3); font-size: 1rem; border-top: 1px solid var(--world-gold); }
+  </style>
+</head>
+<body>
+
+<div class="navbar">
+  <div id="logoContainer"></div>
+  <button class="menu-btn" id="menuBtn" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="side-menu" id="sideMenu">
+  <div class="close-menu" id="closeMenuBtn">&#x2715;</div>
+  <div class="menu-item" id="homeBtn">🏠 Home</div>
+  <div class="menu-item" id="adminModeBtn">🔐 Admin Mode</div>
+</div>
+
+<div class="slideshow-wrapper">
+  <div class="slideshow-frame">
+    <img id="slideshowImg" class="slideshow-img" src="" alt="Slideshow" style="display:none;">
+  </div>
+  <div class="dots-container" id="dotsContainer"></div>
+</div>
+
+<div class="season-bar">
+  <div class="season-controls">
+    <button class="season-arrow" id="prevSeasonBtn">&#8249;</button>
+    <div class="season-number" id="seasonNumber">Season 1</div>
+    <button class="season-arrow" id="nextSeasonBtn">&#8250;</button>
+    <div id="seasonAdminPanel" style="display:none;" class="season-admin-btns">
+      <button class="season-admin-btn" id="addSeasonBtn">+ New</button>
+      <button class="season-admin-btn" id="renameSeasonBtn">Rename</button>
+      <button class="season-admin-btn" id="setActiveSeasonBtn">Set Active</button>
+    </div>
+  </div>
+</div>
+
+<div class="tabs-container">
+  <div class="tabs-row">
+    <button class="tab-btn active" data-tab="fixtures">Fixtures</button>
+    <button class="tab-btn" data-tab="results">Results</button>
+    <button class="tab-btn" data-tab="scorers">Top Scorers</button>
+    <button class="tab-btn" data-tab="assists">Top Assists</button>
+  </div>
+  <div class="tabs-row">
+    <button class="tab-btn" data-tab="matchup">Match Up Diagram</button>
+    <button class="tab-btn" data-tab="watch">Watch Match</button>
+  </div>
+</div>
+
+<div class="content-card" id="contentCard">
+  <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
+</div>
+
+<footer>FIFA Club World Cup &copy; 2025 | Official Fan Hub</footer>
+
+<div id="genericModal" class="modal-overlay">
+  <div class="modal-card" id="modalContent"></div>
+</div>
+
+<script>
+// Firebase config (same project, world_cup path)
+const firebaseConfig = {
+  apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
+  authDomain: "efootball-412.firebaseapp.com",
+  databaseURL: "https://efootball-412-default-rtdb.firebaseio.com",
+  projectId: "efootball-412",
+  storageBucket: "efootball-412.firebasestorage.app",
+  messagingSenderId: "596548424249",
+  appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const IMGBB_KEY   = "81c24f30884ec6dda1dbd2b39739e0c9";
+const RMBG_KEY    = "zdkDj9iwQqbGNe8sJu7AEuE8";
+const BASE_PATH   = "world_cup";
+
+let isAdmin = false;
+let currentSeasonId = 1;
+let availableSeasons = [1];
+let activeSeasonId   = 1;
+let teamIcons = {};
+let fixtures = [], results = [], topScorers = [], topAssists = [];
+let slideshowImages = [], slideInterval = null, currentSlide = 0, slideshowDuration = 3000;
+let matchUpDiagramImage = "";
+let watchMatchEmbed = "";
+
+// ----- helper functions -----
+async function uploadToImgBB(blob) {
+  const fd = new FormData();
+  fd.append('image', blob);
+  const res  = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method:'POST', body:fd });
+  const data = await res.json();
+  if (!data.success) throw new Error(data.error?.message || 'ImgBB upload failed');
+  return data.data.url;
+}
+
+async function removeBackground(file) {
+  const fd = new FormData();
+  fd.append('image_file', file);
+  fd.append('size', 'auto');
+  const res = await fetch('https://api.remove.bg/v1.0/removebg', {
+    method: 'POST',
+    headers: { 'X-Api-Key': RMBG_KEY },
+    body: fd
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.errors?.[0]?.title || 'remove.bg failed');
+  }
+  return await res.blob();
+}
+
+function getInitials(name) {
+  return (name || '?').split(' ').map(w => w[0]).join('').slice(0,3).toUpperCase();
+}
+
+function teamIconHtml(teamName, className = "team-icon-wrap") {
+  const url = teamIcons[teamName];
+  if (url) return `<div class="${className}"><img src="${url}" alt="${teamName}"></div>`;
+  return `<div class="${className}"><span class="team-initials">${getInitials(teamName)}</span></div>`;
+}
+
+function showModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('genericModal').classList.add('active');
+}
+function closeModal() { document.getElementById('genericModal').classList.remove('active'); }
+
+// ----- load global data -----
+async function loadMatchUpData() {
+  const snap = await db.ref(`${BASE_PATH}/matchUpDiagram`).once('value');
+  matchUpDiagramImage = snap.val()?.imageUrl || "";
+}
+async function loadWatchMatchData() {
+  const snap = await db.ref(`${BASE_PATH}/watchMatch`).once('value');
+  watchMatchEmbed = snap.val()?.embedCode || "";
+}
+async function loadBgSettings() {
+  const snap = await db.ref(`${BASE_PATH}/settings`).once('value');
+  const s = snap.val() || {};
+  if (s.backgroundImage) {
+    document.body.style.setProperty('--bg-image', `url(${s.backgroundImage})`);
+    document.body.style.setProperty('--bg-size', s.bgSize || 'cover');
+    document.body.style.setProperty('--bg-pos',  s.bgPos  || 'center');
+    document.body.classList.add('has-bg');
+  }
+}
+async function loadLogo() {
+  const snap = await db.ref(`${BASE_PATH}/settings/navbarLogo`).once('value');
+  const url  = snap.val();
+  const c    = document.getElementById('logoContainer');
+  c.innerHTML = url
+    ? `<img src="${url}" class="navbar-logo" alt="Logo" onclick="goHome()">`
+    : `<div class="navbar-logo-placeholder" onclick="goHome()">🏆 FIFA CLUB WORLD CUP</div>`;
+}
+async function loadTeamIcons() {
+  const snap = await db.ref(`${BASE_PATH}/teamIcons`).once('value');
+  teamIcons  = snap.val() || {};
+}
+
+// ----- seasons -----
+async function loadSeasons() {
+  const snap    = await db.ref(`${BASE_PATH}/seasons`).once('value');
+  const seasons = snap.val() || {};
+  availableSeasons = [];
+  for (const key in seasons) {
+    if (!key.startsWith('season_')) continue;
+    const id = parseInt(key.split('_')[1]);
+    if (!isNaN(id)) availableSeasons.push(id);
+    if (seasons[key].active) activeSeasonId = id;
+  }
+  if (!availableSeasons.length) {
+    availableSeasons = [1];
+    await db.ref(`${BASE_PATH}/seasons/season_1`).set({ active:true, name:'Season 1' });
+    activeSeasonId = 1;
+  }
+  availableSeasons.sort((a,b) => a-b);
+  if (!availableSeasons.includes(activeSeasonId)) activeSeasonId = availableSeasons[0];
+  currentSeasonId = activeSeasonId;
+  updateSeasonUI();
+  await loadSeasonData();
+}
+
+async function loadSeasonData() {
+  const base = `${BASE_PATH}/seasons/season_${currentSeasonId}`;
+  const [fSnap, rSnap, sSnap, aSnap] = await Promise.all([
+    db.ref(`${base}/fixtures`).once('value'),
+    db.ref(`${base}/results`).once('value'),
+    db.ref(`${base}/topScorers`).once('value'),
+    db.ref(`${base}/topAssists`).once('value'),
+  ]);
+  fixtures   = fSnap.val() ? Object.entries(fSnap.val()).map(([k,v])=>({id:k,...v})) : [];
+  results    = rSnap.val() ? Object.entries(rSnap.val()).map(([k,v])=>({id:k,...v})) : [];
+  topScorers = sSnap.val() ? Object.entries(sSnap.val()).map(([k,v])=>({id:k,...v})) : [];
+  topAssists = aSnap.val() ? Object.entries(aSnap.val()).map(([k,v])=>({id:k,...v})) : [];
+  renderCurrentTab();
+}
+
+function updateSeasonUI() {
+  document.getElementById('seasonNumber').textContent = `Season ${currentSeasonId}`;
+  const idx = availableSeasons.indexOf(currentSeasonId);
+  document.getElementById('prevSeasonBtn').disabled = idx <= 0;
+  document.getElementById('nextSeasonBtn').disabled = idx >= availableSeasons.length - 1;
+  document.getElementById('seasonAdminPanel').style.display = isAdmin ? 'flex' : 'none';
+}
+
+function parseDateToTimestamp(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d.getTime();
+}
+
+function sortFixturesByDate(fixturesList) {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const todayTime = today.getTime();
+  const upcoming = [], past = [], noDate = [];
+  fixturesList.forEach(f => {
+    const ts = parseDateToTimestamp(f.date);
+    if (ts === null) noDate.push(f);
+    else if (ts >= todayTime) upcoming.push(f);
+    else past.push(f);
+  });
+  upcoming.sort((a,b) => (parseDateToTimestamp(a.date)||0) - (parseDateToTimestamp(b.date)||0));
+  past.sort((a,b) => (parseDateToTimestamp(a.date)||0) - (parseDateToTimestamp(b.date)||0));
+  noDate.sort((a,b) => (a.md||0) - (b.md||0));
+  return [...upcoming, ...past, ...noDate];
+}
+
+async function switchSeason(delta) {
+  const idx = availableSeasons.indexOf(currentSeasonId);
+  const nIdx = idx + delta;
+  if (nIdx < 0 || nIdx >= availableSeasons.length) return;
+  currentSeasonId = availableSeasons[nIdx];
+  updateSeasonUI();
+  await loadSeasonData();
+}
+
+async function addNewSeason() {
+  const raw = prompt("Enter new season number:");
+  if (!raw) return;
+  const id = parseInt(raw);
+  if (isNaN(id)) { alert("Invalid number"); return; }
+  if (availableSeasons.includes(id)) { alert("Season already exists"); return; }
+  await db.ref(`${BASE_PATH}/seasons/season_${id}`).set({ active:false, name:`Season ${id}` });
+  availableSeasons.push(id); availableSeasons.sort((a,b)=>a-b);
+  currentSeasonId = id; updateSeasonUI(); await loadSeasonData();
+}
+
+async function renameSeason() {
+  const raw = prompt(`New number for Season ${currentSeasonId}:`);
+  if (!raw) return;
+  const id = parseInt(raw);
+  if (isNaN(id)) return;
+  if (availableSeasons.includes(id) && id !== currentSeasonId) { alert("Number taken"); return; }
+  const snap = await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}`).once('value');
+  await db.ref(`${BASE_PATH}/seasons/season_${id}`).set(snap.val());
+  await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}`).remove();
+  availableSeasons = availableSeasons.map(s => s === currentSeasonId ? id : s).sort((a,b)=>a-b);
+  if (activeSeasonId === currentSeasonId) activeSeasonId = id;
+  currentSeasonId = id; updateSeasonUI(); await loadSeasonData();
+}
+
+async function setActiveSeason() {
+  const updates = {};
+  availableSeasons.forEach(s => { updates[`${BASE_PATH}/seasons/season_${s}/active`] = (s === currentSeasonId); });
+  await db.ref().update(updates);
+  activeSeasonId = currentSeasonId;
+  alert(`Season ${currentSeasonId} is now active`);
+}
+
+// ----- FIXTURE MODAL (with aggregate) -----
+async function openFixtureModal(item = null) {
+  showModal(`
+    <h3>${item ? 'Edit Fixture' : 'Add Fixture'}</h3>
+    <label>Home Team</label>
+    <input id="fHome" placeholder="Home Team" value="${escapeHtml(item?.homeTeam || '')}">
+    <label>Away Team</label>
+    <input id="fAway" placeholder="Away Team" value="${escapeHtml(item?.awayTeam || '')}">
+    <label>Date</label>
+    <input id="fDate" placeholder="e.g. 15 May 2025" value="${escapeHtml(item?.date || '')}">
+    <label>Venue</label>
+    <input id="fVenue" placeholder="Venue" value="${escapeHtml(item?.venue || '')}">
+    <label>Description</label>
+    <textarea id="fDesc">${escapeHtml(item?.description || '')}</textarea>
+    <label>Matchday</label>
+    <input id="fMd" type="number" placeholder="Matchday" value="${item?.md || 0}">
+    <label>Aggregate Score (optional)</label>
+    <input id="fAgg" placeholder="e.g. 4-2 or 3-3" value="${escapeHtml(item?.aggregate || '')}">
+    <div class="modal-btns">
+      <button class="modal-btn-primary" id="saveFixtureBtn">Save Fixture</button>
+      <button class="modal-btn-cancel" id="cancelFixtureBtn">Cancel</button>
+    </div>
+  `);
+  document.getElementById('cancelFixtureBtn').onclick = closeModal;
+  document.getElementById('saveFixtureBtn').onclick = async () => {
+    const homeTeam    = document.getElementById('fHome').value.trim();
+    const awayTeam    = document.getElementById('fAway').value.trim();
+    const date        = document.getElementById('fDate').value.trim();
+    const venue       = document.getElementById('fVenue').value.trim();
+    const description = document.getElementById('fDesc').value.trim();
+    const md          = parseInt(document.getElementById('fMd').value) || 0;
+    const aggregate   = document.getElementById('fAgg').value.trim() || null;
+    if (!homeTeam || !awayTeam) { alert("Both teams required"); return; }
+    const data = { homeTeam, awayTeam, date, venue, description, md, aggregate };
+    const path = `${BASE_PATH}/seasons/season_${currentSeasonId}/fixtures`;
+    if (item?.id) await db.ref(`${path}/${item.id}`).set(data);
+    else await db.ref(path).push(data);
+    closeModal(); await loadSeasonData();
+  };
+}
+
+async function deleteFixture(id) {
+  if (!confirm("Delete this fixture?")) return;
+  await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}/fixtures/${id}`).remove();
+  await loadSeasonData();
+}
+
+// ----- RESULT MODAL (forfeit, aggregate, goal scorers) -----
+let tempScorersHome = [];
+let tempScorersAway = [];
+
+function renderScorerList(side) {
+  const list = side === 'home' ? tempScorersHome : tempScorersAway;
+  const containerId = `${side}ScorerList`;
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = list.map((s, idx) => `
+    <div class="scorer-badge">
+      ⚽ ${escapeHtml(s.player)} (${s.goals})
+      <button class="remove-scorer" data-side="${side}" data-idx="${idx}">✖</button>
+    </div>
+  `).join('');
+  document.querySelectorAll('.remove-scorer').forEach(btn => {
+    btn.onclick = (e) => {
+      const s = btn.dataset.side;
+      const idx = parseInt(btn.dataset.idx);
+      if (s === 'home') tempScorersHome.splice(idx,1);
+      else tempScorersAway.splice(idx,1);
+      renderScorerList(s);
+    };
+  });
+}
+
+async function openResultModal(item = null, prefill = null) {
+  const p = prefill || {};
+  tempScorersHome = item?.goalScorers?.home ? [...item.goalScorers.home] : [];
+  tempScorersAway = item?.goalScorers?.away ? [...item.goalScorers.away] : [];
+  const resultType = item?.resultType || 'normal';
+  const forfeitTeam = item?.forfeitTeam || '';
+  const aggregate = item?.aggregate || '';
+  const homeScoreVal = (resultType === 'forfeit' && forfeitTeam === 'home') ? 0 : (item?.homeScore ?? 0);
+  const awayScoreVal = (resultType === 'forfeit' && forfeitTeam === 'away') ? 0 : (item?.awayScore ?? 0);
+
+  showModal(`
+    <h3>${item ? 'Edit Result' : 'Add Result'}</h3>
+    <label>Home Team</label>
+    <input id="rHome" placeholder="Home Team" value="${escapeHtml(item?.homeTeam || p.homeTeam || '')}">
+    <label>Away Team</label>
+    <input id="rAway" placeholder="Away Team" value="${escapeHtml(item?.awayTeam || p.awayTeam || '')}">
+    <label>Result Type</label>
+    <select id="resultTypeSelect">
+      <option value="normal" ${resultType === 'normal' ? 'selected' : ''}>Normal Result</option>
+      <option value="forfeit" ${resultType === 'forfeit' ? 'selected' : ''}>Forfeit</option>
+    </select>
+    <div id="forfeitTeamDiv" style="display: ${resultType === 'forfeit' ? 'block' : 'none'};">
+      <label>Forfeit By</label>
+      <select id="forfeitTeamSelect">
+        <option value="home" ${forfeitTeam === 'home' ? 'selected' : ''}>Home Team Forfeits</option>
+        <option value="away" ${forfeitTeam === 'away' ? 'selected' : ''}>Away Team Forfeits</option>
+      </select>
+    </div>
+    <label>Home Score</label>
+    <input id="rHScore" type="number" placeholder="0" value="${homeScoreVal}" ${resultType === 'forfeit' ? 'disabled' : ''}>
+    <label>Away Score</label>
+    <input id="rAScore" type="number" placeholder="0" value="${awayScoreVal}" ${resultType === 'forfeit' ? 'disabled' : ''}>
+    <label>Aggregate Score (optional)</label>
+    <input id="rAggregate" placeholder="e.g. 4-2" value="${escapeHtml(aggregate)}">
+    <label>Match Type</label>
+    <input id="rType" placeholder="e.g. Semi Final" value="${escapeHtml(item?.matchType || p.description || '')}">
+    <label>Date</label>
+    <input id="rDate" placeholder="Date" value="${escapeHtml(item?.date || p.date || '')}">
+    <label>Venue</label>
+    <input id="rVenue" placeholder="Venue" value="${escapeHtml(item?.venue || p.venue || '')}">
+    <label>Matchday</label>
+    <input id="rMd" type="number" placeholder="Matchday" value="${item?.md || p.md || 0}">
+    
+    <div class="scorer-section">
+      <h4>⚽ Home Team Scorers</h4>
+      <div style="display:flex; gap:12px; margin-bottom:12px;">
+        <input type="text" id="homeScorerName" placeholder="Player name" style="flex:2;">
+        <input type="number" id="homeScorerGoals" placeholder="Goals" value="1" style="width:100px;">
+        <button id="addHomeScorerBtn" class="modal-btn-primary" style="padding:12px 24px;">Add</button>
+      </div>
+      <div id="homeScorerList" class="scorer-list"></div>
+    </div>
+    <div class="scorer-section">
+      <h4>⚽ Away Team Scorers</h4>
+      <div style="display:flex; gap:12px; margin-bottom:12px;">
+        <input type="text" id="awayScorerName" placeholder="Player name" style="flex:2;">
+        <input type="number" id="awayScorerGoals" placeholder="Goals" value="1" style="width:100px;">
+        <button id="addAwayScorerBtn" class="modal-btn-primary" style="padding:12px 24px;">Add</button>
+      </div>
+      <div id="awayScorerList" class="scorer-list"></div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="modal-btn-primary" id="saveResultBtn">Save Result</button>
+      <button class="modal-btn-cancel" id="cancelResultBtn">Cancel</button>
+    </div>
+  `);
+  renderScorerList('home');
+  renderScorerList('away');
+  document.getElementById('cancelResultBtn').onclick = closeModal;
+  const resultTypeSelect = document.getElementById('resultTypeSelect');
+  const forfeitDiv = document.getElementById('forfeitTeamDiv');
+  const homeScoreInp = document.getElementById('rHScore');
+  const awayScoreInp = document.getElementById('rAScore');
+  resultTypeSelect.onchange = () => {
+    const isForfeit = resultTypeSelect.value === 'forfeit';
+    forfeitDiv.style.display = isForfeit ? 'block' : 'none';
+    homeScoreInp.disabled = isForfeit;
+    awayScoreInp.disabled = isForfeit;
+    if (isForfeit) {
+      const ft = document.getElementById('forfeitTeamSelect').value;
+      if (ft === 'home') { homeScoreInp.value = 0; awayScoreInp.value = 3; }
+      else { homeScoreInp.value = 3; awayScoreInp.value = 0; }
+    }
+  };
+  const forfeitSelect = document.getElementById('forfeitTeamSelect');
+  forfeitSelect.onchange = () => {
+    if (resultTypeSelect.value === 'forfeit') {
+      const ft = forfeitSelect.value;
+      if (ft === 'home') { homeScoreInp.value = 0; awayScoreInp.value = 3; }
+      else { homeScoreInp.value = 3; awayScoreInp.value = 0; }
+    }
+  };
+  document.getElementById('addHomeScorerBtn').onclick = () => {
+    const name = document.getElementById('homeScorerName').value.trim();
+    const goals = parseInt(document.getElementById('homeScorerGoals').value) || 1;
+    if (!name) return;
+    tempScorersHome.push({ player: name, goals });
+    renderScorerList('home');
+    document.getElementById('homeScorerName').value = '';
+    document.getElementById('homeScorerGoals').value = '1';
+  };
+  document.getElementById('addAwayScorerBtn').onclick = () => {
+    const name = document.getElementById('awayScorerName').value.trim();
+    const goals = parseInt(document.getElementById('awayScorerGoals').value) || 1;
+    if (!name) return;
+    tempScorersAway.push({ player: name, goals });
+    renderScorerList('away');
+    document.getElementById('awayScorerName').value = '';
+    document.getElementById('awayScorerGoals').value = '1';
+  };
+  document.getElementById('saveResultBtn').onclick = async () => {
+    const homeTeam  = document.getElementById('rHome').value.trim();
+    const awayTeam  = document.getElementById('rAway').value.trim();
+    let homeScore = parseInt(document.getElementById('rHScore').value) || 0;
+    let awayScore = parseInt(document.getElementById('rAScore').value) || 0;
+    const matchType = document.getElementById('rType').value.trim();
+    const date      = document.getElementById('rDate').value.trim();
+    const venue     = document.getElementById('rVenue').value.trim();
+    const md        = parseInt(document.getElementById('rMd').value) || 0;
+    const aggregate = document.getElementById('rAggregate').value.trim() || null;
+    const resultType = document.getElementById('resultTypeSelect').value;
+    const forfeitTeamVal = resultType === 'forfeit' ? document.getElementById('forfeitTeamSelect').value : null;
+    if (resultType === 'forfeit') {
+      if (forfeitTeamVal === 'home') { homeScore = 0; awayScore = 3; }
+      else { homeScore = 3; awayScore = 0; }
+    }
+    if (!homeTeam || !awayTeam) { alert("Both teams required"); return; }
+    const goalScorers = { home: tempScorersHome, away: tempScorersAway };
+    const data = { homeTeam, awayTeam, homeScore, awayScore, matchType, date, venue, md, aggregate, resultType, forfeitTeam: forfeitTeamVal, goalScorers };
+    const path = `${BASE_PATH}/seasons/season_${currentSeasonId}/results`;
+    if (item?.id) await db.ref(`${path}/${item.id}`).set(data);
+    else await db.ref(path).push(data);
+    closeModal(); await loadSeasonData();
+    document.querySelector('.tab-btn[data-tab="results"]').click();
+  };
+}
+
+async function deleteResult(id) {
+  if (!confirm("Delete this result?")) return;
+  await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}/results/${id}`).remove();
+  await loadSeasonData();
+}
+
+// ----- INLINE STATS TABLES (Scorers & Assists) -----
+function renderInlineStatsTable(type) {
+  const list = type === 'scorer' ? topScorers : topAssists;
+  const label = type === 'scorer' ? 'Goals' : 'Assists';
+  const sorted = [...list].sort((a,b) => (b.count||0) - (a.count||0));
+  const medals = ['🥇','🥈','🥉'];
+  let rows = '';
+  if (sorted.length === 0) {
+    rows = `<tr><td colspan="5" style="text-align:center;">No data yet</td></tr>`;
+  } else {
+    rows = sorted.map((p, i) => `
+      <tr>
+        <td>${medals[i] || (i+1)}</td>
+        <td>${escapeHtml(p.name)}</td>
+        <td><div class="team-cell">${teamIconHtml(p.team)}<span>${escapeHtml(p.team)}</span></div></td>
+        <td><span class="count-badge">${p.count}</span></td>
+        ${isAdmin ? `<td><button class="btn-sm btn-edit" data-id="${p.id}">Edit</button> <button class="btn-sm btn-delete" data-id="${p.id}">Delete</button></td>` : ''}
+      </tr>
+    `).join('');
+  }
+  let adminAddButton = isAdmin ? `<button class="add-btn-main" id="addStatBtnInline">+ Add ${type === 'scorer' ? 'Scorer' : 'Assistant'}</button>` : '';
+  return `
+    <div class="stats-table-wrap">
+      <table class="stats-table">
+        <thead><tr><th>#</th><th>Player</th><th>Team</th><th>${label}</th>${isAdmin ? '<th>Actions</th>' : ''}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    ${adminAddButton}
+  `;
+}
+
+function attachInlineStatsHandlers(type) {
+  if (!isAdmin) return;
+  const addBtn = document.getElementById('addStatBtnInline');
+  if (addBtn) addBtn.onclick = () => openStatEntryModalInline(type);
+  document.querySelectorAll('.btn-edit[data-id]').forEach(btn => {
+    const entry = (type === 'scorer' ? topScorers : topAssists).find(p => p.id === btn.dataset.id);
+    if (entry) btn.onclick = () => openStatEntryModalInline(type, entry);
+  });
+  document.querySelectorAll('.btn-delete[data-id]').forEach(btn => {
+    btn.onclick = async () => {
+      if (!confirm("Delete?")) return;
+      const path = type === 'scorer' ? 'topScorers' : 'topAssists';
+      await db.ref(`${BASE_PATH}/seasons/season_${currentSeasonId}/${path}/${btn.dataset.id}`).remove();
+      await loadSeasonData();
+      renderCurrentTab();
+    };
+  });
+}
+
+async function openStatEntryModalInline(type, entry = null) {
+  const label = type === 'scorer' ? 'Goals' : 'Assists';
+  showModal(`
+    <h3>${entry ? 'Edit' : 'Add'} ${type === 'scorer' ? 'Top Scorer' : 'Top Assistant'}</h3>
+    <label>Player Name</label>
+    <input id="statName" placeholder="Player Name" value="${escapeHtml(entry?.name || '')}">
+    <label>Team</label>
+    <input id="statTeam" placeholder="Team" value="${escapeHtml(entry?.team || '')}">
+    <label>${label}</label>
+    <input id="statCount" type="number" value="${entry?.count || 0}">
+    <div class="modal-btns"><button class="modal-btn-primary" id="saveStatBtn">Save</button><button class="modal-btn-cancel" id="cancelStatBtn">Cancel</button></div>
+  `);
+  document.getElementById('cancelStatBtn').onclick = closeModal;
+  document.getElementById('saveStatBtn').onclick = async () => {
+    const name  = document.getElementById('statName').value.trim();
+    const team  = document.getElementById('statTeam').value.trim();
+    const count = parseInt(document.getElementById('statCount').value) || 0;
+    if (!name || !team) { alert("Fill all fields"); return; }
+    const path = `${BASE_PATH}/seasons/season_${currentSeasonId}/${type === 'scorer' ? 'topScorers' : 'topAssists'}`;
+    if (entry?.id) await db.ref(`${path}/${entry.id}`).set({ name, team, count });
+    else await db.ref(path).push({ name, team, count });
+    closeModal(); await loadSeasonData(); renderCurrentTab();
+  };
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;');
+}
+
+// ----- RENDER FIXTURES (with aggregate) -----
+function renderFixtures() {
+  const sorted = sortFixturesByDate(fixtures);
+  let html = '';
+  if (sorted.length === 0) {
+    html = '<div class="empty-state"><div class="empty-icon">📅</div><p>No fixtures scheduled yet</p></div>';
+  } else {
+    html = '<div class="matches-list">';
+    sorted.forEach(f => {
+      const aggHtml = f.aggregate ? `<div class="aggregate-text">Agg: ${escapeHtml(f.aggregate)}</div>` : '';
+      html += `
+        <div class="match-card">
+          <div class="match-row">
+            <div class="team-side home">
+              ${teamIconHtml(f.homeTeam)}
+              <span class="team-name">${escapeHtml(f.homeTeam)}</span>
+            </div>
+            <div class="match-center">
+              <span class="vs-text">VS</span>
+              ${aggHtml}
+            </div>
+            <div class="team-side away">
+              ${teamIconHtml(f.awayTeam)}
+              <span class="team-name">${escapeHtml(f.awayTeam)}</span>
+            </div>
+          </div>
+          <div class="match-meta">
+            ${f.date ? `<span class="meta-tag">📅 ${escapeHtml(f.date)}</span>` : ''}
+            ${f.venue ? `<span class="meta-tag">📍 ${escapeHtml(f.venue)}</span>` : ''}
+            ${f.description ? `<span class="meta-tag">${escapeHtml(f.description)}</span>` : ''}
+            ${f.md ? `<span class="meta-tag">MD ${f.md}</span>` : ''}
+          </div>
+          ${isAdmin ? `<div class="admin-row">
+            <button class="btn-sm btn-add-result" data-id="${f.id}">+ Add Result</button>
+            <button class="btn-sm btn-edit" data-id="${f.id}">Edit</button>
+            <button class="btn-sm btn-delete" data-id="${f.id}">Delete</button>
+          </div>` : ''}
+        </div>
+      `;
+    });
+    html += '</div>';
+  }
+  if (isAdmin) html += `<button class="add-btn-main" id="addFixtureBtn">+ Add Fixture</button>`;
+  return html;
+}
+
+function attachFixtureHandlers() {
+  if (!isAdmin) return;
+  const addBtn = document.getElementById('addFixtureBtn');
+  if (addBtn) addBtn.onclick = () => openFixtureModal();
+  document.querySelectorAll('.btn-edit[data-id]').forEach(btn => {
+    const f = fixtures.find(x => x.id === btn.dataset.id);
+    if (f) btn.onclick = () => openFixtureModal(f);
+  });
+  document.querySelectorAll('.btn-delete[data-id]').forEach(btn => {
+    btn.onclick = () => deleteFixture(btn.dataset.id);
+  });
+  document.querySelectorAll('.btn-add-result[data-id]').forEach(btn => {
+    const f = fixtures.find(x => x.id === btn.dataset.id);
+    if (f) btn.onclick = () => openResultModal(null, f);
+  });
+}
+
+// ----- RENDER RESULTS (forfeit, aggregate, goal scorers) -----
+function renderResults() {
+  const sorted = [...results].sort((a,b) => (b.md||0) - (a.md||0));
+  let html = '';
+  if (sorted.length === 0) {
+    html = '<div class="empty-state"><div class="empty-icon">🏆</div><p>No results yet</p></div>';
+  } else {
+    html = '<div class="matches-list">';
+    sorted.forEach(r => {
+      const isForfeit = r.resultType === 'forfeit';
+      const scoreHtml = isForfeit ? `<div class="forfeit-text">FORFEIT</div><div class="aggregate-text">(3-0 awarded to ${r.forfeitTeam === 'home' ? r.awayTeam : r.homeTeam})</div>` : `<div class="score-display">${r.homeScore} - ${r.awayScore}</div>`;
+      const aggHtml = r.aggregate ? `<div class="aggregate-text">Agg: ${escapeHtml(r.aggregate)}</div>` : '';
+      const homeScorers = r.goalScorers?.home || [];
+      const awayScorers = r.goalScorers?.away || [];
+      const homeScorersHtml = homeScorers.map(s => `<span class="goal-scorer-item">⚽ ${escapeHtml(s.player)}${s.goals > 1 ? ` (${s.goals})` : ''}</span>`).join('');
+      const awayScorersHtml = awayScorers.map(s => `<span class="goal-scorer-item">⚽ ${escapeHtml(s.player)}${s.goals > 1 ? ` (${s.goals})` : ''}</span>`).join('');
+      html += `
+        <div class="match-card">
+          <div class="match-row">
+            <div class="team-side home">
+              ${teamIconHtml(r.homeTeam)}
+              <span class="team-name">${escapeHtml(r.homeTeam)}</span>
+              ${homeScorersHtml ? `<div class="goal-scorers">${homeScorersHtml}</div>` : ''}
+            </div>
+            <div class="match-center">
+              ${scoreHtml}
+              ${aggHtml}
+            </div>
+            <div class="team-side away">
+              ${teamIconHtml(r.awayTeam)}
+              <span class="team-name">${escapeHtml(r.awayTeam)}</span>
+              ${awayScorersHtml ? `<div class="goal-scorers">${awayScorersHtml}</div>` : ''}
+            </div>
+          </div>
+          <div class="match-meta">
+            ${r.date ? `<span class="meta-tag">📅 ${escapeHtml(r.date)}</span>` : ''}
+            ${r.venue ? `<span class="meta-tag">📍 ${escapeHtml(r.venue)}</span>` : ''}
+            ${r.matchType ? `<span class="meta-tag">${escapeHtml(r.matchType)}</span>` : ''}
+            ${r.md ? `<span class="meta-tag">MD ${r.md}</span>` : ''}
+          </div>
+          ${isAdmin ? `<div class="admin-row">
+            <button class="btn-sm btn-edit" data-id="${r.id}">Edit</button>
+            <button class="btn-sm btn-delete" data-id="${r.id}">Delete</button>
+          </div>` : ''}
+        </div>
+      `;
+    });
+    html += '</div>';
+  }
+  if (isAdmin) html += `<button class="add-btn-main" id="addResultBtn">+ Add Result</button>`;
+  return html;
+}
+
+function attachResultHandlers() {
+  if (!isAdmin) return;
+  const addBtn = document.getElementById('addResultBtn');
+  if (addBtn) addBtn.onclick = () => openResultModal();
+  document.querySelectorAll('.btn-edit[data-id]').forEach(btn => {
+    const r = results.find(x => x.id === btn.dataset.id);
+    if (r) btn.onclick = () => openResultModal(r);
+  });
+  document.querySelectorAll('.btn-delete[data-id]').forEach(btn => {
+    btn.onclick = () => deleteResult(btn.dataset.id);
+  });
+}
+
+// ----- INLINE MATCHUP & WATCH -----
+function renderMatchUpInline() {
+  if (matchUpDiagramImage) {
+    return `<div class="inline-media"><img src="${matchUpDiagramImage}" alt="Match Up Diagram" style="width:100%; border-radius:32px;"></div>`;
+  } else {
+    return `<div class="empty-state"><div class="empty-icon">📊</div><p>No match up diagram available yet.</p></div>`;
+  }
+}
+function renderWatchInline() {
+  if (watchMatchEmbed) {
+    return `<div class="inline-media"><div class="video-wrapper">${watchMatchEmbed}</div></div>`;
+  } else {
+    return `<div class="empty-state"><div class="empty-icon">🎬</div><p>No match video available yet.</p></div>`;
+  }
+}
+
+// ----- MAIN RENDER -----
+function renderCurrentTab() {
+  const tab  = document.querySelector('.tab-btn.active')?.dataset.tab;
+  const card = document.getElementById('contentCard');
+  if (tab === 'fixtures') {
+    card.innerHTML = renderFixtures();
+    attachFixtureHandlers();
+  }
+  else if (tab === 'results') {
+    card.innerHTML = renderResults();
+    attachResultHandlers();
+  }
+  else if (tab === 'scorers') {
+    card.innerHTML = renderInlineStatsTable('scorer');
+    attachInlineStatsHandlers('scorer');
+  }
+  else if (tab === 'assists') {
+    card.innerHTML = renderInlineStatsTable('assist');
+    attachInlineStatsHandlers('assist');
+  }
+  else if (tab === 'matchup') {
+    card.innerHTML = renderMatchUpInline();
+  }
+  else if (tab === 'watch') {
+    card.innerHTML = renderWatchInline();
+  }
+}
+
+// ----- SLIDESHOW, ADMIN SETTINGS (unchanged) -----
+async function loadSlideshow() {
+  const [imgSnap, durSnap] = await Promise.all([
+    db.ref(`${BASE_PATH}/slideshow/images`).once('value'),
+    db.ref(`${BASE_PATH}/slideshow/duration`).once('value'),
+  ]);
+  slideshowImages  = imgSnap.val() || [];
+  slideshowDuration = durSnap.val() || 3000;
+  if (slideInterval) clearInterval(slideInterval);
+  const imgEl = document.getElementById('slideshowImg');
+  if (slideshowImages.length) {
+    imgEl.style.display = 'block';
+    currentSlide = 0;
+    updateSlide();
+    slideInterval = setInterval(() => {
+      currentSlide = (currentSlide + 1) % slideshowImages.length;
+      updateSlide();
+    }, slideshowDuration);
+  } else {
+    imgEl.style.display = 'none';
+  }
+}
+
+function updateSlide() {
+  const img = document.getElementById('slideshowImg');
+  img.src = slideshowImages[currentSlide];
+  const dots = document.getElementById('dotsContainer');
+  dots.innerHTML = '';
+  slideshowImages.forEach((_, i) => {
+    const d = document.createElement('span');
+    d.className = 'dot' + (i === currentSlide ? ' active' : '');
+    d.onclick = () => {
+      currentSlide = i; updateSlide();
+      if (slideInterval) { clearInterval(slideInterval); slideInterval = setInterval(() => { currentSlide = (currentSlide+1) % slideshowImages.length; updateSlide(); }, slideshowDuration); }
+    };
+    dots.appendChild(d);
+  });
+}
+
+async function uploadMatchUpDiagram() {
+  const file = await pickFile('image/*');
+  if (!file) return;
+  try {
+    const url = await uploadToImgBB(file);
+    await db.ref(`${BASE_PATH}/matchUpDiagram`).set({ imageUrl: url });
+    matchUpDiagramImage = url;
+    alert("Match Up Diagram updated!");
+    if (document.querySelector('.tab-btn.active')?.dataset.tab === 'matchup') renderCurrentTab();
+    closeModal();
+  } catch(e) { alert('Upload failed: ' + e.message); }
+}
+
+async function updateWatchMatchEmbed() {
+  const embed = prompt("Paste YouTube embed code (iframe) or full URL:", watchMatchEmbed);
+  if (embed === null) return;
+  let finalEmbed = embed.trim();
+  if (finalEmbed.includes("youtube.com/watch?v=") || finalEmbed.includes("youtu.be/")) {
+    let videoId = "";
+    if (finalEmbed.includes("youtu.be/")) {
+      videoId = finalEmbed.split("youtu.be/")[1].split(/[?#]/)[0];
+    } else {
+      const urlParams = new URLSearchParams(new URL(finalEmbed).search);
+      videoId = urlParams.get('v');
+    }
+    if (videoId) {
+      finalEmbed = `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    }
+  }
+  await db.ref(`${BASE_PATH}/watchMatch`).set({ embedCode: finalEmbed });
+  watchMatchEmbed = finalEmbed;
+  alert("Watch Match content updated!");
+  if (document.querySelector('.tab-btn.active')?.dataset.tab === 'watch') renderCurrentTab();
+  closeModal();
+}
+
+function openAdminSettings() {
+  showModal(`
+    <h3>⚙️ Admin Settings</h3>
+    <div class="settings-grid">
+      <button class="settings-btn" id="setLogoBtn">🖼️ Upload Navbar Logo</button>
+      <button class="settings-btn" id="setBgBtn">🌄 Set Background Image</button>
+      <button class="settings-btn" id="manageSlideBtn">🎞️ Manage Main Slideshow</button>
+      <button class="settings-btn" id="setMatchUpBtn">📊 Upload Match Up Diagram</button>
+      <button class="settings-btn" id="setWatchMatchBtn">🎥 Set Watch Match Embed</button>
+      <button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button>
+    </div>
+    <div class="modal-btns"><button class="modal-btn-cancel" id="closeSettingsBtn" style="width:100%;">Close</button></div>
+  `);
+  document.getElementById('closeSettingsBtn').onclick = closeModal;
+  document.getElementById('setLogoBtn').onclick    = () => uploadLogo();
+  document.getElementById('setBgBtn').onclick      = () => openBgCropTool();
+  document.getElementById('manageSlideBtn').onclick = () => manageSlideshowUI('main');
+  document.getElementById('setMatchUpBtn').onclick = () => uploadMatchUpDiagram();
+  document.getElementById('setWatchMatchBtn').onclick = () => updateWatchMatchEmbed();
+  document.getElementById('addIconBtn').onclick    = () => uploadTeamIcon();
+}
+
+async function uploadLogo() {
+  const file = await pickFile('image/*');
+  if (!file) return;
+  try {
+    const url = await uploadToImgBB(file);
+    await db.ref(`${BASE_PATH}/settings/navbarLogo`).set(url);
+    await loadLogo();
+    alert('Logo updated!');
+    closeModal();
+  } catch(e) { alert('Upload failed: ' + e.message); }
+}
+
+function pickFile(accept) {
+  return new Promise(res => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = accept;
+    inp.onchange = e => res(e.target.files[0] || null);
+    inp.click();
+  });
+}
+
+let cropState = {};
+async function openBgCropTool() {
+  const file = await pickFile('image/*');
+  if (!file) return;
+  const objectUrl = URL.createObjectURL(file);
+  showModal(`
+    <h3>🌄 Crop Background</h3>
+    <div class="crop-container" id="cropContainer"><img class="crop-img" id="cropImg" src="${objectUrl}" draggable="false"></div>
+    <div class="crop-controls"><label>Zoom</label><input class="crop-slider" id="zoomSlider" type="range" min="0.5" max="3" step="0.01" value="1"></div>
+    <div class="modal-btns"><button class="modal-btn-primary" id="applyCropBtn">Apply Background</button><button class="modal-btn-cancel" id="cancelCropBtn">Cancel</button></div>
+  `);
+  const container = document.getElementById('cropContainer');
+  const img       = document.getElementById('cropImg');
+  const slider    = document.getElementById('zoomSlider');
+  cropState = { x:0, y:0, scale:1, dragging:false, startX:0, startY:0 };
+  img.onload = () => {
+    const cw = container.clientWidth, ch = container.clientHeight;
+    const fit = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
+    cropState.scale = fit;
+    slider.min = fit*0.8; slider.max = fit*4; slider.step = fit*0.01; slider.value = fit;
+    cropState.x = (cw - img.naturalWidth*fit)/2;
+    cropState.y = (ch - img.naturalHeight*fit)/2;
+    applyTransform();
+  };
+  function applyTransform() { img.style.transform = `translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale})`; }
+  slider.oninput = () => {
+    const old = cropState.scale, nw = parseFloat(slider.value);
+    const cx = container.clientWidth/2, cy = container.clientHeight/2;
+    cropState.x = cx - (cx - cropState.x)*(nw/old);
+    cropState.y = cy - (cy - cropState.y)*(nw/old);
+    cropState.scale = nw;
+    applyTransform();
+  };
+  const move = (e) => { if(cropState.dragging) { cropState.x = e.clientX - cropState.startX; cropState.y = e.clientY - cropState.startY; applyTransform(); } };
+  container.addEventListener('mousedown', e => { cropState.dragging = true; cropState.startX = e.clientX - cropState.x; cropState.startY = e.clientY - cropState.y; e.preventDefault(); });
+  document.addEventListener('mousemove', move);
+  document.addEventListener('mouseup', () => cropState.dragging = false);
+  document.getElementById('cancelCropBtn').onclick = closeModal;
+  document.getElementById('applyCropBtn').onclick = async () => {
+    document.getElementById('applyCropBtn').textContent = 'Uploading…';
+    try {
+      const cw = container.clientWidth, ch = container.clientHeight;
+      const canvas = document.createElement('canvas'); canvas.width = cw*2; canvas.height = ch*2;
+      const ctx = canvas.getContext('2d'); ctx.scale(2,2);
+      ctx.drawImage(img, -cropState.x/cropState.scale, -cropState.y/cropState.scale, cw/cropState.scale, ch/cropState.scale, 0, 0, cw, ch);
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+      const url = await uploadToImgBB(blob);
+      await db.ref(`${BASE_PATH}/settings/backgroundImage`).set(url);
+      document.body.style.setProperty('--bg-image', `url(${url})`);
+      document.body.classList.add('has-bg');
+      closeModal(); alert('Background applied!'); URL.revokeObjectURL(objectUrl);
+    } catch(e) { alert('Failed: '+e.message); }
+  };
+}
+
+async function manageSlideshowUI(type) {
+  let images = slideshowImages;
+  let duration = slideshowDuration/1000;
+  let refPath = `${BASE_PATH}/slideshow`;
+  const refresh = () => {
+    let preview = '<div class="img-preview-grid">';
+    images.forEach((url, idx) => { preview += `<div class="preview-thumb"><img src="${url}"><span class="thumb-del" data-idx="${idx}">×</span></div>`; });
+    preview += '</div>';
+    showModal(`
+      <h3>Manage Main Slideshow</h3>
+      ${preview}
+      <input type="file" id="newSlideFile" accept="image/*">
+      <button class="add-btn-main" id="uploadSlideBtn" style="margin-top:10px;">+ Add Slide</button>
+      <label style="margin-top:20px;">Duration (seconds)</label>
+      <input type="number" id="slideDur" value="${duration}" step="0.5" min="1" max="10">
+      <div class="modal-btns"><button class="modal-btn-primary" id="saveDurBtn">Save Duration</button><button class="modal-btn-cancel" id="closeSlideBtn">Close</button></div>
+    `);
+    document.querySelectorAll('.thumb-del').forEach(btn => {
+      btn.onclick = async () => {
+        const idx = parseInt(btn.dataset.idx);
+        images.splice(idx,1);
+        await db.ref(`${refPath}/images`).set(images);
+        slideshowImages = images; await loadSlideshow();
+        refresh();
+      };
+    });
+    document.getElementById('uploadSlideBtn').onclick = async () => {
+      const file = document.getElementById('newSlideFile').files[0];
+      if (!file) return;
+      document.getElementById('uploadSlideBtn').textContent = 'Uploading…';
+      try {
+        const url = await uploadToImgBB(file);
+        images.push(url);
+        await db.ref(`${refPath}/images`).set(images);
+        slideshowImages = images; await loadSlideshow();
+        refresh();
+      } catch(e) { alert('Upload failed'); document.getElementById('uploadSlideBtn').textContent = '+ Add Slide'; }
+    };
+    document.getElementById('saveDurBtn').onclick = async () => {
+      let sec = parseFloat(document.getElementById('slideDur').value);
+      if (isNaN(sec)) sec = 3;
+      sec = Math.min(10, Math.max(1, sec));
+      await db.ref(`${refPath}/duration`).set(sec*1000);
+      slideshowDuration = sec*1000; loadSlideshow();
+      alert('Duration saved!');
+      closeModal();
+    };
+    document.getElementById('closeSlideBtn').onclick = closeModal;
+  };
+  refresh();
+}
+
+async function uploadTeamIcon() {
+  const teamName = prompt("Enter team name exactly as it appears in fixtures/results:");
+  if (!teamName) return;
+  const file = await pickFile('image/*');
+  if (!file) return;
+  showModal(`<h3>Processing Icon</h3><div class="loading-spinner"><div class="spinner"></div><span>Removing background…</span></div>`);
+  try {
+    let transparentBlob;
+    try { transparentBlob = await removeBackground(file); } catch(e) { transparentBlob = file; }
+    const url = await uploadToImgBB(transparentBlob);
+    await db.ref(`${BASE_PATH}/teamIcons/${teamName}`).set(url);
+    teamIcons[teamName] = url;
+    renderCurrentTab();
+    closeModal();
+    alert(`Icon saved for "${teamName}"!`);
+  } catch(e) { alert('Failed: ' + e.message); closeModal(); }
+}
+
+// ----- UI event bindings -----
+function toggleMenu() { document.getElementById('sideMenu').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); }
+function closeMenu() { document.getElementById('sideMenu').classList.remove('active'); document.getElementById('overlay').classList.remove('active'); }
+document.getElementById('menuBtn').onclick = toggleMenu;
+document.getElementById('closeMenuBtn').onclick = closeMenu;
+document.getElementById('overlay').onclick = closeMenu;
+document.getElementById('homeBtn').onclick = () => window.location.href = 'feed.html';
+document.getElementById('adminModeBtn').onclick = () => {
+  const key = prompt("Enter admin key:");
+  if (key === "admin@100") {
+    isAdmin = true;
+    alert("Admin mode activated ✅");
+    document.getElementById('seasonAdminPanel').style.display = 'flex';
+    renderCurrentTab();
+    if (!document.getElementById('adminSettingsItem')) {
+      const item = document.createElement('div');
+      item.id = 'adminSettingsItem';
+      item.className = 'menu-item';
+      item.innerHTML = '⚙️ Admin Settings';
+      item.onclick = () => { openAdminSettings(); closeMenu(); };
+      document.getElementById('sideMenu').appendChild(item);
+    }
+  } else alert("Incorrect key");
+};
+document.getElementById('prevSeasonBtn').onclick = () => switchSeason(-1);
+document.getElementById('nextSeasonBtn').onclick = () => switchSeason(1);
+document.getElementById('addSeasonBtn').onclick = () => isAdmin && addNewSeason();
+document.getElementById('renameSeasonBtn').onclick = () => isAdmin && renameSeason();
+document.getElementById('setActiveSeasonBtn').onclick = () => isAdmin && setActiveSeason();
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderCurrentTab();
+  };
+});
+
+async function init() {
+  await loadBgSettings();
+  await loadLogo();
+  await loadTeamIcons();
+  await loadSeasons();
+  await loadSlideshow();
+  await loadMatchUpData();
+  await loadWatchMatchData();
+}
+window.goHome = () => window.location.href = 'feed.html';
+init();
+</script>
+</body>
+</html>
