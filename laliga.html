@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -988,7 +989,7 @@ async function loadTeamIcons() {
 }
 
 async function loadCalendarEvents() {
-  const snap = await database.ref('laliga_calendarEvents').once('value');
+  const snap = await database.ref('calendarEvents').once('value');
   calendarEventsData = snap.val() || {};
 }
 
@@ -1224,7 +1225,7 @@ function renderTable() {
     </div>
     <div class="table-scroll-wrap">
       <table class="stats-table">
-        <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GS</th><th>GC</th><th>GD</th><th>Pts</th><th>Last 5</th>${isAdminMode ? '<th>Actions</th>' : ''}</tr></thead>
+        <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GS</th><th>GC</th><th>GD</th><th>Pts</th><th>Last 5</th>${isAdminMode ? '<th>Actions</th>' : ''}</thead>
         <tbody id="tableBody"></tbody>
       </table>
     </div>
@@ -1350,21 +1351,122 @@ function renderTable() {
   attachThreeDotHandler();
 }
 
-// ─── RENDER FIXTURES (blank placeholder) ───
+// ─── RENDER FIXTURES (now reads from calendarEvents) ───
 function renderFixtures() {
-  // Fixtures left blank for now as requested
-  const html = `
-    <div class="empty-state">
-      <div class="empty-icon">📅</div>
-      <p>Fixtures will be available soon.</p>
-    </div>
-  `;
+  // Collect all fixtures from calendarEvents that match "LaLiga" (case & space insensitive) and current season
+  const laligaFixtures = [];
+  
+  for (const [date, eventData] of Object.entries(calendarEventsData)) {
+    // Check if the event's season matches current season
+    const eventSeason = eventData.season;
+    if (eventSeason !== undefined && eventSeason !== null && eventSeason !== currentSeasonId) {
+      continue; // skip if season doesn't match
+    }
+    
+    // Check if eventPairs contain "LaLiga" (case & space insensitive)
+    let isLaLiga = false;
+    if (eventData.eventPairs && Array.isArray(eventData.eventPairs)) {
+      for (const pair of eventData.eventPairs) {
+        if (pair.name) {
+          const normalized = pair.name.trim().toLowerCase().replace(/\s/g, '');
+          if (normalized === 'laliga') {
+            isLaLiga = true;
+            break;
+          }
+        }
+      }
+    }
+    // Also check tournament names for LaLiga label
+    if (!isLaLiga && eventData.tournaments && Array.isArray(eventData.tournaments)) {
+      for (const tournament of eventData.tournaments) {
+        if (tournament.name) {
+          const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
+          if (normalized === 'laliga') {
+            isLaLiga = true;
+            break;
+          }
+        }
+      }
+    }
+    
+    if (isLaLiga && eventData.tournaments) {
+      for (const tournament of eventData.tournaments) {
+        if (tournament.fixtures && Array.isArray(tournament.fixtures)) {
+          for (const fixture of tournament.fixtures) {
+            laligaFixtures.push({
+              date: date,
+              homeTeam: fixture.home,
+              awayTeam: fixture.away,
+              homeIcon: fixture.homeIcon,
+              awayIcon: fixture.awayIcon,
+              tournamentName: tournament.name,
+              eventName: eventData.eventPairs?.[0]?.name || 'LaLiga'
+            });
+          }
+        }
+      }
+    }
+  }
+  
+  // Sort by date (oldest first)
+  laligaFixtures.sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  // Group by date
+  const groupedByDate = {};
+  for (const fixture of laligaFixtures) {
+    if (!groupedByDate[fixture.date]) {
+      groupedByDate[fixture.date] = [];
+    }
+    groupedByDate[fixture.date].push(fixture);
+  }
+  
+  // Build HTML
+  if (laligaFixtures.length === 0) {
+    document.getElementById('contentCard').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📅</div>
+        <p>No LaLiga fixtures found for Season ${currentSeasonId}.</p>
+        <p style="font-size: 0.9rem; margin-top: 10px;">Add fixtures in Admin Calendar with "LaLiga" in the event name and matching season number.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  let html = `<div class="fixtures-list">`;
+  for (const [date, fixtures] of Object.entries(groupedByDate)) {
+    // Format date nicely: "15 April 2026"
+    const dateObj = new Date(date);
+    const formattedDate = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    html += `<div class="fixture-date-group"><div class="fixture-date-label">📅 ${formattedDate}</div>`;
+    for (const f of fixtures) {
+      const homeIconHtml = f.homeIcon ? `<img class="team-icon-sm" src="${f.homeIcon}" alt="${f.homeTeam}" style="width:60px; height:60px;">` : (teamIconsCache[f.homeTeam] ? getTeamIconHtml(f.homeTeam, 'team-icon-sm') : '');
+      const awayIconHtml = f.awayIcon ? `<img class="team-icon-sm" src="${f.awayIcon}" alt="${f.awayTeam}" style="width:60px; height:60px;">` : (teamIconsCache[f.awayTeam] ? getTeamIconHtml(f.awayTeam, 'team-icon-sm') : '');
+      
+      html += `
+        <div class="fixture-card">
+          <div class="fixture-tournament-label">🏆 ${f.tournamentName || 'LaLiga'}</div>
+          <div class="fixture-match-row">
+            <div class="fixture-team-side">
+              ${homeIconHtml}
+              <span class="fixture-team-name">${f.homeTeam}</span>
+            </div>
+            <div class="fixture-vs">VS</div>
+            <div class="fixture-team-side">
+              ${awayIconHtml}
+              <span class="fixture-team-name">${f.awayTeam}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    html += `</div>`;
+  }
+  html += `</div>`;
   document.getElementById('contentCard').innerHTML = html;
 }
 
 // ─── RENDER RESULTS, TOP SCORERS, TOP ASSISTANTS, WATCH ───
-// (Same as original but with laliga paths, we will keep them identical to original except path changes)
-// For brevity, I'll include compact versions but they work exactly the same.
+// (Same as original with laliga paths, they remain unchanged)
 
 function parseResultCard(r) {
   let homeTeam = '', awayTeam = '', homeScore = '', awayScore = '', isForfeit = false, forfeitType = '';
@@ -1564,10 +1666,7 @@ function renderCurrentTab() {
   else if (tab === 'watch') renderWatchMatch();
 }
 
-// Team form, result form, stat modal, three-dot, admin settings (same logic as original with laliga paths)
-// For brevity, I'm including the essential functions that were not defined above (they are similar)
-// We'll quickly define missing ones:
-
+// Team form, result form, stat modal, three-dot, admin settings (same as original with laliga paths)
 let editingTeamKey = null;
 function openTeamForm(key, data) {
   editingTeamKey = key;
@@ -1804,7 +1903,8 @@ function attachRealtimeListeners() {
   database.ref(getSeasonPath(currentSeasonId, 'results')).on('value', snap => { resultsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab; if (activeTab === 'results') renderResults(); if (activeTab === 'table') renderTable(); });
   database.ref(getSeasonPath(currentSeasonId, 'topScorers/list')).on('value', async () => { await loadTopScorerData(); if (document.querySelector('.tab-btn.active')?.dataset.tab === 'topscorers') renderTopScorers(); });
   database.ref(getSeasonPath(currentSeasonId, 'topAssistants/list')).on('value', async () => { await loadTopAssistantData(); if (document.querySelector('.tab-btn.active')?.dataset.tab === 'topassists') renderTopAssistants(); });
-  database.ref('laliga_calendarEvents').on('value', snap => { calendarEventsData = snap.val() || {}; if (document.querySelector('.tab-btn.active')?.dataset.tab === 'fixtures') renderFixtures(); });
+  // Listen to calendarEvents changes for fixtures tab
+  database.ref('calendarEvents').on('value', snap => { calendarEventsData = snap.val() || {}; if (document.querySelector('.tab-btn.active')?.dataset.tab === 'fixtures') renderFixtures(); });
 }
 
 async function init() {
