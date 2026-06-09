@@ -1351,47 +1351,31 @@ function renderTable() {
   attachThreeDotHandler();
 }
 
-// ─── RENDER FIXTURES (now reads from calendarEvents) ───
+// ─── RENDER FIXTURES (ONLY LaLiga tournament fixtures) ───
 function renderFixtures() {
-  // Collect all fixtures from calendarEvents that match "LaLiga" (case & space insensitive) and current season
+  // Collect only fixtures from tournaments whose name normalizes to "laliga"
   const laligaFixtures = [];
   
   for (const [date, eventData] of Object.entries(calendarEventsData)) {
-    // Check if the event's season matches current season
+    // Check season match
     const eventSeason = eventData.season;
     if (eventSeason !== undefined && eventSeason !== null && eventSeason !== currentSeasonId) {
-      continue; // skip if season doesn't match
+      continue;
     }
     
-    // Check if eventPairs contain "LaLiga" (case & space insensitive)
-    let isLaLiga = false;
-    if (eventData.eventPairs && Array.isArray(eventData.eventPairs)) {
-      for (const pair of eventData.eventPairs) {
-        if (pair.name) {
-          const normalized = pair.name.trim().toLowerCase().replace(/\s/g, '');
-          if (normalized === 'laliga') {
-            isLaLiga = true;
-            break;
-          }
-        }
-      }
-    }
-    // Also check tournament names for LaLiga label
-    if (!isLaLiga && eventData.tournaments && Array.isArray(eventData.tournaments)) {
+    if (eventData.tournaments && Array.isArray(eventData.tournaments)) {
       for (const tournament of eventData.tournaments) {
+        // Normalize tournament name: trim, lowercase, remove all spaces
+        let isLaLiga = false;
         if (tournament.name) {
           const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
           if (normalized === 'laliga') {
             isLaLiga = true;
-            break;
           }
         }
-      }
-    }
-    
-    if (isLaLiga && eventData.tournaments) {
-      for (const tournament of eventData.tournaments) {
-        if (tournament.fixtures && Array.isArray(tournament.fixtures)) {
+        
+        // Only add fixtures if this tournament IS LaLiga
+        if (isLaLiga && tournament.fixtures && Array.isArray(tournament.fixtures)) {
           for (const fixture of tournament.fixtures) {
             laligaFixtures.push({
               date: date,
@@ -1426,7 +1410,7 @@ function renderFixtures() {
       <div class="empty-state">
         <div class="empty-icon">📅</div>
         <p>No LaLiga fixtures found for Season ${currentSeasonId}.</p>
-        <p style="font-size: 0.9rem; margin-top: 10px;">Add fixtures in Admin Calendar with "LaLiga" in the event name and matching season number.</p>
+        <p style="font-size: 0.9rem; margin-top: 10px;">Add fixtures in Admin Calendar with tournament name "LaLiga" (case/space insensitive) and matching season number.</p>
       </div>
     `;
     return;
@@ -1434,7 +1418,6 @@ function renderFixtures() {
   
   let html = `<div class="fixtures-list">`;
   for (const [date, fixtures] of Object.entries(groupedByDate)) {
-    // Format date nicely: "15 April 2026"
     const dateObj = new Date(date);
     const formattedDate = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     html += `<div class="fixture-date-group"><div class="fixture-date-label">📅 ${formattedDate}</div>`;
@@ -1578,7 +1561,7 @@ function renderTopScorers() {
       const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
       restHtml += `<tr><td>${i+4}</td><td style="font-size:1.5rem;">${escapeHtml(p.name||'')}</td><td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td><td><span class="count-badge">${p.count||0}</span></td>${isAdminMode?`<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>`:''}</tr>`;
     });
-    restHtml += `</tbody></table></div>`;
+    restHtml += `</tbody><tr></div>`;
   }
   let html = top3Html + restHtml;
   if (!sorted.length) html = '<div class="empty-state"><div class="empty-icon">⚽</div><p>No scorers yet</p></div>';
@@ -1924,3 +1907,4 @@ init();
 </script>
 </body>
 </html>
+```
