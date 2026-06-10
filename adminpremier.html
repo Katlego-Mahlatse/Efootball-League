@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1513,32 +1514,44 @@ function renderTable() {
   attachThreeDotHandler();
 }
 
-// ─── RENDER FIXTURES (icons only from teamIconsCache) ───
+// ======================= CORRECTED FIXTURES RENDERER =======================
+// Only includes fixtures from tournaments whose name normalizes to "premierleague"
 function renderFixtures() {
-  // Gather all PL fixtures from calendarEvents
-  const allFixtures = [];
+  const premierFixtures = [];
   const today = new Date();
   today.setHours(0,0,0,0);
 
+  // Loop over each date in calendarEvents
   for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
-    if (!eventData || !eventData.title) continue;
-    if (eventData.title.toLowerCase().trim() !== 'premier league') continue;
-    const tournaments = eventData.tournaments || [];
-    for (const tourn of tournaments) {
-      const fixtures = tourn.fixtures || [];
-      for (const fix of fixtures) {
-        allFixtures.push({
-          date: dateStr,
-          tournament: tourn.name || 'Premier League',
-          home: fix.home || '',
-          away: fix.away || '',
-        });
+    if (!eventData || !eventData.tournaments) continue;
+
+    // Loop over each tournament in this event
+    for (const tournament of eventData.tournaments) {
+      // Normalize tournament name: trim, lowercase, remove ALL spaces
+      let isPremier = false;
+      if (tournament.name) {
+        const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
+        if (normalized === 'premierleague') {
+          isPremier = true;
+        }
+      }
+
+      // Only add fixtures if this tournament IS Premier League
+      if (isPremier && tournament.fixtures && Array.isArray(tournament.fixtures)) {
+        for (const fix of tournament.fixtures) {
+          premierFixtures.push({
+            date: dateStr,
+            tournament: tournament.name || 'Premier League',
+            home: fix.home || '',
+            away: fix.away || '',
+          });
+        }
       }
     }
   }
 
   // Sort: upcoming first (soonest at top), then past
-  allFixtures.sort((a, b) => {
+  premierFixtures.sort((a, b) => {
     const da = new Date(a.date), db = new Date(b.date);
     const aFuture = da >= today, bFuture = db >= today;
     if (aFuture && bFuture) return da - db;
@@ -1546,12 +1559,12 @@ function renderFixtures() {
     return aFuture ? -1 : 1;
   });
 
-  // Build filter options
-  const allTeams = [...new Set(allFixtures.map(f => [f.home, f.away]).flat().filter(Boolean))].sort();
-  const allMonths = [...new Set(allFixtures.map(f => f.date.substring(0,7)))].sort();
+  // Build filter options from actual fixtures
+  const allTeams = [...new Set(premierFixtures.flatMap(f => [f.home, f.away]).filter(Boolean))].sort();
+  const allMonths = [...new Set(premierFixtures.map(f => f.date.substring(0,7)))].sort();
 
-  // Apply filters
-  let filtered = [...allFixtures];
+  // Apply team/month filters
+  let filtered = [...premierFixtures];
   if (currentFixTeamFilter && currentFixTeamFilter !== 'all') {
     filtered = filtered.filter(f => f.home === currentFixTeamFilter || f.away === currentFixTeamFilter);
   }
@@ -1608,7 +1621,7 @@ function renderFixtures() {
 
   let contentHtml = '';
   if (sortedDates.length === 0) {
-    contentHtml = '<div class="empty-state"><div class="empty-icon">📅</div><p>No fixtures found</p></div>';
+    contentHtml = '<div class="empty-state"><div class="empty-icon">📅</div><p>No Premier League fixtures found</p></div>';
   } else {
     for (const dateStr of sortedDates) {
       const dateObj = new Date(dateStr);
@@ -1655,6 +1668,7 @@ function renderFixtures() {
   document.getElementById('fixMonthFilter')?.addEventListener('change', e => { currentFixMonthFilter = e.target.value; renderFixtures(); });
   document.getElementById('clearFixFiltersBtn')?.addEventListener('click', () => { currentFixTeamFilter = ''; currentFixMonthFilter = ''; renderFixtures(); });
 }
+// ======================= END OF CORRECTED FIXTURES RENDERER =======================
 
 // ─── RENDER RESULTS ───
 function parseResultCard(r) {
@@ -1835,7 +1849,7 @@ function renderTopScorers() {
   let restHtml = '';
   if (rest.length) {
     restHtml = `<div class="rest-table-wrapper"><div class="table-scroll-wrap"><table class="stats-list">
-      <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Goals</th>${isAdminMode?'<th>Actions</th>':''}</td></thead>
+      <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Goals</th>${isAdminMode?'<th>Actions</th>':''}</tr></thead>
       <tbody>`;
     rest.forEach((p, i) => {
       const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
@@ -1906,7 +1920,7 @@ function renderTopAssistants() {
   let restHtml = '';
   if (rest.length) {
     restHtml = `<div class="rest-table-wrapper"><div class="table-scroll-wrap"><table class="stats-list">
-      <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Assists</th>${isAdminMode?'<th>Actions</th>':''}</tr></thead>
+      <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Assists</th>${isAdminMode?'<th>Actions</th>':''}</table></thead>
       <tbody>`;
     rest.forEach((p, i) => {
       const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
@@ -2547,3 +2561,4 @@ init();
 </script>
 </body>
 </html>
+```
