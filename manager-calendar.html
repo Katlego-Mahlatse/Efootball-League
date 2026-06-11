@@ -77,8 +77,8 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .flip-face{position:absolute;inset:0;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;}
 .flip-face img{width:48px;height:48px;object-fit:contain;border-radius:8px;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.5));}
 
-/* EVENT LABEL - FULL TEXT, NO ELLIPSIS, WRAPPING */
-.event-label{font-family:'Rajdhani',sans-serif;font-size:0.58rem;font-weight:700;color:var(--gold);letter-spacing:0.05em;text-transform:uppercase;margin-top:5px;text-align:center;line-height:1.3;word-break:break-word;max-width:100%;padding:0 2px;}
+/* EVENT LABEL - full text, wrapping, smaller font, no ellipsis */
+.event-label{font-family:'Rajdhani',sans-serif;font-size:0.48rem;font-weight:700;color:var(--gold);letter-spacing:0.04em;text-transform:uppercase;margin-top:3px;text-align:center;line-height:1.25;word-break:break-word;white-space:normal;max-width:100%;padding:0 2px;overflow:hidden;}
 
 .add-hint{font-size:0.58rem;color:rgba(245,215,66,0.22);font-style:italic;margin-top:auto;padding-top:4px;transition:color 0.2s;}
 .day-cell:hover .add-hint{color:rgba(245,215,66,0.55);}
@@ -103,9 +103,6 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .form-input{width:100%;background:rgba(0,0,0,0.85);border:1px solid var(--gold-border);border-radius:0.7rem;color:var(--text-primary);padding:0.65rem 0.9rem;font-size:0.9rem;font-family:'Exo 2',sans-serif;outline:none;}
 .form-input[readonly]{opacity:0.8;background:rgba(0,0,0,0.6);cursor:default;}
 
-.img-preview{width:44px;height:44px;object-fit:contain;border-radius:8px;display:none;}
-.img-preview.show{display:block;}
-
 .tournament-card{background:rgba(0,0,0,0.72);border:1px solid rgba(245,215,66,0.14);border-radius:1.1rem;padding:0.9rem 1rem;margin-bottom:0.8rem;transition:border-color 0.2s;}
 .tournament-card:hover{border-color:rgba(245,215,66,0.28);}
 .tc-header{display:flex;align-items:center;gap:0.7rem;}
@@ -114,7 +111,7 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .tc-desc{font-family:'Rajdhani',sans-serif;font-size:0.72rem;color:var(--gold);margin-top:0.2rem;}
 .fix-toggle{background:none;border:1px solid rgba(245,215,66,0.18);color:var(--text-dim);padding:0.25rem 0.65rem;border-radius:1.5rem;font-size:0.67rem;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:0.06em;cursor:pointer;margin-top:0.6rem;transition:all 0.2s;}
 .fix-toggle:hover{border-color:var(--gold-border);color:var(--gold);}
-.fix-panel{display:none;margin-top:0.7rem;background:rgba(0,0,0,0.65);border-radius:0.8rem;border:1px solid rgba(245,215,66,0.07);padding:0.7rem;animation:fadeIn 0.2s ease;}
+.fix-panel{display:none;margin-top:0.7rem;background:rgba(0,0,0,0.65);border-radius:0.8rem;border:1px solid rgba(245,215,66,0.07);padding:0.7rem;}
 .fix-panel.open{display:block;}
 .fix-row{display:flex;align-items:center;gap:0.5rem;padding:0.45rem 0;border-bottom:1px solid rgba(245,215,66,0.06);flex-wrap:wrap;}
 .fix-row:last-of-type{border-bottom:none;}
@@ -131,12 +128,19 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .btn{padding:0.55rem 1.3rem;border-radius:2rem;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.06em;cursor:pointer;transition:all 0.25s;border:none;display:inline-flex;align-items:center;gap:0.3rem;}
 .btn-purple{background:rgba(184,150,12,0.45);border:1px solid var(--gold-border);color:var(--gold);}
 .btn-purple:hover{background:var(--btn-hover);}
+.btn-red{background:rgba(239,68,68,0.8);color:#fff;}
+.btn-red:hover{background:var(--red);}
 .btn-sm{padding:0.3rem 0.75rem;font-size:0.7rem;border-radius:1.5rem;}
 .btn-row{display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:1.2rem;}
 
-.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;}
-.team-opt{background:rgba(184,150,12,0.18);border:1px solid var(--gold-border);border-radius:2rem;padding:0.5rem 0.8rem;cursor:pointer;text-align:center;font-size:0.8rem;font-weight:600;color:var(--text-primary);transition:all 0.2s;font-family:'Rajdhani',sans-serif;}
+/* FILTER POPUP */
+.filter-search{width:100%;background:rgba(0,0,0,0.7);border:1px solid var(--gold-border);border-radius:0.7rem;color:var(--text-primary);padding:0.55rem 0.9rem;font-size:0.85rem;font-family:'Exo 2',sans-serif;outline:none;margin-bottom:0.8rem;transition:border-color 0.2s;}
+.filter-search:focus{border-color:var(--gold);}
+.filter-search::placeholder{color:var(--text-dim);opacity:0.5;}
+.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;max-height:320px;overflow-y:auto;}
+.team-opt{background:rgba(184,150,12,0.18);border:1px solid var(--gold-border);border-radius:2rem;padding:0.5rem 0.8rem;cursor:pointer;text-align:center;font-size:0.8rem;font-weight:600;color:var(--text-primary);transition:all 0.2s;font-family:'Rajdhani',sans-serif;display:flex;align-items:center;gap:0.4rem;justify-content:center;}
 .team-opt:hover,.team-opt.active{background:var(--btn-accent);border-color:var(--gold);color:var(--gold);}
+.team-opt img{width:20px;height:20px;object-fit:contain;border-radius:3px;}
 
 .menu-list{display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem;}
 .menu-link{display:block;text-align:center;padding:0.65rem 1rem;background:rgba(184,150,12,0.18);border:1px solid var(--gold-border);border-radius:2rem;color:var(--text-primary);text-decoration:none;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.9rem;letter-spacing:0.06em;transition:all 0.2s;}
@@ -154,7 +158,7 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
   .day-cell{min-height:80px;padding:5px 3px;}
   .day-number{font-size:0.6rem;}
   .weekday{font-size:0.58rem;padding:0.5rem 0.2rem;}
-  .event-label{font-size:0.5rem;}
+  .event-label{font-size:0.44rem;}
 }
 </style>
 </head>
@@ -211,11 +215,13 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 
 <!-- FILTER -->
 <div class="overlay" id="filterOverlay">
-  <div class="modal" style="max-width:380px;">
+  <div class="modal" style="max-width:400px;">
     <button class="modal-close" data-close="filterOverlay">✕</button>
     <div class="modal-title">FILTER BY TEAM</div>
+    <input class="filter-search" id="filterSearch" type="text" placeholder="🔍  Search team...">
     <div class="team-grid" id="teamGrid"></div>
     <div class="btn-row">
+      <button class="btn btn-red btn-sm" id="clearFilterBtn">CLEAR FILTER</button>
       <button class="btn btn-purple btn-sm" data-close="filterOverlay">CLOSE</button>
     </div>
   </div>
@@ -254,15 +260,26 @@ const ALL_MONTHS = [
   {month:6,label:"July 2026"},{month:7,label:"August 2026"},{month:8,label:"September 2026"},
   {month:9,label:"October 2026"},{month:10,label:"November 2026"},{month:11,label:"December 2026"}
 ];
-const ALL_TEAMS = ["Real Madrid","Liverpool","Dortmund","Man City","Barcelona","Arsenal","PSG","AC Milan","Chelsea","Napoli","Atletico","Juventus","Newcastle","Inter Milan"];
 
 let calData = {};
 let activeMonths = [];
 let selectedTeam = null;
-let teamIconMap = {};
-let globalFlipInterval = null;
+let teamIconRegistry = {};
+let teamIconMapFallback = {};
 
-function rebuildTeamIconMap() {
+/* ── Icon registry from Firebase ── */
+onValue(ref(db, 'teamIcons'), (snap) => {
+  teamIconRegistry = snap.val() || {};
+  renderFilterTeams(document.getElementById('filterSearch')?.value || '');
+});
+
+function getTeamIcon(teamName) {
+  if (!teamName) return null;
+  const key = teamName.trim().replace(/\./g,'_');
+  return teamIconRegistry[key] || teamIconMapFallback[teamName.trim()] || null;
+}
+
+function rebuildTeamIconMapFallback() {
   const map = {};
   for (const date in calData) {
     const ev = calData[date];
@@ -277,16 +294,12 @@ function rebuildTeamIconMap() {
       }
     }
   }
-  teamIconMap = map;
-}
-
-function getTeamIcon(teamName) {
-  if (!teamName) return null;
-  return teamIconMap[teamName.trim()] || null;
+  teamIconMapFallback = map;
 }
 
 function getAllTeamNames() {
-  const s = new Set(ALL_TEAMS);
+  const s = new Set();
+  for (const key in teamIconRegistry) { s.add(key.replace(/_/g,'.')); }
   for (const date in calData) {
     const ev = calData[date];
     if (ev && ev.tournaments) {
@@ -315,7 +328,7 @@ function closeOv(id) { document.getElementById(id).classList.remove("active"); }
 document.querySelectorAll("[data-close]").forEach(el => el.addEventListener("click", () => closeOv(el.dataset.close)));
 document.querySelectorAll(".overlay").forEach(ov => ov.addEventListener("click", e => { if (e.target === ov) closeOv(ov.id); }));
 
-// Firebase listeners
+/* ── Firebase listeners ── */
 onValue(ref(db, 'settings/calendar'), (snap) => {
   const data = snap.val();
   activeMonths = data?.activeMonths || [3, 4, 5, 6];
@@ -324,8 +337,9 @@ onValue(ref(db, 'settings/calendar'), (snap) => {
 
 onValue(ref(db, 'calendarEvents'), (snap) => {
   calData = snap.val() || {};
-  rebuildTeamIconMap();
+  rebuildTeamIconMapFallback();
   renderCalendar();
+  renderFilterTeams(document.getElementById('filterSearch')?.value || '');
   document.getElementById("loader").classList.add("hidden");
 }, (error) => {
   console.error(error);
@@ -335,31 +349,37 @@ onValue(ref(db, 'calendarEvents'), (snap) => {
   toast("Failed to load events", "error");
 });
 
-// Flip animation global index
+/* ── Global flip — icon and label perfectly in sync ── */
 let globalFlipIdx = 0;
-if (globalFlipInterval) clearInterval(globalFlipInterval);
-globalFlipInterval = setInterval(() => {
+setInterval(() => {
   globalFlipIdx++;
   document.querySelectorAll('.flip-cell').forEach(cell => {
     const pairs = JSON.parse(cell.dataset.pairs || '[]');
     if (pairs.length < 2) return;
     const inner = cell.querySelector('.flip-inner');
+    const labelSpan = cell.querySelector('.event-label');
     if (!inner) return;
     const nextIdx = globalFlipIdx % pairs.length;
+    // Trigger flip animation
     inner.classList.add('flipping');
+    // At halfway (250ms) update BOTH icon and label simultaneously
     setTimeout(() => {
       const face = inner.querySelector('.flip-face');
-      const labelSpan = cell.querySelector('.event-label');
-      if (face && face.querySelector('img')) {
-        face.querySelector('img').src = pairs[nextIdx].iconUrl || '';
+      if (face) {
+        let img = face.querySelector('img');
+        if (!img && pairs[nextIdx].iconUrl) {
+          img = document.createElement('img');
+          face.appendChild(img);
+        }
+        if (img) img.src = pairs[nextIdx].iconUrl || '';
       }
       if (labelSpan) labelSpan.textContent = pairs[nextIdx].name || '';
       inner.classList.remove('flipping');
     }, 250);
   });
-}, 2000);
+}, 2800);
 
-// Calendar helpers
+/* ── Calendar helpers ── */
 function fmtYMD(y, m, d) { return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`; }
 function evHasTeam(ev, team) {
   if (!ev || !ev.tournaments) return false;
@@ -440,6 +460,7 @@ function renderCalendar() {
             fi.appendChild(face);
             fc.appendChild(fi);
             cell.appendChild(fc);
+            // Label rendered as sibling of flip-container, inside cell — updated in sync
             const lbl = document.createElement("div");
             lbl.className = "event-label";
             lbl.textContent = pairs[0].name || "";
@@ -463,11 +484,10 @@ function renderCalendar() {
   });
 }
 
-// Read-only day modal
+/* ── Read-only day modal ── */
 function openDayModal(ds, day, monthLabel) {
   const ev = calData[ds];
   document.getElementById("dayTitle").textContent = `${day} ${monthLabel}`;
-  // Event pairs
   const pairsContainer = document.getElementById("eventPairsViewer");
   pairsContainer.innerHTML = "";
   const pairs = ev?.eventPairs || [];
@@ -494,10 +514,8 @@ function openDayModal(ds, day, monthLabel) {
       pairsContainer.appendChild(row);
     });
   }
-  // Season
   const seasonInput = document.getElementById("evSeasonView");
   seasonInput.value = ev?.season ? `Season ${ev.season}` : "Not specified";
-  // Tournaments
   renderTournamentsReadonly(ev?.tournaments || []);
   openOv("dayOverlay");
 }
@@ -585,24 +603,50 @@ function renderTournamentsReadonly(tournaments) {
   });
 }
 
-// Filter team grid
-const teamGrid = document.getElementById("teamGrid");
-const allTeamsList = getAllTeamNames();
-allTeamsList.forEach(team => {
-  const el = document.createElement("div");
-  el.className = "team-opt";
-  el.textContent = team;
-  el.onclick = () => {
-    selectedTeam = team;
-    teamGrid.querySelectorAll(".team-opt").forEach(x => x.classList.remove("active"));
-    el.classList.add("active");
-    closeOv("filterOverlay");
-    renderCalendar();
-    toast(`Filtering: ${team}`, "success");
-  };
-  teamGrid.appendChild(el);
+/* ── Filter — dynamic from calendar data ── */
+function renderFilterTeams(filterText = '') {
+  const teamGrid = document.getElementById("teamGrid");
+  teamGrid.innerHTML = '';
+  const teams = getAllTeamNames();
+  const filtered = filterText ? teams.filter(t => t.toLowerCase().includes(filterText.toLowerCase())) : teams;
+  if (filtered.length === 0) {
+    teamGrid.innerHTML = '<div class="no-data" style="grid-column:1/-1;">No teams found</div>';
+    return;
+  }
+  filtered.forEach(team => {
+    const el = document.createElement("div");
+    el.className = "team-opt" + (selectedTeam === team ? " active" : "");
+    const icon = getTeamIcon(team);
+    if (icon) { const img = document.createElement('img'); img.src = icon; img.alt = ''; el.appendChild(img); }
+    const span = document.createElement('span'); span.textContent = team; el.appendChild(span);
+    el.onclick = () => {
+      selectedTeam = team;
+      closeOv("filterOverlay");
+      renderCalendar();
+      toast(`Filtering: ${team}`, "success");
+    };
+    teamGrid.appendChild(el);
+  });
+}
+
+document.getElementById("filterSearch").addEventListener("input", (e) => {
+  renderFilterTeams(e.target.value);
 });
-document.getElementById("filterBtn").onclick = () => openOv("filterOverlay");
+
+document.getElementById("clearFilterBtn").onclick = () => {
+  selectedTeam = null;
+  document.getElementById("filterSearch").value = '';
+  renderFilterTeams();
+  closeOv("filterOverlay");
+  renderCalendar();
+  toast("Filter cleared", "success");
+};
+
+document.getElementById("filterBtn").onclick = () => {
+  document.getElementById("filterSearch").value = '';
+  renderFilterTeams();
+  openOv("filterOverlay");
+};
 document.getElementById("menuBtn").onclick = () => openOv("menuOverlay");
 </script>
 </body>
