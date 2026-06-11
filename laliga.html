@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -543,6 +543,9 @@
       letter-spacing: 1px;
       margin-bottom: 16px;
       font-family: 'Rajdhani', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
     .fixture-match-row {
       display: flex;
@@ -911,9 +914,10 @@ let tempScorersHome = [], tempScorersAway = [];
 // Filters state for results
 let currentMdFilter = '';
 let currentTeamFilter = '';
-// Filters state for fixtures
+// Filters state for fixtures (enhanced)
 let currentFixTeamFilter = '';
 let currentFixMonthFilter = '';
+let currentFixMatchdayFilter = '';
 
 // ─── Helpers (all paths changed to laliga/) ───
 function getSeasonPath(seasonNum, subPath = "") {
@@ -993,7 +997,7 @@ async function loadCalendarEvents() {
   calendarEventsData = snap.val() || {};
 }
 
-// ─── AUTO TABLE UPDATE (forfeit logic revised) ───
+// ─── AUTO TABLE UPDATE (forfeit logic revised: no contest counts as played, forfeit win no GD for winner) ───
 async function applyResultToTable(homeTeam, awayTeam, homeScore, awayScore, forfeitType) {
   const isNoContest = forfeitType === 'no_contest';
   const isForfeitWin = (forfeitType === 'forfeit_no_reply' || forfeitType === 'forfeit_agreement');
@@ -1089,7 +1093,6 @@ async function loadSeasonsMetadata() {
     if (seasons[key].active === true) activeSeasonId = id;
   }
   if (!availableSeasons.length) {
-    // Initialize season 1 if none exists
     await database.ref('laliga/seasons/season_1/table').set({});
     await database.ref('laliga/seasons/season_1/results').set({});
     await database.ref('laliga/seasons/season_1/active').set(true);
@@ -1192,7 +1195,7 @@ async function setActiveSeason() {
   alert(`Season ${currentSeasonId} set as active.`);
 }
 
-// ─── Form / Last5 helpers (unchanged) ───
+// ─── Form / Last5 helpers ───
 function getResultStatusForTeam(team, matchText) {
   const lower = matchText.toLowerCase();
   if (lower.includes("no contest") || lower.includes("f - f")) return "F";
@@ -1226,7 +1229,7 @@ function getLatestArrow(team) {
   return "⚪";
 }
 
-// ─── Slideshow (paths unchanged) ───
+// ─── Slideshow ───
 async function loadSlideshow() {
   const [imgSnap, durSnap] = await Promise.all([
     database.ref('laliga_slideshow/images').once('value'),
@@ -1255,7 +1258,7 @@ function updateSlide() {
   });
 }
 
-// ─── RENDER TABLE (identical logic, just color vars changed via CSS) ───
+// ─── RENDER TABLE ───
 function renderTable() {
   const sorted = [...teamsData].sort((a,b) => (b.pts||0)-(a.pts||0) || (b.gd||0)-(a.gd||0));
 
@@ -1393,30 +1396,26 @@ function renderTable() {
   attachThreeDotHandler();
 }
 
-// ─── RENDER FIXTURES (LaLiga only, load team icons from cache, not from calendar) ───
+// ═══════════════════════════════════════════════════════════════════════════
+// NEW FIXTURES RENDERER with Team, Month, Matchday filters + proper sorting
+// ═══════════════════════════════════════════════════════════════════════════
 function renderFixtures() {
-  // Collect only fixtures from tournaments whose name normalizes to "laliga"
   const laligaFixtures = [];
+  const today = new Date();
+  today.setHours(0,0,0,0);
   
   for (const [date, eventData] of Object.entries(calendarEventsData)) {
-    // Check season match
     const eventSeason = eventData.season;
     if (eventSeason !== undefined && eventSeason !== null && eventSeason !== currentSeasonId) {
       continue;
     }
-    
     if (eventData.tournaments && Array.isArray(eventData.tournaments)) {
       for (const tournament of eventData.tournaments) {
-        // Normalize tournament name: trim, lowercase, remove all spaces
         let isLaLiga = false;
         if (tournament.name) {
           const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
-          if (normalized === 'laliga') {
-            isLaLiga = true;
-          }
+          if (normalized === 'laliga') isLaLiga = true;
         }
-        
-        // Only add fixtures if this tournament IS LaLiga
         if (isLaLiga && tournament.fixtures && Array.isArray(tournament.fixtures)) {
           for (const fixture of tournament.fixtures) {
             laligaFixtures.push({
@@ -1424,7 +1423,8 @@ function renderFixtures() {
               homeTeam: fixture.home,
               awayTeam: fixture.away,
               tournamentName: tournament.name,
-              eventName: eventData.eventPairs?.[0]?.name || 'LaLiga'
+              eventName: eventData.eventPairs?.[0]?.name || 'LaLiga',
+              matchday: fixture.matchday || tournament.matchday || null
             });
           }
         }
@@ -1432,66 +1432,133 @@ function renderFixtures() {
     }
   }
   
-  // Sort by date (oldest first)
-  laligaFixtures.sort((a, b) => new Date(a.date) - new Date(b.date));
+  // Sort: upcoming first, then past
+  laligaFixtures.sort((a, b) => {
+    const da = new Date(a.date), db = new Date(b.date);
+    const aFuture = da >= today, bFuture = db >= today;
+    if (aFuture && bFuture) return da - db;
+    if (!aFuture && !bFuture) return db - da; // past: most recent first
+    return aFuture ? -1 : 1;
+  });
+  
+  // Build filter options
+  const allTeams = [...new Set(laligaFixtures.flatMap(f => [f.homeTeam, f.awayTeam]).filter(Boolean))].sort();
+  const allMonths = [...new Set(laligaFixtures.map(f => f.date.substring(0,7)))].sort();
+  const allMatchdays = [...new Set(laligaFixtures.map(f => f.matchday).filter(md => md !== null && md !== undefined))].sort((a,b)=>a-b);
+  
+  // Apply filters
+  let filtered = [...laligaFixtures];
+  if (currentFixTeamFilter && currentFixTeamFilter !== 'all') {
+    filtered = filtered.filter(f => f.homeTeam === currentFixTeamFilter || f.awayTeam === currentFixTeamFilter);
+  }
+  if (currentFixMonthFilter && currentFixMonthFilter !== 'all') {
+    filtered = filtered.filter(f => f.date.startsWith(currentFixMonthFilter));
+  }
+  if (currentFixMatchdayFilter && currentFixMatchdayFilter !== 'all') {
+    filtered = filtered.filter(f => f.matchday === parseInt(currentFixMatchdayFilter));
+  }
   
   // Group by date
-  const groupedByDate = {};
-  for (const fixture of laligaFixtures) {
-    if (!groupedByDate[fixture.date]) {
-      groupedByDate[fixture.date] = [];
-    }
-    groupedByDate[fixture.date].push(fixture);
+  const grouped = {};
+  for (const fix of filtered) {
+    if (!grouped[fix.date]) grouped[fix.date] = [];
+    grouped[fix.date].push(fix);
   }
+  const sortedDates = Object.keys(grouped).sort((a,b) => {
+    const da = new Date(a), db = new Date(b);
+    const aFuture = da >= today, bFuture = db >= today;
+    if (aFuture && bFuture) return da - db;
+    if (!aFuture && !bFuture) return db - da;
+    return aFuture ? -1 : 1;
+  });
   
-  // Build HTML using teamIconsCache for icons
-  if (laligaFixtures.length === 0) {
-    document.getElementById('contentCard').innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">📅</div>
-        <p>No LaLiga fixtures found for Season ${currentSeasonId}.</p>
-        <p style="font-size: 0.9rem; margin-top: 10px;">Add fixtures in Admin Calendar with tournament name "LaLiga" (case/space insensitive) and matching season number.</p>
+  const monthLabels = {
+    '01':'January','02':'February','03':'March','04':'April',
+    '05':'May','06':'June','07':'July','08':'August',
+    '09':'September','10':'October','11':'November','12':'December'
+  };
+  
+  let filtersHtml = `
+    <div class="filters-bar">
+      <div class="filter-group">
+        <label>Team</label>
+        <select id="fixTeamFilter">
+          <option value="all">All Teams</option>
+          ${allTeams.map(t => `<option value="${t}" ${currentFixTeamFilter===t?'selected':''}>${t}</option>`).join('')}
+        </select>
       </div>
-    `;
-    return;
-  }
+      <div class="filter-group">
+        <label>Month</label>
+        <select id="fixMonthFilter">
+          <option value="all">All Months</option>
+          ${allMonths.map(m => {
+            const [y, mo] = m.split('-');
+            return `<option value="${m}" ${currentFixMonthFilter===m?'selected':''}>${monthLabels[mo] || mo} ${y}</option>`;
+          }).join('')}
+        </select>
+      </div>
+      ${allMatchdays.length > 0 ? `
+      <div class="filter-group">
+        <label>Matchday</label>
+        <select id="fixMatchdayFilter">
+          <option value="all">All Matchdays</option>
+          ${allMatchdays.map(md => `<option value="${md}" ${currentFixMatchdayFilter==md?'selected':''}>Matchday ${md}</option>`).join('')}
+        </select>
+      </div>
+      ` : ''}
+      <div class="filter-group">
+        <button id="clearFixFiltersBtn" class="clear-filters">Clear Filters</button>
+      </div>
+      <div class="filter-stats">${filtered.length} fixture${filtered.length !== 1 ? 's' : ''} found</div>
+    </div>
+  `;
   
-  let html = `<div class="fixtures-list">`;
-  for (const [date, fixtures] of Object.entries(groupedByDate)) {
-    const dateObj = new Date(date);
-    const formattedDate = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-    html += `<div class="fixture-date-group"><div class="fixture-date-label">📅 ${formattedDate}</div>`;
-    for (const f of fixtures) {
-      // Load icons from teamIconsCache (from league table), not from calendar event
-      const homeIconHtml = getTeamIconHtml(f.homeTeam, 'team-icon-sm');
-      const awayIconHtml = getTeamIconHtml(f.awayTeam, 'team-icon-sm');
+  let contentHtml = '';
+  if (sortedDates.length === 0) {
+    contentHtml = '<div class="empty-state"><div class="empty-icon">📅</div><p>No LaLiga fixtures found for Season ' + currentSeasonId + '</p><p style="font-size: 0.9rem; margin-top: 10px;">Add fixtures in Admin Calendar with tournament name "LaLiga" (case/space insensitive) and matching season number.</p></div>';
+  } else {
+    for (const dateStr of sortedDates) {
+      const dateObj = new Date(dateStr);
+      const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const dayName = dayNames[dateObj.getDay()];
+      const day = dateObj.getDate();
+      const [y, mo] = dateStr.split('-');
+      const monthName = monthLabels[mo] || mo;
+      const isPast = dateObj < today;
+      const dateLabel = `${dayName}, ${day} ${monthName} ${y}${isPast ? ' · Played' : ''}`;
       
-      html += `
-        <div class="fixture-card">
-          <div class="fixture-tournament-label">🏆 ${f.tournamentName || 'LaLiga'}</div>
-          <div class="fixture-match-row">
-            <div class="fixture-team-side">
-              ${homeIconHtml}
-              <span class="fixture-team-name">${f.homeTeam}</span>
+      contentHtml += `<div class="fixture-date-group"><div class="fixture-date-label">📅 ${dateLabel}</div>`;
+      for (const fix of grouped[dateStr]) {
+        const homeIconHtml = getTeamIconHtml(fix.homeTeam, 'team-icon-lg');
+        const awayIconHtml = getTeamIconHtml(fix.awayTeam, 'team-icon-lg');
+        const matchdayBadge = fix.matchday ? `<span class="meta-tag" style="margin-left: 8px;">MD ${fix.matchday}</span>` : '';
+        contentHtml += `
+          <div class="fixture-card">
+            <div class="fixture-tournament-label">
+              🏆 ${escapeHtml(fix.tournamentName || 'LaLiga')}
+              ${matchdayBadge}
             </div>
-            <div class="fixture-vs">VS</div>
-            <div class="fixture-team-side">
-              ${awayIconHtml}
-              <span class="fixture-team-name">${f.awayTeam}</span>
+            <div class="fixture-match-row">
+              <div class="fixture-team-side">${homeIconHtml}<span class="fixture-team-name">${escapeHtml(fix.homeTeam)}</span></div>
+              <div class="fixture-vs">VS</div>
+              <div class="fixture-team-side">${awayIconHtml}<span class="fixture-team-name">${escapeHtml(fix.awayTeam)}</span></div>
             </div>
           </div>
-        </div>
-      `;
+        `;
+      }
+      contentHtml += `</div>`;
     }
-    html += `</div>`;
   }
-  html += `</div>`;
-  document.getElementById('contentCard').innerHTML = html;
+  document.getElementById('contentCard').innerHTML = filtersHtml + contentHtml;
+  
+  // Attach filter events
+  document.getElementById('fixTeamFilter')?.addEventListener('change', e => { currentFixTeamFilter = e.target.value; renderFixtures(); });
+  document.getElementById('fixMonthFilter')?.addEventListener('change', e => { currentFixMonthFilter = e.target.value; renderFixtures(); });
+  document.getElementById('fixMatchdayFilter')?.addEventListener('change', e => { currentFixMatchdayFilter = e.target.value; renderFixtures(); });
+  document.getElementById('clearFixFiltersBtn')?.addEventListener('click', () => { currentFixTeamFilter = ''; currentFixMonthFilter = ''; currentFixMatchdayFilter = ''; renderFixtures(); });
 }
 
-// ─── RENDER RESULTS, TOP SCORERS, TOP ASSISTANTS, WATCH ───
-// (All remain unchanged from original except forfeit handling is already updated in applyResultToTable)
-
+// ─── RENDER RESULTS, TOP SCORERS, TOP ASSISTANTS, WATCH (unchanged from original except forfeit logic already updated) ───
 function parseResultCard(r) {
   let homeTeam = '', awayTeam = '', homeScore = '', awayScore = '', isForfeit = false, forfeitType = '';
   const text = r.matchText || '';
@@ -1602,7 +1669,7 @@ function renderTopScorers() {
       const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
       restHtml += `<tr><td>${i+4}</td><td style="font-size:1.5rem;">${escapeHtml(p.name||'')}</td><td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td><td><span class="count-badge">${p.count||0}</span></td>${isAdminMode?`<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>`:''}</tr>`;
     });
-    restHtml += `</tbody></table></div>`;
+    restHtml += `</tbody></tr></div>`;
   }
   let html = top3Html + restHtml;
   if (!sorted.length) html = '<div class="empty-state"><div class="empty-icon">⚽</div><p>No scorers yet</p></div>';
@@ -1927,7 +1994,6 @@ function attachRealtimeListeners() {
   database.ref(getSeasonPath(currentSeasonId, 'results')).on('value', snap => { resultsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab; if (activeTab === 'results') renderResults(); if (activeTab === 'table') renderTable(); });
   database.ref(getSeasonPath(currentSeasonId, 'topScorers/list')).on('value', async () => { await loadTopScorerData(); if (document.querySelector('.tab-btn.active')?.dataset.tab === 'topscorers') renderTopScorers(); });
   database.ref(getSeasonPath(currentSeasonId, 'topAssistants/list')).on('value', async () => { await loadTopAssistantData(); if (document.querySelector('.tab-btn.active')?.dataset.tab === 'topassists') renderTopAssistants(); });
-  // Listen to calendarEvents changes for fixtures tab
   database.ref('calendarEvents').on('value', snap => { calendarEventsData = snap.val() || {}; if (document.querySelector('.tab-btn.active')?.dataset.tab === 'fixtures') renderFixtures(); });
 }
 
