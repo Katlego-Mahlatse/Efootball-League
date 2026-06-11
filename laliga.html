@@ -993,11 +993,11 @@ async function loadCalendarEvents() {
   calendarEventsData = snap.val() || {};
 }
 
-// ─── AUTO TABLE UPDATE ───
+// ─── AUTO TABLE UPDATE (forfeit logic revised) ───
 async function applyResultToTable(homeTeam, awayTeam, homeScore, awayScore, forfeitType) {
   const isNoContest = forfeitType === 'no_contest';
-  if (isNoContest) return;
-
+  const isForfeitWin = (forfeitType === 'forfeit_no_reply' || forfeitType === 'forfeit_agreement');
+  
   const tableSnap = await database.ref(getSeasonPath(currentSeasonId, 'table')).once('value');
   const tableVal = tableSnap.val() || {};
 
@@ -1014,23 +1014,65 @@ async function applyResultToTable(homeTeam, awayTeam, homeScore, awayScore, forf
 
   const hd = homeEntry.data;
   const ad = awayEntry.data;
-  const isForfeitWin = (forfeitType === 'forfeit_no_reply' || forfeitType === 'forfeit_agreement');
 
-  if (isForfeitWin) {
+  if (isNoContest) {
+    // No contest: count as match played, no points, no goals, no GD change
+    hd.p = (hd.p || 0) + 1;
+    ad.p = (ad.p || 0) + 1;
+    // No wins, draws, losses, goals, points, GD
+  } 
+  else if (isForfeitWin) {
+    // Both teams get a match played
+    hd.p = (hd.p || 0) + 1;
+    ad.p = (ad.p || 0) + 1;
+    
+    // Determine winner based on the scores provided (homeScore > awayScore means home wins by forfeit)
     if (homeScore > awayScore) {
-      hd.p = (hd.p || 0) + 1; hd.w = (hd.w || 0) + 1; hd.pts = (hd.pts || 0) + 3;
-      ad.p = (ad.p || 0) + 1; ad.l = (ad.l || 0) + 1; ad.gd = (ad.gd || 0) - 3;
+      // Home wins by forfeit
+      hd.w = (hd.w || 0) + 1;
+      hd.pts = (hd.pts || 0) + 3;
+      ad.l = (ad.l || 0) + 1;
+      // Loser gets -3 GD and +1 GC (penalty)
+      ad.gd = (ad.gd || 0) - 3;
+      ad.gc = (ad.gc || 0) + 1;
+      // Winner: no goal stats change
     } else {
-      ad.p = (ad.p || 0) + 1; ad.w = (ad.w || 0) + 1; ad.pts = (ad.pts || 0) + 3;
-      hd.p = (hd.p || 0) + 1; hd.l = (hd.l || 0) + 1; hd.gd = (hd.gd || 0) - 3;
+      // Away wins by forfeit
+      ad.w = (ad.w || 0) + 1;
+      ad.pts = (ad.pts || 0) + 3;
+      hd.l = (hd.l || 0) + 1;
+      // Loser gets -3 GD and +1 GC
+      hd.gd = (hd.gd || 0) - 3;
+      hd.gc = (hd.gc || 0) + 1;
     }
-  } else {
-    hd.p = (hd.p || 0) + 1; hd.gs = (hd.gs || 0) + homeScore; hd.gc = (hd.gc || 0) + awayScore; hd.gd = (hd.gd || 0) + (homeScore - awayScore);
-    ad.p = (ad.p || 0) + 1; ad.gs = (ad.gs || 0) + awayScore; ad.gc = (ad.gc || 0) + homeScore; ad.gd = (ad.gd || 0) + (awayScore - homeScore);
-    if (homeScore > awayScore) { hd.w = (hd.w || 0) + 1; hd.pts = (hd.pts || 0) + 3; ad.l = (ad.l || 0) + 1; }
-    else if (homeScore < awayScore) { ad.w = (ad.w || 0) + 1; ad.pts = (ad.pts || 0) + 3; hd.l = (hd.l || 0) + 1; }
-    else { hd.d = (hd.d || 0) + 1; hd.pts = (hd.pts || 0) + 1; ad.d = (ad.d || 0) + 1; ad.pts = (ad.pts || 0) + 1; }
+  } 
+  else {
+    // Normal result: full stats update
+    hd.p = (hd.p || 0) + 1;
+    ad.p = (ad.p || 0) + 1;
+    hd.gs = (hd.gs || 0) + homeScore;
+    hd.gc = (hd.gc || 0) + awayScore;
+    ad.gs = (ad.gs || 0) + awayScore;
+    ad.gc = (ad.gc || 0) + homeScore;
+    hd.gd = (hd.gd || 0) + (homeScore - awayScore);
+    ad.gd = (ad.gd || 0) + (awayScore - homeScore);
+    
+    if (homeScore > awayScore) {
+      hd.w = (hd.w || 0) + 1;
+      hd.pts = (hd.pts || 0) + 3;
+      ad.l = (ad.l || 0) + 1;
+    } else if (homeScore < awayScore) {
+      ad.w = (ad.w || 0) + 1;
+      ad.pts = (ad.pts || 0) + 3;
+      hd.l = (hd.l || 0) + 1;
+    } else {
+      hd.d = (hd.d || 0) + 1;
+      hd.pts = (hd.pts || 0) + 1;
+      ad.d = (ad.d || 0) + 1;
+      ad.pts = (ad.pts || 0) + 1;
+    }
   }
+
   await database.ref(getSeasonPath(currentSeasonId, `table/${homeEntry.key}`)).set(hd);
   await database.ref(getSeasonPath(currentSeasonId, `table/${awayEntry.key}`)).set(ad);
 }
@@ -1184,7 +1226,7 @@ function getLatestArrow(team) {
   return "⚪";
 }
 
-// ─── Slideshow (paths unchanged, just using laliga) ───
+// ─── Slideshow (paths unchanged) ───
 async function loadSlideshow() {
   const [imgSnap, durSnap] = await Promise.all([
     database.ref('laliga_slideshow/images').once('value'),
@@ -1351,7 +1393,7 @@ function renderTable() {
   attachThreeDotHandler();
 }
 
-// ─── RENDER FIXTURES (ONLY LaLiga tournament fixtures) ───
+// ─── RENDER FIXTURES (LaLiga only, load team icons from cache, not from calendar) ───
 function renderFixtures() {
   // Collect only fixtures from tournaments whose name normalizes to "laliga"
   const laligaFixtures = [];
@@ -1381,8 +1423,6 @@ function renderFixtures() {
               date: date,
               homeTeam: fixture.home,
               awayTeam: fixture.away,
-              homeIcon: fixture.homeIcon,
-              awayIcon: fixture.awayIcon,
               tournamentName: tournament.name,
               eventName: eventData.eventPairs?.[0]?.name || 'LaLiga'
             });
@@ -1404,7 +1444,7 @@ function renderFixtures() {
     groupedByDate[fixture.date].push(fixture);
   }
   
-  // Build HTML
+  // Build HTML using teamIconsCache for icons
   if (laligaFixtures.length === 0) {
     document.getElementById('contentCard').innerHTML = `
       <div class="empty-state">
@@ -1422,8 +1462,9 @@ function renderFixtures() {
     const formattedDate = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     html += `<div class="fixture-date-group"><div class="fixture-date-label">📅 ${formattedDate}</div>`;
     for (const f of fixtures) {
-      const homeIconHtml = f.homeIcon ? `<img class="team-icon-sm" src="${f.homeIcon}" alt="${f.homeTeam}" style="width:60px; height:60px;">` : (teamIconsCache[f.homeTeam] ? getTeamIconHtml(f.homeTeam, 'team-icon-sm') : '');
-      const awayIconHtml = f.awayIcon ? `<img class="team-icon-sm" src="${f.awayIcon}" alt="${f.awayTeam}" style="width:60px; height:60px;">` : (teamIconsCache[f.awayTeam] ? getTeamIconHtml(f.awayTeam, 'team-icon-sm') : '');
+      // Load icons from teamIconsCache (from league table), not from calendar event
+      const homeIconHtml = getTeamIconHtml(f.homeTeam, 'team-icon-sm');
+      const awayIconHtml = getTeamIconHtml(f.awayTeam, 'team-icon-sm');
       
       html += `
         <div class="fixture-card">
@@ -1449,7 +1490,7 @@ function renderFixtures() {
 }
 
 // ─── RENDER RESULTS, TOP SCORERS, TOP ASSISTANTS, WATCH ───
-// (Same as original with laliga paths, they remain unchanged)
+// (All remain unchanged from original except forfeit handling is already updated in applyResultToTable)
 
 function parseResultCard(r) {
   let homeTeam = '', awayTeam = '', homeScore = '', awayScore = '', isForfeit = false, forfeitType = '';
@@ -1561,7 +1602,7 @@ function renderTopScorers() {
       const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
       restHtml += `<tr><td>${i+4}</td><td style="font-size:1.5rem;">${escapeHtml(p.name||'')}</td><td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td><td><span class="count-badge">${p.count||0}</span></td>${isAdminMode?`<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>`:''}</tr>`;
     });
-    restHtml += `</tbody><tr></div>`;
+    restHtml += `</tbody></table></div>`;
   }
   let html = top3Html + restHtml;
   if (!sorted.length) html = '<div class="empty-state"><div class="empty-icon">⚽</div><p>No scorers yet</p></div>';
