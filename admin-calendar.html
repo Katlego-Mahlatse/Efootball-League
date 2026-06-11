@@ -88,7 +88,9 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .flip-face{position:absolute;inset:0;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;}
 .flip-face img{width:48px;height:48px;object-fit:contain;border-radius:8px;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.5));}
 
-.event-label{font-family:'Rajdhani',sans-serif;font-size:0.57rem;font-weight:700;color:var(--gold);letter-spacing:0.07em;text-transform:uppercase;margin-top:3px;text-align:center;line-height:1.2;min-height:0.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+/* EVENT LABEL - full text, wrapping, smaller font */
+.event-label{font-family:'Rajdhani',sans-serif;font-size:0.48rem;font-weight:700;color:var(--gold);letter-spacing:0.04em;text-transform:uppercase;margin-top:3px;text-align:center;line-height:1.25;word-break:break-word;white-space:normal;max-width:100%;padding:0 2px;overflow:hidden;}
+
 .add-hint{font-size:0.58rem;color:rgba(245,215,66,0.22);font-style:italic;margin-top:auto;padding-top:4px;transition:color 0.2s;}
 .day-cell:hover .add-hint{color:rgba(245,215,66,0.55);}
 .event-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;background:var(--gold);border-radius:50%;box-shadow:0 0 6px var(--gold);animation:dotPulse 2.2s ease-in-out infinite;}
@@ -179,9 +181,14 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .menu-link{display:block;text-align:center;padding:0.65rem 1rem;background:rgba(184,150,12,0.18);border:1px solid var(--gold-border);border-radius:2rem;color:var(--text-primary);text-decoration:none;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.9rem;letter-spacing:0.06em;transition:all 0.2s;}
 .menu-link:hover{background:var(--btn-accent);color:var(--gold);transform:translateX(4px);}
 
-.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;}
-.team-opt{background:rgba(184,150,12,0.18);border:1px solid var(--gold-border);border-radius:2rem;padding:0.5rem 0.8rem;cursor:pointer;text-align:center;font-size:0.8rem;font-weight:600;color:var(--text-primary);transition:all 0.2s;font-family:'Rajdhani',sans-serif;}
+/* FILTER POPUP */
+.filter-search{width:100%;background:rgba(0,0,0,0.7);border:1px solid var(--gold-border);border-radius:0.7rem;color:var(--text-primary);padding:0.55rem 0.9rem;font-size:0.85rem;font-family:'Exo 2',sans-serif;outline:none;margin-bottom:0.8rem;transition:border-color 0.2s;}
+.filter-search:focus{border-color:var(--gold);}
+.filter-search::placeholder{color:var(--text-dim);opacity:0.5;}
+.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;max-height:320px;overflow-y:auto;}
+.team-opt{background:rgba(184,150,12,0.18);border:1px solid var(--gold-border);border-radius:2rem;padding:0.5rem 0.8rem;cursor:pointer;text-align:center;font-size:0.8rem;font-weight:600;color:var(--text-primary);transition:all 0.2s;font-family:'Rajdhani',sans-serif;display:flex;align-items:center;gap:0.4rem;justify-content:center;}
 .team-opt:hover,.team-opt.active{background:var(--btn-accent);border-color:var(--gold);color:var(--gold);}
+.team-opt img{width:20px;height:20px;object-fit:contain;border-radius:3px;}
 
 .no-data{text-align:center;color:var(--text-dim);font-size:0.85rem;padding:1rem;}
 
@@ -266,9 +273,10 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 
 <!-- FILTER -->
 <div class="overlay" id="filterOverlay">
-  <div class="modal" style="max-width:380px;">
+  <div class="modal" style="max-width:400px;">
     <button class="modal-close" data-close="filterOverlay">✕</button>
     <div class="modal-title">FILTER BY TEAM</div>
+    <input class="filter-search" id="filterSearch" type="text" placeholder="🔍  Search team...">
     <div class="team-grid" id="teamGrid"></div>
     <div class="btn-row">
       <button class="btn btn-red btn-sm" id="clearFilterBtn">CLEAR FILTER</button>
@@ -406,38 +414,38 @@ const ALL_MONTHS = [
   {month:6,label:"July 2026"},{month:7,label:"August 2026"},{month:8,label:"September 2026"},
   {month:9,label:"October 2026"},{month:10,label:"November 2026"},{month:11,label:"December 2026"}
 ];
-const ALL_TEAMS = ["Real Madrid","Liverpool","Dortmund","Man City","Barcelona","Arsenal","PSG","AC Milan","Chelsea","Napoli","Atletico","Juventus","Newcastle","Inter Milan"];
 
 let calData={}, activeMonths=[], selectedTeam=null, currentDate=null, tempTournaments=[];
 let tempEventPairs=[];
 let lastError=null;
+// Central icon registry loaded from Firebase
+let teamIconRegistry = {};
 
-/* ── Global flip state ── */
-let globalFlipIndex = 0;
-setInterval(()=>{
-  globalFlipIndex++;
-  document.querySelectorAll('.flip-cell').forEach(cell=>{
-    const pairs = JSON.parse(cell.dataset.pairs||'[]');
-    if(pairs.length < 2) return;
-    const inner = cell.querySelector('.flip-inner');
-    if(!inner) return;
-    const nextIdx = globalFlipIndex % pairs.length;
-    inner.classList.add('flipping');
-    setTimeout(()=>{
-      const face = inner.querySelector('.flip-face');
-      if(!face) return;
-      const img = face.querySelector('img');
-      const lbl = cell.querySelector('.event-label');
-      if(img) img.src = pairs[nextIdx].iconUrl || '';
-      if(lbl) lbl.textContent = pairs[nextIdx].name || '';
-      inner.classList.remove('flipping');
-    }, 250);
-  });
-}, 2000);
+/* ── Load team icon registry from Firebase ── */
+onValue(ref(db,'teamIcons'), (snap) => {
+  teamIconRegistry = snap.val() || {};
+});
 
-/* ── Team icon map ── */
-let teamIconMap = {};
-function rebuildTeamIconMap() {
+/* ── Save icon to registry when uploaded ── */
+async function saveTeamIconToRegistry(teamName, iconUrl) {
+  if (!teamName || !iconUrl) return;
+  try {
+    await set(ref(db, 'teamIcons/' + teamName.trim().replace(/\./g,'_')), iconUrl);
+  } catch(e) {
+    console.warn('Could not save icon to registry:', e);
+  }
+}
+
+/* ── Get icon: registry first, then fixture data fallback ── */
+function getTeamIcon(teamName) {
+  if (!teamName) return null;
+  const key = teamName.trim().replace(/\./g,'_');
+  return teamIconRegistry[key] || teamIconMapFallback[teamName.trim()] || null;
+}
+
+/* ── Fallback icon map from fixture data ── */
+let teamIconMapFallback = {};
+function rebuildTeamIconMapFallback() {
   const map = {};
   for (const date in calData) {
     const ev = calData[date];
@@ -452,10 +460,14 @@ function rebuildTeamIconMap() {
       }
     }
   }
-  teamIconMap = map;
+  teamIconMapFallback = map;
 }
+
 function getAllTeamNames() {
-  const s = new Set(ALL_TEAMS);
+  const s = new Set();
+  // from registry
+  for (const key in teamIconRegistry) { s.add(key.replace(/_/g,'.')); }
+  // from fixture data
   for (const date in calData) {
     const ev = calData[date];
     if (ev && ev.tournaments) {
@@ -471,10 +483,32 @@ function getAllTeamNames() {
   }
   return Array.from(s).sort();
 }
-function getTeamIcon(teamName) {
-  if (!teamName) return null;
-  return teamIconMap[teamName.trim()] || null;
-}
+
+/* ── Global flip state — icon and label in sync ── */
+let globalFlipIndex = 0;
+setInterval(()=>{
+  globalFlipIndex++;
+  document.querySelectorAll('.flip-cell').forEach(cell=>{
+    const pairs = JSON.parse(cell.dataset.pairs||'[]');
+    if(pairs.length < 2) return;
+    const inner = cell.querySelector('.flip-inner');
+    const lbl = cell.querySelector('.event-label');
+    if(!inner) return;
+    const nextIdx = globalFlipIndex % pairs.length;
+    // Start flip
+    inner.classList.add('flipping');
+    // At halfway point (250ms), update BOTH icon and label together
+    setTimeout(()=>{
+      const face = inner.querySelector('.flip-face');
+      if(face){
+        const img = face.querySelector('img');
+        if(img) img.src = pairs[nextIdx].iconUrl || '';
+      }
+      if(lbl) lbl.textContent = pairs[nextIdx].name || '';
+      inner.classList.remove('flipping');
+    }, 250);
+  });
+}, 2800);
 
 /* ── Autocomplete ── */
 function setupAutocomplete(inputId, dropdownId, iconUrlInputId, iconPreviewId) {
@@ -548,20 +582,29 @@ async function uploadImg(file) {
   if(d.success) return d.data.url;
   throw new Error("Upload failed");
 }
-function makeUploader(btnId,fileId,prevId,urlId,statusId) {
+function makeUploader(btnId,fileId,prevId,urlId,statusId,teamNameInputId) {
   const btn=document.getElementById(btnId), fi=document.getElementById(fileId);
   const prev=document.getElementById(prevId), url=document.getElementById(urlId), st=document.getElementById(statusId);
   btn.onclick=()=>fi.click();
   fi.onchange=async()=>{
     const f=fi.files[0]; if(!f) return;
     st.classList.add("show"); btn.disabled=true;
-    try { const u=await uploadImg(f); url.value=u; prev.src=u; prev.classList.add("show"); toast("Image uploaded ✓","success"); }
+    try {
+      const u=await uploadImg(f);
+      url.value=u; prev.src=u; prev.classList.add("show");
+      // Save to registry if team name is known
+      if(teamNameInputId){
+        const teamName = document.getElementById(teamNameInputId)?.value?.trim();
+        if(teamName) await saveTeamIconToRegistry(teamName, u);
+      }
+      toast("Image uploaded ✓","success");
+    }
     catch(e) { debugLog("Image upload error: "+e.message,true); toast("Upload failed","error"); }
     st.classList.remove("show"); btn.disabled=false; fi.value="";
   };
 }
-makeUploader("homeIconBtn","homeIconFile","homeIconPrev","homeIconUrl","homeIconStatus");
-makeUploader("awayIconBtn","awayIconFile","awayIconPrev","awayIconUrl","awayIconStatus");
+makeUploader("homeIconBtn","homeIconFile","homeIconPrev","homeIconUrl","homeIconStatus","homeName");
+makeUploader("awayIconBtn","awayIconFile","awayIconPrev","awayIconUrl","awayIconStatus","awayName");
 
 /* ── Toast ── */
 function toast(msg,type="") {
@@ -587,8 +630,8 @@ onValue(ref(db,'settings/calendar'), (snap) => {
 });
 onValue(ref(db,'calendarEvents'), (snap) => {
   calData = snap.val() || {};
-  rebuildTeamIconMap(); debugLog('Events loaded successfully');
-  renderCalendar(); updateDebugInfo();
+  rebuildTeamIconMapFallback(); debugLog('Events loaded successfully');
+  renderCalendar(); updateDebugInfo(); renderFilterTeams();
   document.getElementById("loader").classList.add("hidden");
 }, (error) => {
   debugLog('Events read error: '+error.message,true);
@@ -661,13 +704,13 @@ function renderCalendar() {
         } else {
           if(pairs.length > 0){
             const firstPair = pairs[0];
-            // Flip container
             const fc=document.createElement("div"); fc.className="flip-container flip-cell";
             fc.dataset.pairs = JSON.stringify(pairs);
             const fi=document.createElement("div"); fi.className="flip-inner";
             const face=document.createElement("div"); face.className="flip-face";
             if(firstPair.iconUrl){ const img=document.createElement("img"); img.src=firstPair.iconUrl; img.alt=firstPair.name||""; face.appendChild(img); }
             fi.appendChild(face); fc.appendChild(fi); cell.appendChild(fc);
+            // Label rendered OUTSIDE flip-container but INSIDE cell so they update together
             const lbl=document.createElement("div"); lbl.className="event-label"; lbl.textContent=firstPair.name||""; cell.appendChild(lbl);
           }
         }
@@ -693,12 +736,10 @@ function renderEventPairs() {
     const numLbl=document.createElement("div"); numLbl.className="event-pair-num"; numLbl.textContent=`EVENT ${idx+1}`; row.appendChild(numLbl);
     const inner=document.createElement("div"); inner.style.cssText="flex:1;display:flex;flex-direction:column;gap:0.4rem;";
 
-    // Name input
     const nameInp=document.createElement("input"); nameInp.className="form-input"; nameInp.type="text"; nameInp.placeholder=`Event ${idx+1} name`; nameInp.value=pair.name||"";
     nameInp.oninput=()=>{ tempEventPairs[idx].name=nameInp.value.trim(); };
     inner.appendChild(nameInp);
 
-    // Icon upload row
     const iconRow=document.createElement("div"); iconRow.className="img-upload-row";
     const upBtn=document.createElement("button"); upBtn.className="upload-btn"; upBtn.textContent="📁 SELECT IMAGE";
     const fileInp=document.createElement("input"); fileInp.type="file"; fileInp.accept="image/*"; fileInp.className="file-hidden";
@@ -716,7 +757,6 @@ function renderEventPairs() {
     inner.appendChild(iconRow);
     row.appendChild(inner);
 
-    // Delete button (only if more than 1)
     if(tempEventPairs.length > 1){
       const delBtn=document.createElement("button"); delBtn.className="btn btn-red btn-sm"; delBtn.textContent="🗑";
       delBtn.onclick=()=>{ tempEventPairs.splice(idx,1); renderEventPairs(); };
@@ -859,32 +899,72 @@ function openFixModal(ti,fi){
   document.getElementById("homeDropdown").classList.remove("open"); document.getElementById("awayDropdown").classList.remove("open");
   openOv("fixOverlay");
 }
-document.getElementById("saveFixBtn").onclick=()=>{
+document.getElementById("saveFixBtn").onclick=async()=>{
   const home=document.getElementById("homeName").value.trim(); const away=document.getElementById("awayName").value.trim();
   if(!home||!away){toast("Enter both team names","error");return;}
   const ti=parseInt(document.getElementById("fixTournIdx").value); const fiRaw=document.getElementById("fixIdx").value; const fi=fiRaw!==""?parseInt(fiRaw):null;
-  const fix={home,homeIcon:document.getElementById("homeIconUrl").value,away,awayIcon:document.getElementById("awayIconUrl").value};
+  const homeIcon=document.getElementById("homeIconUrl").value;
+  const awayIcon=document.getElementById("awayIconUrl").value;
+  // Save icons to registry
+  if(homeIcon) await saveTeamIconToRegistry(home, homeIcon);
+  if(awayIcon) await saveTeamIconToRegistry(away, awayIcon);
+  const fix={home,homeIcon,away,awayIcon};
   if(!tempTournaments[ti].fixtures)tempTournaments[ti].fixtures=[];
   if(fi!==null)tempTournaments[ti].fixtures[fi]=fix; else tempTournaments[ti].fixtures.push(fix);
-  closeOv("fixOverlay"); rebuildTeamIconMap(); renderTourns(); toast("Fixture saved ✓","success");
+  closeOv("fixOverlay"); rebuildTeamIconMapFallback(); renderTourns(); toast("Fixture saved ✓","success");
 };
 
-/* ── Filter ── */
-const teamGrid=document.getElementById("teamGrid");
-ALL_TEAMS.forEach(team=>{
-  const el=document.createElement("div");el.className="team-opt";el.textContent=team;
-  el.onclick=()=>{selectedTeam=team;teamGrid.querySelectorAll(".team-opt").forEach(x=>x.classList.remove("active"));el.classList.add("active");closeOv("filterOverlay");renderCalendar();toast(`Filtering: ${team}`,"success");};
-  teamGrid.appendChild(el);
+/* ── Filter — dynamic from calendar data ── */
+function renderFilterTeams(filterText='') {
+  const teamGrid = document.getElementById("teamGrid");
+  teamGrid.innerHTML = '';
+  const teams = getAllTeamNames();
+  const filtered = filterText ? teams.filter(t => t.toLowerCase().includes(filterText.toLowerCase())) : teams;
+  if (filtered.length === 0) {
+    teamGrid.innerHTML = '<div class="no-data" style="grid-column:1/-1;">No teams found</div>';
+    return;
+  }
+  filtered.forEach(team => {
+    const el = document.createElement("div");
+    el.className = "team-opt" + (selectedTeam === team ? " active" : "");
+    const icon = getTeamIcon(team);
+    if (icon) { const img = document.createElement('img'); img.src = icon; img.alt = ''; el.appendChild(img); }
+    const span = document.createElement('span'); span.textContent = team; el.appendChild(span);
+    el.onclick = () => {
+      selectedTeam = team;
+      closeOv("filterOverlay");
+      renderCalendar();
+      toast(`Filtering: ${team}`, "success");
+    };
+    teamGrid.appendChild(el);
+  });
+}
+
+document.getElementById("filterSearch").addEventListener("input", (e) => {
+  renderFilterTeams(e.target.value);
 });
-document.getElementById("clearFilterBtn").onclick=()=>{selectedTeam=null;teamGrid.querySelectorAll(".team-opt").forEach(x=>x.classList.remove("active"));closeOv("filterOverlay");renderCalendar();toast("Filter cleared","success");};
-document.getElementById("filterBtn").onclick=()=>openOv("filterOverlay");
+
+document.getElementById("clearFilterBtn").onclick = () => {
+  selectedTeam = null;
+  document.getElementById("filterSearch").value = '';
+  renderFilterTeams();
+  closeOv("filterOverlay");
+  renderCalendar();
+  toast("Filter cleared", "success");
+};
+
+document.getElementById("filterBtn").onclick = () => {
+  document.getElementById("filterSearch").value = '';
+  renderFilterTeams();
+  openOv("filterOverlay");
+};
 document.getElementById("menuBtn").onclick=()=>openOv("menuOverlay");
 
 /* ── Debug panel ── */
 document.getElementById("debugMenuBtn").addEventListener("click",()=>{ closeOv("menuOverlay"); openOv("debugOverlay"); updateDebugInfo(); });
 document.getElementById("debugForceRefresh").addEventListener("click",async()=>{
   try {
-    const snap=await get(ref(db,'calendarEvents')); calData=snap.val()||{}; rebuildTeamIconMap();
+    const snap=await get(ref(db,'calendarEvents')); calData=snap.val()||{}; rebuildTeamIconMapFallback();
     const settingsSnap=await get(ref(db,'settings/calendar')); activeMonths=settingsSnap.val()?.activeMonths||[3,4,5,6];
     renderMonthChips(); renderCalendar(); updateDebugInfo(); debugLog('Manual refresh successful'); toast("Data refreshed ✓","success");
   } catch(e) { debugLog('Force refresh error: '+e.message,true); toast("Refresh failed","error"); }
