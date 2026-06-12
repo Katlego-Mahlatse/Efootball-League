@@ -88,7 +88,7 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .flip-face{position:absolute;inset:0;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;}
 .flip-face img{width:48px;height:48px;object-fit:contain;border-radius:8px;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.5));}
 
-/* EVENT LABEL - full text, wrapping, smaller font */
+/* EVENT LABEL */
 .event-label{font-family:'Rajdhani',sans-serif;font-size:0.48rem;font-weight:700;color:var(--gold);letter-spacing:0.04em;text-transform:uppercase;margin-top:3px;text-align:center;line-height:1.25;word-break:break-word;white-space:normal;max-width:100%;padding:0 2px;overflow:hidden;}
 
 .add-hint{font-size:0.58rem;color:rgba(245,215,66,0.22);font-style:italic;margin-top:auto;padding-top:4px;transition:color 0.2s;}
@@ -201,6 +201,24 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .toast.success{border-color:var(--green);}
 .toast.error{border-color:var(--red);}
 
+/* ADD FIXTURES MODAL */
+.af-step{display:none;}
+.af-step.active{display:block;animation:fadeIn 0.25s ease;}
+.af-tourn-list{display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem;}
+.af-tourn-opt{display:flex;align-items:center;gap:0.7rem;background:rgba(0,0,0,0.5);border:1.5px solid rgba(245,215,66,0.14);border-radius:0.9rem;padding:0.7rem 1rem;cursor:pointer;transition:all 0.2s;}
+.af-tourn-opt:hover{border-color:var(--gold-border);background:rgba(184,150,12,0.18);}
+.af-tourn-opt.selected{border-color:var(--gold);background:rgba(184,150,12,0.28);}
+.af-tourn-opt img{width:36px;height:36px;object-fit:contain;border-radius:6px;flex-shrink:0;}
+.af-tourn-opt-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.95rem;color:var(--text-primary);}
+.af-tourn-opt-desc{font-size:0.72rem;color:var(--gold);}
+.af-parsed-preview{background:rgba(0,0,0,0.55);border:1px solid rgba(245,215,66,0.12);border-radius:0.8rem;padding:0.8rem;margin-top:0.8rem;max-height:200px;overflow-y:auto;}
+.af-parsed-row{display:flex;align-items:center;gap:0.5rem;padding:0.35rem 0;border-bottom:1px solid rgba(245,215,66,0.06);font-family:'Rajdhani',sans-serif;font-size:0.82rem;color:var(--text-primary);}
+.af-parsed-row:last-child{border-bottom:none;}
+.af-parsed-vs{font-family:'Orbitron',monospace;font-size:0.6rem;color:var(--gold);font-weight:700;padding:0 0.3rem;}
+.af-parsed-icon{width:22px;height:22px;object-fit:contain;border-radius:4px;flex-shrink:0;}
+.af-parsed-num{font-family:'Orbitron',monospace;font-size:0.55rem;color:var(--text-dim);min-width:18px;}
+.af-no-tourn{text-align:center;color:var(--text-dim);font-size:0.85rem;padding:1.2rem;font-style:italic;}
+
 @media(max-width:680px){
   .wrapper{padding:1rem 0.75rem 3rem;}
   .flip-container{width:36px;height:36px;}
@@ -265,6 +283,7 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
       <a href="login.html" class="menu-link">🔑 LOGIN</a>
       <a href="player-titles.html" class="menu-link">🏆 MANAGER TITLES</a>
       <a href="user-calendar.html" class="menu-link">👁 USER VIEW</a>
+      <button class="menu-link" id="addFixturesMenuBtn" style="width:100%;cursor:pointer;">⚽ ADD FIXTURES</button>
       <button class="menu-link" id="debugMenuBtn" style="width:100%;cursor:pointer;">🔍 DEBUG INFO</button>
     </div>
     <button class="btn btn-purple" style="width:100%;" data-close="menuOverlay">CLOSE</button>
@@ -367,6 +386,62 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
   </div>
 </div>
 
+<!-- ADD FIXTURES (QUICK ENTRY) -->
+<div class="overlay" id="addFixturesOverlay">
+  <div class="modal" style="max-width:560px;">
+    <button class="modal-close" data-close="addFixturesOverlay">✕</button>
+    <div class="modal-title">⚽ ADD FIXTURES</div>
+
+    <!-- STEP 1: Pick Date -->
+    <div class="af-step active" id="afStep1">
+      <div class="form-group">
+        <label class="form-label">Select Date</label>
+        <input class="form-input" id="afDateInput" type="date">
+      </div>
+      <div id="afDateStatus" style="font-size:0.78rem;color:var(--text-dim);margin-bottom:0.5rem;min-height:1.2rem;"></div>
+      <div class="btn-row">
+        <button class="btn btn-gold" id="afLoadTournsBtn">LOAD TOURNAMENTS →</button>
+        <button class="btn btn-purple" data-close="addFixturesOverlay">CANCEL</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Pick Tournament -->
+    <div class="af-step" id="afStep2">
+      <div class="section-label">SELECT TOURNAMENT</div>
+      <div class="af-tourn-list" id="afTournList"></div>
+      <div class="btn-row">
+        <button class="btn btn-purple btn-sm" id="afBackToStep1Btn">← BACK</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Type & Fixtures Input -->
+    <div class="af-step" id="afStep3">
+      <div id="afSelectedTournDisplay" style="margin-bottom:1rem;"></div>
+      <div class="form-group">
+        <label class="form-label">Match Type</label>
+        <input class="form-input" id="afTypeInput" type="text" placeholder="e.g. Group Stage, Semi Final, Matchday 3...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fixtures</label>
+        <textarea class="form-input" id="afFixturesInput" rows="5"
+          placeholder="Team A vs Team B, Team C vs Team D, Team E vs Team F"
+          style="resize:vertical;line-height:1.6;"></textarea>
+        <div style="font-size:0.68rem;color:var(--text-dim);margin-top:0.35rem;">Separate matchups with commas · Use <strong style="color:var(--gold);">vs</strong> between team names</div>
+      </div>
+      <div id="afParsedPreview" style="display:none;">
+        <div class="section-label">PARSED FIXTURES PREVIEW</div>
+        <div class="af-parsed-preview" id="afParsedList"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-purple btn-sm" id="afPreviewBtn">👁 PREVIEW</button>
+        <button class="btn btn-gold" id="afSaveFixturesBtn">💾 SAVE FIXTURES</button>
+        <button class="btn btn-purple btn-sm" id="afBackToStep2Btn">← BACK</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <!-- DEBUG INFO -->
 <div class="overlay" id="debugOverlay">
   <div class="modal" style="max-width:500px;">
@@ -418,7 +493,6 @@ const ALL_MONTHS = [
 let calData={}, activeMonths=[], selectedTeam=null, currentDate=null, tempTournaments=[];
 let tempEventPairs=[];
 let lastError=null;
-// Central icon registry loaded from Firebase
 let teamIconRegistry = {};
 
 /* ── Load team icon registry from Firebase ── */
@@ -465,9 +539,7 @@ function rebuildTeamIconMapFallback() {
 
 function getAllTeamNames() {
   const s = new Set();
-  // from registry
   for (const key in teamIconRegistry) { s.add(key.replace(/_/g,'.')); }
-  // from fixture data
   for (const date in calData) {
     const ev = calData[date];
     if (ev && ev.tournaments) {
@@ -484,7 +556,7 @@ function getAllTeamNames() {
   return Array.from(s).sort();
 }
 
-/* ── Global flip state — icon and label in sync ── */
+/* ── Global flip state ── */
 let globalFlipIndex = 0;
 setInterval(()=>{
   globalFlipIndex++;
@@ -495,9 +567,7 @@ setInterval(()=>{
     const lbl = cell.querySelector('.event-label');
     if(!inner) return;
     const nextIdx = globalFlipIndex % pairs.length;
-    // Start flip
     inner.classList.add('flipping');
-    // At halfway point (250ms), update BOTH icon and label together
     setTimeout(()=>{
       const face = inner.querySelector('.flip-face');
       if(face){
@@ -592,7 +662,6 @@ function makeUploader(btnId,fileId,prevId,urlId,statusId,teamNameInputId) {
     try {
       const u=await uploadImg(f);
       url.value=u; prev.src=u; prev.classList.add("show");
-      // Save to registry if team name is known
       if(teamNameInputId){
         const teamName = document.getElementById(teamNameInputId)?.value?.trim();
         if(teamName) await saveTeamIconToRegistry(teamName, u);
@@ -710,7 +779,6 @@ function renderCalendar() {
             const face=document.createElement("div"); face.className="flip-face";
             if(firstPair.iconUrl){ const img=document.createElement("img"); img.src=firstPair.iconUrl; img.alt=firstPair.name||""; face.appendChild(img); }
             fi.appendChild(face); fc.appendChild(fi); cell.appendChild(fc);
-            // Label rendered OUTSIDE flip-container but INSIDE cell so they update together
             const lbl=document.createElement("div"); lbl.className="event-label"; lbl.textContent=firstPair.name||""; cell.appendChild(lbl);
           }
         }
@@ -905,7 +973,6 @@ document.getElementById("saveFixBtn").onclick=async()=>{
   const ti=parseInt(document.getElementById("fixTournIdx").value); const fiRaw=document.getElementById("fixIdx").value; const fi=fiRaw!==""?parseInt(fiRaw):null;
   const homeIcon=document.getElementById("homeIconUrl").value;
   const awayIcon=document.getElementById("awayIconUrl").value;
-  // Save icons to registry
   if(homeIcon) await saveTeamIconToRegistry(home, homeIcon);
   if(awayIcon) await saveTeamIconToRegistry(away, awayIcon);
   const fix={home,homeIcon,away,awayIcon};
@@ -914,7 +981,7 @@ document.getElementById("saveFixBtn").onclick=async()=>{
   closeOv("fixOverlay"); rebuildTeamIconMapFallback(); renderTourns(); toast("Fixture saved ✓","success");
 };
 
-/* ── Filter — dynamic from calendar data ── */
+/* ── Filter ── */
 function renderFilterTeams(filterText='') {
   const teamGrid = document.getElementById("teamGrid");
   teamGrid.innerHTML = '';
@@ -969,6 +1036,268 @@ document.getElementById("debugForceRefresh").addEventListener("click",async()=>{
     renderMonthChips(); renderCalendar(); updateDebugInfo(); debugLog('Manual refresh successful'); toast("Data refreshed ✓","success");
   } catch(e) { debugLog('Force refresh error: '+e.message,true); toast("Refresh failed","error"); }
 });
+
+/* ════════════════════════════════════════════
+   ADD FIXTURES — Quick Entry Flow
+   ════════════════════════════════════════════ */
+
+let afSelectedTournIdx = null;
+let afSelectedDate = null;
+let afDateTournaments = [];
+
+// Show step helper
+function afShowStep(n) {
+  document.querySelectorAll('.af-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('afStep' + n).classList.add('active');
+}
+
+// Open the modal fresh
+document.getElementById('addFixturesMenuBtn').addEventListener('click', () => {
+  closeOv('menuOverlay');
+  afSelectedTournIdx = null;
+  afSelectedDate = null;
+  afDateTournaments = [];
+  document.getElementById('afDateInput').value = '';
+  document.getElementById('afDateStatus').textContent = '';
+  document.getElementById('afTypeInput').value = '';
+  document.getElementById('afFixturesInput').value = '';
+  document.getElementById('afParsedPreview').style.display = 'none';
+  document.getElementById('afParsedList').innerHTML = '';
+  afShowStep(1);
+  openOv('addFixturesOverlay');
+});
+
+// STEP 1 → Load tournaments for selected date
+document.getElementById('afLoadTournsBtn').addEventListener('click', async () => {
+  const dateVal = document.getElementById('afDateInput').value;
+  if (!dateVal) { toast('Please select a date', 'error'); return; }
+
+  const statusEl = document.getElementById('afDateStatus');
+  statusEl.textContent = 'Loading...';
+  statusEl.style.color = 'var(--gold)';
+
+  try {
+    const snap = await get(ref(db, 'calendarEvents/' + dateVal));
+    const ev = snap.val();
+
+    if (!ev) {
+      statusEl.textContent = 'No event found on this date. Please create an event first.';
+      statusEl.style.color = 'var(--red)';
+      return;
+    }
+
+    if (!ev.tournaments || ev.tournaments.length === 0) {
+      statusEl.textContent = 'No tournaments found on this date. Add tournaments to the event first.';
+      statusEl.style.color = 'var(--red)';
+      return;
+    }
+
+    afSelectedDate = dateVal;
+    afDateTournaments = JSON.parse(JSON.stringify(ev.tournaments));
+    statusEl.textContent = '';
+    renderAfTournList();
+    afShowStep(2);
+
+  } catch (e) {
+    debugLog('AF load tournaments error: ' + e.message, true);
+    statusEl.textContent = 'Failed to load data. Check connection.';
+    statusEl.style.color = 'var(--red)';
+    toast('Failed to load tournaments', 'error');
+  }
+});
+
+// Render tournament list in step 2
+function renderAfTournList() {
+  const list = document.getElementById('afTournList');
+  list.innerHTML = '';
+
+  if (afDateTournaments.length === 0) {
+    list.innerHTML = '<div class="af-no-tourn">No tournaments on this date.</div>';
+    return;
+  }
+
+  afDateTournaments.forEach((t, idx) => {
+    const opt = document.createElement('div');
+    opt.className = 'af-tourn-opt';
+    if (t.iconUrl) {
+      const img = document.createElement('img');
+      img.src = t.iconUrl; img.alt = t.name || '';
+      opt.appendChild(img);
+    }
+    const info = document.createElement('div');
+    info.style.display = 'flex'; info.style.flexDirection = 'column';
+    const nm = document.createElement('div'); nm.className = 'af-tourn-opt-name'; nm.textContent = t.name || 'Untitled';
+    info.appendChild(nm);
+    if (t.description) {
+      const desc = document.createElement('div'); desc.className = 'af-tourn-opt-desc'; desc.textContent = t.description;
+      info.appendChild(desc);
+    }
+    opt.appendChild(info);
+    opt.addEventListener('click', () => {
+      afSelectedTournIdx = idx;
+      // Show selected tournament in step 3
+      const display = document.getElementById('afSelectedTournDisplay');
+      display.innerHTML = '';
+      const card = document.createElement('div');
+      card.style.cssText = 'display:flex;align-items:center;gap:0.7rem;background:rgba(184,150,12,0.15);border:1px solid var(--gold-border);border-radius:0.8rem;padding:0.6rem 0.9rem;';
+      if (t.iconUrl) {
+        const img = document.createElement('img');
+        img.src = t.iconUrl; img.style.cssText = 'width:30px;height:30px;object-fit:contain;border-radius:5px;';
+        card.appendChild(img);
+      }
+      const lbl = document.createElement('div');
+      lbl.style.cssText = 'font-family:Rajdhani,sans-serif;font-weight:700;font-size:0.9rem;color:var(--text-primary);';
+      lbl.textContent = t.name || 'Untitled';
+      if (t.description) {
+        const sub = document.createElement('div');
+        sub.style.cssText = 'font-size:0.7rem;color:var(--gold);';
+        sub.textContent = t.description;
+        lbl.appendChild(sub);
+      }
+      card.appendChild(lbl);
+      display.appendChild(card);
+
+      // Reset step 3 fields
+      document.getElementById('afTypeInput').value = '';
+      document.getElementById('afFixturesInput').value = '';
+      document.getElementById('afParsedPreview').style.display = 'none';
+      document.getElementById('afParsedList').innerHTML = '';
+      afShowStep(3);
+    });
+    list.appendChild(opt);
+  });
+}
+
+// Back buttons
+document.getElementById('afBackToStep1Btn').addEventListener('click', () => afShowStep(1));
+document.getElementById('afBackToStep2Btn').addEventListener('click', () => afShowStep(2));
+
+// Parse fixtures text → array of {home, away}
+function parseFixturesText(text) {
+  if (!text.trim()) return [];
+  // Split by comma
+  const parts = text.split(',');
+  const results = [];
+  parts.forEach(part => {
+    const trimmed = part.trim();
+    if (!trimmed) return;
+    // Split by " vs " (case-insensitive)
+    const vsMatch = trimmed.match(/^(.+?)\s+vs\s+(.+)$/i);
+    if (vsMatch) {
+      const home = vsMatch[1].trim();
+      const away = vsMatch[2].trim();
+      if (home && away) results.push({ home, away });
+    }
+  });
+  return results;
+}
+
+// Preview button
+document.getElementById('afPreviewBtn').addEventListener('click', () => {
+  const text = document.getElementById('afFixturesInput').value;
+  const parsed = parseFixturesText(text);
+  const previewEl = document.getElementById('afParsedPreview');
+  const listEl = document.getElementById('afParsedList');
+  listEl.innerHTML = '';
+
+  if (parsed.length === 0) {
+    toast('No valid fixtures detected. Use format: Team A vs Team B, Team C vs Team D', 'error');
+    previewEl.style.display = 'none';
+    return;
+  }
+
+  parsed.forEach((fix, i) => {
+    const row = document.createElement('div');
+    row.className = 'af-parsed-row';
+
+    const num = document.createElement('span');
+    num.className = 'af-parsed-num';
+    num.textContent = i + 1;
+    row.appendChild(num);
+
+    const homeIcon = getTeamIcon(fix.home);
+    if (homeIcon) {
+      const img = document.createElement('img');
+      img.className = 'af-parsed-icon'; img.src = homeIcon; img.alt = fix.home;
+      row.appendChild(img);
+    }
+    const homeLbl = document.createElement('span');
+    homeLbl.textContent = fix.home;
+    row.appendChild(homeLbl);
+
+    const vsLbl = document.createElement('span');
+    vsLbl.className = 'af-parsed-vs';
+    vsLbl.textContent = 'VS';
+    row.appendChild(vsLbl);
+
+    const awayIcon = getTeamIcon(fix.away);
+    if (awayIcon) {
+      const img = document.createElement('img');
+      img.className = 'af-parsed-icon'; img.src = awayIcon; img.alt = fix.away;
+      row.appendChild(img);
+    }
+    const awayLbl = document.createElement('span');
+    awayLbl.textContent = fix.away;
+    row.appendChild(awayLbl);
+
+    listEl.appendChild(row);
+  });
+
+  previewEl.style.display = 'block';
+  toast(`${parsed.length} fixture${parsed.length > 1 ? 's' : ''} detected`, 'success');
+});
+
+// Save fixtures
+document.getElementById('afSaveFixturesBtn').addEventListener('click', async () => {
+  if (afSelectedTournIdx === null) { toast('No tournament selected', 'error'); return; }
+  if (!afSelectedDate) { toast('No date selected', 'error'); return; }
+
+  const text = document.getElementById('afFixturesInput').value;
+  const matchType = document.getElementById('afTypeInput').value.trim();
+  const parsed = parseFixturesText(text);
+
+  if (parsed.length === 0) {
+    toast('No valid fixtures to save. Use format: Team A vs Team B, Team C vs Team D', 'error');
+    return;
+  }
+
+  try {
+    // Fetch the current event fresh from Firebase to avoid overwriting other changes
+    const snap = await get(ref(db, 'calendarEvents/' + afSelectedDate));
+    const ev = snap.val();
+    if (!ev) { toast('Event no longer exists on this date', 'error'); return; }
+
+    const tournaments = JSON.parse(JSON.stringify(ev.tournaments || []));
+    if (!tournaments[afSelectedTournIdx]) { toast('Tournament no longer exists', 'error'); return; }
+    if (!tournaments[afSelectedTournIdx].fixtures) tournaments[afSelectedTournIdx].fixtures = [];
+
+    // Build fixture objects, auto-lookup icons from registry
+    const newFixtures = parsed.map(fix => ({
+      home: fix.home,
+      homeIcon: getTeamIcon(fix.home) || '',
+      away: fix.away,
+      awayIcon: getTeamIcon(fix.away) || '',
+      type: matchType || null
+    }));
+
+    // Append to existing fixtures
+    tournaments[afSelectedTournIdx].fixtures.push(...newFixtures);
+
+    // Save back to Firebase (only the tournaments field is updated, rest preserved)
+    await set(ref(db, 'calendarEvents/' + afSelectedDate), {
+      ...ev,
+      tournaments
+    });
+
+    closeOv('addFixturesOverlay');
+    toast(`${newFixtures.length} fixture${newFixtures.length > 1 ? 's' : ''} saved ✓`, 'success');
+
+  } catch (e) {
+    debugLog('AF save fixtures error: ' + e.message, true);
+    toast('Failed to save fixtures', 'error');
+  }
+});
+
 </script>
 </body>
 </html>
