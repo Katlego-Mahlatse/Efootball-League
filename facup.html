@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -737,7 +738,7 @@ let navbarLogoUrl = '';
 let emiratesLogoUrl = '';
 let emiratesSloganUrl = '';
 let groupCornerImageUrl = '';
-let calendarEventsData = {};
+let calendarEventsData = {};      // now holds data from "FA CUP" path
 let topScorerList = [], topAssistantList = [];
 let tempScorersHome = [], tempScorersAway = [];
 
@@ -840,9 +841,9 @@ async function loadTeamIcons() {
   }
 }
 
-// ─── Calendar Events ───
-async function loadCalendarEvents() {
-  const snap = await db.ref('calendarEvents').once('value');
+// ─── Load Fixtures from "FA CUP" (case-insensitive title matching) ───
+async function loadFixturesData() {
+  const snap = await db.ref(`FA CUP`).once('value');
   calendarEventsData = snap.val() || {};
 }
 
@@ -1022,8 +1023,8 @@ function renderGroups() {
       html += `<tr class="${rowClass}">
         <td class="rank-cell stat-number">
           <div class="pos-bar-wrap"><span class="vbar ${barClass}"></span>${pos}</div>
-        </td>
-        <td><div class="team-cell-inner">${iconHtml}<span class="team-name-text">${escapeHtml(team.name)}</span></div></td>
+         </td>
+         <td><div class="team-cell-inner">${iconHtml}<span class="team-name-text">${escapeHtml(team.name)}</span></div></td>
         <td class="stat-number">${team.p||0}</td>
         <td class="stat-number">${team.w||0}</td>
         <td class="stat-number">${team.d||0}</td>
@@ -1036,11 +1037,13 @@ function renderGroups() {
         ${isAdmin ? `<td>
           <button class="btn-sm btn-edit edit-team-btn" data-gid="${gid}" data-key="${team.key}">Edit</button>
           <button class="btn-sm btn-delete del-team-btn" data-gid="${gid}" data-key="${team.key}">Delete</button>
-        </td>` : ''}
-      </tr>`;
+         </td>` : ''}
+       </tr>`;
     });
 
-    html += `</tbody></table></div>
+    html += `</tbody>
+        </table>
+      </div>
       <div class="legend-row">
         <span class="legend-item"><span class="vbar vbar-blue" style="display:inline-block;"></span> Top 4 — Qualify for R16</span>
         <span class="legend-item"><span class="vbar vbar-red" style="display:inline-block;"></span> 5th+ — Eliminated</span>
@@ -1123,7 +1126,7 @@ document.getElementById('saveTeamBtn').onclick = async () => {
 };
 document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamForm').classList.remove('active');
 
-// ─── RENDER FIXTURES ───
+// ─── RENDER FIXTURES (using data from "FA CUP", case‑insensitive title match) ───
 function renderFixtures() {
   const card = document.getElementById('contentCard');
 
@@ -1151,20 +1154,20 @@ function renderFixtures() {
     return;
   }
 
-  // Group stage fixtures from calendar events
+  // Build fixtures array from "FA CUP" data (case-insensitive title matching)
   const allFixtures = [];
   const today = new Date(); today.setHours(0,0,0,0);
 
   for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
     if (!eventData?.title) continue;
-    // Exact match - case sensitive
-    if (eventData.title.trim() !== 'Emirates FA Cup') continue;
+    // Case-insensitive match for "FA CUP"
+    if (eventData.title.trim().toUpperCase() !== 'FA CUP') continue;
     const tournaments = eventData.tournaments || [];
     for (const tourn of tournaments) {
       for (const fix of (tourn.fixtures || [])) {
         allFixtures.push({
           date: dateStr,
-          tournament: tourn.name || 'Emirates FA Cup',
+          tournament: tourn.name || 'FA CUP',
           home: fix.home || '',
           away: fix.away || '',
         });
@@ -1233,7 +1236,6 @@ function renderFixtures() {
       html += `<div class="fixture-date-group">
         <div class="fixture-date-label">${days[d.getDay()]}, ${d.getDate()} ${ML[mo]||mo} ${y}${isPast?' · Played':''}</div>`;
       for (const fix of grouped[dateStr]) {
-        // Only show uploaded team icons, no fallback
         const hIco = getTeamIconHtml(fix.home, 'team-icon-lg');
         const aIco = getTeamIconHtml(fix.away, 'team-icon-lg');
         html += `<div class="fixture-card">
@@ -1385,7 +1387,6 @@ async function renderResults() {
       } else {
         scoreHtml = `<div class="score-display">${r.homeScore??'?'} — ${r.awayScore??'?'}</div>`;
       }
-      // Only use uploaded icons, no fallback
       const hIco = getTeamIconHtml(r.homeTeam, 'team-icon-lg');
       const aIco = getTeamIconHtml(r.awayTeam, 'team-icon-lg');
       html += `<div class="match-card" style="animation-delay:${i*0.05}s">
@@ -1658,7 +1659,7 @@ function renderTopScorers() {
         <td><div class="stat-team-cell">${ico}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td>
         <td><span class="count-badge">${p.count||0}</span></td>
         ${isAdmin?`<td><button class="btn-sm btn-edit scorer-edit" data-key="${p.key}">Edit</button> <button class="btn-sm btn-delete scorer-del" data-key="${p.key}">Delete</button></td>`:''}
-      </tr>`;
+       </tr>`;
     });
     html += '</tbody></table></div>';
   }
@@ -1719,7 +1720,7 @@ function renderTopAssists() {
         <td><div class="stat-team-cell">${ico}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td>
         <td><span class="count-badge">${p.count||0}</span></td>
         ${isAdmin?`<td><button class="btn-sm btn-edit assist-edit" data-key="${p.key}">Edit</button> <button class="btn-sm btn-delete assist-del" data-key="${p.key}">Delete</button></td>`:''}
-      </tr>`;
+       </tr>`;
     });
     html += '</tbody></table></div>';
   }
@@ -2010,7 +2011,7 @@ async function init() {
   await loadEmiratesAnimation();
   await loadSlideshow();
   await loadTeamIcons();
-  await loadCalendarEvents();
+  await loadFixturesData();       // now loads from "FA CUP"
   await loadSeasonsMetadata();
   await loadTopScorerData();
   await loadTopAssistantData();
