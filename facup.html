@@ -738,7 +738,7 @@ let navbarLogoUrl = '';
 let emiratesLogoUrl = '';
 let emiratesSloganUrl = '';
 let groupCornerImageUrl = '';
-let calendarEventsData = {};      // now holds data from "FA CUP" path
+let calendarEventsData = {};      // will hold fixtures from the date nodes
 let topScorerList = [], topAssistantList = [];
 let tempScorersHome = [], tempScorersAway = [];
 
@@ -841,10 +841,70 @@ async function loadTeamIcons() {
   }
 }
 
-// ─── Load Fixtures from "FA CUP" (case-insensitive title matching) ───
+// ─── Load Fixtures from date nodes (case & space insensitive match on eventPairs name) ───
 async function loadFixturesData() {
-  const snap = await db.ref(`FA CUP`).once('value');
-  calendarEventsData = snap.val() || {};
+  const rootSnap = await db.ref('/').once('value');
+  const allData = rootSnap.val() || {};
+  calendarEventsData = {};
+
+  for (const [dateStr, dateData] of Object.entries(allData)) {
+    // Only process keys that look like YYYY-MM-DD
+    if (!dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) continue;
+
+    const eventPairs = dateData.eventPairs;
+    if (!eventPairs || typeof eventPairs !== 'object') continue;
+
+    let isFaCup = false;
+    // Loop through eventPairs (they can be array or object)
+    for (const pairKey of Object.keys(eventPairs)) {
+      const pair = eventPairs[pairKey];
+      if (pair && pair.name) {
+        // Normalize: remove all spaces, convert to lowercase, then compare to "facup"
+        const normalizedName = pair.name.replace(/\s/g, '').toLowerCase();
+        if (normalizedName === 'facup') {
+          isFaCup = true;
+          break;
+        }
+      }
+    }
+
+    if (!isFaCup) continue;
+
+    // Found FA CUP for this date – now extract tournaments
+    const tournaments = dateData.tournaments;
+    if (!tournaments || typeof tournaments !== 'object') continue;
+
+    // Build the same structure as before: { title, tournaments: [...] }
+    const tournamentsArray = [];
+    for (const tKey of Object.keys(tournaments)) {
+      const tournament = tournaments[tKey];
+      if (tournament && tournament.fixtures) {
+        const fixturesArray = [];
+        for (const fKey of Object.keys(tournament.fixtures)) {
+          const fix = tournament.fixtures[fKey];
+          if (fix && fix.home && fix.away) {
+            fixturesArray.push({
+              home: fix.home,
+              away: fix.away
+            });
+          }
+        }
+        if (fixturesArray.length > 0) {
+          tournamentsArray.push({
+            name: tournament.name || 'FA CUP',
+            fixtures: fixturesArray
+          });
+        }
+      }
+    }
+
+    if (tournamentsArray.length > 0) {
+      calendarEventsData[dateStr] = {
+        title: 'FA CUP',
+        tournaments: tournamentsArray
+      };
+    }
+  }
 }
 
 // ─── Slideshow ───
@@ -1023,8 +1083,8 @@ function renderGroups() {
       html += `<tr class="${rowClass}">
         <td class="rank-cell stat-number">
           <div class="pos-bar-wrap"><span class="vbar ${barClass}"></span>${pos}</div>
-         </td>
-         <td><div class="team-cell-inner">${iconHtml}<span class="team-name-text">${escapeHtml(team.name)}</span></div></td>
+        </td>
+        <td><div class="team-cell-inner">${iconHtml}<span class="team-name-text">${escapeHtml(team.name)}</span></div></td>
         <td class="stat-number">${team.p||0}</td>
         <td class="stat-number">${team.w||0}</td>
         <td class="stat-number">${team.d||0}</td>
@@ -1037,8 +1097,8 @@ function renderGroups() {
         ${isAdmin ? `<td>
           <button class="btn-sm btn-edit edit-team-btn" data-gid="${gid}" data-key="${team.key}">Edit</button>
           <button class="btn-sm btn-delete del-team-btn" data-gid="${gid}" data-key="${team.key}">Delete</button>
-         </td>` : ''}
-       </tr>`;
+        </td>` : ''}
+      </tr>`;
     });
 
     html += `</tbody>
@@ -1126,7 +1186,7 @@ document.getElementById('saveTeamBtn').onclick = async () => {
 };
 document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamForm').classList.remove('active');
 
-// ─── RENDER FIXTURES (using data from "FA CUP", case‑insensitive title match) ───
+// ─── RENDER FIXTURES (using data from the new loading method) ───
 function renderFixtures() {
   const card = document.getElementById('contentCard');
 
@@ -1154,13 +1214,13 @@ function renderFixtures() {
     return;
   }
 
-  // Build fixtures array from "FA CUP" data (case-insensitive title matching)
+  // Build fixtures array from calendarEventsData (already structured as { date: { title, tournaments } })
   const allFixtures = [];
   const today = new Date(); today.setHours(0,0,0,0);
 
   for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
     if (!eventData?.title) continue;
-    // Case-insensitive match for "FA CUP"
+    // Case-insensitive match on "FA CUP" – already filtered during load, but double‑check
     if (eventData.title.trim().toUpperCase() !== 'FA CUP') continue;
     const tournaments = eventData.tournaments || [];
     for (const tourn of tournaments) {
@@ -1185,9 +1245,6 @@ function renderFixtures() {
 
   const allTeams  = [...new Set(allFixtures.map(f=>[f.home,f.away]).flat().filter(Boolean))].sort();
   const allMonths = [...new Set(allFixtures.map(f=>f.date.substring(0,7)))].sort();
-
-  let teamF  = 'all';
-  let monthF = 'all';
 
   const ML = {'01':'January','02':'February','03':'March','04':'April','05':'May','06':'June','07':'July','08':'August','09':'September','10':'October','11':'November','12':'December'};
 
@@ -1331,7 +1388,7 @@ function renderFixtures() {
   });
 }
 
-// ─── RENDER RESULTS ───
+// ─── RENDER RESULTS (unchanged) ───
 async function renderResults() {
   const allResults = [];
   for (const gid in groupsData) {
@@ -1442,7 +1499,7 @@ async function renderResults() {
   }
 }
 
-// ─── Result Form ───
+// ─── Result Form (unchanged) ───
 let editingResultKey = null, editingResultGroupId = null;
 async function openResultForm(r) {
   editingResultKey     = r?.key     || null;
@@ -1659,7 +1716,7 @@ function renderTopScorers() {
         <td><div class="stat-team-cell">${ico}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td>
         <td><span class="count-badge">${p.count||0}</span></td>
         ${isAdmin?`<td><button class="btn-sm btn-edit scorer-edit" data-key="${p.key}">Edit</button> <button class="btn-sm btn-delete scorer-del" data-key="${p.key}">Delete</button></td>`:''}
-       </tr>`;
+      </tr>`;
     });
     html += '</tbody></table></div>';
   }
@@ -1720,7 +1777,7 @@ function renderTopAssists() {
         <td><div class="stat-team-cell">${ico}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td>
         <td><span class="count-badge">${p.count||0}</span></td>
         ${isAdmin?`<td><button class="btn-sm btn-edit assist-edit" data-key="${p.key}">Edit</button> <button class="btn-sm btn-delete assist-del" data-key="${p.key}">Delete</button></td>`:''}
-       </tr>`;
+      </tr>`;
     });
     html += '</tbody></table></div>';
   }
@@ -2011,7 +2068,7 @@ async function init() {
   await loadEmiratesAnimation();
   await loadSlideshow();
   await loadTeamIcons();
-  await loadFixturesData();       // now loads from "FA CUP"
+  await loadFixturesData();       // loads from date nodes using eventPairs
   await loadSeasonsMetadata();
   await loadTopScorerData();
   await loadTopAssistantData();
