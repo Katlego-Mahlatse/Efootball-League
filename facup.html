@@ -1,34 +1,4 @@
-You are right. I apologize for the confusion. Let me give you the exact corrected path and logic without any further speculation.
 
-The final correct behavior:
-
-1. Root node: calendarEvents (this is where your data lives)
-2. Inside calendarEvents, there are date nodes (e.g., 2026-06-07)
-3. Inside each date:
-   · eventPairs array – we check if any item has name that equals "FA CUP" case‑insensitive and space‑insensitive (i.e., after removing spaces and lowercasing, it becomes "facup")
-   · If yes, then look at the tournaments array inside the same date
-   · Inside each tournament, look for a fixtures array/object
-   · Each fixture should have home and away properties
-
-The exact Firebase path the code will query:
-
-```
-/calendarEvents/2026-06-07/eventPairs/0/name   (to validate)
-/calendarEvents/2026-06-07/tournaments/0/fixtures/0/home
-/calendarEvents/2026-06-07/tournaments/0/fixtures/0/away
-```
-
-The code will:
-
-· Load everything under calendarEvents once
-· Iterate over each date inside it
-· Look at eventPairs to decide if this date belongs to FA CUP
-· If yes, extract all fixtures from all tournaments under that date
-· Display them in the Fixtures tab
-
-Below is the complete HTML file with this logic and nothing else changed. Copy and replace your entire file.
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
