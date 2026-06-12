@@ -1,4 +1,34 @@
+You are right. I apologize for the confusion. Let me give you the exact corrected path and logic without any further speculation.
 
+The final correct behavior:
+
+1. Root node: calendarEvents (this is where your data lives)
+2. Inside calendarEvents, there are date nodes (e.g., 2026-06-07)
+3. Inside each date:
+   · eventPairs array – we check if any item has name that equals "FA CUP" case‑insensitive and space‑insensitive (i.e., after removing spaces and lowercasing, it becomes "facup")
+   · If yes, then look at the tournaments array inside the same date
+   · Inside each tournament, look for a fixtures array/object
+   · Each fixture should have home and away properties
+
+The exact Firebase path the code will query:
+
+```
+/calendarEvents/2026-06-07/eventPairs/0/name   (to validate)
+/calendarEvents/2026-06-07/tournaments/0/fixtures/0/home
+/calendarEvents/2026-06-07/tournaments/0/fixtures/0/away
+```
+
+The code will:
+
+· Load everything under calendarEvents once
+· Iterate over each date inside it
+· Look at eventPairs to decide if this date belongs to FA CUP
+· If yes, extract all fixtures from all tournaments under that date
+· Display them in the Fixtures tab
+
+Below is the complete HTML file with this logic and nothing else changed. Copy and replace your entire file.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -402,7 +432,8 @@
     /* FIXTURE CARDS - GLASS */
     .fixture-date-group { margin-bottom:32px; animation:cardSlideIn 0.4s ease both; }
     .fixture-date-label {
-      font-family:'Bebas Neue',sans-serif; font-size:1.8rem; letter-spacing:3px; color:white;
+      font-family:'Bebas Neue',sans-serif;
+      font-size:1.8rem; letter-spacing:3px; color:white;
       margin-bottom:14px; padding:10px 20px;
       background:rgba(255,255,255,0.08); border-radius:50px;
       border-left:4px solid rgba(255,255,255,0.4); display:inline-block;
@@ -664,7 +695,7 @@
   </div>
 </div>
 
-<!-- TABS (no Knockout tab) -->
+<!-- TABS -->
 <div class="tabs-container">
   <div class="tabs-row">
     <button class="tab-btn active" data-tab="groups">GROUP STAGES</button>
@@ -738,7 +769,7 @@ let navbarLogoUrl = '';
 let emiratesLogoUrl = '';
 let emiratesSloganUrl = '';
 let groupCornerImageUrl = '';
-let calendarEventsData = {};      // will hold fixtures from the date nodes
+let calendarEventsData = {};      // will hold fixtures from calendarEvents root
 let topScorerList = [], topAssistantList = [];
 let tempScorersHome = [], tempScorersAway = [];
 
@@ -841,44 +872,42 @@ async function loadTeamIcons() {
   }
 }
 
-// ─── Load Fixtures from date nodes (case & space insensitive match on eventPairs name) ───
+// ========== CORRECTED FIXTURE LOADER ==========
+// Reads from /calendarEvents, checks eventPairs for "FA CUP" (case+space insensitive),
+// then extracts fixtures from tournaments.
 async function loadFixturesData() {
-  const rootSnap = await db.ref('/').once('value');
-  const allData = rootSnap.val() || {};
+  const snap = await db.ref('calendarEvents').once('value');
+  const allDates = snap.val() || {};
   calendarEventsData = {};
 
-  for (const [dateStr, dateData] of Object.entries(allData)) {
-    // Only process keys that look like YYYY-MM-DD
-    if (!dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) continue;
-
+  for (const [dateStr, dateData] of Object.entries(allDates)) {
+    // 1. Check eventPairs for FA CUP
     const eventPairs = dateData.eventPairs;
-    if (!eventPairs || typeof eventPairs !== 'object') continue;
-
     let isFaCup = false;
-    // Loop through eventPairs (they can be array or object)
-    for (const pairKey of Object.keys(eventPairs)) {
-      const pair = eventPairs[pairKey];
-      if (pair && pair.name) {
-        // Normalize: remove all spaces, convert to lowercase, then compare to "facup"
-        const normalizedName = pair.name.replace(/\s/g, '').toLowerCase();
-        if (normalizedName === 'facup') {
-          isFaCup = true;
-          break;
+    if (eventPairs && typeof eventPairs === 'object') {
+      for (const pairKey of Object.keys(eventPairs)) {
+        const pair = eventPairs[pairKey];
+        if (pair && pair.name) {
+          const normalized = pair.name.replace(/\s/g, '').toLowerCase();
+          if (normalized === 'facup') {
+            isFaCup = true;
+            break;
+          }
         }
       }
     }
-
     if (!isFaCup) continue;
 
-    // Found FA CUP for this date – now extract tournaments
+    // 2. Extract tournaments and their fixtures
     const tournaments = dateData.tournaments;
     if (!tournaments || typeof tournaments !== 'object') continue;
 
-    // Build the same structure as before: { title, tournaments: [...] }
     const tournamentsArray = [];
     for (const tKey of Object.keys(tournaments)) {
       const tournament = tournaments[tKey];
-      if (tournament && tournament.fixtures) {
+      // Skip non-object or the description field if it's a string
+      if (!tournament || typeof tournament !== 'object') continue;
+      if (tournament.fixtures && typeof tournament.fixtures === 'object') {
         const fixturesArray = [];
         for (const fKey of Object.keys(tournament.fixtures)) {
           const fix = tournament.fixtures[fKey];
@@ -906,6 +935,7 @@ async function loadFixturesData() {
     }
   }
 }
+// =============================================
 
 // ─── Slideshow ───
 async function loadSlideshow() {
@@ -1035,7 +1065,7 @@ async function setActiveSeason() {
   alert(`Season ${currentSeasonId} set as active.`);
 }
 
-// ─── RENDER GROUPS ───
+// ─── RENDER GROUPS (unchanged) ───
 function renderGroups() {
   const card = document.getElementById('contentCard');
   if (!groupsData || !Object.keys(groupsData).length) {
@@ -1186,7 +1216,7 @@ document.getElementById('saveTeamBtn').onclick = async () => {
 };
 document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamForm').classList.remove('active');
 
-// ─── RENDER FIXTURES (using data from the new loading method) ───
+// ─── RENDER FIXTURES (uses calendarEventsData populated by loadFixturesData) ───
 function renderFixtures() {
   const card = document.getElementById('contentCard');
 
@@ -1214,13 +1244,13 @@ function renderFixtures() {
     return;
   }
 
-  // Build fixtures array from calendarEventsData (already structured as { date: { title, tournaments } })
+  // Build fixtures array from calendarEventsData
   const allFixtures = [];
   const today = new Date(); today.setHours(0,0,0,0);
 
   for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
     if (!eventData?.title) continue;
-    // Case-insensitive match on "FA CUP" – already filtered during load, but double‑check
+    // Already filtered to FA CUP during load, but check anyway
     if (eventData.title.trim().toUpperCase() !== 'FA CUP') continue;
     const tournaments = eventData.tournaments || [];
     for (const tourn of tournaments) {
@@ -1338,8 +1368,6 @@ function renderFixtures() {
       if (!grp[fix.date]) grp[fix.date] = [];
       grp[fix.date].push(fix);
     }
-    const container = card.querySelector('.fixture-date-group')?.parentElement;
-    // Remove existing date groups
     card.querySelectorAll('.fixture-date-group').forEach(el => el.remove());
     const filtersBar = card.querySelector('.filters-bar');
     const sortedD = Object.keys(grp).sort((a,b) => {
@@ -1679,7 +1707,7 @@ async function updateGroupTeamStats(gid, homeTeam, awayTeam, hScore, aScore, for
   await db.ref(sp(currentSeasonId, `groups/${gid}/teams/${aKey}`)).set(aData);
 }
 
-// ─── TOP SCORERS ───
+// ─── TOP SCORERS (unchanged) ───
 function renderTopScorers() {
   const sorted = [...topScorerList].sort((a,b)=>(b.count||0)-(a.count||0));
   const top3 = sorted.slice(0,3), rest = sorted.slice(3);
@@ -1740,7 +1768,7 @@ function renderTopScorers() {
   document.getElementById('addScorerBtn')?.addEventListener('click', () => openStatModal('scorer'));
 }
 
-// ─── TOP ASSISTS ───
+// ─── TOP ASSISTS (unchanged) ───
 function renderTopAssists() {
   const sorted = [...topAssistantList].sort((a,b)=>(b.count||0)-(a.count||0));
   const top3 = sorted.slice(0,3), rest = sorted.slice(3);
@@ -1801,7 +1829,7 @@ function renderTopAssists() {
   document.getElementById('addAssistBtn')?.addEventListener('click', () => openStatModal('assistant'));
 }
 
-// ─── Stat Modal ───
+// ─── Stat Modal (unchanged) ───
 async function openStatModal(type, entry=null) {
   const isScorer = type === 'scorer';
   showModal(`
@@ -1862,7 +1890,7 @@ function renderCurrentTab() {
   else if (tab === 'topassists') renderTopAssists();
 }
 
-// ─── Admin Settings ───
+// ─── Admin Settings (unchanged) ───
 function openAdminSettings() {
   showModal(`
     <h3>Admin Settings</h3>
@@ -2068,7 +2096,7 @@ async function init() {
   await loadEmiratesAnimation();
   await loadSlideshow();
   await loadTeamIcons();
-  await loadFixturesData();       // loads from date nodes using eventPairs
+  await loadFixturesData();       // now reads from /calendarEvents and checks eventPairs
   await loadSeasonsMetadata();
   await loadTopScorerData();
   await loadTopAssistantData();
@@ -2083,3 +2111,4 @@ init();
 </script>
 </body>
 </html>
+```
