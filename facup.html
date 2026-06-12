@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -739,7 +738,7 @@ let navbarLogoUrl = '';
 let emiratesLogoUrl = '';
 let emiratesSloganUrl = '';
 let groupCornerImageUrl = '';
-let calendarEventsData = {};      // will hold fixtures from calendarEvents root
+let calendarEventsData = {};
 let topScorerList = [], topAssistantList = [];
 let tempScorersHome = [], tempScorersAway = [];
 
@@ -787,7 +786,6 @@ function showModal(html) {
 }
 function closeModal() { document.getElementById('genericModal').classList.remove('active'); }
 
-// Team icon html - transparent, no circle
 function getTeamIconHtml(name, cls='team-icon-sm') {
   const url = teamIconsCache[name];
   return url ? `<img class="${cls}" src="${url}" alt="${name}" onerror="this.style.display='none';">` : '';
@@ -842,70 +840,65 @@ async function loadTeamIcons() {
   }
 }
 
-// ========== CORRECTED FIXTURE LOADER ==========
-// Reads from /calendarEvents, checks eventPairs for "FA CUP" (case+space insensitive),
-// then extracts fixtures from tournaments.
+// ========== FIXED FIXTURE LOADER ==========
+// Reads from /calendarEvents, loops through all dates,
+// then loops through tournaments array/object on each date,
+// and ONLY picks tournaments whose name is exactly "FA CUP" (case-insensitive, trimmed).
+// This correctly ignores Copa del Rey, Champions League, etc.
 async function loadFixturesData() {
   const snap = await db.ref('calendarEvents').once('value');
   const allDates = snap.val() || {};
   calendarEventsData = {};
 
   for (const [dateStr, dateData] of Object.entries(allDates)) {
-    // 1. Check eventPairs for FA CUP
-    const eventPairs = dateData.eventPairs;
-    let isFaCup = false;
-    if (eventPairs && typeof eventPairs === 'object') {
-      for (const pairKey of Object.keys(eventPairs)) {
-        const pair = eventPairs[pairKey];
-        if (pair && pair.name) {
-          const normalized = pair.name.replace(/\s/g, '').toLowerCase();
-          if (normalized === 'facup') {
-            isFaCup = true;
-            break;
-          }
-        }
-      }
-    }
-    if (!isFaCup) continue;
+    if (!dateData || typeof dateData !== 'object') continue;
 
-    // 2. Extract tournaments and their fixtures
     const tournaments = dateData.tournaments;
     if (!tournaments || typeof tournaments !== 'object') continue;
 
-    const tournamentsArray = [];
+    const faCupTournaments = [];
+
     for (const tKey of Object.keys(tournaments)) {
       const tournament = tournaments[tKey];
-      // Skip non-object or the description field if it's a string
       if (!tournament || typeof tournament !== 'object') continue;
-      if (tournament.fixtures && typeof tournament.fixtures === 'object') {
-        const fixturesArray = [];
-        for (const fKey of Object.keys(tournament.fixtures)) {
-          const fix = tournament.fixtures[fKey];
-          if (fix && fix.home && fix.away) {
-            fixturesArray.push({
-              home: fix.home,
-              away: fix.away
-            });
-          }
-        }
-        if (fixturesArray.length > 0) {
-          tournamentsArray.push({
-            name: tournament.name || 'FA CUP',
-            fixtures: fixturesArray
+
+      // ── KEY FIX: only accept tournaments whose name is "FA CUP" ──
+      const tournamentName = (tournament.name || '').trim().toUpperCase();
+      if (tournamentName !== 'FA CUP') continue;
+
+      // Extract fixtures from this FA CUP tournament
+      const fixturesRaw = tournament.fixtures;
+      if (!fixturesRaw || typeof fixturesRaw !== 'object') continue;
+
+      const fixturesArray = [];
+      for (const fKey of Object.keys(fixturesRaw)) {
+        const fix = fixturesRaw[fKey];
+        if (fix && fix.home && fix.away) {
+          fixturesArray.push({
+            home: fix.home,
+            away: fix.away
           });
         }
       }
+
+      if (fixturesArray.length > 0) {
+        faCupTournaments.push({
+          name: tournament.name,           // preserve original casing for display
+          description: tournament.description || '',
+          fixtures: fixturesArray
+        });
+      }
     }
 
-    if (tournamentsArray.length > 0) {
+    if (faCupTournaments.length > 0) {
       calendarEventsData[dateStr] = {
         title: 'FA CUP',
-        tournaments: tournamentsArray
+        tournaments: faCupTournaments
       };
     }
   }
 }
-// =============================================
+// ==========================================
 
 // ─── Slideshow ───
 async function loadSlideshow() {
@@ -1035,7 +1028,7 @@ async function setActiveSeason() {
   alert(`Season ${currentSeasonId} set as active.`);
 }
 
-// ─── RENDER GROUPS (unchanged) ───
+// ─── RENDER GROUPS ───
 function renderGroups() {
   const card = document.getElementById('contentCard');
   if (!groupsData || !Object.keys(groupsData).length) {
@@ -1186,7 +1179,7 @@ document.getElementById('saveTeamBtn').onclick = async () => {
 };
 document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamForm').classList.remove('active');
 
-// ─── RENDER FIXTURES (uses calendarEventsData populated by loadFixturesData) ───
+// ─── RENDER FIXTURES ───
 function renderFixtures() {
   const card = document.getElementById('contentCard');
 
@@ -1214,14 +1207,11 @@ function renderFixtures() {
     return;
   }
 
-  // Build fixtures array from calendarEventsData
+  // Build fixtures array — calendarEventsData already contains only FA CUP dates/tournaments
   const allFixtures = [];
   const today = new Date(); today.setHours(0,0,0,0);
 
   for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
-    if (!eventData?.title) continue;
-    // Already filtered to FA CUP during load, but check anyway
-    if (eventData.title.trim().toUpperCase() !== 'FA CUP') continue;
     const tournaments = eventData.tournaments || [];
     for (const tourn of tournaments) {
       for (const fix of (tourn.fixtures || [])) {
@@ -1332,7 +1322,6 @@ function renderFixtures() {
     if (tf !== 'all') f = f.filter(x => x.home===tf || x.away===tf);
     if (mf !== 'all') f = f.filter(x => x.date.startsWith(mf));
     document.getElementById('fixFilterStats').textContent = `${f.length} fixture${f.length!==1?'s':''} found`;
-    // Re-render visible fixture cards
     const grp = {};
     for (const fix of f) {
       if (!grp[fix.date]) grp[fix.date] = [];
@@ -1386,7 +1375,7 @@ function renderFixtures() {
   });
 }
 
-// ─── RENDER RESULTS (unchanged) ───
+// ─── RENDER RESULTS ───
 async function renderResults() {
   const allResults = [];
   for (const gid in groupsData) {
@@ -1497,7 +1486,7 @@ async function renderResults() {
   }
 }
 
-// ─── Result Form (unchanged) ───
+// ─── Result Form ───
 let editingResultKey = null, editingResultGroupId = null;
 async function openResultForm(r) {
   editingResultKey     = r?.key     || null;
@@ -1677,7 +1666,7 @@ async function updateGroupTeamStats(gid, homeTeam, awayTeam, hScore, aScore, for
   await db.ref(sp(currentSeasonId, `groups/${gid}/teams/${aKey}`)).set(aData);
 }
 
-// ─── TOP SCORERS (unchanged) ───
+// ─── TOP SCORERS ───
 function renderTopScorers() {
   const sorted = [...topScorerList].sort((a,b)=>(b.count||0)-(a.count||0));
   const top3 = sorted.slice(0,3), rest = sorted.slice(3);
@@ -1738,7 +1727,7 @@ function renderTopScorers() {
   document.getElementById('addScorerBtn')?.addEventListener('click', () => openStatModal('scorer'));
 }
 
-// ─── TOP ASSISTS (unchanged) ───
+// ─── TOP ASSISTS ───
 function renderTopAssists() {
   const sorted = [...topAssistantList].sort((a,b)=>(b.count||0)-(a.count||0));
   const top3 = sorted.slice(0,3), rest = sorted.slice(3);
@@ -1799,7 +1788,7 @@ function renderTopAssists() {
   document.getElementById('addAssistBtn')?.addEventListener('click', () => openStatModal('assistant'));
 }
 
-// ─── Stat Modal (unchanged) ───
+// ─── Stat Modal ───
 async function openStatModal(type, entry=null) {
   const isScorer = type === 'scorer';
   showModal(`
@@ -1860,7 +1849,7 @@ function renderCurrentTab() {
   else if (tab === 'topassists') renderTopAssists();
 }
 
-// ─── Admin Settings (unchanged) ───
+// ─── Admin Settings ───
 function openAdminSettings() {
   showModal(`
     <h3>Admin Settings</h3>
@@ -2066,7 +2055,7 @@ async function init() {
   await loadEmiratesAnimation();
   await loadSlideshow();
   await loadTeamIcons();
-  await loadFixturesData();       // now reads from /calendarEvents and checks eventPairs
+  await loadFixturesData();
   await loadSeasonsMetadata();
   await loadTopScorerData();
   await loadTopAssistantData();
@@ -2081,4 +2070,3 @@ init();
 </script>
 </body>
 </html>
-```
