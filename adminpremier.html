@@ -285,6 +285,19 @@
     .spinner { width: 60px; height: 60px; border: 5px solid rgba(233,0,82,0.2); border-top-color: var(--razzmatazz); border-radius: 50%; animation: spin 0.8s linear infinite; }
     .loading-spinner span { color: rgba(255,255,255,0.6); font-size: 1.4rem; font-family: 'Rajdhani', sans-serif; }
 
+    /* button spinner (inline) */
+    .btn-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
     /* ─── EMPTY STATE ─── */
     .empty-state { text-align: center; padding: 80px 20px; color: rgba(255,255,255,0.4); }
     .empty-state .empty-icon { font-size: 5rem; margin-bottom: 20px; }
@@ -799,6 +812,7 @@
     .modal-btn-primary, .modal-btn-cancel { flex: 1; padding: 16px; border-radius: 28px; font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 1px; cursor: pointer; }
     .modal-btn-primary { background: var(--razzmatazz); color: white; border: none; transition: background 0.2s; }
     .modal-btn-primary:hover { background: #b8003f; }
+    .modal-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     .modal-btn-cancel { background: rgba(255,255,255,0.07); border: 1px solid var(--razzmatazz); color: rgba(255,255,255,0.7); }
     .status-msg { margin-top: 14px; padding: 12px 18px; border-radius: 14px; font-weight: bold; text-align: center; font-size: 1.2rem; }
     .status-success { background: #dcfce7; color: #166534; }
@@ -1859,9 +1873,9 @@ function renderTopScorers() {
         <td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td>
         <td><span class="count-badge">${p.count||0}</span></td>
         ${isAdminMode?`<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>`:''}
-      </tr>`;
+       </tr>`;
     });
-    restHtml += `</tbody>}</table></div></div>`;
+    restHtml += `</tbody></table></div></div>`;
   }
 
   let html = top3Html + restHtml;
@@ -1889,7 +1903,7 @@ function renderTopScorers() {
   }
 }
 
-// ─── RENDER TOP ASSISTANTS (IDENTICAL STRUCTURE) ───
+// ─── RENDER TOP ASSISTANTS (IDENTICAL STRUCTURE TO SCORER, FIXED TABLE CLOSING) ───
 function renderTopAssistants() {
   const sorted = [...topAssistantList].sort((a,b) => (b.count||0)-(a.count||0));
   const top3 = sorted.slice(0,3);
@@ -1920,7 +1934,7 @@ function renderTopAssistants() {
   let restHtml = '';
   if (rest.length) {
     restHtml = `<div class="rest-table-wrapper"><div class="table-scroll-wrap"><table class="stats-list">
-      <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Assists</th>${isAdminMode?'<th>Actions</th>':''}</table></thead>
+      <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Assists</th>${isAdminMode?'<th>Actions</th>':''}</tr></thead>
       <tbody>`;
     rest.forEach((p, i) => {
       const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
@@ -1930,9 +1944,9 @@ function renderTopAssistants() {
         <td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td>
         <td><span class="count-badge">${p.count||0}</span></td>
         ${isAdminMode?`<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>`:''}
-      </tr>`;
+       </tr>`;
     });
-    restHtml += `</tbody>}</table></div></div>`;
+    restHtml += `</tbody></table></div></div>`;
   }
 
   let html = top3Html + restHtml;
@@ -2035,13 +2049,20 @@ document.getElementById('saveTeamBtn').onclick = async () => {
     gd: parseInt(document.getElementById('teamGD').value)||0,
     pts: parseInt(document.getElementById('teamPts').value)||0,
   };
-  if (editingTeamKey) await database.ref(getSeasonPath(currentSeasonId, `table/${editingTeamKey}`)).set(data);
-  else await database.ref(getSeasonPath(currentSeasonId, 'table')).push(data);
-  document.getElementById('teamForm').classList.remove('active');
+  const btn = document.getElementById('saveTeamBtn');
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+  try {
+    if (editingTeamKey) await database.ref(getSeasonPath(currentSeasonId, `table/${editingTeamKey}`)).set(data);
+    else await database.ref(getSeasonPath(currentSeasonId, 'table')).push(data);
+    btn.innerHTML = '✓ Saved!';
+    setTimeout(() => { document.getElementById('teamForm').classList.remove('active'); }, 800);
+  } catch(e) { alert('Error: '+e.message); btn.innerHTML = originalText; btn.disabled = false; }
 };
 document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamForm').classList.remove('active');
 
-// ─── Result Form ───
+// ─── Result Form with loading spinner ───
 function formatResultText(homeTeam, homeScore, awayTeam, awayScore, forfeitType) {
   if (forfeitType === "no_contest") return `${homeTeam} F - F ${awayTeam} (No Contest)`;
   if (forfeitType === "forfeit_no_reply") return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam} (Forfeited - No Reply)`;
@@ -2160,16 +2181,19 @@ async function openResultForm(r) {
       goalScorers: { home: tempScorersHome, away: tempScorersAway },
     };
     const path = getSeasonPath(currentSeasonId, 'results');
-
-    if (!editingResultKey) {
-      await applyResultToTable(homeTeam, awayTeam, hs, as2, forfeit === 'none' ? '' : forfeit);
-    }
-
-    if (editingResultKey) await database.ref(`${path}/${editingResultKey}`).set(resultData);
-    else await database.ref(path).push(resultData);
-    closeModal();
-    await loadCurrentSeasonData();
-    renderResults();
+    const btn = document.getElementById('saveResultBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+    try {
+      if (!editingResultKey) {
+        await applyResultToTable(homeTeam, awayTeam, hs, as2, forfeit === 'none' ? '' : forfeit);
+      }
+      if (editingResultKey) await database.ref(`${path}/${editingResultKey}`).set(resultData);
+      else await database.ref(path).push(resultData);
+      btn.innerHTML = '✓ Saved!';
+      setTimeout(() => { closeModal(); }, 800);
+    } catch(e) { alert('Error: '+e.message); btn.innerHTML = originalText; btn.disabled = false; }
   };
 }
 
@@ -2193,7 +2217,7 @@ function renderScorerList(side) {
   });
 }
 
-// ─── Stat Modal (for scorers/assistants with image) ───
+// ─── Stat Modal (for scorers/assistants with image and loading) ───
 async function openStatModal(type, entry = null) {
   const isScorer = type === 'scorer' || type === 'topscorer';
   const currentImageUrl = entry?.imageUrl || '';
@@ -2238,11 +2262,16 @@ async function openStatModal(type, entry = null) {
     if (fileInput.files.length && fileInput.dataset.uploadedUrl) imageUrl = fileInput.dataset.uploadedUrl;
     const data = { name, team, count, imageUrl };
     const path = isScorer ? getSeasonPath(currentSeasonId, 'topScorers/list') : getSeasonPath(currentSeasonId, 'topAssistants/list');
-    if (entry?.key) await database.ref(`${path}/${entry.key}`).set(data);
-    else await database.ref(path).push(data);
-    closeModal();
-    if (isScorer) { await loadTopScorerData(); renderTopScorers(); }
-    else { await loadTopAssistantData(); renderTopAssistants(); }
+    const btn = document.getElementById('saveStatBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+    try {
+      if (entry?.key) await database.ref(`${path}/${entry.key}`).set(data);
+      else await database.ref(path).push(data);
+      btn.innerHTML = '✓ Saved!';
+      setTimeout(() => { closeModal(); }, 800);
+    } catch(e) { alert('Error: '+e.message); btn.innerHTML = originalText; btn.disabled = false; }
   };
 }
 
@@ -2297,8 +2326,16 @@ function showEditManagersModal() {
       const v = document.getElementById(`mgr_${t.replace(/\s/g,'_')}`)?.value.trim();
       if (v) map[t] = v;
     });
-    await database.ref(getSeasonPath(currentSeasonId, 'managerMap')).set(map);
-    playerMap = map; closeModal(); renderTable();
+    const btn = document.getElementById('saveMgrsBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+    try {
+      await database.ref(getSeasonPath(currentSeasonId, 'managerMap')).set(map);
+      playerMap = map;
+      btn.innerHTML = '✓ Saved!';
+      setTimeout(() => { closeModal(); renderTable(); }, 800);
+    } catch(e) { alert('Error: '+e.message); btn.innerHTML = originalText; btn.disabled = false; }
   };
 }
 
@@ -2376,16 +2413,17 @@ async function openBgCropTool() {
   img.onload = () => { updatePreview(); };
   document.getElementById('cancelCropBtn').onclick = () => { URL.revokeObjectURL(objectUrl); closeModal(); };
   document.getElementById('applyCropBtn').onclick = async () => {
-    document.getElementById('applyCropBtn').textContent = 'Uploading…';
+    const btn = document.getElementById('applyCropBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span> Uploading...';
     try {
       const url = await uploadToImgBB(file);
-      const size = `cover`;  // we use cover to fill screen
+      const size = `cover`;
       const position = `${posX}% ${posY}%`;
       await setBackgroundImage(url, size, position);
-      closeModal();
-      alert('Background applied!');
-      URL.revokeObjectURL(objectUrl);
-    } catch(e) { alert('Failed: '+e.message); }
+      btn.innerHTML = '✓ Applied!';
+      setTimeout(() => { closeModal(); URL.revokeObjectURL(objectUrl); }, 1000);
+    } catch(e) { alert('Failed: '+e.message); btn.disabled = false; btn.innerHTML = 'Apply Background'; }
   };
 }
 
