@@ -703,8 +703,7 @@ async function openResultFormPrefilled(scanned) {
     try {
       await applyResultToTable(homeTeam, awayTeam, hs, as2, forfeit === 'none' ? '' : forfeit);
       await database.ref(getSeasonPath(currentSeasonId, 'results')).push(resultData);
-      btn.innerHTML = '✓ Saved!';
-      setTimeout(() => { closeModal(); }, 800);
+      btn.innerHTML = '✓ Saved!'; setTimeout(() => { closeModal(); }, 1500);
     } catch(e) { alert('Error: ' + e.message); btn.disabled = false; btn.innerHTML = 'Save Result'; }
   };
 }
@@ -1450,8 +1449,7 @@ document.getElementById('saveTeamBtn').onclick = async () => {
   try {
     if (editingTeamKey) await database.ref(getSeasonPath(currentSeasonId, `table/${editingTeamKey}`)).set(data);
     else await database.ref(getSeasonPath(currentSeasonId, 'table')).push(data);
-    btn.innerHTML = '✓ Saved!';
-    setTimeout(() => { document.getElementById('teamForm').classList.remove('active'); }, 800);
+    btn.innerHTML = '✓ Saved!'; setTimeout(() => { document.getElementById('teamForm').classList.remove('active'); }, 1500);
   } catch(e) { alert('Error: ' + e.message); btn.innerHTML = 'Save'; btn.disabled = false; }
 };
 document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamForm').classList.remove('active');
@@ -1532,8 +1530,7 @@ async function openResultForm(r) {
       if (!editingResultKey) await applyResultToTable(homeTeam, awayTeam, hs, as2, forfeit === 'none' ? '' : forfeit);
       if (editingResultKey) await database.ref(`${path}/${editingResultKey}`).set(resultData);
       else await database.ref(path).push(resultData);
-      btn.innerHTML = '✓ Saved!';
-      setTimeout(() => { closeModal(); }, 800);
+      btn.innerHTML = '✓ Saved!'; setTimeout(() => { closeModal(); }, 1500);
     } catch(e) { alert('Error: ' + e.message); btn.innerHTML = 'Save'; btn.disabled = false; }
   };
 }
@@ -1578,8 +1575,7 @@ async function openStatModal(type, entry = null) {
     try {
       if (entry?.key) await database.ref(`${path}/${entry.key}`).set(data);
       else await database.ref(path).push(data);
-      btn.innerHTML = '✓ Saved!';
-      setTimeout(() => { closeModal(); }, 800);
+      btn.innerHTML = '✓ Saved!'; setTimeout(() => { closeModal(); }, 1500);
     } catch(e) { alert('Error: ' + e.message); btn.innerHTML = 'Save'; btn.disabled = false; }
   };
 }
