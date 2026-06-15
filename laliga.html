@@ -1,1 +1,2017 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (function() {
+      var designWidth = 1200;
+      var screenWidth = window.screen.width;
+      var scale = screenWidth / designWidth;
+      scale = Math.min(1.0, Math.max(0.3, scale));
+      var viewportMeta = document.createElement('meta');
+      viewportMeta.name = 'viewport';
+      viewportMeta.content = 'width=1200, initial-scale=' + scale + ', user-scalable=yes';
+      document.head.appendChild(viewportMeta);
+    })();
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    :root {
+      --laliga-red: #E9102E;
+      --laliga-red-light: #ff2a46;
+      --laliga-red-dark: #c40c26;
+      --laliga-navy: #1A2B5E;
+      --laliga-navy-dark: #0E1A3A;
+      --laliga-white: #ffffff;
+      --glass-bg: rgba(233,16,46,0.07);
+      --glass-border: rgba(233,16,46,0.25);
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(40px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes pulseRed {
+      0%,100% { box-shadow: 0 0 0 0 rgba(233,16,46,0.4); }
+      50%      { box-shadow: 0 0 0 12px rgba(233,16,46,0); }
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes shimmer {
+      0%   { background-position: -600px 0; }
+      100% { background-position: 600px 0; }
+    }
+    @keyframes cardSlideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--laliga-navy-dark);
+      min-height: 100vh;
+      overflow-x: auto;
+      min-width: 1200px;
+      width: 1200px;
+      margin: 0 auto;
+      font-size: 20px;
+      padding-bottom: 3rem;
+    }
+
+    /* ─── NAVBAR ─── */
+    .navbar {
+      background: var(--laliga-red);
+      border-bottom: 3px solid var(--laliga-navy);
+      padding: 0 2rem;
+      height: 100px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+      animation: fadeInDown 0.5s ease both;
+    }
+    .navbar-logo { height: 74px; max-width: 260px; object-fit: contain; cursor: pointer; transition: transform 0.3s; }
+    .navbar-logo:hover { transform: scale(1.05); }
+    .navbar-logo-placeholder {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.2rem; letter-spacing: 3px;
+      color: var(--laliga-navy); cursor: pointer; font-weight: bold;
+    }
+    .menu-btn {
+      background: var(--laliga-navy);
+      border: 2px solid var(--laliga-red-light);
+      width: 70px; height: 70px; border-radius: 20px;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center; gap: 8px;
+      cursor: pointer; transition: all 0.3s;
+    }
+    .menu-btn span { width: 32px; height: 4px; background: var(--laliga-red); border-radius: 4px; transition: all 0.3s; }
+    .menu-btn:hover { background: var(--laliga-navy-dark); transform: rotate(90deg); }
+
+    /* ─── SIDE MENU ─── */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 199; display: none; backdrop-filter: blur(3px); }
+    .overlay.active { display: block; }
+    .side-menu {
+      position: fixed; top: 0; right: -360px; width: 360px; height: 100%;
+      background: rgba(14,26,58,0.98); backdrop-filter: blur(20px);
+      border-left: 2px solid var(--laliga-red);
+      z-index: 200; padding: 40px 28px;
+      transition: right 0.35s cubic-bezier(.4,0,.2,1);
+    }
+    .side-menu.active { right: 0; }
+    .close-menu { text-align: right; font-size: 2.8rem; cursor: pointer; color: var(--laliga-white); margin-bottom: 40px; line-height: 1; transition: color 0.2s; }
+    .close-menu:hover { color: var(--laliga-red); }
+    .menu-item {
+      padding: 20px 28px; margin: 12px 0;
+      border: 1px solid rgba(233,16,46,0.3); border-radius: 20px;
+      cursor: pointer; font-weight: 600; font-size: 1.5rem;
+      color: var(--laliga-white); transition: all 0.2s;
+      font-family: 'Rajdhani', sans-serif;
+    }
+    .menu-item:hover { background: var(--laliga-red); border-color: var(--laliga-white); color: var(--laliga-white); transform: translateX(8px); }
+
+    /* ─── SLIDESHOW ─── */
+    .slideshow-wrapper { padding: 36px 36px 20px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.7s ease 0.2s both; }
+    .slideshow-frame {
+      width: 100%; max-width: 1100px; border-radius: 32px; overflow: hidden;
+      box-shadow: 0 8px 40px rgba(233,16,46,0.25);
+      border: 2px solid var(--laliga-red);
+      background: #000; display: flex; justify-content: center; align-items: center;
+    }
+    .slideshow-img { width: 100%; height: auto; max-height: 520px; object-fit: contain; display: block; transition: opacity 0.5s ease; }
+    .dots-container { margin-top: 20px; display: flex; gap: 12px; }
+    .dot { width: 14px; height: 14px; border-radius: 50%; background: rgba(233,16,46,0.3); cursor: pointer; transition: all 0.25s; }
+    .dot.active { background: var(--laliga-red); transform: scale(1.4); box-shadow: 0 0 12px rgba(233,16,46,0.7); }
+    .dot:hover { background: var(--laliga-red-light); }
+
+    /* ─── SEASON BAR ─── */
+    .season-bar { display: flex; justify-content: center; margin: 24px 0 16px; }
+    .season-controls {
+      display: flex; align-items: center; gap: 20px;
+      background: rgba(14,26,58,0.8); border: 2px solid var(--laliga-red);
+      padding: 12px 32px; border-radius: 80px; backdrop-filter: blur(8px);
+    }
+    .season-arrow {
+      background: rgba(233,16,46,0.15); border: 1px solid var(--laliga-red);
+      width: 56px; height: 56px; border-radius: 50%;
+      font-size: 2rem; cursor: pointer; color: var(--laliga-white);
+      font-weight: bold; transition: all 0.2s; line-height: 1;
+    }
+    .season-arrow:hover:not(:disabled) { background: var(--laliga-red); color: var(--laliga-white); transform: scale(1.1); }
+    .season-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+    .season-number {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.2rem; letter-spacing: 3px;
+      color: var(--laliga-white); min-width: 180px; text-align: center;
+    }
+    .season-admin-btns { display: flex; gap: 10px; margin-left: 10px; }
+    .season-admin-btn {
+      background: rgba(233,16,46,0.15); border: 1px solid var(--laliga-red);
+      padding: 8px 20px; border-radius: 40px; font-weight: 600;
+      cursor: pointer; color: var(--laliga-white); font-size: 1.1rem;
+      font-family: 'Rajdhani', sans-serif; transition: all 0.2s;
+    }
+    .season-admin-btn:hover { background: var(--laliga-red); }
+
+    /* ─── TABS ─── */
+    .tabs-container {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      margin: 28px 36px 0;
+      background: rgba(14,26,58,0.7); border: 2px solid var(--laliga-red);
+      border-radius: 80px; padding: 12px 20px; backdrop-filter: blur(8px);
+      max-width: 1100px; margin-left: auto; margin-right: auto;
+      animation: fadeInUp 0.5s ease 0.3s both;
+    }
+    .tabs-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+    .tab-btn {
+      background: transparent; border: none;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.3rem; font-weight: 700;
+      padding: 10px 28px; cursor: pointer;
+      color: rgba(255,255,255,0.6); border-radius: 60px;
+      letter-spacing: 0.5px; transition: all 0.25s; white-space: nowrap;
+    }
+    .tab-btn.active { background: var(--laliga-red); color: var(--laliga-white); }
+    .tab-btn:hover:not(.active) { color: var(--laliga-white); background: rgba(233,16,46,0.2); }
+
+    /* ─── CONTENT CARD ─── */
+    .content-card {
+      margin: 24px 36px 40px;
+      background: var(--glass-bg); backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border); border-radius: 32px;
+      padding: 32px;
+      min-height: 200px;
+      animation: fadeInUp 0.5s ease 0.4s both;
+    }
+
+    /* ─── LOADING ─── */
+    .loading-spinner { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px; gap: 24px; }
+    .spinner { width: 60px; height: 60px; border: 5px solid rgba(233,16,46,0.2); border-top-color: var(--laliga-red); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    .loading-spinner span { color: rgba(255,255,255,0.6); font-size: 1.4rem; font-family: 'Rajdhani', sans-serif; }
+
+    /* ─── EMPTY STATE ─── */
+    .empty-state { text-align: center; padding: 80px 20px; color: rgba(255,255,255,0.4); }
+    .empty-state .empty-icon { font-size: 5rem; margin-bottom: 20px; }
+    .empty-state p { font-size: 2rem; font-weight: 500; font-family: 'Rajdhani', sans-serif; }
+
+    /* ─── TABLE WRAPPER with horizontal scroll ─── */
+    .table-scroll-wrap {
+      overflow-x: auto;
+      border-radius: 20px;
+      position: relative;
+    }
+
+    /* ─── LEAGUE TABLE ─── */
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Rajdhani', sans-serif;
+      min-width: 900px;
+      background: var(--laliga-red);
+      color: var(--laliga-navy);
+    }
+    .stats-table thead th {
+      background: rgba(26,43,94,0.2);
+      color: var(--laliga-navy);
+      font-size: 1.3rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 16px 18px;
+      border-bottom: 2px solid var(--laliga-navy);
+      white-space: nowrap;
+      z-index: 20;
+    }
+
+    /* Sticky pos column */
+    .stats-table th:first-child,
+    .stats-table td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 25;
+      background: var(--laliga-red);
+      width: 64px;
+      min-width: 64px;
+    }
+    .stats-table thead th:first-child { background: rgba(233,16,46,0.95); z-index: 30; }
+
+    /* Sticky club column */
+    .stats-table th:nth-child(2),
+    .stats-table td:nth-child(2) {
+      position: sticky;
+      left: 64px;
+      z-index: 24;
+      background: var(--laliga-red);
+      box-shadow: 4px 0 8px -2px rgba(26,43,94,0.45);
+      border-right: 2px solid rgba(26,43,94,0.35);
+    }
+    .stats-table thead th:nth-child(2) { background: rgba(233,16,46,0.95); z-index: 30; }
+
+    .stats-table tbody tr { border-bottom: 1px solid rgba(26,43,94,0.2); transition: background 0.2s; }
+    .stats-table tbody tr:hover { background: rgba(26,43,94,0.1); }
+    .stats-table td {
+      padding: 14px 18px;
+      color: var(--laliga-navy);
+      font-size: 1.3rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .stats-table td.stat-number {
+      font-size: 2.6rem !important;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .team-name-text {
+      font-weight: 700;
+      font-size: 2.8rem !important;
+      color: var(--laliga-navy);
+    }
+    .pts-cell { font-weight: 800; color: var(--laliga-navy); font-size: 1.5rem; }
+    .rank-cell { font-weight: 700; color: var(--laliga-navy); font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; }
+
+    /* ─── TABLE HEADER ROW ─── */
+    .table-header-row {
+      display: flex;
+      align-items: center;
+      background: var(--laliga-red);
+      border-radius: 20px 20px 0 0;
+      padding: 0;
+      overflow: hidden;
+      border: 2px solid rgba(26,43,94,0.3);
+      border-bottom: none;
+    }
+    .table-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 14px 18px;
+      background: var(--laliga-red);
+      border-radius: 20px 20px 0 0;
+      border: 2px solid rgba(26,43,94,0.2);
+      border-bottom: 3px solid var(--laliga-navy);
+      align-items: center;
+    }
+    .table-actions-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.6rem;
+      color: var(--laliga-navy);
+      letter-spacing: 2px;
+      flex: 1;
+    }
+    .add-btn {
+      background: rgba(26,43,94,0.15);
+      border: 2px solid var(--laliga-navy);
+      color: var(--laliga-navy);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 1.2rem;
+      padding: 10px 24px;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .add-btn:hover { background: var(--laliga-navy); color: var(--laliga-red); transform: translateY(-2px); }
+    .three-dot-btn {
+      background: rgba(26,43,94,0.15);
+      border: 2px solid var(--laliga-navy);
+      color: var(--laliga-navy);
+      font-size: 2.2rem;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .three-dot-btn:hover { background: var(--laliga-navy); color: var(--laliga-red); }
+
+    /* ─── TOP SCORERS & TOP ASSISTANTS ─── */
+    .stats-list {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--laliga-red);
+      color: var(--laliga-navy);
+    }
+    .stats-list thead th {
+      background: rgba(26,43,94,0.15);
+      color: var(--laliga-navy);
+      font-size: 1.4rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 18px 22px;
+      border-bottom: 2px solid var(--laliga-navy);
+    }
+    .stats-list tbody tr { border-bottom: 1px solid rgba(26,43,94,0.2); transition: background 0.2s; }
+    .stats-list tbody tr:hover { background: rgba(26,43,94,0.1); }
+    .stats-list td {
+      padding: 18px 22px;
+      color: var(--laliga-navy);
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+    .stats-list td:first-child { color: var(--laliga-navy); font-family: 'Bebas Neue', sans-serif; font-size: 2rem; font-weight: bold; }
+    .count-badge {
+      background: rgba(26,43,94,0.2);
+      border: 1px solid var(--laliga-navy);
+      color: var(--laliga-navy);
+      padding: 6px 22px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 1.4rem;
+    }
+    .stat-team-cell { display: flex; align-items: center; gap: 16px; color: var(--laliga-navy); }
+
+    /* TOP 3 BLOCKS */
+    .top3-container {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 40px;
+      flex-wrap: nowrap;
+      width: 100%;
+    }
+    .top3-block {
+      position: relative;
+      text-align: center;
+      flex: 1;
+      background: rgba(26,43,94,0.4);
+      border-radius: 0;
+      padding: 0;
+      transition: transform 0.3s;
+      margin: 0;
+      min-width: 0;
+    }
+    .top3-block:first-child { border-top-left-radius: 32px; border-bottom-left-radius: 32px; }
+    .top3-block:last-child { border-top-right-radius: 32px; border-bottom-right-radius: 32px; }
+    .top3-block:hover { transform: translateY(-8px); z-index: 5; }
+    .player-image-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      border: 3px solid var(--laliga-red);
+      background: #0E1A3A;
+      margin: 0;
+      border-radius: 0;
+    }
+    .top3-block:first-child .player-image-wrapper { border-top-left-radius: 32px; border-bottom-left-radius: 32px; }
+    .top3-block:last-child .player-image-wrapper { border-top-right-radius: 32px; border-bottom-right-radius: 32px; }
+    .player-img { width: 100%; height: 100%; object-fit: cover; }
+    .medal-badge {
+      position: absolute; top: 12px; left: 12px;
+      font-size: 3rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); z-index: 2;
+    }
+    .edit-block-btn {
+      position: absolute; top: 12px; right: 12px;
+      background: rgba(0,0,0,0.6); border: 1px solid var(--laliga-red);
+      border-radius: 50%; width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1.6rem; color: var(--laliga-white);
+      transition: all 0.2s; z-index: 3;
+    }
+    .edit-block-btn:hover { background: var(--laliga-red); transform: scale(1.1); }
+    .player-name-overlay {
+      position: absolute; bottom: 16px; left: 16px;
+      background: linear-gradient(90deg, rgba(0,0,0,0.7), rgba(0,0,0,0.3));
+      color: white; font-family: 'Rajdhani', sans-serif;
+      font-weight: 800; font-size: 1.6rem; padding: 6px 16px;
+      border-radius: 40px; backdrop-filter: blur(4px); z-index: 2;
+      letter-spacing: 0.5px; border-left: 3px solid var(--laliga-red); pointer-events: none;
+    }
+    .team-icon-overlay {
+      position: absolute; bottom: 12px; right: 12px;
+      width: 56px; height: 56px; background: rgba(0,0,0,0.4);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px); padding: 6px; z-index: 2;
+    }
+    .team-icon-overlay img { width: 100%; height: 100%; object-fit: contain; }
+    .top3-count {
+      font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--laliga-red);
+      background: rgba(0,0,0,0.3); display: inline-block;
+      padding: 8px 20px; border-radius: 60px; letter-spacing: 2px;
+      margin-top: 12px; margin-bottom: 16px;
+    }
+    .rest-table-wrapper { margin-top: 20px; border-top: 2px solid var(--laliga-red); padding-top: 24px; }
+
+    /* ─── FILTERS BAR ─── */
+    .filters-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: flex-end;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: rgba(26,43,94,0.3);
+      border-radius: 28px;
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 8px; }
+    .filter-group label {
+      font-size: 1rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 1px; color: rgba(255,255,255,0.6);
+    }
+    .filter-group select, .filter-group button {
+      background: rgba(14,26,58,0.8); border: 1px solid var(--laliga-red);
+      border-radius: 40px; padding: 12px 20px;
+      font-family: 'Rajdhani', sans-serif; font-size: 1.2rem;
+      font-weight: 600; color: var(--laliga-white);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .filter-group select:hover, .filter-group button:hover { background: var(--laliga-red); border-color: var(--laliga-white); }
+    .clear-filters { background: rgba(233,16,46,0.2); }
+    .filter-stats { font-size: 1rem; color: rgba(255,255,255,0.5); margin-left: auto; align-self: center; }
+
+    /* ─── VIEW CALENDAR BUTTON ─── */
+    .view-calendar-btn {
+      background: rgba(233,16,46,0.15);
+      border: 2px solid var(--laliga-red);
+      color: var(--laliga-white);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 1.2rem;
+      padding: 12px 28px;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: all 0.25s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      align-self: flex-end;
+      text-decoration: none;
+    }
+    .view-calendar-btn:hover {
+      background: var(--laliga-red);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(233,16,46,0.4);
+    }
+
+    /* ─── FIXTURE CARDS (red bg) ─── */
+    .fixture-date-group { margin-bottom: 32px; animation: cardSlideIn 0.4s ease both; }
+    .fixture-date-label {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem;
+      letter-spacing: 3px;
+      color: var(--laliga-white);
+      margin-bottom: 14px;
+      padding: 10px 20px;
+      background: rgba(233,16,46,0.2);
+      border-radius: 50px;
+      border-left: 4px solid var(--laliga-red);
+      display: inline-block;
+    }
+    .fixture-card {
+      background: var(--laliga-red);
+      border-radius: 28px;
+      padding: 28px 40px;
+      margin-bottom: 16px;
+      transition: all 0.25s;
+      animation: cardSlideIn 0.4s ease both;
+      border: 1px solid rgba(26,43,94,0.2);
+    }
+    .fixture-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(233,16,46,0.35);
+    }
+    .fixture-tournament-label {
+      font-size: 1rem;
+      font-weight: 700;
+      color: rgba(26,43,94,0.7);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+      font-family: 'Rajdhani', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .fixture-match-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .fixture-team-side {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      text-align: center;
+    }
+    .fixture-team-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 2.2rem;
+      color: var(--laliga-navy);
+    }
+    .fixture-vs {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3rem;
+      color: var(--laliga-navy);
+      letter-spacing: 4px;
+      flex-shrink: 0;
+      opacity: 0.6;
+    }
+
+    /* ─── MATCH CARDS (red bg) ─── */
+    .matches-list { display: flex; flex-direction: column; gap: 24px; }
+    .match-card {
+      background: var(--laliga-red);
+      border-radius: 28px;
+      padding: 32px 48px;
+      transition: all 0.25s;
+      animation: cardSlideIn 0.4s ease both;
+      border: 1px solid rgba(26,43,94,0.2);
+    }
+    .match-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(233,16,46,0.35);
+    }
+    .match-row {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 32px;
+    }
+    .team-side {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 16px; flex: 1; text-align: center;
+    }
+    .team-name-big {
+      font-family: 'Rajdhani', sans-serif; font-weight: 700;
+      font-size: 2.8rem; color: var(--laliga-navy); letter-spacing: 0.3px;
+    }
+    .match-center {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 8px; flex-shrink: 0; min-width: 180px;
+    }
+    .score-display {
+      font-family: 'Bebas Neue', sans-serif; font-size: 4.5rem;
+      color: var(--laliga-navy); letter-spacing: 6px;
+      background: rgba(26,43,94,0.15); padding: 14px 42px;
+      border-radius: 80px; border: 2px solid rgba(26,43,94,0.3);
+    }
+    .forfeit-display {
+      font-family: 'Bebas Neue', sans-serif; font-size: 3rem;
+      color: #7a0000; letter-spacing: 4px;
+      background: rgba(26,43,94,0.15); padding: 12px 28px;
+      border-radius: 60px; border: 2px solid rgba(26,43,94,0.3);
+    }
+    .aggregate-text { font-size: 1.6rem; color: rgba(26,43,94,0.7); font-family: 'Rajdhani', sans-serif; }
+    .goal-scorers { margin-top: 12px; }
+    .goal-scorer-item {
+      display: inline-block; background: rgba(26,43,94,0.12);
+      border: 1px solid rgba(26,43,94,0.25);
+      padding: 5px 14px; border-radius: 30px;
+      margin: 3px; font-size: 1.2rem; color: var(--laliga-navy);
+    }
+    .match-meta { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 24px; justify-content: center; }
+    .meta-tag {
+      font-size: 1.4rem; font-weight: 500; color: var(--laliga-navy);
+      background: rgba(26,43,94,0.1); padding: 10px 24px;
+      border-radius: 50px; border: 1px solid rgba(26,43,94,0.25);
+      font-family: 'Inter', sans-serif;
+    }
+    .admin-row { display: flex; gap: 16px; justify-content: flex-end; margin-top: 24px; }
+    .btn-sm {
+      font-family: 'Rajdhani', sans-serif; font-weight: 700;
+      font-size: 1.5rem; padding: 12px 32px; border-radius: 50px;
+      border: none; cursor: pointer; transition: all 0.2s; letter-spacing: 1px;
+    }
+    .btn-edit   { background: rgba(26,43,94,0.15); color: var(--laliga-navy); border: 1px solid var(--laliga-navy); }
+    .btn-edit:hover   { background: var(--laliga-navy); color: var(--laliga-red); }
+    .btn-delete { background: rgba(100,0,0,0.15); color: #7a0000; border: 1px solid rgba(100,0,0,0.3); }
+    .btn-delete:hover { background: #7a0000; color: white; }
+
+    .add-btn-main {
+      display: inline-flex; align-items: center; gap: 14px;
+      background: rgba(26,43,94,0.5); border: 2px solid var(--laliga-red);
+      color: var(--laliga-red); font-family: 'Rajdhani', sans-serif;
+      font-weight: 700; font-size: 2rem; padding: 20px 56px;
+      border-radius: 100px; cursor: pointer; margin-top: 40px;
+      transition: all 0.2s; letter-spacing: 1px;
+    }
+    .add-btn-main:hover { background: var(--laliga-red); color: var(--laliga-white); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(233,16,46,0.4); }
+
+    /* Add result top button */
+    .add-result-top-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--laliga-red); border: 2px solid var(--laliga-red);
+      color: var(--laliga-white); font-family: 'Rajdhani', sans-serif;
+      font-weight: 700; font-size: 1.2rem; padding: 12px 28px;
+      border-radius: 40px; cursor: pointer;
+      transition: all 0.2s; letter-spacing: 1px;
+      white-space: nowrap;
+    }
+    .add-result-top-btn:hover { background: var(--laliga-red-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(233,16,46,0.4); }
+
+    /* ─── WATCH MATCH ─── */
+    .inline-media { width: 100%; border-radius: 32px; overflow: hidden; background: #000; }
+    .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; }
+    .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+    /* ─── MODAL ─── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(6px); display: none;
+      justify-content: center; align-items: center;
+      z-index: 1000; padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-card {
+      background: rgba(14,26,58,0.98); border: 2px solid var(--laliga-red);
+      border-radius: 40px; padding: 44px;
+      max-width: 860px; width: 100%; max-height: 88vh; overflow-y: auto;
+      font-family: 'Rajdhani', sans-serif;
+      animation: fadeInUp 0.35s ease both;
+    }
+    .modal-card h3 {
+      font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem;
+      color: var(--laliga-red); letter-spacing: 2px; margin-bottom: 28px;
+    }
+    .modal-card label {
+      display: block; color: rgba(255,255,255,0.55);
+      font-size: 1.2rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 1px; margin-bottom: 6px; margin-top: 20px;
+    }
+    .modal-card input, .modal-card select, .modal-card textarea {
+      width: 100%; padding: 16px 22px;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--laliga-red);
+      border-radius: 28px; color: white;
+      font-family: 'Rajdhani', sans-serif; font-size: 1.4rem;
+      font-weight: 500; outline: none;
+    }
+    .modal-card textarea { min-height: 100px; }
+    .modal-card input:focus, .modal-card select:focus { box-shadow: 0 0 0 3px rgba(233,16,46,0.3); }
+    .scorer-section { border-top: 1px solid rgba(255,255,255,0.15); margin-top: 18px; padding-top: 18px; }
+    .scorer-section h4 { color: var(--laliga-red); font-size: 1.4rem; margin-bottom: 12px; font-family: 'Rajdhani', sans-serif; font-weight: 700; }
+    .scorer-list { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+    .scorer-badge {
+      background: rgba(26,43,94,0.6); border: 1px solid var(--laliga-red);
+      border-radius: 32px; padding: 7px 18px;
+      font-size: 1.1rem; display: inline-flex; align-items: center; gap: 10px; color: var(--laliga-white);
+    }
+    .remove-scorer { background: #b91c1c; color: white; border: none; border-radius: 50%; width: 26px; height: 26px; font-size: 16px; cursor: pointer; }
+    .modal-btns { display: flex; gap: 18px; margin-top: 28px; }
+    .modal-btn-primary, .modal-btn-cancel { flex: 1; padding: 16px; border-radius: 28px; font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 1px; cursor: pointer; }
+    .modal-btn-primary { background: var(--laliga-red); color: white; border: none; transition: background 0.2s; }
+    .modal-btn-primary:hover { background: var(--laliga-red-light); }
+    .modal-btn-cancel { background: rgba(255,255,255,0.07); border: 1px solid var(--laliga-red); color: rgba(255,255,255,0.7); }
+    .status-msg { margin-top: 14px; padding: 12px 18px; border-radius: 14px; font-weight: bold; text-align: center; font-size: 1.2rem; }
+    .status-success { background: #dcfce7; color: #166534; }
+    .status-error   { background: #fee2e2; color: #991b1b; }
+    .status-loading { background: #fef3c7; color: #92400e; }
+    .settings-grid { display: flex; flex-direction: column; gap: 16px; }
+    .settings-btn {
+      background: rgba(26,43,94,0.4); border: 1px solid var(--laliga-red);
+      color: var(--laliga-white); padding: 18px 26px; border-radius: 28px;
+      cursor: pointer; font-family: 'Rajdhani', sans-serif;
+      font-size: 1.5rem; font-weight: 600; display: flex; align-items: center; gap: 16px; transition: all 0.2s;
+    }
+    .settings-btn:hover { background: var(--laliga-red); }
+
+    /* popup three-dot */
+    .popup-menu {
+      position: absolute; background: rgba(14,26,58,0.98);
+      border: 1px solid var(--laliga-red); border-radius: 20px;
+      padding: 8px 0; z-index: 150;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      animation: fadeIn 0.2s ease; min-width: 220px;
+    }
+    .popup-menu div {
+      padding: 12px 20px; cursor: pointer; color: var(--laliga-white);
+      transition: all 0.2s; font-weight: 600; font-size: 1.3rem; font-family: 'Rajdhani', sans-serif;
+    }
+    .popup-menu div:hover { background: rgba(233,16,46,0.2); transform: translateX(8px); }
+
+    /* image preview grid */
+    .img-preview-grid { display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0; justify-content: center; }
+    .preview-thumb { position: relative; width: 180px; height: 180px; }
+    .preview-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 14px; border: 2px solid var(--laliga-red); }
+    .thumb-del { position: absolute; top: -10px; right: -10px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+    .thumb-del:hover { background: #dc2626; }
+
+    /* Other styles */
+    .pos-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .vbar { width: 6px; height: 28px; border-radius: 3px; }
+    .vbar-blue   { background: #0033cc; }
+    .vbar-orange { background: #f97316; }
+    .vbar-green  { background: #22c55e; }
+    .vbar-red    { background: #ef4444; }
+    .team-cell-inner { display: flex; align-items: center; gap: 14px; }
+    .team-icon { width: 80px; height: 80px; object-fit: contain; display: inline-block; background: transparent; border: none; border-radius: 0; transition: transform 0.25s; }
+    .team-icon:hover { transform: scale(1.1); }
+    .team-icon-sm { width: 80px; height: 80px; object-fit: contain; background: transparent; border: none; border-radius: 0; transition: transform 0.25s; }
+    .team-icon-sm:hover { transform: scale(1.1); }
+    .team-icon-lg { width: 120px; height: 120px; object-fit: contain; background: transparent; border: none; border-radius: 0; transition: transform 0.25s; }
+    .team-icon-lg:hover { transform: scale(1.05); }
+    .form-circles { display: flex; gap: 6px; align-items: center; }
+    .circle-result {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 1rem; font-weight: bold; transition: transform 0.2s;
+    }
+    .circle-result:hover { transform: scale(1.2); }
+    .cW { background: #22c55e; color: white; }
+    .cL { background: #b91c1c; color: white; }
+    .cD { background: #6b7280; color: white; }
+    .cF { background: #b91c1c; color: white; }
+    .cWF{ background: #22c55e; color: white; }
+    .cLF{ background: #b91c1c; color: white; }
+    .cBlank { background: rgba(26,43,94,0.2); }
+    .arrow-up   { color: #0033cc; font-size: 1.6rem; }
+    .arrow-down { color: #b91c1c; font-size: 1.6rem; }
+    .arrow-side { color: var(--laliga-navy); font-size: 1.6rem; opacity: 0.7; }
+    .dashed-sep td { border-bottom: 3px dashed var(--laliga-navy) !important; }
+    .dashed-sep-red td { border-bottom: 3px dashed #b91c1c !important; }
+    .legend-row {
+      margin-top: 24px; padding: 16px 20px;
+      background: rgba(26,43,94,0.4); border-radius: 20px;
+      display: flex; gap: 28px; flex-wrap: wrap; justify-content: center;
+    }
+    .legend-item { display: inline-flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.7); font-size: 1.1rem; }
+    .legend-dashed { display: inline-block; width: 28px; height: 3px; border-bottom: 3px dashed rgba(255,255,255,0.7); vertical-align: middle; }
+
+    footer { text-align: center; padding: 36px; color: rgba(255,255,255,0.3); font-size: 1.1rem; border-top: 1px solid rgba(233,16,46,0.3); margin-top: 24px; }
+  </style>
+</head>
+<body>
+
+<div class="navbar">
+  <div id="logoContainer"></div>
+  <button class="menu-btn" id="menuBtn"><span></span><span></span><span></span></button>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="side-menu" id="sideMenu">
+  <div class="close-menu" id="closeMenuBtn">&#x2715;</div>
+  <div class="menu-item" id="homeBtn">🏠 Home</div>
+  <div class="menu-item" id="adminModeBtn">🔐 Admin Mode</div>
+</div>
+
+<div class="slideshow-wrapper">
+  <div class="slideshow-frame">
+    <img id="slideshowImg" class="slideshow-img" src="" alt="Slideshow" style="display:none;">
+  </div>
+  <div class="dots-container" id="dotsContainer"></div>
+</div>
+
+<div class="season-bar">
+  <div class="season-controls">
+    <button class="season-arrow" id="prevSeasonBtn">&#8249;</button>
+    <div class="season-number" id="seasonNumber">Season 1</div>
+    <button class="season-arrow" id="nextSeasonBtn">&#8250;</button>
+    <div id="seasonAdminPanel" style="display:none;" class="season-admin-btns">
+      <button class="season-admin-btn" id="addSeasonBtn">+ New</button>
+      <button class="season-admin-btn" id="renameSeasonBtn">Rename</button>
+      <button class="season-admin-btn" id="setActiveSeasonBtn">Set Active</button>
+    </div>
+  </div>
+</div>
+
+<div class="tabs-container">
+  <div class="tabs-row">
+    <button class="tab-btn active" data-tab="table">TABLE</button>
+    <button class="tab-btn" data-tab="fixtures">FIXTURES</button>
+    <button class="tab-btn" data-tab="results">RESULTS</button>
+    <button class="tab-btn" data-tab="topscorers">TOP SCORERS</button>
+    <button class="tab-btn" data-tab="topassists">TOP ASSISTANTS</button>
+    <button class="tab-btn" data-tab="watch">WATCH MATCH</button>
+  </div>
+</div>
+
+<div class="content-card" id="contentCard">
+  <div class="loading-spinner"><div class="spinner"></div><span>Loading…</span></div>
+</div>
+
+<footer>LaLiga &copy; 2025 | Official Fan Hub</footer>
+
+<!-- Modal -->
+<div id="genericModal" class="modal-overlay">
+  <div class="modal-card" id="modalContent"></div>
+</div>
+
+<!-- Team form overlay -->
+<div id="teamForm" class="modal-overlay">
+  <div class="modal-card">
+    <h3>Add / Edit Team</h3>
+    <label>Team Name</label><input type="text" id="teamNameInput" placeholder="Team Name">
+    <label>Played (P)</label><input type="number" id="teamP">
+    <label>Wins (W)</label><input type="number" id="teamW">
+    <label>Draws (D)</label><input type="number" id="teamD">
+    <label>Losses (L)</label><input type="number" id="teamL">
+    <label>Goals Scored (GS)</label><input type="number" id="teamGS">
+    <label>Goals Conceded (GC)</label><input type="number" id="teamGC">
+    <label>Goal Difference (GD)</label><input type="number" id="teamGD">
+    <label>Points (Pts)</label><input type="number" id="teamPts">
+    <div class="modal-btns">
+      <button class="modal-btn-primary" id="saveTeamBtn">Save</button>
+      <button class="modal-btn-cancel" id="cancelTeamBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Firebase (LaLiga config) ───
+const firebaseConfig = {
+  apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
+  authDomain: "efootball-412.firebaseapp.com",
+  databaseURL: "https://efootball-412-default-rtdb.firebaseio.com",
+  projectId: "efootball-412",
+  storageBucket: "efootball-412.firebasestorage.app",
+  messagingSenderId: "596548424249",
+  appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
+};
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
+const RMBG_KEY      = "zdkDj9iwQqbGNe8sJu7AEuE8";
+
+// ─── State ───
+let isAdminMode = false;
+let currentSeasonId = 1;
+let availableSeasons = [];
+let activeSeasonId = 1;
+
+let teamsData = [], resultsData = [];
+let teamIconsCache = {};
+let slideshowImages = [], slideshowDuration = 3000, slideInterval = null, currentSlideIdx = 0;
+let navbarLogoUrl = '';
+let tableHeaderBgImageUrl = '';
+let watchMatchEmbedCode = '';
+let playerMap = {};
+let topScorerList = [], topAssistantList = [];
+let calendarEventsData = {};
+
+let showFormArrows = false;
+let showLast5 = true;
+let currentView = "team";
+let popupEl = null;
+let tempScorersHome = [], tempScorersAway = [];
+
+// Filters state for results
+let currentMdFilter = '';
+let currentTeamFilter = '';
+// Filters state for fixtures (enhanced)
+let currentFixTeamFilter = '';
+let currentFixMonthFilter = '';
+let currentFixMatchdayFilter = '';
+
+// ─── Helpers (all paths changed to laliga/) ───
+function getSeasonPath(seasonNum, subPath = "") {
+  return `laliga/seasons/season_${seasonNum}${subPath ? "/" + subPath : ""}`;
+}
+
+async function uploadToImgBB(blob) {
+  const fd = new FormData(); fd.append('image', blob);
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method:'POST', body:fd });
+  const data = await res.json();
+  if (!data.success) throw new Error(data.error?.message || 'ImgBB upload failed');
+  return data.data.url;
+}
+
+async function removeBackground(file) {
+  const fd = new FormData();
+  fd.append('image_file', file);
+  fd.append('size', 'auto');
+  const res = await fetch('https://api.remove.bg/v1.0/removebg', {
+    method: 'POST', headers: { 'X-Api-Key': RMBG_KEY }, body: fd
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.errors?.[0]?.title || 'remove.bg failed');
+  }
+  return await res.blob();
+}
+
+function pickFile(accept) {
+  return new Promise(res => {
+    const inp = document.createElement('input'); inp.type = 'file'; inp.accept = accept;
+    inp.onchange = e => res(e.target.files[0] || null); inp.click();
+  });
+}
+
+function getTeamIconHtml(teamName, className = "team-icon-sm") {
+  const url = teamIconsCache[teamName];
+  return url ? `<img class="${className}" src="${url}" alt="${teamName}" onerror="this.style.display='none';">` : '';
+}
+
+function showModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('genericModal').classList.add('active');
+}
+function closeModal() { document.getElementById('genericModal').classList.remove('active'); }
+
+// ─── Navbar Logo ───
+async function loadNavbarLogo() {
+  const snap = await database.ref('laliga_navbar_logo').once('value');
+  navbarLogoUrl = snap.val() || '';
+  const c = document.getElementById('logoContainer');
+  c.innerHTML = navbarLogoUrl
+    ? `<img src="${navbarLogoUrl}" class="navbar-logo" alt="LaLiga Logo">`
+    : `<div class="navbar-logo-placeholder">⚽ LALIGA</div>`;
+}
+
+async function loadTableHeaderBgImage() {
+  const snap = await database.ref('laliga_table_header_bg').once('value');
+  tableHeaderBgImageUrl = snap.val() || '';
+}
+
+async function loadWatchMatchEmbed() {
+  const snap = await database.ref('laliga/watchMatch/embedCode').once('value');
+  watchMatchEmbedCode = snap.val() || '';
+}
+
+async function loadTeamIcons() {
+  const snapshot = await database.ref('laliga_teamIcons').once('value');
+  const data = snapshot.val() || {};
+  for (const [team, value] of Object.entries(data)) {
+    if (value.imageUrl) teamIconsCache[team] = value.imageUrl;
+  }
+}
+
+async function loadCalendarEvents() {
+  const snap = await database.ref('calendarEvents').once('value');
+  calendarEventsData = snap.val() || {};
+}
+
+// ─── AUTO TABLE UPDATE (forfeit logic revised: no contest counts as played, forfeit win no GD for winner) ───
+async function applyResultToTable(homeTeam, awayTeam, homeScore, awayScore, forfeitType) {
+  const isNoContest = forfeitType === 'no_contest';
+  const isForfeitWin = (forfeitType === 'forfeit_no_reply' || forfeitType === 'forfeit_agreement');
+  
+  const tableSnap = await database.ref(getSeasonPath(currentSeasonId, 'table')).once('value');
+  const tableVal = tableSnap.val() || {};
+
+  function findTeamEntry(name) {
+    for (const [key, val] of Object.entries(tableVal)) {
+      if (val.name === name) return { key, data: { ...val } };
+    }
+    return null;
+  }
+
+  const homeEntry = findTeamEntry(homeTeam);
+  const awayEntry = findTeamEntry(awayTeam);
+  if (!homeEntry || !awayEntry) return;
+
+  const hd = homeEntry.data;
+  const ad = awayEntry.data;
+
+  if (isNoContest) {
+    // No contest: count as match played, no points, no goals, no GD change
+    hd.p = (hd.p || 0) + 1;
+    ad.p = (ad.p || 0) + 1;
+    // No wins, draws, losses, goals, points, GD
+  } 
+  else if (isForfeitWin) {
+    // Both teams get a match played
+    hd.p = (hd.p || 0) + 1;
+    ad.p = (ad.p || 0) + 1;
+    
+    // Determine winner based on the scores provided (homeScore > awayScore means home wins by forfeit)
+    if (homeScore > awayScore) {
+      // Home wins by forfeit
+      hd.w = (hd.w || 0) + 1;
+      hd.pts = (hd.pts || 0) + 3;
+      ad.l = (ad.l || 0) + 1;
+      // Loser gets -3 GD and +1 GC (penalty)
+      ad.gd = (ad.gd || 0) - 3;
+      ad.gc = (ad.gc || 0) + 1;
+      // Winner: no goal stats change
+    } else {
+      // Away wins by forfeit
+      ad.w = (ad.w || 0) + 1;
+      ad.pts = (ad.pts || 0) + 3;
+      hd.l = (hd.l || 0) + 1;
+      // Loser gets -3 GD and +1 GC
+      hd.gd = (hd.gd || 0) - 3;
+      hd.gc = (hd.gc || 0) + 1;
+    }
+  } 
+  else {
+    // Normal result: full stats update
+    hd.p = (hd.p || 0) + 1;
+    ad.p = (ad.p || 0) + 1;
+    hd.gs = (hd.gs || 0) + homeScore;
+    hd.gc = (hd.gc || 0) + awayScore;
+    ad.gs = (ad.gs || 0) + awayScore;
+    ad.gc = (ad.gc || 0) + homeScore;
+    hd.gd = (hd.gd || 0) + (homeScore - awayScore);
+    ad.gd = (ad.gd || 0) + (awayScore - homeScore);
+    
+    if (homeScore > awayScore) {
+      hd.w = (hd.w || 0) + 1;
+      hd.pts = (hd.pts || 0) + 3;
+      ad.l = (ad.l || 0) + 1;
+    } else if (homeScore < awayScore) {
+      ad.w = (ad.w || 0) + 1;
+      ad.pts = (ad.pts || 0) + 3;
+      hd.l = (hd.l || 0) + 1;
+    } else {
+      hd.d = (hd.d || 0) + 1;
+      hd.pts = (hd.pts || 0) + 1;
+      ad.d = (ad.d || 0) + 1;
+      ad.pts = (ad.pts || 0) + 1;
+    }
+  }
+
+  await database.ref(getSeasonPath(currentSeasonId, `table/${homeEntry.key}`)).set(hd);
+  await database.ref(getSeasonPath(currentSeasonId, `table/${awayEntry.key}`)).set(ad);
+}
+
+// ─── Seasons & Migration (using laliga paths) ───
+async function loadSeasonsMetadata() {
+  const snapshot = await database.ref('laliga/seasons').once('value');
+  const seasons = snapshot.val() || {};
+  availableSeasons = [];
+  for (const key in seasons) {
+    if (!key.startsWith('season_')) continue;
+    const id = parseInt(key.split('_')[1]);
+    if (!isNaN(id)) availableSeasons.push(id);
+    if (seasons[key].active === true) activeSeasonId = id;
+  }
+  if (!availableSeasons.length) {
+    await database.ref('laliga/seasons/season_1/table').set({});
+    await database.ref('laliga/seasons/season_1/results').set({});
+    await database.ref('laliga/seasons/season_1/active').set(true);
+    availableSeasons.push(1);
+    activeSeasonId = 1;
+  }
+  availableSeasons.sort((a,b)=>a-b);
+  if (!availableSeasons.includes(activeSeasonId) && availableSeasons.length) activeSeasonId = availableSeasons[0];
+  currentSeasonId = activeSeasonId;
+  updateSeasonUI();
+  await loadCurrentSeasonData();
+  await loadManagerNamesForSeason();
+}
+
+function updateSeasonUI() {
+  document.getElementById('seasonNumber').textContent = `Season ${currentSeasonId}`;
+  const idx = availableSeasons.indexOf(currentSeasonId);
+  document.getElementById('prevSeasonBtn').disabled = idx <= 0;
+  document.getElementById('nextSeasonBtn').disabled = idx >= availableSeasons.length - 1;
+  document.getElementById('seasonAdminPanel').style.display = isAdminMode ? 'flex' : 'none';
+}
+
+async function loadCurrentSeasonData() {
+  const [tableSnap, resultsSnap] = await Promise.all([
+    database.ref(getSeasonPath(currentSeasonId, 'table')).once('value'),
+    database.ref(getSeasonPath(currentSeasonId, 'results')).once('value'),
+  ]);
+  teamsData = tableSnap.val() ? Object.entries(tableSnap.val()).map(([k,v])=>({key:k,...v})) : [];
+  resultsData = resultsSnap.val() ? Object.entries(resultsSnap.val()).map(([k,v])=>({key:k,...v})) : [];
+}
+
+async function loadManagerNamesForSeason() {
+  const snap = await database.ref(getSeasonPath(currentSeasonId, 'managerMap')).once('value');
+  playerMap = snap.val() || {};
+}
+
+async function loadTopScorerData() {
+  const snap = await database.ref(getSeasonPath(currentSeasonId, 'topScorers/list')).once('value');
+  topScorerList = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : [];
+}
+
+async function loadTopAssistantData() {
+  const snap = await database.ref(getSeasonPath(currentSeasonId, 'topAssistants/list')).once('value');
+  topAssistantList = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : [];
+}
+
+async function switchSeason(delta) {
+  const idx = availableSeasons.indexOf(currentSeasonId);
+  const nIdx = idx + delta;
+  if (nIdx < 0 || nIdx >= availableSeasons.length) return;
+  currentSeasonId = availableSeasons[nIdx];
+  updateSeasonUI(); await loadCurrentSeasonData(); await loadManagerNamesForSeason();
+  await loadTopScorerData(); await loadTopAssistantData();
+  renderCurrentTab();
+}
+
+async function addNewSeason() {
+  const raw = prompt("Enter new season number:"); if (!raw) return;
+  const id = parseInt(raw);
+  if (isNaN(id)) { alert("Invalid number"); return; }
+  if (availableSeasons.includes(id)) { alert("Season already exists"); return; }
+  await database.ref(`laliga/seasons/season_${id}/table`).set({});
+  await database.ref(`laliga/seasons/season_${id}/results`).set({});
+  await database.ref(`laliga/seasons/season_${id}/managerMap`).set({});
+  await database.ref(`laliga/seasons/season_${id}/topScorers/list`).set({});
+  await database.ref(`laliga/seasons/season_${id}/topAssistants/list`).set({});
+  availableSeasons.push(id); availableSeasons.sort((a,b)=>a-b);
+  currentSeasonId = id; updateSeasonUI(); await loadCurrentSeasonData(); await loadManagerNamesForSeason(); await loadTopScorerData(); await loadTopAssistantData(); renderCurrentTab();
+}
+
+async function renameSeason() {
+  const raw = prompt(`New number for Season ${currentSeasonId}:`); if (!raw) return;
+  const id = parseInt(raw); if (isNaN(id)) return;
+  if (availableSeasons.includes(id) && id !== currentSeasonId) { alert("Number taken"); return; }
+  const [t, r, m, ts, ta] = await Promise.all([
+    database.ref(getSeasonPath(currentSeasonId,'table')).once('value'),
+    database.ref(getSeasonPath(currentSeasonId,'results')).once('value'),
+    database.ref(getSeasonPath(currentSeasonId,'managerMap')).once('value'),
+    database.ref(getSeasonPath(currentSeasonId,'topScorers')).once('value'),
+    database.ref(getSeasonPath(currentSeasonId,'topAssistants')).once('value'),
+  ]);
+  const wasActive = activeSeasonId === currentSeasonId;
+  await database.ref(`laliga/seasons/season_${id}/table`).set(t.val()||{});
+  await database.ref(`laliga/seasons/season_${id}/results`).set(r.val()||{});
+  await database.ref(`laliga/seasons/season_${id}/managerMap`).set(m.val()||{});
+  await database.ref(`laliga/seasons/season_${id}/topScorers`).set(ts.val()||{});
+  await database.ref(`laliga/seasons/season_${id}/topAssistants`).set(ta.val()||{});
+  if (wasActive) await database.ref(`laliga/seasons/season_${id}/active`).set(true);
+  await database.ref(`laliga/seasons/season_${currentSeasonId}`).remove();
+  availableSeasons = availableSeasons.filter(s=>s!==currentSeasonId);
+  availableSeasons.push(id); availableSeasons.sort((a,b)=>a-b);
+  if (activeSeasonId === currentSeasonId) activeSeasonId = id;
+  currentSeasonId = id; updateSeasonUI(); await loadCurrentSeasonData(); await loadManagerNamesForSeason(); await loadTopScorerData(); await loadTopAssistantData(); renderCurrentTab();
+}
+
+async function setActiveSeason() {
+  const updates = {};
+  availableSeasons.forEach(s => { updates[`laliga/seasons/season_${s}/active`] = (s === currentSeasonId); });
+  await database.ref().update(updates); activeSeasonId = currentSeasonId;
+  alert(`Season ${currentSeasonId} set as active.`);
+}
+
+// ─── Form / Last5 helpers ───
+function getResultStatusForTeam(team, matchText) {
+  const lower = matchText.toLowerCase();
+  if (lower.includes("no contest") || lower.includes("f - f")) return "F";
+  const isForfeit = lower.includes("forfeit") || lower.includes("forfeited");
+  const parts = matchText.match(/([A-Za-z\s]+?)\s+(\d+)\s*[-–]\s*(\d+)\s+([A-Za-z\s]+)/);
+  if (parts) {
+    let home = parts[1].trim(), hs = parseInt(parts[2]), as2 = parseInt(parts[3]), away = parts[4].trim();
+    if (home === team && hs > as2) return isForfeit ? "WF" : "W";
+    if (home === team && hs < as2) return isForfeit ? "LF" : "L";
+    if (away === team && as2 > hs) return isForfeit ? "WF" : "W";
+    if (away === team && as2 < hs) return isForfeit ? "LF" : "L";
+    if ((home === team || away === team) && hs === as2) return "D";
+  }
+  return null;
+}
+
+function getTeamLast5(team) {
+  const sorted = resultsData.filter(r => r.matchText && r.matchText.includes(team)).sort((a,b)=>(b.md||0)-(a.md||0));
+  const last5 = sorted.slice(0,5).map(r => getResultStatusForTeam(team, r.matchText)).filter(Boolean);
+  while (last5.length < 5) last5.push(null);
+  return last5.reverse();
+}
+
+function getLatestArrow(team) {
+  const sorted = resultsData.filter(r => r.matchText && r.matchText.includes(team)).sort((a,b)=>(b.md||0)-(a.md||0));
+  if (!sorted.length) return null;
+  const s = getResultStatusForTeam(team, sorted[0].matchText);
+  if (s === "W" || s === "WF") return "↑";
+  if (s === "L" || s === "LF") return "↓";
+  if (s === "D") return "→";
+  return "⚪";
+}
+
+// ─── Slideshow ───
+async function loadSlideshow() {
+  const [imgSnap, durSnap] = await Promise.all([
+    database.ref('laliga_slideshow/images').once('value'),
+    database.ref('laliga_slideshow/duration').once('value'),
+  ]);
+  slideshowImages = imgSnap.val() || [];
+  slideshowDuration = durSnap.val() || 3000;
+  if (slideInterval) clearInterval(slideInterval);
+  const imgEl = document.getElementById('slideshowImg');
+  if (slideshowImages.length) {
+    imgEl.style.display = 'block'; currentSlideIdx = 0; updateSlide();
+    slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx+1) % slideshowImages.length; updateSlide(); }, slideshowDuration);
+  } else { imgEl.style.display = 'none'; }
+}
+
+function updateSlide() {
+  const img = document.getElementById('slideshowImg');
+  img.src = slideshowImages[currentSlideIdx];
+  const dots = document.getElementById('dotsContainer');
+  dots.innerHTML = '';
+  slideshowImages.forEach((_, i) => {
+    const d = document.createElement('span');
+    d.className = 'dot' + (i === currentSlideIdx ? ' active' : '');
+    d.onclick = () => { currentSlideIdx = i; updateSlide(); if (slideInterval) { clearInterval(slideInterval); slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx+1) % slideshowImages.length; updateSlide(); }, slideshowDuration); } };
+    dots.appendChild(d);
+  });
+}
+
+// ─── RENDER TABLE ───
+function renderTable() {
+  const sorted = [...teamsData].sort((a,b) => (b.pts||0)-(a.pts||0) || (b.gd||0)-(a.gd||0));
+
+  let html = `
+    <div class="table-actions">
+      <span class="table-actions-title">🏆 League Table</span>
+      ${isAdminMode ? `<button class="add-btn" id="addTeamBtnInner">+ Add Team</button>` : ''}
+      <button class="three-dot-btn" id="threeDotBtn">⋮</button>
+    </div>
+    <div class="table-scroll-wrap">
+      <table class="stats-table">
+        <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GS</th><th>GC</th><th>GD</th><th>Pts</th><th>Last 5</th>${isAdminMode ? '<th>Actions</th>' : ''}</thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="legend-row" id="legendContainer"></div>
+  `;
+  document.getElementById('contentCard').innerHTML = html;
+
+  const tbody = document.getElementById('tableBody');
+  sorted.forEach((team, idx) => {
+    const pos = idx + 1;
+    let barClass = '';
+    let rowClass = '';
+    if (currentSeasonId === 1) {
+      if (pos <= 4) barClass = 'vbar-blue';
+    } else if (currentSeasonId === 2) {
+      if (pos <= 4) barClass = 'vbar-blue';
+      else if (pos <= 8) barClass = 'vbar-orange';
+      else if (pos <= 12) barClass = 'vbar-green';
+      if (pos === 8) rowClass = 'dashed-sep';
+    } else {
+      if (pos <= 4) barClass = 'vbar-blue';
+      else if (pos <= 8) barClass = 'vbar-orange';
+      else if (pos <= 12) barClass = 'vbar-green';
+      else if (pos >= 18) barClass = 'vbar-red';
+      if (pos === 8) rowClass = 'dashed-sep';
+      if (pos === 17) rowClass = 'dashed-sep-red';
+    }
+    const row = document.createElement('tr');
+    if (rowClass) row.className = rowClass;
+
+    const posCell = document.createElement('td');
+    posCell.className = 'rank-cell stat-number';
+    if (barClass) posCell.innerHTML = `<div class="pos-bar-wrap"><span class="vbar ${barClass}"></span>${pos}</div>`;
+    else posCell.textContent = pos;
+    row.appendChild(posCell);
+
+    let arrowHtml = '';
+    if (showFormArrows) {
+      const a = getLatestArrow(team.name);
+      if (a === '↑') arrowHtml = '<span class="arrow-up">↑</span> ';
+      else if (a === '↓') arrowHtml = '<span class="arrow-down">↓</span> ';
+      else if (a === '→') arrowHtml = '<span class="arrow-side">→</span> ';
+      else arrowHtml = '<span class="arrow-side" style="opacity:0.3;">—</span> ';
+    }
+    const displayName = (currentView === 'player' && playerMap[team.name]) ? playerMap[team.name] : team.name;
+    const iconHtml = getTeamIconHtml(team.name, 'team-icon-sm');
+    const clubCell = document.createElement('td');
+    clubCell.innerHTML = `<div class="team-cell-inner">${arrowHtml}${iconHtml}<span class="team-name-text">${displayName}</span></div>`;
+    row.appendChild(clubCell);
+
+    function mkNumCell(val) { const td = document.createElement('td'); td.textContent = val; td.className = 'stat-number'; return td; }
+
+    row.appendChild(mkNumCell(team.p || 0));
+    const w = currentSeasonId === 2 ? '🤷‍♂️' : (team.w || 0);
+    const d = currentSeasonId === 2 ? '🤷‍♂️' : (team.d || 0);
+    const l = currentSeasonId === 2 ? '🤷‍♂️' : (team.l || 0);
+    row.appendChild(mkNumCell(w));
+    row.appendChild(mkNumCell(d));
+    row.appendChild(mkNumCell(l));
+    const gs = (currentSeasonId === 1 || currentSeasonId === 2) ? '🤷‍♂️' : (team.gs || 0);
+    const gc = (currentSeasonId === 1 || currentSeasonId === 2) ? '🤷‍♂️' : (team.gc || 0);
+    row.appendChild(mkNumCell(gs));
+    row.appendChild(mkNumCell(gc));
+    const gd = team.gd || 0;
+    row.appendChild(mkNumCell(gd > 0 ? `+${gd}` : `${gd}`));
+    const ptsCell = document.createElement('td');
+    ptsCell.className = 'pts-cell stat-number';
+    ptsCell.textContent = team.pts || 0;
+    row.appendChild(ptsCell);
+
+    const last5Cell = document.createElement('td');
+    if (showLast5) {
+      const last5 = getTeamLast5(team.name);
+      const wrap = document.createElement('div'); wrap.className = 'form-circles';
+      last5.forEach(res => {
+        const span = document.createElement('span'); span.className = 'circle-result';
+        if (res === 'W')  { span.classList.add('cW'); span.textContent = '✓'; }
+        else if (res === 'L')  { span.classList.add('cL'); span.textContent = '✗'; }
+        else if (res === 'D')  { span.classList.add('cD'); span.textContent = '–'; }
+        else if (res === 'F')  { span.classList.add('cF'); span.textContent = 'F'; }
+        else if (res === 'WF') { span.classList.add('cWF'); span.textContent = 'F'; }
+        else if (res === 'LF') { span.classList.add('cLF'); span.textContent = 'F'; }
+        else { span.classList.add('cBlank'); }
+        wrap.appendChild(span);
+      });
+      last5Cell.appendChild(wrap);
+    }
+    row.appendChild(last5Cell);
+
+    if (isAdminMode) {
+      const actCell = document.createElement('td');
+      actCell.innerHTML = `<button class="btn-sm btn-edit" data-key="${team.key}">✏️</button> <button class="btn-sm btn-delete" data-key="${team.key}">🗑️</button>`;
+      row.appendChild(actCell);
+    }
+    tbody.appendChild(row);
+  });
+
+  const legend = document.getElementById('legendContainer');
+  let legendHtml = '';
+  if (currentSeasonId === 1) {
+    legendHtml = '<span class="legend-item"><span class="vbar vbar-blue" style="display:inline-block;"></span> UEFA Champions League</span>';
+  } else {
+    legendHtml = `
+      <span class="legend-item"><span class="vbar vbar-blue" style="display:inline-block;"></span> UEFA Champions League</span>
+      <span class="legend-item"><span class="vbar vbar-orange" style="display:inline-block;"></span> Europa League</span>
+      <span class="legend-item"><span class="legend-dashed"></span> FIFA Club World Cup</span>
+      <span class="legend-item"><span class="vbar vbar-green" style="display:inline-block;"></span> UEFA Conference League</span>
+    `;
+    if (currentSeasonId >= 3) legendHtml += '<span class="legend-item"><span class="vbar vbar-red" style="display:inline-block;"></span> Relegation</span>';
+  }
+  legend.innerHTML = legendHtml;
+
+  if (isAdminMode) {
+    document.getElementById('addTeamBtnInner')?.addEventListener('click', () => openTeamForm(null));
+    document.querySelectorAll('.btn-edit[data-key]').forEach(btn => {
+      const t = teamsData.find(x => x.key === btn.dataset.key);
+      if (t) btn.onclick = () => openTeamForm(t.key, t);
+    });
+    document.querySelectorAll('.btn-delete[data-key]').forEach(btn => {
+      btn.onclick = async () => { if (confirm('Delete this team?')) await database.ref(getSeasonPath(currentSeasonId, `table/${btn.dataset.key}`)).remove(); };
+    });
+  }
+  attachThreeDotHandler();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// NEW FIXTURES RENDERER with Team, Month, Matchday filters + proper sorting
+// ═══════════════════════════════════════════════════════════════════════════
+function renderFixtures() {
+  const laligaFixtures = [];
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  
+  for (const [date, eventData] of Object.entries(calendarEventsData)) {
+    const eventSeason = eventData.season;
+    if (eventSeason !== undefined && eventSeason !== null && eventSeason !== currentSeasonId) {
+      continue;
+    }
+    if (eventData.tournaments && Array.isArray(eventData.tournaments)) {
+      for (const tournament of eventData.tournaments) {
+        let isLaLiga = false;
+        if (tournament.name) {
+          const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
+          if (normalized === 'laliga') isLaLiga = true;
+        }
+        if (isLaLiga && tournament.fixtures && Array.isArray(tournament.fixtures)) {
+          for (const fixture of tournament.fixtures) {
+            laligaFixtures.push({
+              date: date,
+              homeTeam: fixture.home,
+              awayTeam: fixture.away,
+              tournamentName: tournament.name,
+              eventName: eventData.eventPairs?.[0]?.name || 'LaLiga',
+              matchday: fixture.matchday || tournament.matchday || null
+            });
+          }
+        }
+      }
+    }
+  }
+  
+  // Sort: upcoming first, then past
+  laligaFixtures.sort((a, b) => {
+    const da = new Date(a.date), db = new Date(b.date);
+    const aFuture = da >= today, bFuture = db >= today;
+    if (aFuture && bFuture) return da - db;
+    if (!aFuture && !bFuture) return db - da; // past: most recent first
+    return aFuture ? -1 : 1;
+  });
+  
+  // Build filter options
+  const allTeams = [...new Set(laligaFixtures.flatMap(f => [f.homeTeam, f.awayTeam]).filter(Boolean))].sort();
+  const allMonths = [...new Set(laligaFixtures.map(f => f.date.substring(0,7)))].sort();
+  const allMatchdays = [...new Set(laligaFixtures.map(f => f.matchday).filter(md => md !== null && md !== undefined))].sort((a,b)=>a-b);
+  
+  // Apply filters
+  let filtered = [...laligaFixtures];
+  if (currentFixTeamFilter && currentFixTeamFilter !== 'all') {
+    filtered = filtered.filter(f => f.homeTeam === currentFixTeamFilter || f.awayTeam === currentFixTeamFilter);
+  }
+  if (currentFixMonthFilter && currentFixMonthFilter !== 'all') {
+    filtered = filtered.filter(f => f.date.startsWith(currentFixMonthFilter));
+  }
+  if (currentFixMatchdayFilter && currentFixMatchdayFilter !== 'all') {
+    filtered = filtered.filter(f => f.matchday === parseInt(currentFixMatchdayFilter));
+  }
+  
+  // Group by date
+  const grouped = {};
+  for (const fix of filtered) {
+    if (!grouped[fix.date]) grouped[fix.date] = [];
+    grouped[fix.date].push(fix);
+  }
+  const sortedDates = Object.keys(grouped).sort((a,b) => {
+    const da = new Date(a), db = new Date(b);
+    const aFuture = da >= today, bFuture = db >= today;
+    if (aFuture && bFuture) return da - db;
+    if (!aFuture && !bFuture) return db - da;
+    return aFuture ? -1 : 1;
+  });
+  
+  const monthLabels = {
+    '01':'January','02':'February','03':'March','04':'April',
+    '05':'May','06':'June','07':'July','08':'August',
+    '09':'September','10':'October','11':'November','12':'December'
+  };
+  
+  let filtersHtml = `
+    <div class="filters-bar">
+      <div class="filter-group">
+        <label>Team</label>
+        <select id="fixTeamFilter">
+          <option value="all">All Teams</option>
+          ${allTeams.map(t => `<option value="${t}" ${currentFixTeamFilter===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Month</label>
+        <select id="fixMonthFilter">
+          <option value="all">All Months</option>
+          ${allMonths.map(m => {
+            const [y, mo] = m.split('-');
+            return `<option value="${m}" ${currentFixMonthFilter===m?'selected':''}>${monthLabels[mo] || mo} ${y}</option>`;
+          }).join('')}
+        </select>
+      </div>
+      ${allMatchdays.length > 0 ? `
+      <div class="filter-group">
+        <label>Matchday</label>
+        <select id="fixMatchdayFilter">
+          <option value="all">All Matchdays</option>
+          ${allMatchdays.map(md => `<option value="${md}" ${currentFixMatchdayFilter==md?'selected':''}>Matchday ${md}</option>`).join('')}
+        </select>
+      </div>
+      ` : ''}
+      <div class="filter-group">
+        <button id="clearFixFiltersBtn" class="clear-filters">Clear Filters</button>
+      </div>
+      <div class="filter-stats">${filtered.length} fixture${filtered.length !== 1 ? 's' : ''} found</div>
+    </div>
+  `;
+  
+  let contentHtml = '';
+  if (sortedDates.length === 0) {
+    contentHtml = '<div class="empty-state"><div class="empty-icon">📅</div><p>No LaLiga fixtures found for Season ' + currentSeasonId + '</p><p style="font-size: 0.9rem; margin-top: 10px;">Add fixtures in Admin Calendar with tournament name "LaLiga" (case/space insensitive) and matching season number.</p></div>';
+  } else {
+    for (const dateStr of sortedDates) {
+      const dateObj = new Date(dateStr);
+      const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const dayName = dayNames[dateObj.getDay()];
+      const day = dateObj.getDate();
+      const [y, mo] = dateStr.split('-');
+      const monthName = monthLabels[mo] || mo;
+      const isPast = dateObj < today;
+      const dateLabel = `${dayName}, ${day} ${monthName} ${y}${isPast ? ' · Played' : ''}`;
+      
+      contentHtml += `<div class="fixture-date-group"><div class="fixture-date-label">📅 ${dateLabel}</div>`;
+      for (const fix of grouped[dateStr]) {
+        const homeIconHtml = getTeamIconHtml(fix.homeTeam, 'team-icon-lg');
+        const awayIconHtml = getTeamIconHtml(fix.awayTeam, 'team-icon-lg');
+        const matchdayBadge = fix.matchday ? `<span class="meta-tag" style="margin-left: 8px;">MD ${fix.matchday}</span>` : '';
+        contentHtml += `
+          <div class="fixture-card">
+            <div class="fixture-tournament-label">
+              🏆 ${escapeHtml(fix.tournamentName || 'LaLiga')}
+              ${matchdayBadge}
+            </div>
+            <div class="fixture-match-row">
+              <div class="fixture-team-side">${homeIconHtml}<span class="fixture-team-name">${escapeHtml(fix.homeTeam)}</span></div>
+              <div class="fixture-vs">VS</div>
+              <div class="fixture-team-side">${awayIconHtml}<span class="fixture-team-name">${escapeHtml(fix.awayTeam)}</span></div>
+            </div>
+          </div>
+        `;
+      }
+      contentHtml += `</div>`;
+    }
+  }
+  document.getElementById('contentCard').innerHTML = filtersHtml + contentHtml;
+  
+  // Attach filter events
+  document.getElementById('fixTeamFilter')?.addEventListener('change', e => { currentFixTeamFilter = e.target.value; renderFixtures(); });
+  document.getElementById('fixMonthFilter')?.addEventListener('change', e => { currentFixMonthFilter = e.target.value; renderFixtures(); });
+  document.getElementById('fixMatchdayFilter')?.addEventListener('change', e => { currentFixMatchdayFilter = e.target.value; renderFixtures(); });
+  document.getElementById('clearFixFiltersBtn')?.addEventListener('click', () => { currentFixTeamFilter = ''; currentFixMonthFilter = ''; currentFixMatchdayFilter = ''; renderFixtures(); });
+}
+
+// ─── RENDER RESULTS, TOP SCORERS, TOP ASSISTANTS, WATCH (unchanged from original except forfeit logic already updated) ───
+function parseResultCard(r) {
+  let homeTeam = '', awayTeam = '', homeScore = '', awayScore = '', isForfeit = false, forfeitType = '';
+  const text = r.matchText || '';
+  const lower = text.toLowerCase();
+  if (lower.includes('no contest') || lower.includes('f - f')) isForfeit = true;
+  else if (lower.includes('forfeit')) isForfeit = true;
+  if (isForfeit && text.includes('F - F')) {
+    const parts = text.split(/\s*F\s*-\s*F\s*/i);
+    if (parts.length >= 2) { homeTeam = parts[0].trim().replace(/\(.*\)/g,'').trim(); awayTeam = parts[1].trim().replace(/\(.*\)/g,'').trim(); homeScore = 'F'; awayScore = 'F'; }
+    if (text.includes('No Contest')) forfeitType = 'No Contest';
+    else if (text.includes('Forfeited - No Reply')) forfeitType = 'Forfeited - No Reply';
+    else if (text.includes('Forfeited on Agreement')) forfeitType = 'Forfeited on Agreement';
+    else forfeitType = 'Forfeit';
+  } else {
+    const match = text.match(/(\d+)\s*-\s*(\d+)/);
+    if (match) {
+      homeScore = match[1]; awayScore = match[2];
+      const parts = text.split(/\s+\d+\s*-\s*\d+\s+/);
+      if (parts.length >= 2) { homeTeam = parts[0].trim(); awayTeam = parts[1].trim().replace(/\(.*\)/g,'').trim(); }
+      if (lower.includes('forfeited - no reply')) forfeitType = 'Forfeited - No Reply';
+      else if (lower.includes('forfeited on agreement')) forfeitType = 'Forfeited on Agreement';
+      else if (lower.includes('forfeit')) forfeitType = 'Forfeit';
+    }
+  }
+  return { homeTeam, awayTeam, homeScore, awayScore, isForfeit, forfeitType, md: r.md };
+}
+
+function renderResults() {
+  let filtered = [...resultsData];
+  if (currentMdFilter && currentMdFilter !== 'all') {
+    const mdNum = parseInt(currentMdFilter);
+    filtered = filtered.filter(r => r.md === mdNum);
+  }
+  if (currentTeamFilter && currentTeamFilter !== 'all') {
+    filtered = filtered.filter(r => {
+      const { homeTeam, awayTeam } = parseResultCard(r);
+      return homeTeam === currentTeamFilter || awayTeam === currentTeamFilter;
+    });
+  }
+  const sorted = filtered.sort((a,b) => (b.md||0)-(a.md||0));
+
+  const allMatchdays = [...new Set(resultsData.map(r => r.md).filter(md => md !== undefined && md !== null))].sort((a,b)=>a-b);
+  const allTeams = [...new Set(resultsData.map(r => {
+    const { homeTeam, awayTeam } = parseResultCard(r);
+    return [homeTeam, awayTeam];
+  }).flat().filter(Boolean))].sort();
+
+  let filtersHtml = `
+    <div class="filters-bar">
+      <div class="filter-group"><label>Matchday</label><select id="mdFilterSelect"><option value="all" ${!currentMdFilter||currentMdFilter==='all'?'selected':''}>All Matchdays</option>${allMatchdays.map(md => `<option value="${md}" ${currentMdFilter==md?'selected':''}>Matchday ${md}</option>`).join('')}</select></div>
+      <div class="filter-group"><label>Team</label><select id="teamFilterSelect"><option value="all" ${!currentTeamFilter||currentTeamFilter==='all'?'selected':''}>All Teams</option>${allTeams.map(team => `<option value="${team}" ${currentTeamFilter===team?'selected':''}>${team}</option>`).join('')}</select></div>
+      <div class="filter-group"><button id="clearFiltersBtn" class="clear-filters">Clear Filters</button></div>
+      <div class="filter-stats">${filtered.length} match${filtered.length !== 1 ? 'es' : ''} found</div>
+      ${isAdminMode ? `<button class="add-result-top-btn" id="addResultTopBtn">⚽ + Add Result</button>` : ''}
+    </div>
+  `;
+  let matchesHtml = '';
+  if (!sorted.length) matchesHtml = '<div class="empty-state"><div class="empty-icon">🏆</div><p>No results match the filters</p></div>';
+  else {
+    matchesHtml = '<div class="matches-list">';
+    sorted.forEach((r, i) => {
+      const { homeTeam, awayTeam, homeScore, awayScore, isForfeit, forfeitType } = parseResultCard(r);
+      const homeIcon = getTeamIconHtml(homeTeam, 'team-icon-lg');
+      const awayIcon = getTeamIconHtml(awayTeam, 'team-icon-lg');
+      let scoreHtml = '';
+      if (isForfeit && homeScore === 'F') scoreHtml = `<div class="forfeit-display">F — F</div><div class="aggregate-text">${forfeitType}</div>`;
+      else if (forfeitType) scoreHtml = `<div class="score-display">${homeScore} — ${awayScore}</div><div class="aggregate-text">${forfeitType}</div>`;
+      else scoreHtml = `<div class="score-display">${homeScore} — ${awayScore}</div>`;
+      const homeScorers = r.goalScorers?.home || [];
+      const awayScorers = r.goalScorers?.away || [];
+      const homeScorersHtml = homeScorers.map(s => `<span class="goal-scorer-item">⚽ ${s.player}${s.goals>1?` (${s.goals})`:''}</span>`).join('');
+      const awayScorersHtml = awayScorers.map(s => `<span class="goal-scorer-item">⚽ ${s.player}${s.goals>1?` (${s.goals})`:''}</span>`).join('');
+      const aggHtml = r.aggregate ? `<div class="aggregate-text">Agg: ${r.aggregate}</div>` : '';
+      matchesHtml += `<div class="match-card"><div class="match-row"><div class="team-side">${homeIcon}<span class="team-name-big">${homeTeam}</span>${homeScorersHtml ? `<div class="goal-scorers">${homeScorersHtml}</div>` : ''}</div><div class="match-center">${scoreHtml}${aggHtml}</div><div class="team-side">${awayIcon}<span class="team-name-big">${awayTeam}</span>${awayScorersHtml ? `<div class="goal-scorers">${awayScorersHtml}</div>` : ''}</div></div><div class="match-meta">${r.date ? `<span class="meta-tag">📅 ${r.date}</span>` : ''}${r.venue ? `<span class="meta-tag">📍 ${r.venue}</span>` : ''}${r.matchType ? `<span class="meta-tag">${r.matchType}</span>` : ''}${r.md ? `<span class="meta-tag">MD ${r.md}</span>` : ''}</div>${isAdminMode ? `<div class="admin-row"><button class="btn-sm btn-edit" data-id="${r.key}">✏️ Edit</button><button class="btn-sm btn-delete" data-id="${r.key}">🗑️ Delete</button></div>` : ''}</div>`;
+    });
+    matchesHtml += '</div>';
+  }
+  document.getElementById('contentCard').innerHTML = filtersHtml + matchesHtml;
+  document.getElementById('mdFilterSelect')?.addEventListener('change', e => { currentMdFilter = e.target.value; renderResults(); });
+  document.getElementById('teamFilterSelect')?.addEventListener('change', e => { currentTeamFilter = e.target.value; renderResults(); });
+  document.getElementById('clearFiltersBtn')?.addEventListener('click', () => { currentMdFilter = ''; currentTeamFilter = ''; renderResults(); });
+  document.getElementById('addResultTopBtn')?.addEventListener('click', () => openResultForm(null));
+  if (isAdminMode) {
+    document.querySelectorAll('.btn-edit[data-id]').forEach(btn => { const r = resultsData.find(x => x.key === btn.dataset.id); if (r) btn.onclick = () => openResultForm(r); });
+    document.querySelectorAll('.btn-delete[data-id]').forEach(btn => { btn.onclick = async () => { if (confirm('Delete result?')) await database.ref(getSeasonPath(currentSeasonId, `results/${btn.dataset.id}`)).remove(); }; });
+  }
+}
+
+function renderTopScorers() {
+  const sorted = [...topScorerList].sort((a,b) => (b.count||0)-(a.count||0));
+  const top3 = sorted.slice(0,3);
+  const rest = sorted.slice(3);
+  let top3Html = '';
+  if (top3.length) {
+    top3Html = '<div class="top3-container">';
+    top3.forEach((player, idx) => {
+      const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
+      const teamIconUrl = teamIconsCache[player.team] || '';
+      const playerImageUrl = player.imageUrl || '';
+      top3Html += `<div class="top3-block">${isAdminMode ? `<div class="edit-block-btn" data-key="${player.key}" data-type="scorer">✏️</div>` : ''}<div class="player-image-wrapper"><div class="medal-badge">${medal}</div><img class="player-img" src="${playerImageUrl || 'https://via.placeholder.com/320x320?text=No+Image'}" alt="${player.name}" onerror="this.src='https://via.placeholder.com/320x320?text=No+Image'"><div class="player-name-overlay">${escapeHtml(player.name || '')}</div>${teamIconUrl ? `<div class="team-icon-overlay"><img src="${teamIconUrl}" alt="${player.team}"></div>` : ''}</div><div class="top3-count">⚽ ${player.count || 0}</div></div>`;
+    });
+    top3Html += '</div>';
+  }
+  let restHtml = '';
+  if (rest.length) {
+    restHtml = `<div class="rest-table-wrapper"><table class="stats-list"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>Goals</th>${isAdminMode?'<th>Actions</th>':''}</tr></thead><tbody>`;
+    rest.forEach((p, i) => {
+      const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
+      restHtml += `<tr><td>${i+4}</td><td style="font-size:1.5rem;">${escapeHtml(p.name||'')}</td><td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td><td><span class="count-badge">${p.count||0}</span></td>${isAdminMode?`<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>`:''}</tr>`;
+    });
+    restHtml += `</tbody></tr></div>`;
+  }
+  let html = top3Html + restHtml;
+  if (!sorted.length) html = '<div class="empty-state"><div class="empty-icon">⚽</div><p>No scorers yet</p></div>';
+  if (isAdminMode) html += `<button class="add-btn-main" id="addScorerBtn">+ Add Scorer</button>`;
+  document.getElementById('contentCard').innerHTML = html;
+  document.querySelectorAll('.edit-block-btn').forEach(btn => { btn.addEventListener('click', e => { const player = topScorerList.find(p => p.key === btn.dataset.key); if (player) openStatModal('scorer', player); }); });
+  if (isAdminMode) {
+    document.getElementById('addScorerBtn')?.addEventListener('click', () => openStatModal('scorer'));
+    document.querySelectorAll('.btn-edit[data-id]').forEach(btn => { const e = topScorerList.find(x => x.key === btn.dataset.id); if (e) btn.onclick = () => openStatModal('scorer', e); });
+    document.querySelectorAll('.btn-delete[data-id]').forEach(btn => { btn.onclick = async () => { if (confirm('Delete?')) { await database.ref(getSeasonPath(currentSeasonId, `topScorers/list/${btn.dataset.id}`)).remove(); await loadTopScorerData(); renderTopScorers(); } }; });
+  }
+}
+
+function renderTopAssistants() {
+  const sorted = [...topAssistantList].sort((a,b) => (b.count||0)-(a.count||0));
+  const top3 = sorted.slice(0,3);
+  const rest = sorted.slice(3);
+  let top3Html = '';
+  if (top3.length) {
+    top3Html = '<div class="top3-container">';
+    top3.forEach((player, idx) => {
+      const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
+      const teamIconUrl = teamIconsCache[player.team] || '';
+      const playerImageUrl = player.imageUrl || '';
+      top3Html += `<div class="top3-block">${isAdminMode ? `<div class="edit-block-btn" data-key="${player.key}" data-type="assistant">✏️</div>` : ''}<div class="player-image-wrapper"><div class="medal-badge">${medal}</div><img class="player-img" src="${playerImageUrl || 'https://via.placeholder.com/320x320?text=No+Image'}" alt="${player.name}" onerror="this.src='https://via.placeholder.com/320x320?text=No+Image'"><div class="player-name-overlay">${escapeHtml(player.name || '')}</div>${teamIconUrl ? `<div class="team-icon-overlay"><img src="${teamIconUrl}" alt="${player.team}"></div>` : ''}</div><div class="top3-count">🎯 ${player.count || 0}</div></div>`;
+    });
+    top3Html += '</div>';
+  }
+  let restHtml = '';
+  if (rest.length) {
+    restHtml = `<div class="rest-table-wrapper"><table class="stats-list"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>Assists</th>${isAdminMode?'<th>Actions</th>':''}</tr></thead><tbody>`;
+    rest.forEach((p, i) => {
+      const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
+      restHtml += `<tr><td>${i+4}</td><td style="font-size:1.5rem;">${escapeHtml(p.name||'')}</td><td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td><td><span class="count-badge">${p.count||0}</span></td>${isAdminMode?`<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>`:''}</tr>`;
+    });
+    restHtml += `</tbody></table></div>`;
+  }
+  let html = top3Html + restHtml;
+  if (!sorted.length) html = '<div class="empty-state"><div class="empty-icon">🎯</div><p>No assistants yet</p></div>';
+  if (isAdminMode) html += `<button class="add-btn-main" id="addAssistBtn">+ Add Assistant</button>`;
+  document.getElementById('contentCard').innerHTML = html;
+  document.querySelectorAll('.edit-block-btn').forEach(btn => { btn.addEventListener('click', e => { const player = topAssistantList.find(p => p.key === btn.dataset.key); if (player) openStatModal('assistant', player); }); });
+  if (isAdminMode) {
+    document.getElementById('addAssistBtn')?.addEventListener('click', () => openStatModal('assistant'));
+    document.querySelectorAll('.btn-edit[data-id]').forEach(btn => { const e = topAssistantList.find(x => x.key === btn.dataset.id); if (e) btn.onclick = () => openStatModal('assistant', e); });
+    document.querySelectorAll('.btn-delete[data-id]').forEach(btn => { btn.onclick = async () => { if (confirm('Delete?')) { await database.ref(getSeasonPath(currentSeasonId, `topAssistants/list/${btn.dataset.id}`)).remove(); await loadTopAssistantData(); renderTopAssistants(); } }; });
+  }
+}
+
+function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
+
+function renderWatchMatch() {
+  let html = '';
+  if (watchMatchEmbedCode) { html = `<div class="inline-media"><div class="video-wrapper">${watchMatchEmbedCode}</div></div>`; }
+  else { html = `<div class="empty-state"><div class="empty-icon">🎬</div><p>No match video available yet.</p></div>`; }
+  if (isAdminMode) html += `<button class="add-btn-main" id="setWatchBtn">🎥 Update Match Video</button>`;
+  document.getElementById('contentCard').innerHTML = html;
+  if (isAdminMode) document.getElementById('setWatchBtn')?.addEventListener('click', updateWatchMatchEmbed);
+}
+
+async function updateWatchMatchEmbed() {
+  const embed = prompt("Paste YouTube embed code (iframe) or full URL:", watchMatchEmbedCode);
+  if (embed === null) return;
+  let finalEmbed = embed.trim();
+  if (finalEmbed.includes("youtube.com/watch?v=") || finalEmbed.includes("youtu.be/")) {
+    let videoId = '';
+    if (finalEmbed.includes("youtu.be/")) videoId = finalEmbed.split("youtu.be/")[1].split(/[?#]/)[0];
+    else { const u = new URLSearchParams(new URL(finalEmbed).search); videoId = u.get('v'); }
+    if (videoId) finalEmbed = `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+  }
+  await database.ref('laliga/watchMatch/embedCode').set(finalEmbed);
+  watchMatchEmbedCode = finalEmbed;
+  alert("Watch Match updated!");
+  if (document.querySelector('.tab-btn.active')?.dataset.tab === 'watch') renderWatchMatch();
+}
+
+function renderCurrentTab() {
+  const tab = document.querySelector('.tab-btn.active')?.dataset.tab;
+  document.getElementById('contentCard').innerHTML = '<div class="loading-spinner"><div class="spinner"></div><span>Loading…</span></div>';
+  if (tab === 'table') renderTable();
+  else if (tab === 'fixtures') renderFixtures();
+  else if (tab === 'results') renderResults();
+  else if (tab === 'topscorers') renderTopScorers();
+  else if (tab === 'topassists') renderTopAssistants();
+  else if (tab === 'watch') renderWatchMatch();
+}
+
+// Team form, result form, stat modal, three-dot, admin settings (same as original with laliga paths)
+let editingTeamKey = null;
+function openTeamForm(key, data) {
+  editingTeamKey = key;
+  document.getElementById('teamNameInput').value = data?.name || '';
+  document.getElementById('teamP').value = data?.p ?? '';
+  document.getElementById('teamW').value = data?.w ?? '';
+  document.getElementById('teamD').value = data?.d ?? '';
+  document.getElementById('teamL').value = data?.l ?? '';
+  document.getElementById('teamGS').value = data?.gs ?? '';
+  document.getElementById('teamGC').value = data?.gc ?? '';
+  document.getElementById('teamGD').value = data?.gd ?? '';
+  document.getElementById('teamPts').value = data?.pts ?? '';
+  document.getElementById('teamForm').classList.add('active');
+}
+document.getElementById('saveTeamBtn').onclick = async () => {
+  const name = document.getElementById('teamNameInput').value.trim();
+  if (!name) { alert("Team name required"); return; }
+  const data = { name, p: parseInt(document.getElementById('teamP').value)||0, w: parseInt(document.getElementById('teamW').value)||0, d: parseInt(document.getElementById('teamD').value)||0, l: parseInt(document.getElementById('teamL').value)||0, gs: parseInt(document.getElementById('teamGS').value)||0, gc: parseInt(document.getElementById('teamGC').value)||0, gd: parseInt(document.getElementById('teamGD').value)||0, pts: parseInt(document.getElementById('teamPts').value)||0 };
+  if (editingTeamKey) await database.ref(getSeasonPath(currentSeasonId, `table/${editingTeamKey}`)).set(data);
+  else await database.ref(getSeasonPath(currentSeasonId, 'table')).push(data);
+  document.getElementById('teamForm').classList.remove('active');
+};
+document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamForm').classList.remove('active');
+
+function formatResultText(homeTeam, homeScore, awayTeam, awayScore, forfeitType) {
+  if (forfeitType === "no_contest") return `${homeTeam} F - F ${awayTeam} (No Contest)`;
+  if (forfeitType === "forfeit_no_reply") return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam} (Forfeited - No Reply)`;
+  if (forfeitType === "forfeit_agreement") return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam} (Forfeited on Agreement)`;
+  return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam}`;
+}
+
+let editingResultKey = null;
+async function openResultForm(r) {
+  editingResultKey = r?.key || null;
+  tempScorersHome = r?.goalScorers?.home ? [...r.goalScorers.home] : [];
+  tempScorersAway = r?.goalScorers?.away ? [...r.goalScorers.away] : [];
+  const teamNames = teamsData.map(t=>t.name).sort();
+  const homeOpts = teamNames.map(t=>`<option value="${t}" ${r?.homeTeam===t?'selected':''}>${t}</option>`).join('');
+  const awayOpts = teamNames.map(t=>`<option value="${t}" ${r?.awayTeam===t?'selected':''}>${t}</option>`).join('');
+  let existingForfeit = 'none', existingHS = 0, existingAS = 0;
+  if (r) {
+    const text = r.matchText || '';
+    const lower = text.toLowerCase();
+    if (lower.includes('no contest')) existingForfeit = 'no_contest';
+    else if (lower.includes('forfeited - no reply')) existingForfeit = 'forfeit_no_reply';
+    else if (lower.includes('forfeited on agreement')) existingForfeit = 'forfeit_agreement';
+    const match = text.match(/(\d+)\s*-\s*(\d+)/);
+    if (match) { existingHS = parseInt(match[1]); existingAS = parseInt(match[2]); }
+  }
+  showModal(`
+    <h3>${r ? 'Edit Result' : 'Add Result'}</h3>
+    <label>Home Team</label><select id="rHome"><option value="">Select Home Team</option>${homeOpts}</select>
+    <label>Away Team</label><select id="rAway"><option value="">Select Away Team</option>${awayOpts}</select>
+    <label>Home Score</label><input id="rHS" type="number" value="${existingHS}">
+    <label>Away Score</label><input id="rAS" type="number" value="${existingAS}">
+    <label>Forfeit Type</label><select id="rForfeit"><option value="none" ${existingForfeit==='none'?'selected':''}>Normal Result</option><option value="no_contest" ${existingForfeit==='no_contest'?'selected':''}>No Contest (F-F)</option><option value="forfeit_no_reply" ${existingForfeit==='forfeit_no_reply'?'selected':''}>Forfeited – No Reply</option><option value="forfeit_agreement" ${existingForfeit==='forfeit_agreement'?'selected':''}>Forfeited on Agreement</option></select>
+    <label>Matchday</label><input id="rMd" type="number" value="${r?.md || ''}">
+    <label>Date (optional)</label><input id="rDate" placeholder="e.g. 15 May 2025" value="${r?.date || ''}">
+    <label>Venue (optional)</label><input id="rVenue" placeholder="Venue" value="${r?.venue || ''}">
+    <label>Match Type (optional)</label><input id="rType" placeholder="e.g. Matchday 5" value="${r?.matchType || ''}">
+    <label>Aggregate Score (optional)</label><input id="rAgg" placeholder="e.g. 4-2" value="${r?.aggregate || ''}">
+    <div class="scorer-section"><h4>⚽ Home Team Scorers</h4><div style="display:flex;gap:10px;margin-bottom:10px;"><input type="text" id="homeScorerName" placeholder="Player name" style="flex:2;"><input type="number" id="homeScorerGoals" placeholder="Goals" value="1" style="width:90px;"><button id="addHomeScorer" class="modal-btn-primary" style="padding:10px 20px;">Add</button></div><div id="homeScorerList" class="scorer-list"></div></div>
+    <div class="scorer-section"><h4>⚽ Away Team Scorers</h4><div style="display:flex;gap:10px;margin-bottom:10px;"><input type="text" id="awayScorerName" placeholder="Player name" style="flex:2;"><input type="number" id="awayScorerGoals" placeholder="Goals" value="1" style="width:90px;"><button id="addAwayScorer" class="modal-btn-primary" style="padding:10px 20px;">Add</button></div><div id="awayScorerList" class="scorer-list"></div></div>
+    <div class="modal-btns"><button class="modal-btn-primary" id="saveResultBtn">Save</button><button class="modal-btn-cancel" id="cancelResultBtn">Cancel</button></div>
+  `);
+  const renderScorerList = (side) => {
+    const list = side === 'home' ? tempScorersHome : tempScorersAway;
+    const container = document.getElementById(`${side}ScorerList`);
+    if (!container) return;
+    container.innerHTML = list.map((s, idx) => `<div class="scorer-badge">⚽ ${s.player} (${s.goals})<button class="remove-scorer" data-side="${side}" data-idx="${idx}">✖</button></div>`).join('');
+    container.querySelectorAll('.remove-scorer').forEach(btn => { btn.onclick = () => { const idx = parseInt(btn.dataset.idx); if (btn.dataset.side === 'home') tempScorersHome.splice(idx,1); else tempScorersAway.splice(idx,1); renderScorerList(btn.dataset.side); }; });
+  };
+  renderScorerList('home'); renderScorerList('away');
+  document.getElementById('cancelResultBtn').onclick = closeModal;
+  document.getElementById('addHomeScorer').onclick = () => { const name = document.getElementById('homeScorerName').value.trim(); const goals = parseInt(document.getElementById('homeScorerGoals').value) || 1; if (!name) return; tempScorersHome.push({ player: name, goals }); renderScorerList('home'); document.getElementById('homeScorerName').value = ''; document.getElementById('homeScorerGoals').value = '1'; };
+  document.getElementById('addAwayScorer').onclick = () => { const name = document.getElementById('awayScorerName').value.trim(); const goals = parseInt(document.getElementById('awayScorerGoals').value) || 1; if (!name) return; tempScorersAway.push({ player: name, goals }); renderScorerList('away'); document.getElementById('awayScorerName').value = ''; document.getElementById('awayScorerGoals').value = '1'; };
+  document.getElementById('saveResultBtn').onclick = async () => {
+    const homeTeam = document.getElementById('rHome').value;
+    const awayTeam = document.getElementById('rAway').value;
+    let hs = parseInt(document.getElementById('rHS').value) || 0;
+    let as2 = parseInt(document.getElementById('rAS').value) || 0;
+    const forfeit = document.getElementById('rForfeit').value;
+    const md = parseInt(document.getElementById('rMd').value) || 0;
+    const date = document.getElementById('rDate').value.trim();
+    const venue = document.getElementById('rVenue').value.trim();
+    const matchType = document.getElementById('rType').value.trim();
+    const aggregate = document.getElementById('rAgg').value.trim();
+    if (!homeTeam || !awayTeam) { alert("Both teams required"); return; }
+    if (homeTeam === awayTeam) { alert("Teams cannot be the same"); return; }
+    const matchText = formatResultText(homeTeam, hs, awayTeam, as2, forfeit === 'none' ? '' : forfeit);
+    const resultData = { matchText, md, ...(date && { date }), ...(venue && { venue }), ...(matchType && { matchType }), ...(aggregate && { aggregate }), goalScorers: { home: tempScorersHome, away: tempScorersAway } };
+    const path = getSeasonPath(currentSeasonId, 'results');
+    if (!editingResultKey) await applyResultToTable(homeTeam, awayTeam, hs, as2, forfeit === 'none' ? '' : forfeit);
+    if (editingResultKey) await database.ref(`${path}/${editingResultKey}`).set(resultData);
+    else await database.ref(path).push(resultData);
+    closeModal();
+    await loadCurrentSeasonData();
+    renderResults();
+  };
+}
+
+async function openStatModal(type, entry = null) {
+  const isScorer = type === 'scorer' || type === 'topscorer';
+  const currentImageUrl = entry?.imageUrl || '';
+  showModal(`
+    <h3>${entry ? 'Edit' : 'Add'} ${isScorer ? 'Top Scorer' : 'Top Assistant'}</h3>
+    <label>Player Name</label><input id="statName" placeholder="Player Name" value="${escapeHtml(entry?.name || '')}">
+    <label>Team</label><input id="statTeam" placeholder="Team" value="${escapeHtml(entry?.team || '')}">
+    <label>${isScorer ? 'Goals' : 'Assists'}</label><input id="statCount" type="number" value="${entry?.count || 0}">
+    <label>Player Photo (upload will remove background automatically)</label><input type="file" id="statPhoto" accept="image/*">
+    <div id="photoPreview" style="margin-top:10px;">${currentImageUrl ? `<img src="${currentImageUrl}" style="max-width:120px; border-radius:12px;">` : 'No photo'}</div>
+    <div class="modal-btns"><button class="modal-btn-primary" id="saveStatBtn">Save</button><button class="modal-btn-cancel" id="cancelStatBtn">Cancel</button></div>
+  `);
+  document.getElementById('cancelStatBtn').onclick = closeModal;
+  const fileInput = document.getElementById('statPhoto');
+  const previewDiv = document.getElementById('photoPreview');
+  fileInput.onchange = async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    previewDiv.innerHTML = '<div class="status-msg status-loading">Processing image (remove.bg)...</div>';
+    try {
+      let processedBlob; try { processedBlob = await removeBackground(file); } catch(e) { processedBlob = file; }
+      const url = await uploadToImgBB(processedBlob);
+      previewDiv.innerHTML = `<img src="${url}" style="max-width:120px; border-radius:12px;"><div class="status-msg status-success">Photo ready</div>`;
+      fileInput.dataset.uploadedUrl = url;
+    } catch(e) { previewDiv.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`; }
+  };
+  document.getElementById('saveStatBtn').onclick = async () => {
+    const name = document.getElementById('statName').value.trim();
+    const team = document.getElementById('statTeam').value.trim();
+    const count = parseInt(document.getElementById('statCount').value) || 0;
+    if (!name || !team) { alert("Fill all fields"); return; }
+    let imageUrl = currentImageUrl;
+    if (fileInput.files.length && fileInput.dataset.uploadedUrl) imageUrl = fileInput.dataset.uploadedUrl;
+    const data = { name, team, count, imageUrl };
+    const path = isScorer ? getSeasonPath(currentSeasonId, 'topScorers/list') : getSeasonPath(currentSeasonId, 'topAssistants/list');
+    if (entry?.key) await database.ref(`${path}/${entry.key}`).set(data);
+    else await database.ref(path).push(data);
+    closeModal();
+    if (isScorer) { await loadTopScorerData(); renderTopScorers(); }
+    else { await loadTopAssistantData(); renderTopAssistants(); }
+  };
+}
+
+function attachThreeDotHandler() {
+  const btn = document.getElementById('threeDotBtn');
+  if (!btn) return;
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    if (popupEl) { popupEl.remove(); popupEl = null; return; }
+    const rect = btn.getBoundingClientRect();
+    popupEl = document.createElement('div'); popupEl.className = 'popup-menu';
+    popupEl.style.position = 'absolute';
+    popupEl.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+    popupEl.style.left = (rect.left + window.scrollX - 80) + 'px';
+    const opts = [
+      { label: currentView === 'team' ? 'Show Manager Names' : 'Show Team Names', fn: () => { currentView = currentView === 'team' ? 'player' : 'team'; renderTable(); } },
+      { label: showFormArrows ? 'Hide Form Arrows' : 'Show Form Arrows', fn: () => { showFormArrows = !showFormArrows; renderTable(); } },
+      { label: showLast5 ? 'Hide Last 5' : 'Show Last 5', fn: () => { showLast5 = !showLast5; renderTable(); } },
+    ];
+    if (isAdminMode) opts.unshift({ label: 'Edit Manager Names', fn: showEditManagersModal });
+    opts.forEach(o => { const d = document.createElement('div'); d.textContent = o.label; d.onclick = () => { if (popupEl) { popupEl.remove(); popupEl = null; } o.fn(); }; popupEl.appendChild(d); });
+    document.body.appendChild(popupEl);
+  };
+  document.addEventListener('click', e => { if (popupEl && !popupEl.contains(e.target) && e.target !== btn) { popupEl.remove(); popupEl = null; } });
+}
+
+function showEditManagersModal() {
+  const teams = teamsData.map(t=>t.name).sort();
+  let inputs = teams.map(t => `<div style="margin:10px 0;"><label>${t}</label><input type="text" id="mgr_${t.replace(/\s/g,'_')}" value="${(playerMap[t]||'').replace(/"/g,'&quot;')}" placeholder="Manager name"></div>`).join('');
+  showModal(`<h3>Edit Manager Names</h3><div style="max-height:400px;overflow-y:auto;margin:10px 0;">${inputs}</div><div class="modal-btns"><button class="modal-btn-primary" id="saveMgrsBtn">Save</button><button class="modal-btn-cancel" id="cancelMgrsBtn">Cancel</button></div>`);
+  document.getElementById('cancelMgrsBtn').onclick = closeModal;
+  document.getElementById('saveMgrsBtn').onclick = async () => { const map = {}; teams.forEach(t => { const v = document.getElementById(`mgr_${t.replace(/\s/g,'_')}`)?.value.trim(); if (v) map[t] = v; }); await database.ref(getSeasonPath(currentSeasonId, 'managerMap')).set(map); playerMap = map; closeModal(); renderTable(); };
+}
+
+function openAdminSettings() {
+  showModal(`<h3>⚙️ Admin Settings</h3><div class="settings-grid"><button class="settings-btn" id="setLogoBtn">🖼️ Upload Navbar Logo</button><button class="settings-btn" id="manageSlideBtn">🎞️ Manage Main Slideshow</button><button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button><button class="settings-btn" id="manageHeaderBgBtn">🖼️ Table Header Background (legacy)</button><button class="settings-btn" id="setWatchBtnAdmin">🎥 Set Watch Match Embed</button></div><div class="modal-btns"><button class="modal-btn-cancel" id="closeAdminBtn" style="width:100%;">Close</button></div>`);
+  document.getElementById('closeAdminBtn').onclick = closeModal;
+  document.getElementById('setLogoBtn').onclick = uploadNavbarLogo;
+  document.getElementById('manageSlideBtn').onclick = manageSlideshowUI;
+  document.getElementById('addIconBtn').onclick = uploadTeamIcon;
+  document.getElementById('manageHeaderBgBtn').onclick = uploadHeaderBgImage;
+  document.getElementById('setWatchBtnAdmin').onclick = () => { closeModal(); updateWatchMatchEmbed(); };
+}
+
+async function uploadNavbarLogo() {
+  const file = await pickFile('image/*'); if (!file) return;
+  try { const url = await uploadToImgBB(file); await database.ref('laliga_navbar_logo').set(url); navbarLogoUrl = url; await loadNavbarLogo(); alert('Logo updated'); closeModal(); } catch(e) { alert('Upload failed'); }
+}
+
+async function uploadTeamIcon() {
+  const teamName = prompt("Enter team name exactly as it appears:"); if (!teamName) return;
+  const file = await pickFile('image/*'); if (!file) return;
+  showModal(`<h3>Processing Icon</h3><div class="loading-spinner"><div class="spinner"></div><span>Removing background…</span></div>`);
+  try { let transparentBlob; try { transparentBlob = await removeBackground(file); } catch(e) { transparentBlob = file; } const url = await uploadToImgBB(transparentBlob); await database.ref(`laliga_teamIcons/${teamName}`).set({ imageUrl: url, updatedAt: Date.now() }); teamIconsCache[teamName] = url; renderCurrentTab(); closeModal(); alert(`Icon saved for "${teamName}"!`); } catch(e) { alert('Failed'); closeModal(); }
+}
+
+async function uploadHeaderBgImage() {
+  const file = await pickFile('image/*'); if (!file) return;
+  try { const url = await uploadToImgBB(file); await database.ref('laliga_table_header_bg').set(url); tableHeaderBgImageUrl = url; closeModal(); alert('Header background updated'); } catch(e) { alert('Upload failed'); }
+}
+
+async function manageSlideshowUI() {
+  const refresh = () => {
+    let preview = '<div class="img-preview-grid">';
+    slideshowImages.forEach((url, idx) => { preview += `<div class="preview-thumb"><img src="${url}"><span class="thumb-del" data-idx="${idx}" style="cursor:pointer;">✕</span></div>`; });
+    preview += '</div>';
+    showModal(`<h3>Manage Slideshow</h3>${preview}<label>Add New Slide</label><input type="file" id="newSlideFile" accept="image/*"><button class="add-btn-main" id="uploadSlideBtn" style="margin-top:12px;">+ Add Slide</button><label style="margin-top:20px;">Duration (seconds)</label><input type="number" id="slideDur" value="${slideshowDuration/1000}" step="0.5" min="1" max="10"><div class="modal-btns"><button class="modal-btn-primary" id="saveDurBtn">Save Duration</button><button class="modal-btn-cancel" id="closeSlideBtn">Close</button></div><div id="slideStatus"></div>`);
+    document.querySelectorAll('.thumb-del').forEach(btn => { btn.onclick = async () => { const idx = parseInt(btn.dataset.idx); slideshowImages.splice(idx,1); await database.ref('laliga_slideshow/images').set(slideshowImages); await loadSlideshow(); refresh(); }; });
+    document.getElementById('uploadSlideBtn').onclick = async () => { const file = document.getElementById('newSlideFile').files[0]; const statusDiv = document.getElementById('slideStatus'); if (!file) { statusDiv.innerHTML = '<div class="status-msg status-error">Select a file first</div>'; return; } try { statusDiv.innerHTML = '<div class="status-msg status-loading">Uploading…</div>'; const url = await uploadToImgBB(file); slideshowImages.push(url); await database.ref('laliga_slideshow/images').set(slideshowImages); await loadSlideshow(); refresh(); } catch(e) { statusDiv.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`; } };
+    document.getElementById('saveDurBtn').onclick = async () => { let sec = parseFloat(document.getElementById('slideDur').value); if (isNaN(sec)) sec = 3; sec = Math.min(10, Math.max(1, sec)); await database.ref('laliga_slideshow/duration').set(sec * 1000); slideshowDuration = sec * 1000; await loadSlideshow(); document.getElementById('slideStatus').innerHTML = '<div class="status-msg status-success">Duration saved!</div>'; };
+    document.getElementById('closeSlideBtn').onclick = closeModal;
+  };
+  refresh();
+}
+
+// Menu and event listeners
+function toggleMenu() { document.getElementById('sideMenu').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); }
+function closeMenu() { document.getElementById('sideMenu').classList.remove('active'); document.getElementById('overlay').classList.remove('active'); }
+document.getElementById('menuBtn').onclick = toggleMenu;
+document.getElementById('closeMenuBtn').onclick = closeMenu;
+document.getElementById('overlay').onclick = closeMenu;
+document.getElementById('homeBtn').onclick = () => window.location.href = 'feed.html';
+document.getElementById('adminModeBtn').onclick = () => { const key = prompt("Enter admin key:"); if (key === "admin#epl") { isAdminMode = true; alert("Admin mode activated ✅"); document.getElementById('seasonAdminPanel').style.display = 'flex'; renderCurrentTab(); if (!document.getElementById('adminSettingsItem')) { const item = document.createElement('div'); item.id = 'adminSettingsItem'; item.className = 'menu-item'; item.innerHTML = '⚙️ Admin Settings'; item.onclick = () => { openAdminSettings(); closeMenu(); }; document.getElementById('sideMenu').appendChild(item); } } else alert("Incorrect key"); };
+document.getElementById('prevSeasonBtn').onclick = () => switchSeason(-1);
+document.getElementById('nextSeasonBtn').onclick = () => switchSeason(1);
+document.getElementById('addSeasonBtn').onclick = () => isAdminMode && addNewSeason();
+document.getElementById('renameSeasonBtn').onclick = () => isAdminMode && renameSeason();
+document.getElementById('setActiveSeasonBtn').onclick = () => isAdminMode && setActiveSeason();
+document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderCurrentTab(); }); });
+
+function attachRealtimeListeners() {
+  database.ref(getSeasonPath(currentSeasonId, 'table')).on('value', snap => { teamsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; if (document.querySelector('.tab-btn.active')?.dataset.tab === 'table') renderTable(); });
+  database.ref(getSeasonPath(currentSeasonId, 'results')).on('value', snap => { resultsData = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : []; const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab; if (activeTab === 'results') renderResults(); if (activeTab === 'table') renderTable(); });
+  database.ref(getSeasonPath(currentSeasonId, 'topScorers/list')).on('value', async () => { await loadTopScorerData(); if (document.querySelector('.tab-btn.active')?.dataset.tab === 'topscorers') renderTopScorers(); });
+  database.ref(getSeasonPath(currentSeasonId, 'topAssistants/list')).on('value', async () => { await loadTopAssistantData(); if (document.querySelector('.tab-btn.active')?.dataset.tab === 'topassists') renderTopAssistants(); });
+  database.ref('calendarEvents').on('value', snap => { calendarEventsData = snap.val() || {}; if (document.querySelector('.tab-btn.active')?.dataset.tab === 'fixtures') renderFixtures(); });
+}
+
+async function init() {
+  await loadSlideshow();
+  await loadTeamIcons();
+  await loadNavbarLogo();
+  await loadTableHeaderBgImage();
+  await loadWatchMatchEmbed();
+  await loadCalendarEvents();
+  await loadSeasonsMetadata();
+  await loadTopScorerData();
+  await loadTopAssistantData();
+  attachRealtimeListeners();
+  renderCurrentTab();
+}
+init();
+</script>
+</body>
+</html>
+```
