@@ -143,8 +143,54 @@
     .dot.active { background: var(--laliga-red); transform: scale(1.4); box-shadow: 0 0 12px rgba(233,16,46,0.7); }
     .dot:hover { background: var(--laliga-red-light); }
 
+    /* ─── DEADLINE TIMER ─── */
+    .deadline-wrapper {
+      display: flex;
+      justify-content: center;
+      margin: 0 36px 16px;
+    }
+    .deadline-card {
+      background: rgba(233,16,46,0.85);
+      backdrop-filter: blur(8px);
+      border-radius: 60px;
+      padding: 16px 36px;
+      text-align: center;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 2rem;
+      letter-spacing: 1px;
+      color: var(--laliga-white);
+      border: 2px solid var(--laliga-navy);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+      animation: fadeInDown 0.5s ease 0.15s both;
+    }
+    .deadline-label {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.6rem;
+      margin-right: 16px;
+      background: var(--laliga-navy);
+      padding: 6px 18px;
+      border-radius: 40px;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .deadline-countdown {
+      display: inline-block;
+      vertical-align: middle;
+      font-family: 'Rajdhani', monospace;
+      font-weight: 800;
+      background: rgba(0,0,0,0.3);
+      padding: 6px 20px;
+      border-radius: 50px;
+      letter-spacing: 2px;
+    }
+    @media (max-width: 1300px) {
+      .deadline-card { font-size: 1.6rem; padding: 12px 24px; }
+      .deadline-label { font-size: 1.3rem; margin-right: 12px; }
+    }
+
     /* ─── SEASON BAR ─── */
-    .season-bar { display: flex; justify-content: center; margin: 24px 0 16px; }
+    .season-bar { display: flex; justify-content: center; margin: 8px 0 16px; }
     .season-controls {
       display: flex; align-items: center; gap: 20px;
       background: rgba(14,26,58,0.8); border: 2px solid var(--laliga-red);
@@ -817,6 +863,14 @@
   <div class="dots-container" id="dotsContainer"></div>
 </div>
 
+<!-- ⏰ DEADLINE TIMER (between slideshow and season bar) -->
+<div class="deadline-wrapper">
+  <div class="deadline-card">
+    <span class="deadline-label">DEADLINE :</span>
+    <span class="deadline-countdown" id="deadlineCountdown">--d --h --m --s</span>
+  </div>
+</div>
+
 <div class="season-bar">
   <div class="season-controls">
     <button class="season-arrow" id="prevSeasonBtn">&#8249;</button>
@@ -918,6 +972,87 @@ let currentTeamFilter = '';
 let currentFixTeamFilter = '';
 let currentFixMonthFilter = '';
 let currentFixMatchdayFilter = '';
+
+// ─── Deadline Timer (weekly Friday 23:59:59 SAST = UTC+2) ───
+function getNextFridayDeadline() {
+  const now = new Date();
+  // Create a date in SAST (UTC+2) by adding offset
+  const sastOffset = 2 * 60; // minutes
+  const localOffset = now.getTimezoneOffset();
+  const sastNow = new Date(now.getTime() + (localOffset + sastOffset) * 60000);
+  
+  let nextFriday = new Date(sastNow);
+  const day = nextFriday.getDay(); // 0=Sun,5=Fri
+  const daysUntilFriday = (5 - day + 7) % 7;
+  if (daysUntilFriday === 0 && sastNow.getHours() >= 23 && sastNow.getMinutes() >= 59) {
+    // already past deadline this week, move to next week
+    nextFriday.setDate(nextFriday.getDate() + 7);
+  } else {
+    nextFriday.setDate(nextFriday.getDate() + daysUntilFriday);
+  }
+  nextFriday.setHours(23, 59, 59, 999);
+  // convert back to local timestamp for countdown
+  const localDeadline = new Date(nextFriday.getTime() - (localOffset + sastOffset) * 60000);
+  return localDeadline;
+}
+
+function updateDeadlineTimer() {
+  const deadlineElem = document.getElementById('deadlineCountdown');
+  if (!deadlineElem) return;
+  const now = new Date();
+  const deadline = getNextFridayDeadline();
+  const diff = deadline - now;
+  if (diff <= 0) {
+    deadlineElem.textContent = "0d 0h 0m 0s";
+    // Optionally schedule next check after 1 minute
+    setTimeout(updateDeadlineTimer, 60000);
+    return;
+  }
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (86400000)) / (3600000));
+  const minutes = Math.floor((diff % 3600000) / 60000);
+  const seconds = Math.floor((diff % 60000) / 1000);
+  deadlineElem.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  setTimeout(updateDeadlineTimer, 1000);
+}
+
+// ─── Helper: convert SAST date string to user's local date display ───
+function convertSastToLocal(dateStr, includeTime = false) {
+  // dateStr can be "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM:SS" or just "YYYY-MM-DD"
+  if (!dateStr) return '';
+  // Treat as SAST (UTC+2)
+  let sastDate;
+  if (dateStr.includes('T')) {
+    sastDate = new Date(dateStr);
+    if (isNaN(sastDate.getTime())) {
+      // fallback: append T00:00:00+02:00
+      sastDate = new Date(dateStr + 'T00:00:00+02:00');
+    }
+  } else {
+    sastDate = new Date(dateStr + 'T00:00:00+02:00');
+  }
+  if (isNaN(sastDate.getTime())) return dateStr;
+  
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  if (includeTime) {
+    options.hour = '2-digit', minute = '2-digit';
+  }
+  return sastDate.toLocaleDateString(undefined, options);
+}
+
+// Also for fixture grouping we need the local date string for sorting
+function getLocalDateKey(dateStr) {
+  if (!dateStr) return '';
+  let sastDate;
+  if (dateStr.includes('T')) {
+    sastDate = new Date(dateStr);
+    if (isNaN(sastDate.getTime())) sastDate = new Date(dateStr + 'T00:00:00+02:00');
+  } else {
+    sastDate = new Date(dateStr + 'T00:00:00+02:00');
+  }
+  if (isNaN(sastDate.getTime())) return dateStr;
+  return sastDate.toISOString().split('T')[0];
+}
 
 // ─── Helpers (all paths changed to laliga/) ───
 function getSeasonPath(seasonNum, subPath = "") {
@@ -1396,9 +1531,7 @@ function renderTable() {
   attachThreeDotHandler();
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// NEW FIXTURES RENDERER with Team, Month, Matchday filters + proper sorting
-// ═══════════════════════════════════════════════════════════════════════════
+// ─── FIXTURES RENDERER with SAST to local timezone conversion ───
 function renderFixtures() {
   const laligaFixtures = [];
   const today = new Date();
@@ -1418,8 +1551,9 @@ function renderFixtures() {
         }
         if (isLaLiga && tournament.fixtures && Array.isArray(tournament.fixtures)) {
           for (const fixture of tournament.fixtures) {
+            // store original date as SAST string, we'll convert for display
             laligaFixtures.push({
-              date: date,
+              originalDate: date,
               homeTeam: fixture.home,
               awayTeam: fixture.away,
               tournamentName: tournament.name,
@@ -1432,37 +1566,65 @@ function renderFixtures() {
     }
   }
   
-  // Sort: upcoming first, then past
-  laligaFixtures.sort((a, b) => {
-    const da = new Date(a.date), db = new Date(b.date);
+  // Convert each fixture's date to local date object for sorting and grouping
+  const fixturesWithLocalDate = laligaFixtures.map(f => {
+    let localDateObj;
+    let originalDateStr = f.originalDate;
+    if (originalDateStr) {
+      // treat as SAST
+      let sastDate;
+      if (originalDateStr.includes('T')) {
+        sastDate = new Date(originalDateStr);
+        if (isNaN(sastDate.getTime())) sastDate = new Date(originalDateStr + 'T00:00:00+02:00');
+      } else {
+        sastDate = new Date(originalDateStr + 'T00:00:00+02:00');
+      }
+      if (!isNaN(sastDate.getTime())) {
+        // Convert to user's local midnight for grouping
+        const userDate = new Date(sastDate.getTime()); // Date object respects user timezone
+        localDateObj = userDate;
+      } else {
+        localDateObj = new Date(originalDateStr);
+      }
+    } else {
+      localDateObj = new Date();
+    }
+    return { ...f, localDateObj };
+  });
+  
+  // Sort: upcoming first, then past (based on local date)
+  fixturesWithLocalDate.sort((a, b) => {
+    const da = a.localDateObj, db = b.localDateObj;
     const aFuture = da >= today, bFuture = db >= today;
     if (aFuture && bFuture) return da - db;
-    if (!aFuture && !bFuture) return db - da; // past: most recent first
+    if (!aFuture && !bFuture) return db - da;
     return aFuture ? -1 : 1;
   });
   
   // Build filter options
-  const allTeams = [...new Set(laligaFixtures.flatMap(f => [f.homeTeam, f.awayTeam]).filter(Boolean))].sort();
-  const allMonths = [...new Set(laligaFixtures.map(f => f.date.substring(0,7)))].sort();
-  const allMatchdays = [...new Set(laligaFixtures.map(f => f.matchday).filter(md => md !== null && md !== undefined))].sort((a,b)=>a-b);
+  const allTeams = [...new Set(fixturesWithLocalDate.flatMap(f => [f.homeTeam, f.awayTeam]).filter(Boolean))].sort();
+  // For month filter, use originalDate YYYY-MM
+  const allMonths = [...new Set(fixturesWithLocalDate.map(f => f.originalDate ? f.originalDate.substring(0,7) : '').filter(m => m))].sort();
+  const allMatchdays = [...new Set(fixturesWithLocalDate.map(f => f.matchday).filter(md => md !== null && md !== undefined))].sort((a,b)=>a-b);
   
   // Apply filters
-  let filtered = [...laligaFixtures];
+  let filtered = [...fixturesWithLocalDate];
   if (currentFixTeamFilter && currentFixTeamFilter !== 'all') {
     filtered = filtered.filter(f => f.homeTeam === currentFixTeamFilter || f.awayTeam === currentFixTeamFilter);
   }
   if (currentFixMonthFilter && currentFixMonthFilter !== 'all') {
-    filtered = filtered.filter(f => f.date.startsWith(currentFixMonthFilter));
+    filtered = filtered.filter(f => f.originalDate && f.originalDate.startsWith(currentFixMonthFilter));
   }
   if (currentFixMatchdayFilter && currentFixMatchdayFilter !== 'all') {
     filtered = filtered.filter(f => f.matchday === parseInt(currentFixMatchdayFilter));
   }
   
-  // Group by date
+  // Group by local date string (YYYY-MM-DD)
   const grouped = {};
   for (const fix of filtered) {
-    if (!grouped[fix.date]) grouped[fix.date] = [];
-    grouped[fix.date].push(fix);
+    const localDateStr = fix.localDateObj.toISOString().split('T')[0];
+    if (!grouped[localDateStr]) grouped[localDateStr] = [];
+    grouped[localDateStr].push(fix);
   }
   const sortedDates = Object.keys(grouped).sort((a,b) => {
     const da = new Date(a), db = new Date(b);
@@ -1522,10 +1684,10 @@ function renderFixtures() {
       const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
       const dayName = dayNames[dateObj.getDay()];
       const day = dateObj.getDate();
-      const [y, mo] = dateStr.split('-');
-      const monthName = monthLabels[mo] || mo;
+      const monthName = dateObj.toLocaleDateString(undefined, { month: 'long' });
+      const year = dateObj.getFullYear();
       const isPast = dateObj < today;
-      const dateLabel = `${dayName}, ${day} ${monthName} ${y}${isPast ? ' · Played' : ''}`;
+      const dateLabel = `${dayName}, ${day} ${monthName} ${year}${isPast ? ' · Played' : ''}`;
       
       contentHtml += `<div class="fixture-date-group"><div class="fixture-date-label">📅 ${dateLabel}</div>`;
       for (const fix of grouped[dateStr]) {
@@ -1551,14 +1713,13 @@ function renderFixtures() {
   }
   document.getElementById('contentCard').innerHTML = filtersHtml + contentHtml;
   
-  // Attach filter events
   document.getElementById('fixTeamFilter')?.addEventListener('change', e => { currentFixTeamFilter = e.target.value; renderFixtures(); });
   document.getElementById('fixMonthFilter')?.addEventListener('change', e => { currentFixMonthFilter = e.target.value; renderFixtures(); });
   document.getElementById('fixMatchdayFilter')?.addEventListener('change', e => { currentFixMatchdayFilter = e.target.value; renderFixtures(); });
   document.getElementById('clearFixFiltersBtn')?.addEventListener('click', () => { currentFixTeamFilter = ''; currentFixMonthFilter = ''; currentFixMatchdayFilter = ''; renderFixtures(); });
 }
 
-// ─── RENDER RESULTS, TOP SCORERS, TOP ASSISTANTS, WATCH (unchanged from original except forfeit logic already updated) ───
+// ─── RENDER RESULTS, TOP SCORERS, TOP ASSISTANTS, WATCH (unchanged but keep as is) ───
 function parseResultCard(r) {
   let homeTeam = '', awayTeam = '', homeScore = '', awayScore = '', isForfeit = false, forfeitType = '';
   const text = r.matchText || '';
@@ -1669,7 +1830,7 @@ function renderTopScorers() {
       const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
       restHtml += `<tr><td>${i+4}</td><td style="font-size:1.5rem;">${escapeHtml(p.name||'')}</td><td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td><td><span class="count-badge">${p.count||0}</span></td>${isAdminMode?`<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>`:''}</tr>`;
     });
-    restHtml += `</tbody></tr></div>`;
+    restHtml += `</tbody></table></div>`;
   }
   let html = top3Html + restHtml;
   if (!sorted.length) html = '<div class="empty-state"><div class="empty-icon">⚽</div><p>No scorers yet</p></div>';
@@ -1705,7 +1866,7 @@ function renderTopAssistants() {
       const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
       restHtml += `<tr><td>${i+4}</td><td style="font-size:1.5rem;">${escapeHtml(p.name||'')}</td><td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td><td><span class="count-badge">${p.count||0}</span></td>${isAdminMode?`<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>`:''}</tr>`;
     });
-    restHtml += `</tbody></table></div>`;
+    restHtml += `</tbody></tr></div>`;
   }
   let html = top3Html + restHtml;
   if (!sorted.length) html = '<div class="empty-state"><div class="empty-icon">🎯</div><p>No assistants yet</p></div>';
@@ -1719,7 +1880,7 @@ function renderTopAssistants() {
   }
 }
 
-function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
+function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':m==='>'?'&gt;':m); }
 
 function renderWatchMatch() {
   let html = '';
@@ -2009,9 +2170,9 @@ async function init() {
   await loadTopAssistantData();
   attachRealtimeListeners();
   renderCurrentTab();
+  updateDeadlineTimer(); // start the deadline countdown
 }
 init();
 </script>
 </body>
 </html>
-```
