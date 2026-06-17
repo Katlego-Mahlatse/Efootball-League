@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -345,6 +346,25 @@
     .preview-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
     .preview-field-row.three { grid-template-columns: 1fr 1fr 80px; }
     .modal-card-wide { max-width: 1000px !important; }
+
+    /* Debug log styles */
+    .debug-log-entry { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 1rem; font-family: 'Inter', monospace; display: flex; gap: 12px; align-items: flex-start; }
+    .debug-log-entry .log-time { color: rgba(255,255,255,0.4); font-size: 0.8rem; min-width: 80px; flex-shrink: 0; }
+    .debug-log-entry .log-level { font-weight: 700; min-width: 60px; flex-shrink: 0; }
+    .debug-log-entry .log-level.info { color: #60a5fa; }
+    .debug-log-entry .log-level.warn { color: #fbbf24; }
+    .debug-log-entry .log-level.error { color: #f87171; }
+    .debug-log-entry .log-level.debug { color: #a78bfa; }
+    .debug-log-entry .log-msg { word-break: break-all; color: rgba(255,255,255,0.85); }
+    .debug-log-entry .log-msg .stack { color: rgba(255,255,255,0.4); font-size: 0.85rem; display: block; margin-top: 4px; }
+    .debug-log-container { max-height: 500px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 16px; padding: 8px; margin: 12px 0; }
+    .debug-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+    .debug-stat-card { background: rgba(150,60,255,0.12); border: 1px solid rgba(150,60,255,0.3); border-radius: 16px; padding: 16px; text-align: center; }
+    .debug-stat-card .stat-value { font-size: 2.4rem; font-weight: 800; color: var(--white); font-family: 'Bebas Neue', sans-serif; }
+    .debug-stat-card .stat-label { font-size: 0.9rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+    .debug-clear-btn { background: rgba(233,0,82,0.2); border: 1px solid var(--razzmatazz); color: var(--white); padding: 8px 20px; border-radius: 30px; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; transition: all 0.2s; }
+    .debug-clear-btn:hover { background: var(--razzmatazz); }
+    .debug-timestamp { color: rgba(255,255,255,0.3); font-size: 0.85rem; text-align: right; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -359,6 +379,7 @@
   <div class="close-menu" id="closeMenuBtn">&#x2715;</div>
   <div class="menu-item" id="homeBtn">🏠 Home</div>
   <div class="menu-item" id="adminModeBtn">🔐 Admin Mode</div>
+  <div class="menu-item" id="debugInfoBtn">🐛 Debug Info</div>
 </div>
 
 <div class="slideshow-wrapper">
@@ -422,6 +443,65 @@
 </div>
 
 <script>
+// ─── DEBUG LOG SYSTEM ───
+const debugLogs = [];
+const MAX_DEBUG_LOGS = 500;
+
+function addDebugLog(level, msg, stack = null) {
+  const entry = {
+    time: new Date().toLocaleTimeString(),
+    timestamp: Date.now(),
+    level: level,
+    message: msg,
+    stack: stack
+  };
+  debugLogs.push(entry);
+  if (debugLogs.length > MAX_DEBUG_LOGS) debugLogs.shift();
+}
+
+// Override console methods to capture logs
+const origConsoleLog = console.log;
+const origConsoleError = console.error;
+const origConsoleWarn = console.warn;
+const origConsoleInfo = console.info;
+const origConsoleDebug = console.debug;
+
+console.log = function(...args) {
+  origConsoleLog.apply(console, args);
+  addDebugLog('info', args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
+};
+console.error = function(...args) {
+  origConsoleError.apply(console, args);
+  const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ');
+  const stack = args.find(a => a instanceof Error)?.stack || null;
+  addDebugLog('error', msg, stack);
+};
+console.warn = function(...args) {
+  origConsoleWarn.apply(console, args);
+  addDebugLog('warn', args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
+};
+console.info = function(...args) {
+  origConsoleInfo.apply(console, args);
+  addDebugLog('info', args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
+};
+console.debug = function(...args) {
+  origConsoleDebug.apply(console, args);
+  addDebugLog('debug', args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
+};
+
+// Global error handler
+window.onerror = function(message, source, lineno, colno, error) {
+  const stack = error?.stack || null;
+  addDebugLog('error', `${message} at ${source}:${lineno}:${colno}`, stack);
+  return false;
+};
+
+window.addEventListener('unhandledrejection', function(e) {
+  const msg = e.reason?.message || String(e.reason);
+  const stack = e.reason?.stack || null;
+  addDebugLog('error', `Unhandled Promise Rejection: ${msg}`, stack);
+});
+
 // ─── eFootball → Real team name mapping ───
 const EFOOTBALL_TEAM_MAP = {
   'manchester b': 'Man City',
@@ -498,7 +578,6 @@ let bgSize = 'cover';
 let bgPosition = 'center';
 
 // ─── Multi-scan state ───
-// Array of { id, images: [{file, dataUrl}] }
 let multiScanMatches = [];
 let multiScanIdCounter = 0;
 
@@ -569,6 +648,69 @@ function showModal(html, wide = false) {
 }
 function closeModal() { document.getElementById('genericModal').classList.remove('active'); }
 
+// ─── DEBUG INFO MODAL ───
+function openDebugInfoModal() {
+  const errorCount = debugLogs.filter(l => l.level === 'error').length;
+  const warnCount = debugLogs.filter(l => l.level === 'warn').length;
+  const infoCount = debugLogs.filter(l => l.level === 'info').length;
+
+  let logsHtml = debugLogs.slice().reverse().map(l => {
+    const levelClass = l.level;
+    const stackHtml = l.stack ? `<span class="stack">${escapeHtml(l.stack)}</span>` : '';
+    return `<div class="debug-log-entry">
+      <span class="log-time">${escapeHtml(l.time)}</span>
+      <span class="log-level ${levelClass}">${l.level.toUpperCase()}</span>
+      <span class="log-msg">${escapeHtml(l.message)}${stackHtml}</span>
+    </div>`;
+  }).join('');
+
+  if (!logsHtml) logsHtml = '<div style="color:rgba(255,255,255,0.3);padding:20px;text-align:center;">No logs captured yet.</div>';
+
+  showModal(`
+    <h3>🐛 Comprehensive Debug Information</h3>
+    <div class="debug-stats-grid">
+      <div class="debug-stat-card"><div class="stat-value">${debugLogs.length}</div><div class="stat-label">Total Logs</div></div>
+      <div class="debug-stat-card" style="border-color:#f87171;"><div class="stat-value" style="color:#f87171;">${errorCount}</div><div class="stat-label">Errors</div></div>
+      <div class="debug-stat-card" style="border-color:#fbbf24;"><div class="stat-value" style="color:#fbbf24;">${warnCount}</div><div class="stat-label">Warnings</div></div>
+      <div class="debug-stat-card" style="border-color:#60a5fa;"><div class="stat-value" style="color:#60a5fa;">${infoCount}</div><div class="stat-label">Info</div></div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0;">
+      <span style="color:rgba(255,255,255,0.4);font-size:1rem;">System Status: <span style="color:var(--turquoise);">● Online</span></span>
+      <button class="debug-clear-btn" id="debugClearBtn">Clear Logs</button>
+    </div>
+
+    <div class="debug-log-container" id="debugLogContainer">
+      ${logsHtml}
+    </div>
+
+    <div class="debug-timestamp">Debug session started: ${new Date().toLocaleString()}</div>
+
+    <div style="margin-top:16px;padding:14px;background:rgba(150,60,255,0.1);border-radius:16px;border:1px solid rgba(150,60,255,0.3);">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.95rem;color:rgba(255,255,255,0.6);">
+        <div>Season: <strong style="color:white;">${currentSeasonId}</strong></div>
+        <div>Teams: <strong style="color:white;">${teamsData.length}</strong></div>
+        <div>Results: <strong style="color:white;">${resultsData.length}</strong></div>
+        <div>Admin Mode: <strong style="color:white;">${isAdminMode ? '✅ Active' : '❌ Inactive'}</strong></div>
+        <div>Top Scorers: <strong style="color:white;">${topScorerList.length}</strong></div>
+        <div>Top Assistants: <strong style="color:white;">${topAssistantList.length}</strong></div>
+      </div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="modal-btn-cancel" id="closeDebugBtn">Close</button>
+    </div>
+  `);
+
+  document.getElementById('closeDebugBtn').onclick = closeModal;
+
+  document.getElementById('debugClearBtn').onclick = function() {
+    debugLogs.length = 0;
+    const container = document.getElementById('debugLogContainer');
+    if (container) container.innerHTML = '<div style="color:rgba(255,255,255,0.3);padding:20px;text-align:center;">Logs cleared.</div>';
+  };
+}
+
 // ═══════════════════════════════════════════════════════════
 // MULTI-SCAN RESULT MODAL
 // ═══════════════════════════════════════════════════════════
@@ -613,17 +755,12 @@ function renderMultiScanModal() {
     </div>
   `, true);
 
-  // Cancel
   document.getElementById('cancelMultiScanBtn').onclick = () => { multiScanMatches = []; closeModal(); };
-
-  // Add match block
   document.getElementById('addMatchBlockBtn').onclick = () => {
     multiScanIdCounter++;
     multiScanMatches.push(createScanMatchBlock(multiScanIdCounter));
     renderMultiScanModal();
   };
-
-  // Remove match block
   document.querySelectorAll('[data-removemid]').forEach(btn => {
     btn.onclick = () => {
       const mid = parseInt(btn.dataset.removemid);
@@ -631,8 +768,6 @@ function renderMultiScanModal() {
       renderMultiScanModal();
     };
   });
-
-  // Add images to a match
   document.querySelectorAll('.add-match-img-btn').forEach(btn => {
     btn.onclick = async () => {
       const mid = parseInt(btn.dataset.mid);
@@ -647,8 +782,6 @@ function renderMultiScanModal() {
       renderMultiScanModal();
     };
   });
-
-  // Remove individual image
   document.querySelectorAll('[data-iidx]').forEach(btn => {
     btn.onclick = () => {
       const mid = parseInt(btn.dataset.mid);
@@ -657,8 +790,6 @@ function renderMultiScanModal() {
       if (match) { match.images.splice(iIdx, 1); renderMultiScanModal(); }
     };
   });
-
-  // Scan all
   document.getElementById('scanAllBtn').onclick = () => scanAllMatches();
 }
 
@@ -681,12 +812,10 @@ async function scanAllMatches() {
     }
   }
 
-  // Show preview/confirm modal
   openMultiScanPreviewModal(results);
 }
 
 async function scanMatchImages(images) {
-  // Build multi-image content
   const contentParts = [
     {
       type: 'text',
@@ -736,19 +865,13 @@ Use team names EXACTLY as shown in the image. If you cannot find scorers or assi
   const clean = text.replace(/```json|```/g, '').trim();
   const parsed = JSON.parse(clean);
 
-  // Apply team name mapping
   parsed.homeTeam = mapTeamName(parsed.homeTeam);
   parsed.awayTeam = mapTeamName(parsed.awayTeam);
 
   return parsed;
 }
 
-// ═══════════════════════════════════════════════════════════
-// MULTI-SCAN PREVIEW / CONFIRM MODAL
-// ═══════════════════════════════════════════════════════════
-
-// State for the preview/confirm modal
-let previewMatches = []; // array of editable match data
+let previewMatches = [];
 
 function openMultiScanPreviewModal(results) {
   previewMatches = results.map(r => {
@@ -824,8 +947,6 @@ function renderPreviewModal() {
   `, true);
 
   document.getElementById('cancelPreviewBtn').onclick = () => { multiScanMatches = []; closeModal(); };
-
-  // Remove match from preview
   document.querySelectorAll('[data-removeidx]').forEach(btn => {
     btn.onclick = () => {
       const idx = parseInt(btn.dataset.removeidx);
@@ -833,9 +954,8 @@ function renderPreviewModal() {
       renderPreviewModal();
     };
   });
-
-  // Confirm & Save
   document.getElementById('confirmAllScanBtn').onclick = () => confirmAndSaveAll();
+  setTimeout(attachPreviewModalListeners, 50);
 }
 
 function buildMatchEditFields(m, idx, teamNames) {
@@ -959,7 +1079,6 @@ function buildMatchEditFields(m, idx, teamNames) {
 }
 
 function attachPreviewModalListeners() {
-  // Field change listeners
   document.querySelectorAll('[data-field][data-idx]').forEach(el => {
     el.addEventListener('change', () => {
       const idx = parseInt(el.dataset.idx);
@@ -977,7 +1096,6 @@ function attachPreviewModalListeners() {
     });
   });
 
-  // Remove scorer/assist
   document.querySelectorAll('.remove-scorer[data-matchidx]').forEach(btn => {
     btn.onclick = () => {
       const idx = parseInt(btn.dataset.matchidx);
@@ -989,7 +1107,6 @@ function attachPreviewModalListeners() {
     };
   });
 
-  // Add scorer
   document.querySelectorAll('.add-scorer-btn').forEach(btn => {
     btn.onclick = () => {
       const idx = parseInt(btn.dataset.matchidx);
@@ -1004,7 +1121,6 @@ function attachPreviewModalListeners() {
     };
   });
 
-  // Add assist
   document.querySelectorAll('.add-assist-btn').forEach(btn => {
     btn.onclick = () => {
       const idx = parseInt(btn.dataset.matchidx);
@@ -1020,19 +1136,11 @@ function attachPreviewModalListeners() {
   });
 }
 
-// Override renderPreviewModal to attach listeners after render
-const _origRenderPreviewModal = renderPreviewModal;
-function renderPreviewModal() {
-  _origRenderPreviewModal.call(this);
-  setTimeout(attachPreviewModalListeners, 50);
-}
-
 async function confirmAndSaveAll() {
   const btn = document.getElementById('confirmAllScanBtn');
   const statusEl = document.getElementById('confirmSaveStatus');
   if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Saving…'; }
 
-  // Sync field values from DOM before saving
   document.querySelectorAll('[data-field][data-idx]').forEach(el => {
     const idx = parseInt(el.dataset.idx);
     const field = el.dataset.field;
@@ -1065,17 +1173,10 @@ async function confirmAndSaveAll() {
         goalScorers: { home: m.homeScorers || [], away: m.awayScorers || [] }
       };
 
-      // Save to results
       await database.ref(getSeasonPath(currentSeasonId, 'results')).push(resultData);
-
-      // Update table
       await applyResultToTable(m.homeTeam, m.awayTeam, hs, as2, forfeit === 'none' ? '' : forfeit);
-
-      // Update top scorers
       await applyScorersFromScan(m.homeScorers || [], m.homeTeam);
       await applyScorersFromScan(m.awayScorers || [], m.awayTeam);
-
-      // Update top assists
       await applyAssistsFromScan(m.homeAssists || [], m.homeTeam);
       await applyAssistsFromScan(m.awayAssists || [], m.awayTeam);
 
@@ -1085,7 +1186,6 @@ async function confirmAndSaveAll() {
     }
   }
 
-  // Reload data
   await loadCurrentSeasonData();
   await loadTopScorerData();
   await loadTopAssistantData();
@@ -1134,7 +1234,6 @@ async function applyAssistsFromScan(assists, team) {
   }
 }
 
-// ─── Open scan modal entry point ───
 function openMultiScanModal() {
   multiScanMatches = [];
   multiScanIdCounter = 1;
@@ -1142,7 +1241,6 @@ function openMultiScanModal() {
   renderMultiScanModal();
 }
 
-// ─── SCAN SCORER/ASSISTANT IMAGE (existing) ───
 async function openScanScorerModal(type) {
   const isScorer = type === 'scorer';
   showModal(`
@@ -1227,7 +1325,6 @@ Extract ALL players visible. Return ONLY the JSON object.`;
   const clean = text.replace(/```json|```/g, '').trim();
   const parsed = JSON.parse(clean);
 
-  // Apply team mapping to stat players
   if (parsed.players) {
     parsed.players = parsed.players.map(p => ({ ...p, team: mapTeamName(p.team) }));
   }
@@ -1319,7 +1416,6 @@ function openScannedStatForm(type, scanned) {
   };
 }
 
-// ─── Navbar Logo ───
 async function loadNavbarLogo() {
   const snap = await database.ref('premier_league_navbar_logo').once('value');
   navbarLogoUrl = snap.val() || '';
@@ -2191,6 +2287,7 @@ document.getElementById('adminModeBtn').onclick = () => {
     }
   } else alert("Incorrect key");
 };
+document.getElementById('debugInfoBtn').onclick = () => { openDebugInfoModal(); closeMenu(); };
 
 document.getElementById('prevSeasonBtn').onclick = () => switchSeason(-1);
 document.getElementById('nextSeasonBtn').onclick = () => switchSeason(1);
