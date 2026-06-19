@@ -69,7 +69,6 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .weekday{padding:0.65rem 0.3rem;text-align:center;font-family:'Orbitron',monospace;font-weight:700;font-size:0.65rem;color:var(--gold);letter-spacing:0.08em;}
 .days-grid{display:grid;grid-template-columns:repeat(7,1fr);}
 
-/* DAY CELL */
 .day-cell{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;border:1px solid rgba(245,215,66,0.07);background:rgba(26,26,26,0.45);min-height:115px;padding:8px 5px 6px;cursor:pointer;position:relative;transition:background 0.2s,border-color 0.25s;overflow:hidden;}
 .day-cell::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(245,215,66,0.05),transparent);opacity:0;transition:opacity 0.25s;}
 .day-cell:hover{background:rgba(184,150,12,0.3);border-color:rgba(245,215,66,0.22);}
@@ -81,14 +80,12 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .day-number{font-family:'Orbitron',monospace;font-size:0.68rem;font-weight:700;color:var(--text-dim);align-self:flex-start;margin-bottom:5px;letter-spacing:0.03em;}
 .day-cell.has-event .day-number{color:var(--gold);}
 
-/* FLIP CONTAINER */
 .flip-container{width:48px;height:48px;perspective:300px;margin-top:2px;flex-shrink:0;}
 .flip-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 0.5s ease;}
 .flip-inner.flipping{transform:rotateY(90deg);}
 .flip-face{position:absolute;inset:0;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;}
 .flip-face img{width:48px;height:48px;object-fit:contain;border-radius:8px;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.5));}
 
-/* EVENT LABEL */
 .event-label{font-family:'Rajdhani',sans-serif;font-size:0.48rem;font-weight:700;color:var(--gold);letter-spacing:0.04em;text-transform:uppercase;margin-top:3px;text-align:center;line-height:1.25;word-break:break-word;white-space:normal;max-width:100%;padding:0 2px;overflow:hidden;}
 
 .add-hint{font-size:0.58rem;color:rgba(245,215,66,0.22);font-style:italic;margin-top:auto;padding-top:4px;transition:color 0.2s;}
@@ -96,7 +93,6 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .event-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;background:var(--gold);border-radius:50%;box-shadow:0 0 6px var(--gold);animation:dotPulse 2.2s ease-in-out infinite;}
 @keyframes dotPulse{0%,100%{opacity:1;box-shadow:0 0 6px var(--gold);}50%{opacity:0.4;box-shadow:0 0 14px var(--gold);}}
 
-/* OVERLAY */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.82);backdrop-filter:blur(7px);z-index:500;display:flex;align-items:center;justify-content:center;padding:1rem;visibility:hidden;opacity:0;transition:opacity 0.3s,visibility 0.3s;}
 .overlay.active{visibility:visible;opacity:1;}
 .overlay.active .modal{transform:translateY(0) scale(1);}
@@ -106,6 +102,13 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .modal-close{position:absolute;top:14px;right:16px;background:rgba(184,150,12,0.4);border:1px solid var(--gold-border);color:var(--gold);width:32px;height:32px;border-radius:50%;font-size:1.15rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.25s;line-height:1;}
 .modal-close:hover{background:var(--red);border-color:var(--red);color:#fff;transform:rotate(90deg);}
 .modal-title{font-family:'Orbitron',monospace;font-size:1.05rem;font-weight:700;color:var(--gold);margin-bottom:1.5rem;padding-right:2.5rem;letter-spacing:0.05em;text-shadow:0 0 25px rgba(245,215,66,0.3);}
+
+/* Day modal nav arrows */
+.modal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;}
+.modal-nav-title{font-family:'Orbitron',monospace;font-size:1.05rem;font-weight:700;color:var(--gold);letter-spacing:0.05em;text-shadow:0 0 25px rgba(245,215,66,0.3);text-align:center;flex:1;padding:0 0.5rem;}
+.nav-arrow{background:rgba(184,150,12,0.3);border:1px solid var(--gold-border);color:var(--gold);width:34px;height:34px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0;}
+.nav-arrow:hover{background:var(--btn-accent);transform:scale(1.1);}
+.nav-arrow:disabled{opacity:0.25;cursor:default;transform:none;}
 
 .section-label{font-family:'Orbitron',monospace;font-size:0.6rem;font-weight:700;color:var(--gold);letter-spacing:0.15em;margin:1.4rem 0 0.8rem;display:flex;align-items:center;gap:0.5rem;}
 .section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--gold-border),transparent);}
@@ -126,13 +129,11 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .upload-status{font-size:0.7rem;color:var(--gold);display:none;animation:glowPulse 1s ease-in-out infinite;}
 .upload-status.show{display:block;}
 
-/* EVENT PAIRS */
 .event-pair-row{display:flex;align-items:center;gap:0.6rem;background:rgba(0,0,0,0.4);border:1px solid rgba(245,215,66,0.1);border-radius:0.8rem;padding:0.7rem;margin-bottom:0.6rem;animation:fadeIn 0.25s ease;}
 .event-pair-icon{width:38px;height:38px;object-fit:contain;border-radius:6px;border:1px solid var(--gold-border);flex-shrink:0;background:rgba(0,0,0,0.5);}
 .event-pair-name{flex:1;font-family:'Rajdhani',sans-serif;font-size:0.85rem;color:var(--text-primary);}
 .event-pair-num{font-family:'Orbitron',monospace;font-size:0.6rem;color:var(--gold);font-weight:700;white-space:nowrap;}
 
-/* AUTOCOMPLETE DROPDOWN */
 .autocomplete-wrap{position:relative;}
 .autocomplete-dropdown{position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:var(--black-card);border:1px solid var(--gold-border);border-radius:0.7rem;z-index:600;display:none;}
 .autocomplete-dropdown.open{display:block;}
@@ -166,12 +167,18 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .fix-toggle:hover{border-color:var(--gold-border);color:var(--gold);}
 .fix-panel{display:none;margin-top:0.7rem;background:rgba(0,0,0,0.65);border-radius:0.8rem;border:1px solid rgba(245,215,66,0.07);padding:0.7rem;animation:fadeIn 0.2s ease;}
 .fix-panel.open{display:block;}
-.fix-row{display:flex;align-items:center;gap:0.5rem;padding:0.45rem 0;border-bottom:1px solid rgba(245,215,66,0.06);flex-wrap:wrap;}
+
+/* FIXTURE ROW — icon + name both sides, wrapping */
+.fix-row{display:grid;grid-template-columns:minmax(0,1fr) 36px minmax(0,1fr);align-items:center;gap:6px;padding:0.5rem 0;border-bottom:1px solid rgba(245,215,66,0.06);}
 .fix-row:last-of-type{border-bottom:none;}
+.fix-team-home{display:flex;align-items:center;gap:6px;min-width:0;}
+.fix-team-away{display:flex;align-items:center;gap:6px;flex-direction:row-reverse;min-width:0;}
 .fix-team-icon{width:26px;height:26px;object-fit:contain;border-radius:4px;flex-shrink:0;}
-.fix-team-name{font-size:0.78rem;font-weight:600;color:var(--text-primary);}
-.fix-vs{font-size:0.63rem;color:var(--gold);font-family:'Orbitron',monospace;font-weight:700;}
-.fix-actions{margin-left:auto;display:flex;gap:0.3rem;}
+.fix-team-name{font-size:0.78rem;font-weight:600;color:var(--text-primary);word-break:break-word;white-space:normal;line-height:1.3;}
+.fix-vs{font-size:0.63rem;color:var(--gold);font-family:'Orbitron',monospace;font-weight:700;text-align:center;}
+.fix-actions{display:flex;gap:0.3rem;margin-left:auto;}
+.fix-row-actions{display:flex;gap:0.3rem;justify-content:flex-end;margin-top:4px;}
+
 .add-form-box{background:rgba(0,0,0,0.55);border:1px dashed rgba(245,215,66,0.2);border-radius:1rem;padding:1rem;margin-top:0.8rem;animation:fadeIn 0.25s ease;}
 
 .two-col{display:grid;grid-template-columns:1fr auto 1fr;gap:0.7rem;align-items:start;}
@@ -181,7 +188,6 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .menu-link{display:block;text-align:center;padding:0.65rem 1rem;background:rgba(184,150,12,0.18);border:1px solid var(--gold-border);border-radius:2rem;color:var(--text-primary);text-decoration:none;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.9rem;letter-spacing:0.06em;transition:all 0.2s;}
 .menu-link:hover{background:var(--btn-accent);color:var(--gold);transform:translateX(4px);}
 
-/* FILTER POPUP */
 .filter-search{width:100%;background:rgba(0,0,0,0.7);border:1px solid var(--gold-border);border-radius:0.7rem;color:var(--text-primary);padding:0.55rem 0.9rem;font-size:0.85rem;font-family:'Exo 2',sans-serif;outline:none;margin-bottom:0.8rem;transition:border-color 0.2s;}
 .filter-search:focus{border-color:var(--gold);}
 .filter-search::placeholder{color:var(--text-dim);opacity:0.5;}
@@ -201,7 +207,6 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .toast.success{border-color:var(--green);}
 .toast.error{border-color:var(--red);}
 
-/* ADD FIXTURES MODAL */
 .af-step{display:none;}
 .af-step.active{display:block;animation:fadeIn 0.25s ease;}
 .af-tourn-list{display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem;}
@@ -218,6 +223,11 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .af-parsed-icon{width:22px;height:22px;object-fit:contain;border-radius:4px;flex-shrink:0;}
 .af-parsed-num{font-family:'Orbitron',monospace;font-size:0.55rem;color:var(--text-dim);min-width:18px;}
 .af-no-tourn{text-align:center;color:var(--text-dim);font-size:0.85rem;padding:1.2rem;font-style:italic;}
+
+/* AF date nav row */
+.af-date-nav{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;background:rgba(0,0,0,0.3);border:1px solid var(--gold-border);border-radius:0.8rem;padding:0.6rem 0.8rem;}
+.af-date-nav-label{font-family:'Orbitron',monospace;font-size:0.72rem;font-weight:700;color:var(--gold);flex:1;text-align:center;}
+.af-save-status{text-align:center;font-family:'Rajdhani',sans-serif;font-size:0.85rem;font-weight:700;color:var(--green);margin-top:0.5rem;min-height:1.4rem;transition:opacity 0.3s;}
 
 @media(max-width:680px){
   .wrapper{padding:1rem 0.75rem 3rem;}
@@ -308,7 +318,13 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 <div class="overlay" id="dayOverlay">
   <div class="modal" style="max-width:600px;">
     <button class="modal-close" data-close="dayOverlay">✕</button>
-    <div class="modal-title" id="dayTitle">DATE</div>
+
+    <!-- Nav arrows + title -->
+    <div class="modal-nav">
+      <button class="nav-arrow" id="dayNavPrev" title="Previous day">◀</button>
+      <div class="modal-nav-title" id="dayTitle">DATE</div>
+      <button class="nav-arrow" id="dayNavNext" title="Next day">▶</button>
+    </div>
 
     <div class="section-label">EVENT ICONS & NAMES</div>
     <div id="eventPairsContainer"></div>
@@ -416,6 +432,13 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 
     <!-- STEP 3: Type & Fixtures Input -->
     <div class="af-step" id="afStep3">
+      <!-- Date nav row -->
+      <div class="af-date-nav" id="afDateNavRow">
+        <button class="nav-arrow" id="afPrevDateBtn" title="Previous event date">◀</button>
+        <div class="af-date-nav-label" id="afCurrentDateLabel">—</div>
+        <button class="nav-arrow" id="afNextDateBtn" title="Next event date">▶</button>
+      </div>
+
       <div id="afSelectedTournDisplay" style="margin-bottom:1rem;"></div>
       <div class="form-group">
         <label class="form-label">Match Type</label>
@@ -432,6 +455,7 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
         <div class="section-label">PARSED FIXTURES PREVIEW</div>
         <div class="af-parsed-preview" id="afParsedList"></div>
       </div>
+      <div class="af-save-status" id="afSaveStatus"></div>
       <div class="btn-row">
         <button class="btn btn-purple btn-sm" id="afPreviewBtn">👁 PREVIEW</button>
         <button class="btn btn-gold" id="afSaveFixturesBtn">💾 SAVE FIXTURES</button>
@@ -495,29 +519,99 @@ let tempEventPairs=[];
 let lastError=null;
 let teamIconRegistry = {};
 
-/* ── Load team icon registry from Firebase ── */
+/* ── All calendar days list for navigation ── */
+function getAllCalendarDays() {
+  const days = [];
+  [...activeMonths].sort((a,b)=>a-b).forEach(m => {
+    const dim = new Date(YEAR, m+1, 0).getDate();
+    for (let d = 1; d <= dim; d++) {
+      days.push(fmtYMD(YEAR, m, d));
+    }
+  });
+  return days;
+}
+
+/* ── Load team icon registry ── */
 onValue(ref(db,'teamIcons'), (snap) => {
   teamIconRegistry = snap.val() || {};
 });
 
-/* ── Save icon to registry when uploaded ── */
+/* ── Save icon to registry ── */
 async function saveTeamIconToRegistry(teamName, iconUrl) {
   if (!teamName || !iconUrl) return;
-  try {
-    await set(ref(db, 'teamIcons/' + teamName.trim().replace(/\./g,'_')), iconUrl);
-  } catch(e) {
-    console.warn('Could not save icon to registry:', e);
-  }
+  try { await set(ref(db, 'teamIcons/' + teamName.trim().replace(/\./g,'_')), iconUrl); }
+  catch(e) { console.warn('Could not save icon to registry:', e); }
 }
 
-/* ── Get icon: registry first, then fixture data fallback ── */
+/* ── Sync team icon + name across ALL calendar events ── */
+async function syncTeamAcrossAllEvents(oldName, newName, newIconUrl) {
+  if (!oldName) return;
+  try {
+    const snap = await get(ref(db, 'calendarEvents'));
+    const allEvents = snap.val() || {};
+    const updates = {};
+    for (const [date, ev] of Object.entries(allEvents)) {
+      if (!ev || !ev.tournaments) continue;
+      let changed = false;
+      const tournaments = JSON.parse(JSON.stringify(ev.tournaments));
+      for (const t of tournaments) {
+        for (const f of (t.fixtures || [])) {
+          if (f.home && f.home.trim().toLowerCase() === oldName.trim().toLowerCase()) {
+            if (newName) f.home = newName;
+            if (newIconUrl) f.homeIcon = newIconUrl;
+            changed = true;
+          }
+          if (f.away && f.away.trim().toLowerCase() === oldName.trim().toLowerCase()) {
+            if (newName) f.away = newName;
+            if (newIconUrl) f.awayIcon = newIconUrl;
+            changed = true;
+          }
+        }
+      }
+      if (changed) updates[date] = { ...ev, tournaments };
+    }
+    for (const [date, ev] of Object.entries(updates)) {
+      await set(ref(db, 'calendarEvents/' + date), ev);
+    }
+    if (Object.keys(updates).length > 0) {
+      toast(`Synced ${Object.keys(updates).length} event(s) ✓`, 'success');
+    }
+  } catch(e) { console.error('Sync error:', e); toast('Sync failed', 'error'); }
+}
+
+/* ── Sync event pair name + icon across ALL calendar events ── */
+async function syncEventPairAcrossAllEvents(oldName, newName, newIconUrl) {
+  if (!oldName) return;
+  try {
+    const snap = await get(ref(db, 'calendarEvents'));
+    const allEvents = snap.val() || {};
+    let count = 0;
+    for (const [date, ev] of Object.entries(allEvents)) {
+      if (!ev || !ev.eventPairs) continue;
+      let changed = false;
+      const eventPairs = JSON.parse(JSON.stringify(ev.eventPairs));
+      for (const p of eventPairs) {
+        if (p.name && p.name.trim().toLowerCase() === oldName.trim().toLowerCase()) {
+          if (newName) p.name = newName;
+          if (newIconUrl) p.iconUrl = newIconUrl;
+          changed = true;
+        }
+      }
+      if (changed) {
+        await set(ref(db, 'calendarEvents/' + date), { ...ev, eventPairs });
+        count++;
+      }
+    }
+    if (count > 0) toast(`Event pair synced across ${count} date(s) ✓`, 'success');
+  } catch(e) { console.error('Event pair sync error:', e); toast('Event pair sync failed', 'error'); }
+}
+
 function getTeamIcon(teamName) {
   if (!teamName) return null;
   const key = teamName.trim().replace(/\./g,'_');
   return teamIconRegistry[key] || teamIconMapFallback[teamName.trim()] || null;
 }
 
-/* ── Fallback icon map from fixture data ── */
 let teamIconMapFallback = {};
 function rebuildTeamIconMapFallback() {
   const map = {};
@@ -556,7 +650,7 @@ function getAllTeamNames() {
   return Array.from(s).sort();
 }
 
-/* ── Global flip state ── */
+/* ── Global flip — icon AND label in sync ── */
 let globalFlipIndex = 0;
 setInterval(()=>{
   globalFlipIndex++;
@@ -571,7 +665,8 @@ setInterval(()=>{
     setTimeout(()=>{
       const face = inner.querySelector('.flip-face');
       if(face){
-        const img = face.querySelector('img');
+        let img = face.querySelector('img');
+        if(!img && pairs[nextIdx].iconUrl){ img = document.createElement('img'); face.appendChild(img); }
         if(img) img.src = pairs[nextIdx].iconUrl || '';
       }
       if(lbl) lbl.textContent = pairs[nextIdx].name || '';
@@ -664,7 +759,11 @@ function makeUploader(btnId,fileId,prevId,urlId,statusId,teamNameInputId) {
       url.value=u; prev.src=u; prev.classList.add("show");
       if(teamNameInputId){
         const teamName = document.getElementById(teamNameInputId)?.value?.trim();
-        if(teamName) await saveTeamIconToRegistry(teamName, u);
+        const oldName = teamName;
+        if(teamName) {
+          await saveTeamIconToRegistry(teamName, u);
+          await syncTeamAcrossAllEvents(oldName, teamName, u);
+        }
       }
       toast("Image uploaded ✓","success");
     }
@@ -772,40 +871,70 @@ function renderCalendar() {
           } else { cell.classList.remove("has-event"); }
         } else {
           if(pairs.length > 0){
-            const firstPair = pairs[0];
             const fc=document.createElement("div"); fc.className="flip-container flip-cell";
             fc.dataset.pairs = JSON.stringify(pairs);
             const fi=document.createElement("div"); fi.className="flip-inner";
             const face=document.createElement("div"); face.className="flip-face";
-            if(firstPair.iconUrl){ const img=document.createElement("img"); img.src=firstPair.iconUrl; img.alt=firstPair.name||""; face.appendChild(img); }
+            if(pairs[0].iconUrl){ const img=document.createElement("img"); img.src=pairs[0].iconUrl; img.alt=pairs[0].name||""; face.appendChild(img); }
             fi.appendChild(face); fc.appendChild(fi); cell.appendChild(fc);
-            const lbl=document.createElement("div"); lbl.className="event-label"; lbl.textContent=firstPair.name||""; cell.appendChild(lbl);
+            const lbl=document.createElement("div"); lbl.className="event-label"; lbl.textContent=pairs[0].name||""; cell.appendChild(lbl);
           }
         }
         const dot=document.createElement("div"); dot.className="event-dot"; cell.appendChild(dot);
       } else {
         const hint=document.createElement("div"); hint.className="add-hint"; hint.textContent="+ add event"; cell.appendChild(hint);
       }
-      cell.addEventListener("click",()=>openDayModal(ds,d,info.label));
+      cell.addEventListener("click",()=>openDayModal(ds));
       grid.appendChild(cell);
     }
     card.appendChild(grid); root.appendChild(card);
   });
 }
 
+/* ── Day modal navigation ── */
+function getDayLabel(ds) {
+  const parts = ds.split('-');
+  const y = parseInt(parts[0]), m = parseInt(parts[1])-1, d = parseInt(parts[2]);
+  const info = ALL_MONTHS.find(x=>x.month===m);
+  return `${d} ${info ? info.label : ds}`;
+}
+
+document.getElementById('dayNavPrev').addEventListener('click', () => {
+  const days = getAllCalendarDays();
+  const idx = days.indexOf(currentDate);
+  if (idx > 0) openDayModal(days[idx - 1]);
+});
+document.getElementById('dayNavNext').addEventListener('click', () => {
+  const days = getAllCalendarDays();
+  const idx = days.indexOf(currentDate);
+  if (idx < days.length - 1) openDayModal(days[idx + 1]);
+});
+
+function updateDayNavArrows() {
+  const days = getAllCalendarDays();
+  const idx = days.indexOf(currentDate);
+  document.getElementById('dayNavPrev').disabled = idx <= 0;
+  document.getElementById('dayNavNext').disabled = idx >= days.length - 1;
+}
+
 /* ── Event Pairs in Modal ── */
 function renderEventPairs() {
   const c=document.getElementById("eventPairsContainer"); c.innerHTML="";
-  if(tempEventPairs.length===0){
-    tempEventPairs.push({name:"",iconUrl:""});
-  }
+  if(tempEventPairs.length===0){ tempEventPairs.push({name:"",iconUrl:""}); }
   tempEventPairs.forEach((pair,idx)=>{
+    const oldName = pair.name || '';
     const row=document.createElement("div"); row.className="event-pair-row";
     const numLbl=document.createElement("div"); numLbl.className="event-pair-num"; numLbl.textContent=`EVENT ${idx+1}`; row.appendChild(numLbl);
     const inner=document.createElement("div"); inner.style.cssText="flex:1;display:flex;flex-direction:column;gap:0.4rem;";
 
     const nameInp=document.createElement("input"); nameInp.className="form-input"; nameInp.type="text"; nameInp.placeholder=`Event ${idx+1} name`; nameInp.value=pair.name||"";
     nameInp.oninput=()=>{ tempEventPairs[idx].name=nameInp.value.trim(); };
+    nameInp.onblur=async()=>{
+      const newName = nameInp.value.trim();
+      if(oldName && newName && oldName !== newName) {
+        await syncEventPairAcrossAllEvents(oldName, newName, tempEventPairs[idx].iconUrl);
+      }
+    };
     inner.appendChild(nameInp);
 
     const iconRow=document.createElement("div"); iconRow.className="img-upload-row";
@@ -817,7 +946,13 @@ function renderEventPairs() {
     fileInp.onchange=async()=>{
       const f=fileInp.files[0]; if(!f) return;
       st.classList.add("show"); upBtn.disabled=true;
-      try{ const u=await uploadImg(f); tempEventPairs[idx].iconUrl=u; prev.src=u; prev.classList.add("show"); toast("Image uploaded ✓","success"); }
+      try{
+        const u=await uploadImg(f);
+        tempEventPairs[idx].iconUrl=u; prev.src=u; prev.classList.add("show");
+        toast("Image uploaded ✓","success");
+        const pairName = tempEventPairs[idx].name;
+        if(pairName) await syncEventPairAcrossAllEvents(pairName, pairName, u);
+      }
       catch(e){ toast("Upload failed","error"); }
       st.classList.remove("show"); upBtn.disabled=false; fileInp.value="";
     };
@@ -839,15 +974,16 @@ document.getElementById("addEventPairBtn").onclick=()=>{
 };
 
 /* ── Day Modal ── */
-function openDayModal(ds,day,monthLabel){
+function openDayModal(ds){
   currentDate=ds; const ev=calData[ds];
-  document.getElementById("dayTitle").textContent=`${day} ${monthLabel}`;
+  document.getElementById("dayTitle").textContent = getDayLabel(ds);
   document.getElementById("evSeason").value=ev?.season||"";
   document.getElementById("delEvBtn").style.display=ev?"inline-flex":"none";
   tempEventPairs = ev?.eventPairs ? JSON.parse(JSON.stringify(ev.eventPairs)) : [{name:"",iconUrl:""}];
   tempTournaments = ev?.tournaments ? JSON.parse(JSON.stringify(ev.tournaments)) : [];
   renderEventPairs();
   renderTourns();
+  updateDayNavArrows();
   openOv("dayOverlay");
 }
 
@@ -870,17 +1006,30 @@ function renderTourns(){
     const panel=document.createElement("div"); panel.className="fix-panel";
     (t.fixtures||[]).forEach((f,fi)=>{
       const row=document.createElement("div"); row.className="fix-row";
+
+      // Home side: icon + name
+      const homeDiv=document.createElement("div"); homeDiv.className="fix-team-home";
       const homeIcon=getTeamIcon(f.home)||f.homeIcon;
-      if(homeIcon){const img=document.createElement("img");img.className="fix-team-icon";img.src=homeIcon;row.appendChild(img);}
-      else if(f.home){const hn=document.createElement("span");hn.className="fix-team-name";hn.textContent=f.home;row.appendChild(hn);}
+      if(homeIcon){const img=document.createElement("img");img.className="fix-team-icon";img.src=homeIcon;homeDiv.appendChild(img);}
+      if(f.home){const hn=document.createElement("span");hn.className="fix-team-name";hn.textContent=f.home;homeDiv.appendChild(hn);}
+      row.appendChild(homeDiv);
+
       const vs=document.createElement("span");vs.className="fix-vs";vs.textContent="vs";row.appendChild(vs);
+
+      // Away side: icon + name (reversed)
+      const awayDiv=document.createElement("div"); awayDiv.className="fix-team-away";
       const awayIcon=getTeamIcon(f.away)||f.awayIcon;
-      if(awayIcon){const img=document.createElement("img");img.className="fix-team-icon";img.src=awayIcon;row.appendChild(img);}
-      else if(f.away){const an=document.createElement("span");an.className="fix-team-name";an.textContent=f.away;row.appendChild(an);}
-      const fa=document.createElement("div");fa.className="fix-actions";
+      if(awayIcon){const img=document.createElement("img");img.className="fix-team-icon";img.src=awayIcon;awayDiv.appendChild(img);}
+      if(f.away){const an=document.createElement("span");an.className="fix-team-name";an.textContent=f.away;awayDiv.appendChild(an);}
+      row.appendChild(awayDiv);
+
+      panel.appendChild(row);
+
+      // Action buttons row
+      const fa=document.createElement("div");fa.className="fix-row-actions";
       const eF=document.createElement("button");eF.className="btn btn-purple btn-sm";eF.textContent="✏️";eF.onclick=()=>openFixModal(ti,fi);
       const dF=document.createElement("button");dF.className="btn btn-red btn-sm";dF.textContent="🗑";dF.onclick=()=>{tempTournaments[ti].fixtures.splice(fi,1);renderTourns();panel.classList.add("open");};
-      fa.appendChild(eF);fa.appendChild(dF);row.appendChild(fa);panel.appendChild(row);
+      fa.appendChild(eF);fa.appendChild(dF);panel.appendChild(fa);
     });
     const addFix=document.createElement("button");addFix.className="btn btn-green btn-sm";addFix.style.marginTop="0.5rem";addFix.textContent="+ ADD FIXTURE";addFix.onclick=()=>openFixModal(ti,null);
     panel.appendChild(addFix);
@@ -973,8 +1122,21 @@ document.getElementById("saveFixBtn").onclick=async()=>{
   const ti=parseInt(document.getElementById("fixTournIdx").value); const fiRaw=document.getElementById("fixIdx").value; const fi=fiRaw!==""?parseInt(fiRaw):null;
   const homeIcon=document.getElementById("homeIconUrl").value;
   const awayIcon=document.getElementById("awayIconUrl").value;
+
+  // Get old names for sync
+  const oldHome = fi !== null ? (tempTournaments[ti]?.fixtures?.[fi]?.home || '') : '';
+  const oldAway = fi !== null ? (tempTournaments[ti]?.fixtures?.[fi]?.away || '') : '';
+
   if(homeIcon) await saveTeamIconToRegistry(home, homeIcon);
   if(awayIcon) await saveTeamIconToRegistry(away, awayIcon);
+
+  // Sync across all events if name or icon changed
+  if(oldHome && (oldHome !== home || homeIcon)) await syncTeamAcrossAllEvents(oldHome, home, homeIcon);
+  if(oldAway && (oldAway !== away || awayIcon)) await syncTeamAcrossAllEvents(oldAway, away, awayIcon);
+  // Also sync new name if it's a new fixture with existing team
+  if(!oldHome && homeIcon) await syncTeamAcrossAllEvents(home, home, homeIcon);
+  if(!oldAway && awayIcon) await syncTeamAcrossAllEvents(away, away, awayIcon);
+
   const fix={home,homeIcon,away,awayIcon};
   if(!tempTournaments[ti].fixtures)tempTournaments[ti].fixtures=[];
   if(fi!==null)tempTournaments[ti].fixtures[fi]=fix; else tempTournaments[ti].fixtures.push(fix);
@@ -997,34 +1159,16 @@ function renderFilterTeams(filterText='') {
     const icon = getTeamIcon(team);
     if (icon) { const img = document.createElement('img'); img.src = icon; img.alt = ''; el.appendChild(img); }
     const span = document.createElement('span'); span.textContent = team; el.appendChild(span);
-    el.onclick = () => {
-      selectedTeam = team;
-      closeOv("filterOverlay");
-      renderCalendar();
-      toast(`Filtering: ${team}`, "success");
-    };
+    el.onclick = () => { selectedTeam = team; closeOv("filterOverlay"); renderCalendar(); toast(`Filtering: ${team}`, "success"); };
     teamGrid.appendChild(el);
   });
 }
-
-document.getElementById("filterSearch").addEventListener("input", (e) => {
-  renderFilterTeams(e.target.value);
-});
-
+document.getElementById("filterSearch").addEventListener("input", (e) => { renderFilterTeams(e.target.value); });
 document.getElementById("clearFilterBtn").onclick = () => {
-  selectedTeam = null;
-  document.getElementById("filterSearch").value = '';
-  renderFilterTeams();
-  closeOv("filterOverlay");
-  renderCalendar();
-  toast("Filter cleared", "success");
+  selectedTeam = null; document.getElementById("filterSearch").value = '';
+  renderFilterTeams(); closeOv("filterOverlay"); renderCalendar(); toast("Filter cleared", "success");
 };
-
-document.getElementById("filterBtn").onclick = () => {
-  document.getElementById("filterSearch").value = '';
-  renderFilterTeams();
-  openOv("filterOverlay");
-};
+document.getElementById("filterBtn").onclick = () => { document.getElementById("filterSearch").value = ''; renderFilterTeams(); openOv("filterOverlay"); };
 document.getElementById("menuBtn").onclick=()=>openOv("menuOverlay");
 
 /* ── Debug panel ── */
@@ -1037,67 +1181,105 @@ document.getElementById("debugForceRefresh").addEventListener("click",async()=>{
   } catch(e) { debugLog('Force refresh error: '+e.message,true); toast("Refresh failed","error"); }
 });
 
-/* ════════════════════════════════════════════
+/* ════════════════════════════════
    ADD FIXTURES — Quick Entry Flow
-   ════════════════════════════════════════════ */
+   ════════════════════════════════ */
 
 let afSelectedTournIdx = null;
 let afSelectedDate = null;
 let afDateTournaments = [];
+let afEventDates = []; // all dates that have events with tournaments
 
-// Show step helper
 function afShowStep(n) {
   document.querySelectorAll('.af-step').forEach(s => s.classList.remove('active'));
   document.getElementById('afStep' + n).classList.add('active');
 }
 
-// Open the modal fresh
+/* Get all event dates that have tournaments, sorted */
+function getAfEventDates() {
+  return Object.keys(calData)
+    .filter(d => calData[d] && calData[d].tournaments && calData[d].tournaments.length > 0)
+    .sort();
+}
+
+function updateAfDateNav() {
+  const label = document.getElementById('afCurrentDateLabel');
+  if(afSelectedDate) {
+    label.textContent = getDayLabel(afSelectedDate);
+  }
+  const idx = afEventDates.indexOf(afSelectedDate);
+  document.getElementById('afPrevDateBtn').disabled = idx <= 0;
+  document.getElementById('afNextDateBtn').disabled = idx >= afEventDates.length - 1;
+}
+
+/* Navigate AF dates */
+document.getElementById('afPrevDateBtn').addEventListener('click', async () => {
+  const idx = afEventDates.indexOf(afSelectedDate);
+  if (idx > 0) await afNavigateToDate(afEventDates[idx - 1]);
+});
+document.getElementById('afNextDateBtn').addEventListener('click', async () => {
+  const idx = afEventDates.indexOf(afSelectedDate);
+  if (idx < afEventDates.length - 1) await afNavigateToDate(afEventDates[idx + 1]);
+});
+
+async function afNavigateToDate(dateVal) {
+  afSelectedDate = dateVal;
+  afSelectedTournIdx = null;
+  document.getElementById('afTypeInput').value = '';
+  document.getElementById('afFixturesInput').value = '';
+  document.getElementById('afParsedPreview').style.display = 'none';
+  document.getElementById('afSaveStatus').textContent = '';
+
+  try {
+    const snap = await get(ref(db, 'calendarEvents/' + dateVal));
+    const ev = snap.val();
+    afDateTournaments = ev && ev.tournaments ? JSON.parse(JSON.stringify(ev.tournaments)) : [];
+  } catch(e) { afDateTournaments = []; }
+
+  updateAfDateNav();
+  renderAfTournList();
+  afShowStep(2);
+}
+
+/* Open the modal fresh */
 document.getElementById('addFixturesMenuBtn').addEventListener('click', () => {
   closeOv('menuOverlay');
   afSelectedTournIdx = null;
   afSelectedDate = null;
   afDateTournaments = [];
+  afEventDates = getAfEventDates();
   document.getElementById('afDateInput').value = '';
   document.getElementById('afDateStatus').textContent = '';
   document.getElementById('afTypeInput').value = '';
   document.getElementById('afFixturesInput').value = '';
   document.getElementById('afParsedPreview').style.display = 'none';
   document.getElementById('afParsedList').innerHTML = '';
+  document.getElementById('afSaveStatus').textContent = '';
   afShowStep(1);
   openOv('addFixturesOverlay');
 });
 
-// STEP 1 → Load tournaments for selected date
+/* STEP 1 → Load tournaments */
 document.getElementById('afLoadTournsBtn').addEventListener('click', async () => {
   const dateVal = document.getElementById('afDateInput').value;
   if (!dateVal) { toast('Please select a date', 'error'); return; }
-
   const statusEl = document.getElementById('afDateStatus');
   statusEl.textContent = 'Loading...';
   statusEl.style.color = 'var(--gold)';
-
   try {
     const snap = await get(ref(db, 'calendarEvents/' + dateVal));
     const ev = snap.val();
-
-    if (!ev) {
-      statusEl.textContent = 'No event found on this date. Please create an event first.';
-      statusEl.style.color = 'var(--red)';
-      return;
-    }
-
-    if (!ev.tournaments || ev.tournaments.length === 0) {
-      statusEl.textContent = 'No tournaments found on this date. Add tournaments to the event first.';
-      statusEl.style.color = 'var(--red)';
-      return;
-    }
-
+    if (!ev) { statusEl.textContent = 'No event found on this date. Please create an event first.'; statusEl.style.color = 'var(--red)'; return; }
+    if (!ev.tournaments || ev.tournaments.length === 0) { statusEl.textContent = 'No tournaments found on this date. Add tournaments to the event first.'; statusEl.style.color = 'var(--red)'; return; }
     afSelectedDate = dateVal;
+    afEventDates = getAfEventDates();
+    if(!afEventDates.includes(dateVal)) afEventDates.push(dateVal);
+    afEventDates.sort();
     afDateTournaments = JSON.parse(JSON.stringify(ev.tournaments));
     statusEl.textContent = '';
+    updateAfDateNav();
     renderAfTournList();
     afShowStep(2);
-
   } catch (e) {
     debugLog('AF load tournaments error: ' + e.message, true);
     statusEl.textContent = 'Failed to load data. Check connection.';
@@ -1106,198 +1288,124 @@ document.getElementById('afLoadTournsBtn').addEventListener('click', async () =>
   }
 });
 
-// Render tournament list in step 2
+/* Render tournament list in step 2 */
 function renderAfTournList() {
   const list = document.getElementById('afTournList');
   list.innerHTML = '';
-
-  if (afDateTournaments.length === 0) {
-    list.innerHTML = '<div class="af-no-tourn">No tournaments on this date.</div>';
-    return;
-  }
-
+  if (afDateTournaments.length === 0) { list.innerHTML = '<div class="af-no-tourn">No tournaments on this date.</div>'; return; }
   afDateTournaments.forEach((t, idx) => {
     const opt = document.createElement('div');
     opt.className = 'af-tourn-opt';
-    if (t.iconUrl) {
-      const img = document.createElement('img');
-      img.src = t.iconUrl; img.alt = t.name || '';
-      opt.appendChild(img);
-    }
-    const info = document.createElement('div');
-    info.style.display = 'flex'; info.style.flexDirection = 'column';
-    const nm = document.createElement('div'); nm.className = 'af-tourn-opt-name'; nm.textContent = t.name || 'Untitled';
-    info.appendChild(nm);
-    if (t.description) {
-      const desc = document.createElement('div'); desc.className = 'af-tourn-opt-desc'; desc.textContent = t.description;
-      info.appendChild(desc);
-    }
+    if (t.iconUrl) { const img = document.createElement('img'); img.src = t.iconUrl; img.alt = t.name || ''; opt.appendChild(img); }
+    const info = document.createElement('div'); info.style.display = 'flex'; info.style.flexDirection = 'column';
+    const nm = document.createElement('div'); nm.className = 'af-tourn-opt-name'; nm.textContent = t.name || 'Untitled'; info.appendChild(nm);
+    if (t.description) { const desc = document.createElement('div'); desc.className = 'af-tourn-opt-desc'; desc.textContent = t.description; info.appendChild(desc); }
     opt.appendChild(info);
     opt.addEventListener('click', () => {
       afSelectedTournIdx = idx;
-      // Show selected tournament in step 3
       const display = document.getElementById('afSelectedTournDisplay');
       display.innerHTML = '';
       const card = document.createElement('div');
       card.style.cssText = 'display:flex;align-items:center;gap:0.7rem;background:rgba(184,150,12,0.15);border:1px solid var(--gold-border);border-radius:0.8rem;padding:0.6rem 0.9rem;';
-      if (t.iconUrl) {
-        const img = document.createElement('img');
-        img.src = t.iconUrl; img.style.cssText = 'width:30px;height:30px;object-fit:contain;border-radius:5px;';
-        card.appendChild(img);
-      }
+      if (t.iconUrl) { const img = document.createElement('img'); img.src = t.iconUrl; img.style.cssText = 'width:30px;height:30px;object-fit:contain;border-radius:5px;'; card.appendChild(img); }
       const lbl = document.createElement('div');
       lbl.style.cssText = 'font-family:Rajdhani,sans-serif;font-weight:700;font-size:0.9rem;color:var(--text-primary);';
       lbl.textContent = t.name || 'Untitled';
-      if (t.description) {
-        const sub = document.createElement('div');
-        sub.style.cssText = 'font-size:0.7rem;color:var(--gold);';
-        sub.textContent = t.description;
-        lbl.appendChild(sub);
-      }
+      if (t.description) { const sub = document.createElement('div'); sub.style.cssText = 'font-size:0.7rem;color:var(--gold);'; sub.textContent = t.description; lbl.appendChild(sub); }
       card.appendChild(lbl);
       display.appendChild(card);
-
-      // Reset step 3 fields
       document.getElementById('afTypeInput').value = '';
       document.getElementById('afFixturesInput').value = '';
       document.getElementById('afParsedPreview').style.display = 'none';
       document.getElementById('afParsedList').innerHTML = '';
+      document.getElementById('afSaveStatus').textContent = '';
+      updateAfDateNav();
       afShowStep(3);
     });
     list.appendChild(opt);
   });
 }
 
-// Back buttons
 document.getElementById('afBackToStep1Btn').addEventListener('click', () => afShowStep(1));
 document.getElementById('afBackToStep2Btn').addEventListener('click', () => afShowStep(2));
 
-// Parse fixtures text → array of {home, away}
 function parseFixturesText(text) {
   if (!text.trim()) return [];
-  // Split by comma
   const parts = text.split(',');
   const results = [];
   parts.forEach(part => {
-    const trimmed = part.trim();
-    if (!trimmed) return;
-    // Split by " vs " (case-insensitive)
+    const trimmed = part.trim(); if (!trimmed) return;
     const vsMatch = trimmed.match(/^(.+?)\s+vs\s+(.+)$/i);
-    if (vsMatch) {
-      const home = vsMatch[1].trim();
-      const away = vsMatch[2].trim();
-      if (home && away) results.push({ home, away });
-    }
+    if (vsMatch) { const home = vsMatch[1].trim(); const away = vsMatch[2].trim(); if (home && away) results.push({ home, away }); }
   });
   return results;
 }
 
-// Preview button
 document.getElementById('afPreviewBtn').addEventListener('click', () => {
   const text = document.getElementById('afFixturesInput').value;
   const parsed = parseFixturesText(text);
   const previewEl = document.getElementById('afParsedPreview');
   const listEl = document.getElementById('afParsedList');
   listEl.innerHTML = '';
-
-  if (parsed.length === 0) {
-    toast('No valid fixtures detected. Use format: Team A vs Team B, Team C vs Team D', 'error');
-    previewEl.style.display = 'none';
-    return;
-  }
-
+  if (parsed.length === 0) { toast('No valid fixtures detected. Use format: Team A vs Team B, Team C vs Team D', 'error'); previewEl.style.display = 'none'; return; }
   parsed.forEach((fix, i) => {
-    const row = document.createElement('div');
-    row.className = 'af-parsed-row';
-
-    const num = document.createElement('span');
-    num.className = 'af-parsed-num';
-    num.textContent = i + 1;
-    row.appendChild(num);
-
+    const row = document.createElement('div'); row.className = 'af-parsed-row';
+    const num = document.createElement('span'); num.className = 'af-parsed-num'; num.textContent = i + 1; row.appendChild(num);
     const homeIcon = getTeamIcon(fix.home);
-    if (homeIcon) {
-      const img = document.createElement('img');
-      img.className = 'af-parsed-icon'; img.src = homeIcon; img.alt = fix.home;
-      row.appendChild(img);
-    }
-    const homeLbl = document.createElement('span');
-    homeLbl.textContent = fix.home;
-    row.appendChild(homeLbl);
-
-    const vsLbl = document.createElement('span');
-    vsLbl.className = 'af-parsed-vs';
-    vsLbl.textContent = 'VS';
-    row.appendChild(vsLbl);
-
+    if (homeIcon) { const img = document.createElement('img'); img.className = 'af-parsed-icon'; img.src = homeIcon; img.alt = fix.home; row.appendChild(img); }
+    const homeLbl = document.createElement('span'); homeLbl.textContent = fix.home; row.appendChild(homeLbl);
+    const vsLbl = document.createElement('span'); vsLbl.className = 'af-parsed-vs'; vsLbl.textContent = 'VS'; row.appendChild(vsLbl);
     const awayIcon = getTeamIcon(fix.away);
-    if (awayIcon) {
-      const img = document.createElement('img');
-      img.className = 'af-parsed-icon'; img.src = awayIcon; img.alt = fix.away;
-      row.appendChild(img);
-    }
-    const awayLbl = document.createElement('span');
-    awayLbl.textContent = fix.away;
-    row.appendChild(awayLbl);
-
+    if (awayIcon) { const img = document.createElement('img'); img.className = 'af-parsed-icon'; img.src = awayIcon; img.alt = fix.away; row.appendChild(img); }
+    const awayLbl = document.createElement('span'); awayLbl.textContent = fix.away; row.appendChild(awayLbl);
     listEl.appendChild(row);
   });
-
   previewEl.style.display = 'block';
   toast(`${parsed.length} fixture${parsed.length > 1 ? 's' : ''} detected`, 'success');
 });
 
-// Save fixtures
+/* Save fixtures — stays open, shows saved status */
 document.getElementById('afSaveFixturesBtn').addEventListener('click', async () => {
   if (afSelectedTournIdx === null) { toast('No tournament selected', 'error'); return; }
   if (!afSelectedDate) { toast('No date selected', 'error'); return; }
-
   const text = document.getElementById('afFixturesInput').value;
   const matchType = document.getElementById('afTypeInput').value.trim();
   const parsed = parseFixturesText(text);
-
-  if (parsed.length === 0) {
-    toast('No valid fixtures to save. Use format: Team A vs Team B, Team C vs Team D', 'error');
-    return;
-  }
-
+  if (parsed.length === 0) { toast('No valid fixtures to save. Use format: Team A vs Team B, Team C vs Team D', 'error'); return; }
+  const statusEl = document.getElementById('afSaveStatus');
+  statusEl.textContent = 'Saving...';
+  statusEl.style.color = 'var(--gold)';
   try {
-    // Fetch the current event fresh from Firebase to avoid overwriting other changes
     const snap = await get(ref(db, 'calendarEvents/' + afSelectedDate));
     const ev = snap.val();
-    if (!ev) { toast('Event no longer exists on this date', 'error'); return; }
-
+    if (!ev) { toast('Event no longer exists on this date', 'error'); statusEl.textContent = ''; return; }
     const tournaments = JSON.parse(JSON.stringify(ev.tournaments || []));
-    if (!tournaments[afSelectedTournIdx]) { toast('Tournament no longer exists', 'error'); return; }
+    if (!tournaments[afSelectedTournIdx]) { toast('Tournament no longer exists', 'error'); statusEl.textContent = ''; return; }
     if (!tournaments[afSelectedTournIdx].fixtures) tournaments[afSelectedTournIdx].fixtures = [];
-
-    // Build fixture objects, auto-lookup icons from registry
     const newFixtures = parsed.map(fix => ({
-      home: fix.home,
-      homeIcon: getTeamIcon(fix.home) || '',
-      away: fix.away,
-      awayIcon: getTeamIcon(fix.away) || '',
+      home: fix.home, homeIcon: getTeamIcon(fix.home) || '',
+      away: fix.away, awayIcon: getTeamIcon(fix.away) || '',
       type: matchType || null
     }));
-
-    // Append to existing fixtures
     tournaments[afSelectedTournIdx].fixtures.push(...newFixtures);
-
-    // Save back to Firebase (only the tournaments field is updated, rest preserved)
-    await set(ref(db, 'calendarEvents/' + afSelectedDate), {
-      ...ev,
-      tournaments
-    });
-
-    closeOv('addFixturesOverlay');
+    await set(ref(db, 'calendarEvents/' + afSelectedDate), { ...ev, tournaments });
+    // Update local afDateTournaments
+    afDateTournaments = tournaments;
+    statusEl.textContent = `✓ Saved ${newFixtures.length} fixture${newFixtures.length > 1 ? 's' : ''}`;
+    statusEl.style.color = 'var(--green)';
+    // Clear inputs for next entry but keep modal open
+    document.getElementById('afTypeInput').value = '';
+    document.getElementById('afFixturesInput').value = '';
+    document.getElementById('afParsedPreview').style.display = 'none';
+    document.getElementById('afParsedList').innerHTML = '';
     toast(`${newFixtures.length} fixture${newFixtures.length > 1 ? 's' : ''} saved ✓`, 'success');
-
   } catch (e) {
     debugLog('AF save fixtures error: ' + e.message, true);
+    statusEl.textContent = 'Save failed';
+    statusEl.style.color = 'var(--red)';
     toast('Failed to save fixtures', 'error');
   }
 });
-
 </script>
 </body>
 </html>
