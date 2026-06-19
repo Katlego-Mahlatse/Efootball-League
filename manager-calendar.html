@@ -70,14 +70,12 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .day-number{font-family:'Orbitron',monospace;font-size:0.68rem;font-weight:700;color:var(--text-dim);align-self:flex-start;margin-bottom:5px;letter-spacing:0.03em;}
 .day-cell.has-event .day-number{color:var(--gold);}
 
-/* FLIP CONTAINER */
 .flip-container{width:48px;height:48px;perspective:300px;margin-top:2px;flex-shrink:0;}
 .flip-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 0.5s ease;}
 .flip-inner.flipping{transform:rotateY(90deg);}
 .flip-face{position:absolute;inset:0;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;}
 .flip-face img{width:48px;height:48px;object-fit:contain;border-radius:8px;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.5));}
 
-/* EVENT LABEL - full text, wrapping, smaller font, no ellipsis */
 .event-label{font-family:'Rajdhani',sans-serif;font-size:0.48rem;font-weight:700;color:var(--gold);letter-spacing:0.04em;text-transform:uppercase;margin-top:3px;text-align:center;line-height:1.25;word-break:break-word;white-space:normal;max-width:100%;padding:0 2px;overflow:hidden;}
 
 .add-hint{font-size:0.58rem;color:rgba(245,215,66,0.22);font-style:italic;margin-top:auto;padding-top:4px;transition:color 0.2s;}
@@ -93,6 +91,14 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .modal::-webkit-scrollbar-thumb{background:var(--gold-border);border-radius:2px;}
 .modal-close{position:absolute;top:14px;right:16px;background:rgba(184,150,12,0.4);border:1px solid var(--gold-border);color:var(--gold);width:32px;height:32px;border-radius:50%;font-size:1.15rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.25s;line-height:1;}
 .modal-close:hover{background:var(--red);border-color:var(--red);color:#fff;transform:rotate(90deg);}
+
+/* Day modal nav arrows */
+.modal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;}
+.modal-nav-title{font-family:'Orbitron',monospace;font-size:1.05rem;font-weight:700;color:var(--gold);letter-spacing:0.05em;text-shadow:0 0 25px rgba(245,215,66,0.3);text-align:center;flex:1;padding:0 0.5rem;}
+.nav-arrow{background:rgba(184,150,12,0.3);border:1px solid var(--gold-border);color:var(--gold);width:34px;height:34px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0;}
+.nav-arrow:hover{background:var(--btn-accent);transform:scale(1.1);}
+.nav-arrow:disabled{opacity:0.25;cursor:default;transform:none;}
+
 .modal-title{font-family:'Orbitron',monospace;font-size:1.05rem;font-weight:700;color:var(--gold);margin-bottom:1.5rem;padding-right:2.5rem;letter-spacing:0.05em;text-shadow:0 0 25px rgba(245,215,66,0.3);}
 
 .section-label{font-family:'Orbitron',monospace;font-size:0.6rem;font-weight:700;color:var(--gold);letter-spacing:0.15em;margin:1.4rem 0 0.8rem;display:flex;align-items:center;gap:0.5rem;}
@@ -113,12 +119,15 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .fix-toggle:hover{border-color:var(--gold-border);color:var(--gold);}
 .fix-panel{display:none;margin-top:0.7rem;background:rgba(0,0,0,0.65);border-radius:0.8rem;border:1px solid rgba(245,215,66,0.07);padding:0.7rem;}
 .fix-panel.open{display:block;}
-.fix-row{display:flex;align-items:center;gap:0.5rem;padding:0.45rem 0;border-bottom:1px solid rgba(245,215,66,0.06);flex-wrap:wrap;}
+
+/* FIXTURE ROW — icon + name both sides, wrapping */
+.fix-row{display:grid;grid-template-columns:minmax(0,1fr) 36px minmax(0,1fr);align-items:center;gap:6px;padding:0.5rem 0;border-bottom:1px solid rgba(245,215,66,0.06);}
 .fix-row:last-of-type{border-bottom:none;}
+.fix-team-home{display:flex;align-items:center;gap:6px;min-width:0;}
+.fix-team-away{display:flex;align-items:center;gap:6px;flex-direction:row-reverse;min-width:0;}
 .fix-team-icon{width:26px;height:26px;object-fit:contain;border-radius:4px;flex-shrink:0;}
-.fix-team-name{font-size:0.78rem;font-weight:600;color:var(--text-primary);}
-.fix-vs{font-size:0.63rem;color:var(--gold);font-family:'Orbitron',monospace;font-weight:700;}
-.no-data{text-align:center;color:var(--text-dim);font-size:0.85rem;padding:1rem;}
+.fix-team-name{font-size:0.78rem;font-weight:600;color:var(--text-primary);word-break:break-word;white-space:normal;line-height:1.3;}
+.fix-vs{font-size:0.63rem;color:var(--gold);font-family:'Orbitron',monospace;font-weight:700;text-align:center;}
 
 .event-pair-row{display:flex;align-items:center;gap:0.6rem;background:rgba(0,0,0,0.4);border:1px solid rgba(245,215,66,0.1);border-radius:0.8rem;padding:0.7rem;margin-bottom:0.6rem;}
 .event-pair-icon{width:38px;height:38px;object-fit:contain;border-radius:6px;border:1px solid var(--gold-border);flex-shrink:0;background:rgba(0,0,0,0.5);}
@@ -133,7 +142,6 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .btn-sm{padding:0.3rem 0.75rem;font-size:0.7rem;border-radius:1.5rem;}
 .btn-row{display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:1.2rem;}
 
-/* FILTER POPUP */
 .filter-search{width:100%;background:rgba(0,0,0,0.7);border:1px solid var(--gold-border);border-radius:0.7rem;color:var(--text-primary);padding:0.55rem 0.9rem;font-size:0.85rem;font-family:'Exo 2',sans-serif;outline:none;margin-bottom:0.8rem;transition:border-color 0.2s;}
 .filter-search:focus{border-color:var(--gold);}
 .filter-search::placeholder{color:var(--text-dim);opacity:0.5;}
@@ -150,6 +158,8 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 .toast.show{transform:translateY(0);opacity:1;}
 .toast.success{border-color:var(--green);}
 .toast.error{border-color:var(--red);}
+
+.no-data{text-align:center;color:var(--text-dim);font-size:0.85rem;padding:1rem;}
 
 @media(max-width:680px){
   .wrapper{padding:1rem 0.75rem 3rem;}
@@ -197,7 +207,7 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 
 <div class="toast" id="toast"></div>
 
-<!-- MENU (only RULES and MAIN MENU remain) -->
+<!-- MENU -->
 <div class="overlay" id="menuOverlay">
   <div class="modal" style="max-width:300px;">
     <button class="modal-close" data-close="menuOverlay">✕</button>
@@ -228,7 +238,14 @@ body{background:var(--black-deep);font-family:'Exo 2',sans-serif;color:var(--tex
 <div class="overlay" id="dayOverlay">
   <div class="modal" style="max-width:600px;">
     <button class="modal-close" data-close="dayOverlay">✕</button>
-    <div class="modal-title" id="dayTitle">DATE</div>
+
+    <!-- Nav arrows + title -->
+    <div class="modal-nav">
+      <button class="nav-arrow" id="dayNavPrev" title="Previous day">◀</button>
+      <div class="modal-nav-title" id="dayTitle">DATE</div>
+      <button class="nav-arrow" id="dayNavNext" title="Next day">▶</button>
+    </div>
+
     <div class="section-label">EVENTS ON THIS DAY</div>
     <div id="eventPairsViewer"></div>
     <div class="section-label">SEASON</div>
@@ -261,10 +278,11 @@ const ALL_MONTHS = [
 let calData = {};
 let activeMonths = [];
 let selectedTeam = null;
+let currentDate = null;
 let teamIconRegistry = {};
 let teamIconMapFallback = {};
 
-/* ── Icon registry from Firebase ── */
+/* ── Icon registry ── */
 onValue(ref(db, 'teamIcons'), (snap) => {
   teamIconRegistry = snap.val() || {};
   renderFilterTeams(document.getElementById('filterSearch')?.value || '');
@@ -313,6 +331,25 @@ function getAllTeamNames() {
   return Array.from(s).sort();
 }
 
+/* ── All calendar days for navigation ── */
+function getAllCalendarDays() {
+  const days = [];
+  [...activeMonths].sort((a,b)=>a-b).forEach(m => {
+    const dim = new Date(YEAR, m+1, 0).getDate();
+    for (let d = 1; d <= dim; d++) {
+      days.push(fmtYMD(YEAR, m, d));
+    }
+  });
+  return days;
+}
+
+function getDayLabel(ds) {
+  const parts = ds.split('-');
+  const y = parseInt(parts[0]), m = parseInt(parts[1])-1, d = parseInt(parts[2]);
+  const info = ALL_MONTHS.find(x=>x.month===m);
+  return `${d} ${info ? info.label : ds}`;
+}
+
 function toast(msg, type = "") {
   const t = document.getElementById("toast");
   t.textContent = msg;
@@ -346,7 +383,7 @@ onValue(ref(db, 'calendarEvents'), (snap) => {
   toast("Failed to load events", "error");
 });
 
-/* ── Global flip — icon and label perfectly in sync ── */
+/* ── Global flip — icon AND label in sync ── */
 let globalFlipIdx = 0;
 setInterval(() => {
   globalFlipIdx++;
@@ -357,17 +394,12 @@ setInterval(() => {
     const labelSpan = cell.querySelector('.event-label');
     if (!inner) return;
     const nextIdx = globalFlipIdx % pairs.length;
-    // Trigger flip animation
     inner.classList.add('flipping');
-    // At halfway (250ms) update BOTH icon and label simultaneously
     setTimeout(() => {
       const face = inner.querySelector('.flip-face');
       if (face) {
         let img = face.querySelector('img');
-        if (!img && pairs[nextIdx].iconUrl) {
-          img = document.createElement('img');
-          face.appendChild(img);
-        }
+        if (!img && pairs[nextIdx].iconUrl) { img = document.createElement('img'); face.appendChild(img); }
         if (img) img.src = pairs[nextIdx].iconUrl || '';
       }
       if (labelSpan) labelSpan.textContent = pairs[nextIdx].name || '';
@@ -430,15 +462,8 @@ function renderCalendar() {
         if (selectedTeam) {
           if (evHasTeam(ev, selectedTeam)) {
             const oi = oppIcon(ev, selectedTeam);
-            if (oi) {
-              const img = document.createElement("img");
-              img.className = "event-icon";
-              img.src = oi;
-              cell.appendChild(img);
-            }
-          } else {
-            cell.classList.remove("has-event");
-          }
+            if (oi) { const img = document.createElement("img"); img.className = "event-icon"; img.src = oi; cell.appendChild(img); }
+          } else { cell.classList.remove("has-event"); }
         } else {
           if (pairs.length > 0) {
             const fc = document.createElement("div");
@@ -457,7 +482,6 @@ function renderCalendar() {
             fi.appendChild(face);
             fc.appendChild(fi);
             cell.appendChild(fc);
-            // Label rendered as sibling of flip-container, inside cell — updated in sync
             const lbl = document.createElement("div");
             lbl.className = "event-label";
             lbl.textContent = pairs[0].name || "";
@@ -473,7 +497,7 @@ function renderCalendar() {
         hint.textContent = "No event";
         cell.appendChild(hint);
       }
-      cell.addEventListener("click", () => openDayModal(ds, d, info.label));
+      cell.addEventListener("click", () => openDayModal(ds));
       grid.appendChild(cell);
     }
     card.appendChild(grid);
@@ -481,10 +505,32 @@ function renderCalendar() {
   });
 }
 
+/* ── Day modal navigation ── */
+document.getElementById('dayNavPrev').addEventListener('click', () => {
+  const days = getAllCalendarDays();
+  const idx = days.indexOf(currentDate);
+  if (idx > 0) openDayModal(days[idx - 1]);
+});
+document.getElementById('dayNavNext').addEventListener('click', () => {
+  const days = getAllCalendarDays();
+  const idx = days.indexOf(currentDate);
+  if (idx < days.length - 1) openDayModal(days[idx + 1]);
+});
+
+function updateDayNavArrows() {
+  const days = getAllCalendarDays();
+  const idx = days.indexOf(currentDate);
+  document.getElementById('dayNavPrev').disabled = idx <= 0;
+  document.getElementById('dayNavNext').disabled = idx >= days.length - 1;
+}
+
 /* ── Read-only day modal ── */
-function openDayModal(ds, day, monthLabel) {
+function openDayModal(ds) {
+  currentDate = ds;
   const ev = calData[ds];
-  document.getElementById("dayTitle").textContent = `${day} ${monthLabel}`;
+  document.getElementById("dayTitle").textContent = getDayLabel(ds);
+  updateDayNavArrows();
+
   const pairsContainer = document.getElementById("eventPairsViewer");
   pairsContainer.innerHTML = "";
   const pairs = ev?.eventPairs || [];
@@ -511,6 +557,7 @@ function openDayModal(ds, day, monthLabel) {
       pairsContainer.appendChild(row);
     });
   }
+
   const seasonInput = document.getElementById("evSeasonView");
   seasonInput.value = ev?.season ? `Season ${ev.season}` : "Not specified";
   renderTournamentsReadonly(ev?.tournaments || []);
@@ -529,23 +576,10 @@ function renderTournamentsReadonly(tournaments) {
     card.className = "tournament-card";
     const hdr = document.createElement("div");
     hdr.className = "tc-header";
-    if (t.iconUrl) {
-      const img = document.createElement("img");
-      img.className = "tc-icon";
-      img.src = t.iconUrl;
-      hdr.appendChild(img);
-    }
+    if (t.iconUrl) { const img = document.createElement("img"); img.className = "tc-icon"; img.src = t.iconUrl; hdr.appendChild(img); }
     const infoDiv = document.createElement("div");
-    const nm = document.createElement("div");
-    nm.className = "tc-name";
-    nm.textContent = t.name || "Untitled";
-    infoDiv.appendChild(nm);
-    if (t.description) {
-      const desc = document.createElement("div");
-      desc.className = "tc-desc";
-      desc.textContent = t.description;
-      infoDiv.appendChild(desc);
-    }
+    const nm = document.createElement("div"); nm.className = "tc-name"; nm.textContent = t.name || "Untitled"; infoDiv.appendChild(nm);
+    if (t.description) { const desc = document.createElement("div"); desc.className = "tc-desc"; desc.textContent = t.description; infoDiv.appendChild(desc); }
     hdr.appendChild(infoDiv);
     card.appendChild(hdr);
     const tog = document.createElement("button");
@@ -558,41 +592,27 @@ function renderTournamentsReadonly(tournaments) {
     (t.fixtures || []).forEach((f) => {
       const row = document.createElement("div");
       row.className = "fix-row";
+
+      // Home side: icon + name
+      const homeDiv = document.createElement("div"); homeDiv.className = "fix-team-home";
       const homeIcon = getTeamIcon(f.home) || f.homeIcon;
-      if (homeIcon) {
-        const img = document.createElement("img");
-        img.className = "fix-team-icon";
-        img.src = homeIcon;
-        row.appendChild(img);
-      } else if (f.home) {
-        const hn = document.createElement("span");
-        hn.className = "fix-team-name";
-        hn.textContent = f.home;
-        row.appendChild(hn);
-      }
-      const vs = document.createElement("span");
-      vs.className = "fix-vs";
-      vs.textContent = "vs";
-      row.appendChild(vs);
+      if (homeIcon) { const img = document.createElement("img"); img.className = "fix-team-icon"; img.src = homeIcon; homeDiv.appendChild(img); }
+      if (f.home) { const hn = document.createElement("span"); hn.className = "fix-team-name"; hn.textContent = f.home; homeDiv.appendChild(hn); }
+      row.appendChild(homeDiv);
+
+      const vs = document.createElement("span"); vs.className = "fix-vs"; vs.textContent = "vs"; row.appendChild(vs);
+
+      // Away side: icon + name (reversed)
+      const awayDiv = document.createElement("div"); awayDiv.className = "fix-team-away";
       const awayIcon = getTeamIcon(f.away) || f.awayIcon;
-      if (awayIcon) {
-        const img = document.createElement("img");
-        img.className = "fix-team-icon";
-        img.src = awayIcon;
-        row.appendChild(img);
-      } else if (f.away) {
-        const an = document.createElement("span");
-        an.className = "fix-team-name";
-        an.textContent = f.away;
-        row.appendChild(an);
-      }
+      if (awayIcon) { const img = document.createElement("img"); img.className = "fix-team-icon"; img.src = awayIcon; awayDiv.appendChild(img); }
+      if (f.away) { const an = document.createElement("span"); an.className = "fix-team-name"; an.textContent = f.away; awayDiv.appendChild(an); }
+      row.appendChild(awayDiv);
+
       panel.appendChild(row);
     });
     if (fixtureCount === 0) {
-      const nofix = document.createElement("div");
-      nofix.className = "no-data";
-      nofix.textContent = "No fixtures added.";
-      panel.appendChild(nofix);
+      const nofix = document.createElement("div"); nofix.className = "no-data"; nofix.textContent = "No fixtures added."; panel.appendChild(nofix);
     }
     tog.onclick = () => panel.classList.toggle("open");
     card.appendChild(panel);
@@ -600,50 +620,30 @@ function renderTournamentsReadonly(tournaments) {
   });
 }
 
-/* ── Filter — dynamic from calendar data ── */
+/* ── Filter ── */
 function renderFilterTeams(filterText = '') {
   const teamGrid = document.getElementById("teamGrid");
   teamGrid.innerHTML = '';
   const teams = getAllTeamNames();
   const filtered = filterText ? teams.filter(t => t.toLowerCase().includes(filterText.toLowerCase())) : teams;
-  if (filtered.length === 0) {
-    teamGrid.innerHTML = '<div class="no-data" style="grid-column:1/-1;">No teams found</div>';
-    return;
-  }
+  if (filtered.length === 0) { teamGrid.innerHTML = '<div class="no-data" style="grid-column:1/-1;">No teams found</div>'; return; }
   filtered.forEach(team => {
     const el = document.createElement("div");
     el.className = "team-opt" + (selectedTeam === team ? " active" : "");
     const icon = getTeamIcon(team);
     if (icon) { const img = document.createElement('img'); img.src = icon; img.alt = ''; el.appendChild(img); }
     const span = document.createElement('span'); span.textContent = team; el.appendChild(span);
-    el.onclick = () => {
-      selectedTeam = team;
-      closeOv("filterOverlay");
-      renderCalendar();
-      toast(`Filtering: ${team}`, "success");
-    };
+    el.onclick = () => { selectedTeam = team; closeOv("filterOverlay"); renderCalendar(); toast(`Filtering: ${team}`, "success"); };
     teamGrid.appendChild(el);
   });
 }
 
-document.getElementById("filterSearch").addEventListener("input", (e) => {
-  renderFilterTeams(e.target.value);
-});
-
+document.getElementById("filterSearch").addEventListener("input", (e) => { renderFilterTeams(e.target.value); });
 document.getElementById("clearFilterBtn").onclick = () => {
-  selectedTeam = null;
-  document.getElementById("filterSearch").value = '';
-  renderFilterTeams();
-  closeOv("filterOverlay");
-  renderCalendar();
-  toast("Filter cleared", "success");
+  selectedTeam = null; document.getElementById("filterSearch").value = '';
+  renderFilterTeams(); closeOv("filterOverlay"); renderCalendar(); toast("Filter cleared", "success");
 };
-
-document.getElementById("filterBtn").onclick = () => {
-  document.getElementById("filterSearch").value = '';
-  renderFilterTeams();
-  openOv("filterOverlay");
-};
+document.getElementById("filterBtn").onclick = () => { document.getElementById("filterSearch").value = ''; renderFilterTeams(); openOv("filterOverlay"); };
 document.getElementById("menuBtn").onclick = () => openOv("menuOverlay");
 </script>
 </body>
