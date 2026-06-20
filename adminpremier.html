@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -241,6 +240,12 @@
     .inline-media { width: 100%; border-radius: 32px; overflow: hidden; background: #000; }
     .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; }
     .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+    .watch-video-item { margin-bottom: 40px; }
+    .watch-video-item:last-child { margin-bottom: 0; }
+    .watch-video-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; color: var(--white); letter-spacing: 2px; margin-top: 12px; text-align: center; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+    .watch-video-delete-btn { display: block; margin: 12px auto 0; background: rgba(180,0,0,0.4); border: 1px solid #cc3333; color: #ffaaaa; padding: 8px 24px; border-radius: 30px; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; transition: all 0.2s; }
+    .watch-video-delete-btn:hover { background: #cc3333; color: white; }
 
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); backdrop-filter: blur(6px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
     .modal-overlay.active { display: flex; }
@@ -548,8 +553,8 @@ function mapTeamName(raw) {
   return EFOOTBALL_TEAM_MAP[lower] || raw.trim();
 }
 
-// ─── CHANGED: API endpoint ───
-const GROQ_API_URL = "https://efootball-league.onrender.com/scan";
+const GROQ_API_KEY = "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";
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
@@ -606,6 +611,9 @@ let teamLogoMappings = {}; // { "Man City": { imageUrl: "...", efootballName: "m
 
 // ─── FEATURE 7: Manager History ───
 let managerHistory = {}; // { "Man City": [ { key, name, status, matchdayJoined, matchdayLeft } ] }
+
+// ─── CHANGE 2: Watch Match videos ───
+let watchMatchVideos = []; // Array of { id, title, embedCode }
 
 // ─── Helper: increment/decrement pending saves ───
 function incrementPending() { pendingSaves++; }
@@ -885,7 +893,7 @@ Use team names EXACTLY as shown in the image. If you cannot find scorers or assi
 
   const response = await fetch(GROQ_API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_API_KEY },
     body: JSON.stringify({
       model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       messages: [{ role: 'user', content: contentParts }],
@@ -1393,7 +1401,7 @@ Extract ALL players visible. Return ONLY the JSON object.`;
 
   const response = await fetch(GROQ_API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_API_KEY },
     body: JSON.stringify({
       model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       messages: [{ role: 'user', content: contentParts }],
@@ -1968,9 +1976,171 @@ async function setTableHeaderImage(url) {
   await loadTableHeaderImage();
 }
 
+// ─── CHANGE 2: Load Watch Match videos ───
 async function loadWatchMatchEmbed() {
-  const snap = await database.ref('premier_league/watchMatch/embedCode').once('value');
-  watchMatchEmbedCode = snap.val() || '';
+  // First, try to load the old single embedCode for backward compatibility
+  const oldSnap = await database.ref('premier_league/watchMatch/embedCode').once('value');
+  const oldEmbedCode = oldSnap.val() || '';
+  if (oldEmbedCode) {
+    // If old embed exists, add it as a video with default title
+    watchMatchVideos = [{ id: 'legacy', title: 'Match Video', embedCode: oldEmbedCode }];
+  } else {
+    watchMatchVideos = [];
+  }
+
+  // Now load the new videos array
+  const videosSnap = await database.ref('premier_league/watchMatch/videos').once('value');
+  const videosData = videosSnap.val() || {};
+  // Convert object to array
+  const newVideos = [];
+  for (const key in videosData) {
+    const video = videosData[key];
+    if (video && video.embedCode) {
+      newVideos.push({ id: key, title: video.title || 'Match Video', embedCode: video.embedCode });
+    }
+  }
+
+  // If there are new videos, replace the legacy one (or add to it?)
+  // If legacy exists and there are new videos, we keep legacy as the first item
+  if (newVideos.length > 0) {
+    // If we have a legacy video (from old embedCode), keep it and add new ones
+    if (watchMatchVideos.length > 0 && watchMatchVideos[0].id === 'legacy') {
+      // Keep legacy as first, then add new videos (avoid duplicates by id)
+      const existingIds = new Set(watchMatchVideos.map(v => v.id));
+      for (const v of newVideos) {
+        if (!existingIds.has(v.id)) {
+          watchMatchVideos.push(v);
+        }
+      }
+    } else {
+      // No legacy, just use new videos
+      watchMatchVideos = newVideos;
+    }
+  }
+
+  // If legacy was the only one and there are no new videos, keep it
+  // If there are new videos and no legacy, we already set it above
+
+  console.log('[loadWatchMatchEmbed] Loaded', watchMatchVideos.length, 'videos');
+}
+
+// ─── CHANGE 2: Add a new watch video ───
+async function addWatchMatchVideo(title, embedCode) {
+  // Convert YouTube URLs to embed iframes
+  let finalEmbed = embedCode.trim();
+  if (finalEmbed.includes("youtube.com/watch?v=") || finalEmbed.includes("youtu.be/")) {
+    let videoId = '';
+    if (finalEmbed.includes("youtu.be/")) videoId = finalEmbed.split("youtu.be/")[1].split(/[?#]/)[0];
+    else { const u = new URLSearchParams(new URL(finalEmbed).search); videoId = u.get('v'); }
+    if (videoId) finalEmbed = `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+  }
+
+  const videoData = { title: title.trim() || 'Match Video', embedCode: finalEmbed };
+  const newRef = await database.ref('premier_league/watchMatch/videos').push(videoData);
+  // Add to local array
+  watchMatchVideos.push({ id: newRef.key, title: videoData.title, embedCode: videoData.embedCode });
+  // Re-render if on watch tab
+  if (document.querySelector('.tab-btn.active')?.dataset.tab === 'watch') renderWatchMatch();
+}
+
+// ─── CHANGE 2: Delete a watch video ───
+async function deleteWatchMatchVideo(videoId) {
+  if (videoId === 'legacy') {
+    // If it's the legacy video, delete the old embedCode from Firebase
+    await database.ref('premier_league/watchMatch/embedCode').remove();
+    watchMatchVideos = watchMatchVideos.filter(v => v.id !== 'legacy');
+  } else {
+    await database.ref(`premier_league/watchMatch/videos/${videoId}`).remove();
+    watchMatchVideos = watchMatchVideos.filter(v => v.id !== videoId);
+  }
+  // Re-render if on watch tab
+  if (document.querySelector('.tab-btn.active')?.dataset.tab === 'watch') renderWatchMatch();
+}
+
+// ─── CHANGE 2: Open Add Video Modal ───
+function openAddVideoModal() {
+  showModal(`
+    <h3>🎬 Add Match Video</h3>
+    <label>Video Title</label>
+    <input type="text" id="newVideoTitle" placeholder="e.g. ARSENAL VS LIVERPOOL" value="">
+    <label>YouTube URL or Embed Code</label>
+    <input type="text" id="newVideoEmbed" placeholder="Paste YouTube URL or iframe code">
+    <div id="addVideoStatus"></div>
+    <div class="modal-btns">
+      <button class="modal-btn-primary" id="saveVideoBtn">Add Video</button>
+      <button class="modal-btn-cancel" id="cancelVideoBtn">Cancel</button>
+    </div>
+  `);
+
+  document.getElementById('cancelVideoBtn').onclick = closeModal;
+
+  document.getElementById('saveVideoBtn').onclick = async () => {
+    const title = document.getElementById('newVideoTitle').value.trim();
+    const embed = document.getElementById('newVideoEmbed').value.trim();
+    const status = document.getElementById('addVideoStatus');
+    if (!embed) {
+      status.innerHTML = '<div class="status-msg status-error">Please enter a video URL or embed code.</div>';
+      return;
+    }
+    const btn = document.getElementById('saveVideoBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span> Adding...';
+    try {
+      await addWatchMatchVideo(title, embed);
+      status.innerHTML = '<div class="status-msg status-success">Video added!</div>';
+      setTimeout(() => { closeModal(); renderWatchMatch(); }, 1200);
+    } catch(e) {
+      status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+      btn.disabled = false;
+      btn.innerHTML = 'Add Video';
+    }
+  };
+}
+
+// ─── CHANGE 2: Updated renderWatchMatch ───
+function renderWatchMatch() {
+  let html = '';
+
+  if (watchMatchVideos.length === 0) {
+    html = `<div class="empty-state"><div class="empty-icon">🎬</div><p>No match videos available yet.</p></div>`;
+  } else {
+    html = '<div class="watch-videos-container">';
+    for (const video of watchMatchVideos) {
+      html += `
+        <div class="watch-video-item">
+          <div class="inline-media">
+            <div class="video-wrapper">${video.embedCode}</div>
+          </div>
+          <div class="watch-video-title">${escapeHtml(video.title)}</div>
+          ${isAdminMode ? `<button class="watch-video-delete-btn" data-id="${video.id}">🗑️ Delete Video</button>` : ''}
+        </div>
+      `;
+    }
+    html += '</div>';
+  }
+
+  if (isAdminMode) {
+    html += `<button class="add-btn-main" id="addVideoBtn" style="margin-top:20px;">➕ Add Video</button>`;
+  }
+
+  document.getElementById('contentCard').innerHTML = html;
+
+  // Attach delete handlers
+  document.querySelectorAll('.watch-video-delete-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.dataset.id;
+      if (confirm(`Delete this video?`)) {
+        await deleteWatchMatchVideo(id);
+      }
+    };
+  });
+
+  document.getElementById('addVideoBtn')?.addEventListener('click', openAddVideoModal);
+}
+
+async function updateWatchMatchEmbed() {
+  // This function is kept for backward compatibility but now opens the add video modal
+  openAddVideoModal();
 }
 
 async function loadTeamIcons() {
@@ -2497,30 +2667,7 @@ function renderTopAssistants() {
 
 function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
 
-function renderWatchMatch() {
-  let html = '';
-  if (watchMatchEmbedCode) { html = `<div class="inline-media"><div class="video-wrapper">${watchMatchEmbedCode}</div></div>`; }
-  else { html = `<div class="empty-state"><div class="empty-icon">🎬</div><p>No match video available yet.</p></div>`; }
-  if (isAdminMode) html += `<button class="add-btn-main" id="setWatchBtn">🎥 Update Match Video</button>`;
-  document.getElementById('contentCard').innerHTML = html;
-  if (isAdminMode) document.getElementById('setWatchBtn')?.addEventListener('click', updateWatchMatchEmbed);
-}
-
-async function updateWatchMatchEmbed() {
-  const embed = prompt("Paste YouTube embed code (iframe) or full URL:", watchMatchEmbedCode);
-  if (embed === null) return;
-  let finalEmbed = embed.trim();
-  if (finalEmbed.includes("youtube.com/watch?v=") || finalEmbed.includes("youtu.be/")) {
-    let videoId = '';
-    if (finalEmbed.includes("youtu.be/")) videoId = finalEmbed.split("youtu.be/")[1].split(/[?#]/)[0];
-    else { const u = new URLSearchParams(new URL(finalEmbed).search); videoId = u.get('v'); }
-    if (videoId) finalEmbed = `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-  }
-  await database.ref('premier_league/watchMatch/embedCode').set(finalEmbed);
-  watchMatchEmbedCode = finalEmbed;
-  alert("Watch Match updated!");
-  if (document.querySelector('.tab-btn.active')?.dataset.tab === 'watch') renderWatchMatch();
-}
+// ─── CHANGE 2: renderWatchMatch is now defined above ───
 
 // ─── Modified renderCurrentTab with background save awareness ───
 function renderCurrentTab(tabOverride) {
@@ -2791,7 +2938,7 @@ function showEditManagersModal() {
   };
 }
 
-// ─── Modified openAdminSettings to include two new buttons ───
+// ─── Modified openAdminSettings ───
 function openAdminSettings() {
   showModal(`<h3>⚙️ Admin Settings</h3><div class="settings-grid">
     <button class="settings-btn" id="setLogoBtn">🖼️ Upload Navbar Logo</button>
@@ -2800,7 +2947,7 @@ function openAdminSettings() {
     <button class="settings-btn" id="manageSlideBtn">🎞️ Manage Main Slideshow</button>
     <button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button>
     <button class="settings-btn" id="manageHeaderBgBtn">🖼️ Table Header Background (legacy)</button>
-    <button class="settings-btn" id="setWatchBtnAdmin">🎥 Set Watch Match Embed</button>
+    <button class="settings-btn" id="manageWatchVideosBtn">🎥 Manage Watch Videos</button>
     <!-- FEATURE 3 & 4: New buttons -->
     <button class="settings-btn" id="manageTeamNameMappingsBtn">🔁 Manage Team Name Mappings</button>
     <button class="settings-btn" id="manageTeamLogoMappingsBtn">🏷️ Manage Team Logo Mappings</button>
@@ -2812,7 +2959,7 @@ function openAdminSettings() {
   document.getElementById('manageSlideBtn').onclick = manageSlideshowUI;
   document.getElementById('addIconBtn').onclick = uploadTeamIcon;
   document.getElementById('manageHeaderBgBtn').onclick = uploadHeaderBgImage;
-  document.getElementById('setWatchBtnAdmin').onclick = () => { closeModal(); updateWatchMatchEmbed(); };
+  document.getElementById('manageWatchVideosBtn').onclick = () => { closeModal(); openAddVideoModal(); };
   document.getElementById('manageTeamNameMappingsBtn').onclick = () => { closeModal(); openManageTeamNameMappingsModal(); };
   document.getElementById('manageTeamLogoMappingsBtn').onclick = () => { closeModal(); openManageTeamLogoMappingsModal(); };
 }
@@ -2887,19 +3034,60 @@ document.getElementById('menuBtn').onclick = toggleMenu;
 document.getElementById('closeMenuBtn').onclick = closeMenu;
 document.getElementById('overlay').onclick = closeMenu;
 document.getElementById('homeBtn').onclick = () => window.location.href = 'feed.html';
-document.getElementById('adminModeBtn').onclick = () => {
+
+// ─── CHANGE 1: Admin Key Verification via API ───
+document.getElementById('adminModeBtn').onclick = async () => {
   const key = prompt("Enter admin key:");
-  if (key === "admin@911") {
-    isAdminMode = true; alert("Admin mode activated ✅");
-    document.getElementById('seasonAdminPanel').style.display = 'flex';
-    renderCurrentTab();
-    if (!document.getElementById('adminSettingsItem')) {
-      const item = document.createElement('div'); item.id = 'adminSettingsItem'; item.className = 'menu-item'; item.innerHTML = '⚙️ Admin Settings';
-      item.onclick = () => { openAdminSettings(); closeMenu(); };
-      document.getElementById('sideMenu').appendChild(item);
+  if (key === null) return; // User cancelled
+
+  // Show loading modal
+  const loadingModal = document.createElement('div');
+  loadingModal.className = 'modal-overlay active';
+  loadingModal.style.display = 'flex';
+  loadingModal.innerHTML = `
+    <div class="modal-card" style="max-width:400px;text-align:center;">
+      <h3>⏳ Verifying...</h3>
+      <div class="loading-spinner" style="padding:20px;">
+        <div class="spinner"></div>
+        <span>Checking credentials...</span>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(loadingModal);
+
+  try {
+    const response = await fetch('https://efootball-league.onrender.com/verify-admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: key })
+    });
+    const data = await response.json();
+
+    // Remove loading modal
+    loadingModal.remove();
+
+    if (data.success === true) {
+      isAdminMode = true;
+      alert("Admin mode activated ✅");
+      document.getElementById('seasonAdminPanel').style.display = 'flex';
+      renderCurrentTab();
+      if (!document.getElementById('adminSettingsItem')) {
+        const item = document.createElement('div');
+        item.id = 'adminSettingsItem';
+        item.className = 'menu-item';
+        item.innerHTML = '⚙️ Admin Settings';
+        item.onclick = () => { openAdminSettings(); closeMenu(); };
+        document.getElementById('sideMenu').appendChild(item);
+      }
+    } else {
+      alert("Incorrect key");
     }
-  } else alert("Incorrect key");
+  } catch(e) {
+    loadingModal.remove();
+    alert("Error verifying admin key: " + e.message);
+  }
 };
+
 document.getElementById('debugInfoBtn').onclick = () => { openDebugInfoModal(); closeMenu(); };
 
 document.getElementById('prevSeasonBtn').onclick = () => switchSeason(-1);
@@ -2933,6 +3121,7 @@ async function init() {
   await loadTeamIcons();
   await loadNavbarLogo();
   await loadTableHeaderBgImage();
+  // CHANGE 2: Load watch match videos (replaces old loadWatchMatchEmbed)
   await loadWatchMatchEmbed();
   await loadCalendarEvents();
   // FEATURE 3: Load team name mappings
