@@ -182,15 +182,17 @@
         .modal h2 { color: #FFD700; margin-top: 0; font-size: 28px; margin-bottom: 25px; }
 
         /* ===== STORY CAROUSEL ===== */
-        .story-carousel-new { position: relative; width: 100%; background: #000; overflow: hidden; padding: 30px 0; border-bottom: 1px solid rgba(255,215,0,0.1); user-select: none; }
+        .story-carousel-new { position: relative; width: 100%; background: #000; overflow: hidden; padding: 30px 0; border-bottom: 1px solid rgba(255, 215, 0, 0.1); user-select: none; }
         .story-track-new { display: flex; justify-content: center; align-items: center; gap: 20px; transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94); will-change: transform; padding: 0 20px; }
         .story-item-new { flex-shrink: 0; text-align: center; transition: all 0.3s ease; position: relative; }
         .story-ring-new { border-radius: 50%; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); padding: 3px; display: flex; align-items: center; justify-content: center; margin: 0 auto; transition: all 0.3s ease; position: relative; }
         .story-image-wrapper-new { border-radius: 50%; overflow: hidden; background: #000; border: 3px solid #000; }
         .story-image-new { width: 100%; height: 100%; object-fit: cover; display: block; }
         .story-caption-new { margin-top: 10px; color: #fff; font-size: 13px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        /* center big */
         .story-item-new.center .story-ring-new { width: 110px; height: 110px; }
         .story-item-new.center .story-image-wrapper-new { width: 104px; height: 104px; }
+        /* side smaller + blur */
         .story-item-new.side .story-ring-new { width: 70px; height: 70px; filter: blur(2px); opacity: 0.7; }
         .story-item-new.side .story-image-wrapper-new { width: 64px; height: 64px; }
         .story-item-new.side .story-caption-new { font-size: 11px; opacity: 0.8; }
@@ -645,29 +647,29 @@
         let userLikedPosts = new Set();
 
         const defaultLeagues = [
-            { id: 'premier', name: 'Premier League', url: 'adminpremier.html', color: '#3d195b', icon: 'https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg' },
-            { id: 'laliga', name: 'La Liga', url: 'laliga.html', color: '#ee3524', icon: 'https://upload.wikimedia.org/wikipedia/commons/1/13/LaLiga_logo_2023.svg' },
-            { id: 'seriea', name: 'Serie A', url: 'seriea.html', color: '#00529f', icon: 'https://upload.wikimedia.org/wikipedia/en/e/e1/Serie_A_logo_%282019%29.svg' },
-            { id: 'bundesliga', name: 'Bundesliga', url: 'bundesliga.html', color: '#d3010c', icon: 'https://upload.wikimedia.org/wikipedia/en/d/df/Bundesliga_logo_%282017%29.svg' },
-            { id: 'ligue1', name: 'Ligue 1', url: 'ligue1.html', color: '#dba514', icon: 'https://upload.wikimedia.org/wikipedia/en/a/a8/Ligue1.svg' },
-            { id: 'ucl', name: 'UEFA Champions League', url: 'newchampion.html', color: '#003399', icon: 'https://upload.wikimedia.org/wikipedia/en/b/bf/UEFA_Champions_League_logo_2.svg' },
-            { id: 'uel', name: 'UEFA Europa League', url: 'neweuropa.html', color: '#f58220', icon: 'https://upload.wikimedia.org/wikipedia/en/c/c5/UEFA_Europa_League_logo_2024.svg' },
-            { id: 'uecl', name: 'UEFA Conference League', url: 'newconference.html', color: '#5db846', icon: 'https://upload.wikimedia.org/wikipedia/en/b/b5/UEFA_Europa_Conference_League.svg' },
-            { id: 'supercup', name: 'UEFA Super Cup', url: 'newsupercup.html', color: '#0066cc', icon: 'https://upload.wikimedia.org/wikipedia/en/7/73/UEFA_Super_Cup_Logo_2021.svg' },
-            { id: 'nations', name: 'UEFA Nations League', url: 'nations.html', color: '#0057a8', icon: 'https://upload.wikimedia.org/wikipedia/en/7/76/UEFA_Nations_League.svg' },
-            { id: 'euro', name: 'UEFA Euro', url: 'euro.html', color: '#0057a8', icon: 'https://upload.wikimedia.org/wikipedia/en/7/76/UEFA_Nations_League.svg' },
-            { id: 'facup', name: 'FA Cup', url: 'facup.html', color: '#cc0000', icon: 'https://upload.wikimedia.org/wikipedia/en/4/4b/FA_Cup_2023.svg' },
-            { id: 'copadelrey', name: 'Copa del Rey', url: 'copadelrey.html', color: '#c60b1e', icon: 'https://upload.wikimedia.org/wikipedia/en/b/b1/Copa_del_Rey_logo.svg' },
-            { id: 'coppaditalia', name: 'Coppa Italia', url: 'coppaditalia.html', color: '#00529f', icon: 'https://upload.wikimedia.org/wikipedia/en/5/5c/Coppa_Italia_logo.svg' },
-            { id: 'dfbpokal', name: 'DFB-Pokal', url: 'dfbpokal.html', color: '#008000', icon: 'https://upload.wikimedia.org/wikipedia/en/0/0e/DFB-Pokal_logo.svg' },
-            { id: 'coupedefrance', name: 'Coupe de France', url: 'coupedefrance.html', color: '#002395', icon: 'https://upload.wikimedia.org/wikipedia/fr/f/f7/Logo_Coupe_de_France.svg' },
-            { id: 'cwc', name: 'FIFA Club World Cup', url: 'newclubworldcup.html', color: '#326295', icon: 'https://upload.wikimedia.org/wikipedia/en/9/93/2025_FIFA_Club_World_Cup_logo.svg' },
-            { id: 'wc', name: 'FIFA World Cup', url: 'fwc.html', color: '#d4a017', icon: 'https://upload.wikimedia.org/wikipedia/en/6/67/2026_FIFA_World_Cup_logo.svg' },
-            { id: 'cs', name: 'Community Shield', url: 'cs.html', color: '#e60000', icon: 'https://upload.wikimedia.org/wikipedia/en/4/49/FA_Community_Shield_2023.svg' },
-            { id: 'supercopaesp', name: 'Supercopa de España', url: 'supercopa.html', color: '#c60b1e', icon: 'https://upload.wikimedia.org/wikipedia/en/2/24/Supercopa_de_Espa%C3%B1a_logo.svg' },
-            { id: 'supercoppaitaliana', name: 'Supercoppa Italiana', url: 'supercoppaitaliana.html', color: '#00529f', icon: 'https://upload.wikimedia.org/wikipedia/en/6/6e/Supercoppa_Italiana_logo.svg' },
-            { id: 'dflsupercup', name: 'DFL-Supercup', url: 'dflsupercup.html', color: '#d3010c', icon: 'https://upload.wikimedia.org/wikipedia/en/d/df/Bundesliga_logo_%282017%29.svg' },
-            { id: 'tropheedeschampions', name: 'Trophée des Champions', url: 'tropheedeschampions.html', color: '#dba514', icon: 'https://upload.wikimedia.org/wikipedia/fr/3/3c/Trophee_des_champions.svg' }
+            { id: 'premier', name: 'Premier League', url: 'adminpremier.html', color: '#3d195b' },
+            { id: 'laliga', name: 'La Liga', url: 'laliga.html', color: '#ee3524' },
+            { id: 'seriea', name: 'Serie A', url: 'seriea.html', color: '#00529f' },
+            { id: 'bundesliga', name: 'Bundesliga', url: 'bundesliga.html', color: '#d3010c' },
+            { id: 'ligue1', name: 'Ligue 1', url: 'ligue1.html', color: '#dba514' },
+            { id: 'ucl', name: 'UEFA Champions League', url: 'newchampion.html', color: '#003399' },
+            { id: 'uel', name: 'UEFA Europa League', url: 'neweuropa.html', color: '#f58220' },
+            { id: 'uecl', name: 'UEFA Conference League', url: 'newconference.html', color: '#5db846' },
+            { id: 'supercup', name: 'UEFA Super Cup', url: 'newsupercup.html', color: '#0066cc' },
+            { id: 'nations', name: 'UEFA Nations League', url: 'nations.html', color: '#0057a8' },
+            { id: 'euro', name: 'UEFA Euro', url: 'euro.html', color: '#0057a8' },
+            { id: 'facup', name: 'FA Cup', url: 'facup.html', color: '#cc0000' },
+            { id: 'copadelrey', name: 'Copa del Rey', url: 'copadelrey.html', color: '#c60b1e' },
+            { id: 'coppaditalia', name: 'Coppa Italia', url: 'coppaditalia.html', color: '#00529f' },
+            { id: 'dfbpokal', name: 'DFB-Pokal', url: 'dfbpokal.html', color: '#008000' },
+            { id: 'coupedefrance', name: 'Coupe de France', url: 'coupedefrance.html', color: '#002395' },
+            { id: 'cwc', name: 'FIFA Club World Cup', url: 'newclubworldcup.html', color: '#326295' },
+            { id: 'wc', name: 'FIFA World Cup', url: 'fwc.html', color: '#d4a017' },
+            { id: 'cs', name: 'Community Shield', url: 'cs.html', color: '#e60000' },
+            { id: 'supercopaesp', name: 'Supercopa de España', url: 'supercopa.html', color: '#c60b1e' },
+            { id: 'supercoppaitaliana', name: 'Supercoppa Italiana', url: 'supercoppaitaliana.html', color: '#00529f' },
+            { id: 'dflsupercup', name: 'DFL-Supercup', url: 'dflsupercup.html', color: '#d3010c' },
+            { id: 'tropheedeschampions', name: 'Trophée des Champions', url: 'tropheedeschampions.html', color: '#dba514' }
         ];
 
         window.onload = function() {
@@ -808,10 +810,10 @@
                 const data = await res.json();
                 leaguesData = defaultLeagues.map(league => {
                     const saved = (data && data[league.id]) ? data[league.id] : {};
-                    return { ...league, icon: saved.icon || league.icon, bgImage: saved.bgImage || null };
+                    return { ...league, icon: saved.icon || null, bgImage: saved.bgImage || null };
                 });
             } catch(e) {
-                leaguesData = [...defaultLeagues];
+                leaguesData = defaultLeagues.map(l => ({ ...l, icon: null, bgImage: null }));
             }
             renderLeagueGrid(leaguesData);
         }
@@ -827,11 +829,14 @@
                     ? `background-image: url('${league.bgImage}'); background-size: cover; background-position: center;`
                     : `background: #1a1a1a;`;
                 const colorTint = league.color ? `rgba(${hexToRgb(league.color)}, 0.35)` : 'rgba(0,0,0,0.5)';
+                const iconHtml = league.icon
+                    ? `<img src="${league.icon}" alt="${league.name}" class="league-block-icon" onerror="this.style.display='none'">`
+                    : '';
                 return `
                     <a class="league-block-wrap" href="${league.url}">
                         <div class="league-block" style="${bgStyle}">
                             <div class="league-block-overlay" style="background: ${colorTint};"></div>
-                            <img src="${league.icon}" alt="${league.name}" class="league-block-icon" onerror="this.style.display='none'">
+                            ${iconHtml}
                         </div>
                         <div class="league-block-name">${league.name}</div>
                     </a>
@@ -861,10 +866,12 @@
                     <label style="color:#FFD700; font-size:13px;">Tournament Icon</label>
                     <input type="file" id="league-icon-${league.id}" accept="image/*" onchange="uploadLeagueIcon('${league.id}')">
                     <label for="league-icon-${league.id}" class="file-upload-label" style="margin-bottom:8px;">📷 Upload Icon</label>
+                    <button onclick="removeLeagueIcon('${league.id}')" style="width:100%;background:#ff4444;color:#fff;border:none;padding:8px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:bold;margin-bottom:4px;">🗑️ Remove Icon</button>
                     <div id="league-icon-status-${league.id}" class="upload-status"></div>
                     <label style="color:#FFD700; font-size:13px; margin-top:10px; display:block;">Block Background Image</label>
                     <input type="file" id="league-bg-${league.id}" accept="image/*" onchange="uploadLeagueBg('${league.id}')">
                     <label for="league-bg-${league.id}" class="file-upload-label">🖼️ Upload Background</label>
+                    <button onclick="removeLeagueBg('${league.id}')" style="width:100%;background:#ff4444;color:#fff;border:none;padding:8px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:bold;margin-top:4px;">🗑️ Remove Background</button>
                     <div id="league-bg-status-${league.id}" class="upload-status"></div>
                 </div>
             `).join('');
@@ -898,6 +905,26 @@
             } catch(e) { statusDiv.innerHTML = '❌ Upload failed'; }
         }
 
+        async function removeLeagueIcon(leagueId) {
+            if (!confirm('Remove icon for this league?')) return;
+            try {
+                await fetch(`${FIREBASE_CONFIG.databaseURL}/leagues/${leagueId}/icon.json`, { method: 'DELETE' });
+                const statusDiv = document.getElementById(`league-icon-status-${leagueId}`);
+                if (statusDiv) statusDiv.innerHTML = '✅ Icon removed!';
+                loadLeagues();
+            } catch(e) { console.error(e); }
+        }
+
+        async function removeLeagueBg(leagueId) {
+            if (!confirm('Remove background for this league?')) return;
+            try {
+                await fetch(`${FIREBASE_CONFIG.databaseURL}/leagues/${leagueId}/bgImage.json`, { method: 'DELETE' });
+                const statusDiv = document.getElementById(`league-bg-status-${leagueId}`);
+                if (statusDiv) statusDiv.innerHTML = '✅ Background removed!';
+                loadLeagues();
+            } catch(e) { console.error(e); }
+        }
+
         async function uploadToImgBB(file) {
             const formData = new FormData();
             formData.append("image", file);
@@ -918,11 +945,10 @@
             return urls;
         }
 
-        // ===== ADMIN KEY - RENDER ONLY, IMPROVED ERROR MESSAGES =====
+        // ===== ADMIN KEY - RENDER ONLY, NO ERROR ALERTS =====
         async function promptAdminKey() {
             const key = prompt("Enter Admin Key:");
-            if (key === null) return;
-            if (!key.trim()) { alert("⚠️ Please enter a key."); return; }
+            if (key === null || !key.trim()) return;
 
             const loadingDiv = document.createElement('div');
             loadingDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;color:#FFD700;font-size:18px;gap:16px;';
@@ -935,20 +961,9 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ key: key.trim() })
                 });
-
                 loadingDiv.parentNode && loadingDiv.parentNode.removeChild(loadingDiv);
-
-                if (!response.ok) {
-                    if (response.status === 401 || response.status === 403) {
-                        alert("❌ Incorrect admin key. Please try again.");
-                    } else {
-                        alert(`⚠️ Server error (${response.status}). Please try again later.`);
-                    }
-                    return;
-                }
-
+                if (!response.ok) return;
                 const data = await response.json();
-
                 if (data && data.success === true) {
                     isAdminMode = true;
                     document.getElementById('adminSlideControls').style.display = 'block';
@@ -956,26 +971,17 @@
                     document.getElementById('editLeagueIconsMenuItem').style.display = 'block';
                     renderPosts();
                     renderStoryCarousel();
-                    alert("✅ Admin mode activated! You now have full access.");
                     closeMenu();
-                } else {
-                    alert("❌ Incorrect admin key. Please try again.");
                 }
             } catch(e) {
                 loadingDiv.parentNode && loadingDiv.parentNode.removeChild(loadingDiv);
-                if (e.name === 'TypeError' && e.message.includes('fetch')) {
-                    alert("🌐 Cannot reach the server. Check your internet connection and try again.");
-                } else {
-                    alert("⚠️ Something went wrong while verifying. Please try again.");
-                }
             }
         }
 
         async function handleAdminCalendar(event) {
             event.preventDefault();
             const key = prompt("Enter Admin Key for Calendar:");
-            if (key === null) return;
-            if (!key.trim()) { alert("⚠️ Please enter a key."); return; }
+            if (key === null || !key.trim()) return;
 
             const loadingDiv = document.createElement('div');
             loadingDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;color:#FFD700;font-size:18px;gap:16px;';
@@ -988,31 +994,14 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ key: key.trim() })
                 });
-
                 loadingDiv.parentNode && loadingDiv.parentNode.removeChild(loadingDiv);
-
-                if (!response.ok) {
-                    if (response.status === 401 || response.status === 403) {
-                        alert("❌ Incorrect admin key. Please try again.");
-                    } else {
-                        alert(`⚠️ Server error (${response.status}). Please try again later.`);
-                    }
-                    return;
-                }
-
+                if (!response.ok) return;
                 const data = await response.json();
                 if (data && data.success === true) {
                     window.location.href = "admin-calendar.html";
-                } else {
-                    alert("❌ Incorrect admin key. Please try again.");
                 }
             } catch(e) {
                 loadingDiv.parentNode && loadingDiv.parentNode.removeChild(loadingDiv);
-                if (e.name === 'TypeError' && e.message.includes('fetch')) {
-                    alert("🌐 Cannot reach the server. Check your internet connection and try again.");
-                } else {
-                    alert("⚠️ Something went wrong while verifying. Please try again.");
-                }
             }
         }
 
