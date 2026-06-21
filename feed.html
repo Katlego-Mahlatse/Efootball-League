@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -117,12 +116,12 @@
         .league-panel {
             position: fixed;
             top: 0;
-            left: -420px;
-            width: 420px;
+            left: -340px;
+            width: 340px;
             height: 100vh;
             background: linear-gradient(135deg, #f5d742 0%, #d4af37 100%);
             z-index: 2000;
-            padding: 20px;
+            padding: 15px;
             transition: left 0.4s ease;
             overflow-y: auto;
         }
@@ -145,14 +144,14 @@
         .league-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            gap: 8px;
             margin-top: 10px;
         }
 
         .league-block {
             background: #000;
-            border-radius: 12px;
-            padding: 12px 8px;
+            border-radius: 10px;
+            padding: 8px 4px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -160,7 +159,7 @@
             cursor: pointer;
             text-decoration: none;
             transition: all 0.3s ease;
-            min-height: 110px;
+            min-height: 80px;
             position: relative;
             overflow: hidden;
             background-size: cover;
@@ -173,21 +172,21 @@
         }
 
         .league-block-icon {
-            width: 45px;
-            height: 45px;
+            width: 32px;
+            height: 32px;
             object-fit: contain;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
 
         .league-block-name {
             color: #FFD700;
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 700;
             text-align: center;
-            line-height: 1.3;
+            line-height: 1.2;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .league-block-overlay {
@@ -204,6 +203,48 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 480px) {
+            .league-panel {
+                width: 280px;
+                left: -280px;
+                padding: 12px;
+            }
+            .league-grid {
+                gap: 6px;
+            }
+            .league-block {
+                min-height: 70px;
+                padding: 6px 3px;
+            }
+            .league-block-icon {
+                width: 28px;
+                height: 28px;
+            }
+            .league-block-name {
+                font-size: 8px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .league-panel {
+                width: 240px;
+                left: -240px;
+                padding: 10px;
+            }
+            .league-block {
+                min-height: 60px;
+                padding: 4px 2px;
+            }
+            .league-block-icon {
+                width: 24px;
+                height: 24px;
+            }
+            .league-block-name {
+                font-size: 7px;
+            }
         }
 
         .close-panel {
@@ -1743,13 +1784,16 @@
             return urls;
         }
 
+        // ---- UPDATED: Admin key verification without hardcoded fallback ----
         async function promptAdminKey() {
             const key = prompt("Enter Admin Key:");
             if (key === null) return;
+            
             const loadingDiv = document.createElement('div');
             loadingDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;color:#FFD700;font-size:20px;';
             loadingDiv.textContent = 'Verifying...';
             document.body.appendChild(loadingDiv);
+            
             try {
                 const response = await fetch('https://efootball-league.onrender.com/verify-admin', {
                     method: 'POST',
@@ -1757,8 +1801,12 @@
                     body: JSON.stringify({ key: key })
                 });
                 const data = await response.json();
-                loadingDiv.remove();
-                if (data.success === true) {
+                
+                if (loadingDiv && loadingDiv.parentNode) {
+                    loadingDiv.parentNode.removeChild(loadingDiv);
+                }
+                
+                if (data && data.success === true) {
                     isAdminMode = true;
                     document.getElementById('adminSlideControls').style.display = 'block';
                     document.getElementById('createPostSection').style.display = 'block';
@@ -1771,17 +1819,47 @@
                     alert("Invalid admin key.");
                 }
             } catch(e) {
-                loadingDiv.remove();
-                alert("Error verifying key: " + e.message);
+                if (loadingDiv && loadingDiv.parentNode) {
+                    loadingDiv.parentNode.removeChild(loadingDiv);
+                }
+                alert("Error verifying key. Please try again.");
             }
         }
 
-        function handleAdminCalendar(event) {
+        // ---- UPDATED: Admin calendar verification without hardcoded fallback ----
+        async function handleAdminCalendar(event) {
             event.preventDefault();
             const key = prompt("Enter Admin Key for Calendar:");
-            if (key === "admin@100") {
-                window.location.href = "admin-calendar.html";
-            } else if (key !== null) alert("Invalid admin key.");
+            if (key === null) return;
+            
+            const loadingDiv = document.createElement('div');
+            loadingDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;color:#FFD700;font-size:20px;';
+            loadingDiv.textContent = 'Verifying...';
+            document.body.appendChild(loadingDiv);
+            
+            try {
+                const response = await fetch('https://efootball-league.onrender.com/verify-admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: key })
+                });
+                const data = await response.json();
+                
+                if (loadingDiv && loadingDiv.parentNode) {
+                    loadingDiv.parentNode.removeChild(loadingDiv);
+                }
+                
+                if (data && data.success === true) {
+                    window.location.href = "admin-calendar.html";
+                } else {
+                    alert("Invalid admin key.");
+                }
+            } catch(e) {
+                if (loadingDiv && loadingDiv.parentNode) {
+                    loadingDiv.parentNode.removeChild(loadingDiv);
+                }
+                alert("Error verifying key. Please try again.");
+            }
         }
 
         function toggleMenu() { document.getElementById('hamburgerMenu').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); }
