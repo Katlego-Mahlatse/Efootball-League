@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,1240 +5,338 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>eFootball Fan Hub</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #000; color: #fff; min-height: 100vh; overflow-x: hidden; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: #000;
-            color: #fff;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+        .navbar { background: linear-gradient(135deg, #f5d742, #d4af37); padding: 0.5rem 1.2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 12px rgba(245, 215, 66, 0.3); }
+        .view-league-btn { background: #1a1a1a; color: #f5d742; border: 1.5px solid #f5d742; padding: 8px 20px; border-radius: 20px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-block; }
+        .view-league-btn:hover { background: #f5d742; color: #1a1a1a; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(245, 215, 66, 0.4); }
+        .menu-icon { background: #1a1a1a; width: 36px; height: 36px; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; cursor: pointer; transition: transform 0.2s, background 0.2s; border: 1.5px solid #f5d742; }
+        .menu-icon span { display: block; width: 18px; height: 2.5px; background-color: #f5d742; border-radius: 2px; }
+        .menu-icon:hover { transform: scale(1.05); background: #0a0a0a; }
 
-        .navbar {
-            background: linear-gradient(135deg, #f5d742, #d4af37);
-            padding: 0.5rem 1.2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 4px 12px rgba(245, 215, 66, 0.3);
-        }
+        .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1999; display: none; animation: fadeIn 0.3s ease; }
+        .overlay.active { display: block; }
 
-        .view-league-btn {
-            background: #1a1a1a;
-            color: #f5d742;
-            border: 1.5px solid #f5d742;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-        }
+        .hamburger-menu { position: fixed; top: 0; right: -320px; width: 320px; height: 100vh; background: linear-gradient(135deg, #f5d742 0%, #d4af37 100%); z-index: 2000; padding: 30px; transition: right 0.4s ease; overflow-y: auto; }
+        .hamburger-menu.active { right: 0; }
 
-        .view-league-btn:hover {
-            background: #f5d742;
-            color: #1a1a1a;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(245, 215, 66, 0.4);
-        }
-
-        .menu-icon {
-            background: #1a1a1a;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
-            border: 1.5px solid #f5d742;
-        }
-
-        .menu-icon span {
-            display: block;
-            width: 18px;
-            height: 2.5px;
-            background-color: #f5d742;
-            border-radius: 2px;
-        }
-
-        .menu-icon:hover {
-            transform: scale(1.05);
-            background: #0a0a0a;
-        }
-
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.7);
-            z-index: 1999;
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .overlay.active {
-            display: block;
-        }
-
-        .hamburger-menu {
-            position: fixed;
-            top: 0;
-            right: -320px;
-            width: 320px;
-            height: 100vh;
-            background: linear-gradient(135deg, #f5d742 0%, #d4af37 100%);
-            z-index: 2000;
-            padding: 30px;
-            transition: right 0.4s ease;
-            overflow-y: auto;
-        }
-
-        .hamburger-menu.active {
-            right: 0;
-        }
-
+        /* ===== FULL SCREEN LEAGUE PANEL ===== */
         .league-panel {
             position: fixed;
-            top: 0;
-            left: -340px;
-            width: 340px;
-            height: 100vh;
-            background: linear-gradient(135deg, #f5d742 0%, #d4af37 100%);
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100%; height: 100vh;
+            background: #0a0a0a;
             z-index: 2000;
-            padding: 15px;
-            transition: left 0.4s ease;
-            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(-100%);
+            transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            overflow: hidden;
         }
+        .league-panel.active { transform: translateY(0); }
 
-        .league-panel.active {
-            left: 0;
+        .league-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px;
+            border-bottom: 1px solid #222;
+            flex-shrink: 0;
+            background: #0a0a0a;
         }
-
         .league-panel-title {
-            font-size: 18px;
-            font-weight: 800;
-            color: #000;
-            text-align: center;
-            margin-top: 50px;
-            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #FFD700;
             letter-spacing: 2px;
             text-transform: uppercase;
         }
+        .close-panel {
+            cursor: pointer;
+            color: #FFD700;
+            font-size: 28px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            border: 1.5px solid #FFD700;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .close-panel:hover { transform: rotate(90deg) scale(1.1); background: #FFD70020; }
 
+        .league-search-bar {
+            padding: 12px 16px;
+            border-bottom: 1px solid #1a1a1a;
+            flex-shrink: 0;
+            background: #0a0a0a;
+        }
+        .league-search-input-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #1a1a1a;
+            border: 1.5px solid #FFD700;
+            border-radius: 25px;
+            padding: 10px 16px;
+        }
+        .league-search-icon { color: #FFD700; font-size: 18px; flex-shrink: 0; }
+        .league-search-input {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .league-search-input::placeholder { color: #555; }
+
+        .league-grid-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
         .league-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-top: 10px;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
         }
-
-        .league-block {
-            background: #000;
-            border-radius: 10px;
-            padding: 8px 4px;
+        .league-block-wrap {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            cursor: pointer;
+            gap: 8px;
             text-decoration: none;
-            transition: all 0.3s ease;
-            min-height: 80px;
+            cursor: pointer;
+        }
+        .league-block {
+            width: 100%;
+            min-height: 130px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             position: relative;
             overflow: hidden;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            transition: all 0.3s ease;
             background-size: cover;
             background-position: center;
         }
-
-        .league-block:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5);
-        }
-
+        .league-block:hover { transform: scale(1.03); border-color: #FFD700; box-shadow: 0 4px 20px rgba(255,215,0,0.25); }
+        .league-block-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); border-radius: 14px; }
         .league-block-icon {
-            width: 32px;
-            height: 32px;
-            object-fit: contain;
-            margin-bottom: 4px;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-        }
-
-        .league-block-name {
-            color: #FFD700;
-            font-size: 9px;
-            font-weight: 700;
-            text-align: center;
-            line-height: 1.2;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .league-block-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,0.55);
-            border-radius: 12px;
-        }
-
-        .league-block-content {
             position: relative;
             z-index: 2;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
         }
-
-        /* Mobile responsive */
-        @media (max-width: 480px) {
-            .league-panel {
-                width: 280px;
-                left: -280px;
-                padding: 12px;
-            }
-            .league-grid {
-                gap: 6px;
-            }
-            .league-block {
-                min-height: 70px;
-                padding: 6px 3px;
-            }
-            .league-block-icon {
-                width: 28px;
-                height: 28px;
-            }
-            .league-block-name {
-                font-size: 8px;
-            }
+        .league-block-name {
+            color: #FFD700;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.3;
+            max-width: 100%;
+            padding: 0 4px;
+        }
+        .league-no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #555;
+            padding: 40px 20px;
+            font-size: 15px;
         }
 
         @media (max-width: 380px) {
-            .league-panel {
-                width: 240px;
-                left: -240px;
-                padding: 10px;
-            }
-            .league-block {
-                min-height: 60px;
-                padding: 4px 2px;
-            }
-            .league-block-icon {
-                width: 24px;
-                height: 24px;
-            }
-            .league-block-name {
-                font-size: 7px;
-            }
+            .league-block { min-height: 100px; }
+            .league-block-icon { width: 44px; height: 44px; }
+            .league-block-name { font-size: 10px; }
         }
 
-        .close-panel {
-            cursor: pointer;
-            color: #000;
-            float: right;
-            font-size: 32px;
-            transition: all 0.3s ease;
-            font-weight: bold;
-        }
+        /* ===== HAMBURGER MENU ===== */
+        .close-menu { cursor: pointer; color: #000; float: right; font-size: 32px; transition: all 0.3s ease; font-weight: bold; }
+        .close-menu:hover { transform: rotate(90deg) scale(1.2); }
+        .menu-items { margin-top: 80px; }
+        .menu-item { padding: 18px 20px; margin: 12px 0; background: #000; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; border-left: 5px solid #000; font-size: 16px; font-weight: 500; color: #FFD700; }
+        .menu-item:hover { background: rgba(0,0,0,0.8); transform: translateX(10px); }
+        .menu-item.calendar-parent { position: relative; cursor: pointer; }
+        .calendar-dropdown { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: #000; border-left: 5px solid #FFD700; border-radius: 12px; z-index: 2100; padding: 8px 0; margin-top: 4px; }
+        .menu-item.calendar-parent:hover .calendar-dropdown { display: block; }
+        .dropdown-item { padding: 12px 20px; color: #FFD700; text-decoration: none; display: block; transition: all 0.2s ease; font-size: 14px; border-bottom: 1px solid rgba(255,215,0,0.1); }
+        .dropdown-item:hover { background: rgba(255,215,0,0.2); transform: translateX(5px); }
 
-        .close-panel:hover {
-            transform: rotate(90deg) scale(1.2);
-        }
+        /* ===== MODALS ===== */
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; z-index: 3000; animation: fadeIn 0.3s ease; overflow: auto; padding: 20px; backdrop-filter: blur(10px); }
+        .modal.active { display: flex; }
+        .modal-content { background: linear-gradient(135deg, #1a1a1a 0%, #000 100%); padding: 50px; border-radius: 25px; max-width: 550px; width: 100%; border: 3px solid #FFD700; position: relative; animation: scaleIn 0.3s ease; box-shadow: 0 20px 60px rgba(255,215,0,0.3); max-height: 90vh; overflow-y: auto; }
+        .modal-close { position: absolute; top: 20px; right: 20px; cursor: pointer; color: #FFD700; font-size: 28px; transition: transform 0.2s ease; }
+        .modal-close:hover { transform: rotate(90deg) scale(1.2); }
+        .modal h2 { color: #FFD700; margin-top: 0; font-size: 28px; margin-bottom: 25px; }
 
-        .panel-items {
-            margin-top: 10px;
-        }
-
-        .panel-item {
-            padding: 18px 20px;
-            margin: 12px 0;
-            background: #000;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border-left: 5px solid;
-            font-size: 16px;
-            font-weight: 500;
-            color: #FFD700;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .panel-item::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 0;
-            transition: width 0.3s ease;
-            opacity: 0.1;
-        }
-
-        .panel-item:hover::before {
-            width: 100%;
-        }
-
-        .panel-item:hover {
-            transform: translateX(10px);
-        }
-
-        .league-icon {
-            width: 40px;
-            height: 40px;
-            object-fit: contain;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-        }
-
-        .league-premier { border-left-color: #3d195b; }
-        .league-premier::before { background: #3d195b; }
-        .league-laliga { border-left-color: #ee3524; }
-        .league-laliga::before { background: #ee3524; }
-        .league-facup { border-left-color: #cc0000; }
-        .league-facup::before { background: #cc0000; }
-        .league-copadelrey { border-left-color: #c60b1e; }
-        .league-copadelrey::before { background: #c60b1e; }
-        .league-ucl { border-left-color: #003399; }
-        .league-ucl::before { background: #003399; }
-        .league-uel { border-left-color: #f58220; }
-        .league-uel::before { background: #f58220; }
-        .league-uecl { border-left-color: #5db846; }
-        .league-uecl::before { background: #5db846; }
-        .league-supercup { border-left-color: #0066cc; }
-        .league-supercup::before { background: #0066cc; }
-        .league-nations { border-left-color: #0057a8; }
-        .league-nations::before { background: #0057a8; }
-        .league-euro { border-left-color: #0057a8; }
-        .league-euro::before { background: #0057a8; }
-        .league-cwc { border-left-color: #326295; }
-        .league-cwc::before { background: #326295; }
-        .league-wc { border-left-color: #d4a017; }
-        .league-wc::before { background: #d4a017; }
-        .league-cs { border-left-color: #e60000; }
-        .league-cs::before { background: #e60000; }
-        .league-supercopaesp { border-left-color: #c60b1e; }
-        .league-supercopaesp::before { background: #c60b1e; }
-        .league-dream { border-left-color: #ffd700; }
-        .league-dream::before { background: #ffd700; }
-
-        .close-menu {
-            cursor: pointer;
-            color: #000;
-            float: right;
-            font-size: 32px;
-            transition: all 0.3s ease;
-            font-weight: bold;
-        }
-
-        .close-menu:hover {
-            transform: rotate(90deg) scale(1.2);
-        }
-
-        .menu-items {
-            margin-top: 80px;
-        }
-
-        .menu-item {
-            padding: 18px 20px;
-            margin: 12px 0;
-            background: #000;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border-left: 5px solid #000;
-            font-size: 16px;
-            font-weight: 500;
-            color: #FFD700;
-        }
-
-        .menu-item:hover {
-            background: rgba(0, 0, 0, 0.8);
-            transform: translateX(10px);
-        }
-
-        .menu-item.calendar-parent {
-            position: relative;
-            cursor: pointer;
-        }
-        .calendar-dropdown {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            width: 100%;
-            background: #000;
-            border-left: 5px solid #FFD700;
-            border-radius: 12px;
-            z-index: 2100;
-            padding: 8px 0;
-            margin-top: 4px;
-        }
-        .menu-item.calendar-parent:hover .calendar-dropdown {
-            display: block;
-        }
-        .dropdown-item {
-            padding: 12px 20px;
-            color: #FFD700;
-            text-decoration: none;
-            display: block;
-            transition: all 0.2s ease;
-            font-size: 14px;
-            border-bottom: 1px solid rgba(255,215,0,0.1);
-        }
-        .dropdown-item:hover {
-            background: rgba(255, 215, 0, 0.2);
-            transform: translateX(5px);
-        }
-
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.92);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 3000;
-            animation: fadeIn 0.3s ease;
-            overflow: auto;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
-            padding: 50px;
-            border-radius: 25px;
-            max-width: 550px;
-            width: 100%;
-            border: 3px solid #FFD700;
-            position: relative;
-            animation: scaleIn 0.3s ease;
-            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.3);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            cursor: pointer;
-            color: #FFD700;
-            font-size: 28px;
-            transition: transform 0.2s ease;
-        }
-
-        .modal-close:hover {
-            transform: rotate(90deg) scale(1.2);
-        }
-
-        .modal h2 {
-            color: #FFD700;
-            margin-top: 0;
-            font-size: 28px;
-            margin-bottom: 25px;
-        }
-
-        /* NEW STORY CAROUSEL - professional sliding animation */
-        .story-carousel-new {
-            position: relative;
-            width: 100%;
-            background: #000;
-            overflow: hidden;
-            padding: 30px 0;
-            border-bottom: 1px solid rgba(255, 215, 0, 0.1);
-            user-select: none;
-        }
-        .story-track-new {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            will-change: transform;
-            padding: 0 20px;
-        }
-        .story-item-new {
-            flex-shrink: 0;
-            text-align: center;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        .story-ring-new {
-            border-radius: 50%;
-            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-            padding: 3px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        .story-image-wrapper-new {
-            border-radius: 50%;
-            overflow: hidden;
-            background: #000;
-            border: 3px solid #000;
-        }
-        .story-image-new {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-        .story-caption-new {
-            margin-top: 10px;
-            color: #fff;
-            font-size: 13px;
-            max-width: 120px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        /* center big */
+        /* ===== STORY CAROUSEL ===== */
+        .story-carousel-new { position: relative; width: 100%; background: #000; overflow: hidden; padding: 30px 0; border-bottom: 1px solid rgba(255,215,0,0.1); user-select: none; }
+        .story-track-new { display: flex; justify-content: center; align-items: center; gap: 20px; transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94); will-change: transform; padding: 0 20px; }
+        .story-item-new { flex-shrink: 0; text-align: center; transition: all 0.3s ease; position: relative; }
+        .story-ring-new { border-radius: 50%; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); padding: 3px; display: flex; align-items: center; justify-content: center; margin: 0 auto; transition: all 0.3s ease; position: relative; }
+        .story-image-wrapper-new { border-radius: 50%; overflow: hidden; background: #000; border: 3px solid #000; }
+        .story-image-new { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .story-caption-new { margin-top: 10px; color: #fff; font-size: 13px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .story-item-new.center .story-ring-new { width: 110px; height: 110px; }
         .story-item-new.center .story-image-wrapper-new { width: 104px; height: 104px; }
-        /* side smaller + blur */
         .story-item-new.side .story-ring-new { width: 70px; height: 70px; filter: blur(2px); opacity: 0.7; }
         .story-item-new.side .story-image-wrapper-new { width: 64px; height: 64px; }
         .story-item-new.side .story-caption-new { font-size: 11px; opacity: 0.8; }
 
-        /* Countdown Deadline */
-        .deadline-countdown {
-            background: #0a0a0a;
-            padding: 15px 10px;
-            text-align: center;
-            border-bottom: 1px solid #FFD70030;
-        }
+        /* ===== COUNTDOWN ===== */
+        .deadline-countdown { background: #0a0a0a; padding: 15px 10px; text-align: center; border-bottom: 1px solid #FFD70030; }
         .countdown-title { font-size: 14px; color: #FFD700; letter-spacing: 1px; margin-bottom: 8px; }
-        .countdown-boxes {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .cd-box {
-            background: #1a1a1a;
-            border-radius: 12px;
-            padding: 8px 12px;
-            min-width: 65px;
-            text-align: center;
-            border: 1px solid #FFD700;
-            box-shadow: 0 0 8px rgba(255,215,0,0.3);
-        }
-        .cd-number {
-            font-size: 28px;
-            font-weight: bold;
-            font-family: monospace;
-            color: #FFD700;
-        }
-        .cd-label {
-            font-size: 10px;
-            color: #aaa;
-            text-transform: uppercase;
-        }
+        .countdown-boxes { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+        .cd-box { background: #1a1a1a; border-radius: 12px; padding: 8px 12px; min-width: 65px; text-align: center; border: 1px solid #FFD700; box-shadow: 0 0 8px rgba(255,215,0,0.3); }
+        .cd-number { font-size: 28px; font-weight: bold; font-family: monospace; color: #FFD700; }
+        .cd-label { font-size: 10px; color: #aaa; text-transform: uppercase; }
 
-        /* Post images natural height */
-        .gallery-img {
-            width: 100%;
-            height: auto !important;
-            object-fit: contain;
-            background: #000;
-        }
-        .gallery-video {
-            width: 100%;
-            height: auto;
-            aspect-ratio: 16/9;
-            border: none;
-        }
+        /* ===== GALLERY ===== */
+        .gallery-img { width: 100%; height: auto !important; object-fit: contain; background: #000; }
+        .gallery-video { width: 100%; height: auto; aspect-ratio: 16/9; border: none; }
 
-        /* Comment Modal (anyone) */
-        .comment-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.95);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 4000;
-            backdrop-filter: blur(8px);
-        }
+        /* ===== COMMENT MODAL ===== */
+        .comment-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 4000; backdrop-filter: blur(8px); }
         .comment-modal.active { display: flex; }
-        .comment-modal-content {
-            background: #111;
-            border-radius: 20px;
-            max-width: 500px;
-            width: 90%;
-            border: 2px solid #FFD700;
-            overflow: hidden;
-            animation: scaleIn 0.2s;
-        }
-        .comment-modal-media {
-            max-height: 300px;
-            background: #000;
-            text-align: center;
-        }
+        .comment-modal-content { background: #111; border-radius: 20px; max-width: 500px; width: 90%; border: 2px solid #FFD700; overflow: hidden; animation: scaleIn 0.2s; }
+        .comment-modal-media { max-height: 300px; background: #000; text-align: center; }
         .comment-modal-media img, .comment-modal-media video { max-width: 100%; max-height: 280px; object-fit: contain; }
         .comment-modal-body { padding: 20px; }
         .comment-username-input { width: 100%; padding: 12px; background: #222; border: 1px solid #FFD700; color: white; border-radius: 30px; margin-bottom: 12px; }
         .comment-textarea { width: 100%; padding: 12px; background: #222; border: 1px solid #FFD700; color: white; border-radius: 20px; resize: vertical; }
         .comment-submit-btn { background: #FFD700; color: #000; border: none; padding: 12px; border-radius: 30px; font-weight: bold; margin-top: 12px; width: 100%; cursor: pointer; }
 
-        .admin-controls {
-            text-align: center;
-            padding: 20px;
-            background: rgba(255, 215, 0, 0.03);
-            border-bottom: 1px solid rgba(255, 215, 0, 0.1);
-        }
+        /* ===== ADMIN / POST CONTROLS ===== */
+        .admin-controls { text-align: center; padding: 20px; background: rgba(255,215,0,0.03); border-bottom: 1px solid rgba(255,215,0,0.1); }
+        .admin-btn { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #000; border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: bold; font-size: 14px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255,215,0,0.3); margin: 5px; }
+        .admin-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,215,0,0.5); }
+        .create-post-section { text-align: center; padding: 20px; background: #000; border-bottom: 1px solid rgba(255,215,0,0.1); }
+        .create-post-btn { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #000; border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: bold; font-size: 14px; text-transform: uppercase; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255,215,0,0.3); margin: 5px; }
+        .create-post-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,215,0,0.5); }
 
-        .admin-btn {
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-            color: #000;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
-            margin: 5px;
-        }
+        /* ===== FEED ===== */
+        .feed-container { max-width: 470px; margin: 0 auto; padding: 20px 0; }
+        .empty-feed { text-align: center; padding: 60px 20px; color: #666; font-size: 18px; }
+        .post { background: #000; border: 1px solid #262626; margin-bottom: 20px; animation: fadeInUp 0.5s ease; border-radius: 3px; position: relative; }
+        .post-header { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .post-user { display: flex; align-items: center; gap: 12px; }
+        .post-avatar { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #FFD700; object-fit: cover; }
+        .post-username { font-weight: 600; color: #fff; font-size: 14px; display: flex; align-items: center; gap: 5px; }
+        .verified-badge { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; background: #FFD700; border-radius: 50%; font-size: 9px; color: #000; font-weight: 900; flex-shrink: 0; }
+        .post-time { font-size: 12px; color: #8e8e8e; }
+        .post-menu-btn { background: none; border: none; color: #FFD700; font-size: 24px; cursor: pointer; padding: 4px 8px; transition: color 0.2s ease; position: relative; }
+        .post-menu-btn:hover { color: #FFA500; }
+        .post-menu-dropdown { position: absolute; top: 100%; right: 0; background: #262626; border: 1px solid #3a3a3a; border-radius: 8px; min-width: 150px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 100; overflow: hidden; display: none; }
+        .post-menu-dropdown.active { display: block; animation: fadeIn 0.2s ease; }
+        .menu-option { padding: 12px 16px; color: #fff; cursor: pointer; transition: background 0.2s ease; font-size: 14px; display: flex; align-items: center; gap: 10px; }
+        .menu-option:hover { background: #3a3a3a; }
+        .menu-option.delete { color: #ff4444; }
+        .menu-option.delete:hover { background: rgba(255,68,68,0.1); }
 
-        .admin-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
-        }
-
-        .create-post-section {
-            text-align: center;
-            padding: 20px;
-            background: #000;
-            border-bottom: 1px solid rgba(255, 215, 0, 0.1);
-        }
-
-        .create-post-btn {
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-            color: #000;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-            text-transform: uppercase;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
-            margin: 5px;
-        }
-
-        .create-post-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
-        }
-
-        .feed-container {
-            max-width: 470px;
-            margin: 0 auto;
-            padding: 20px 0;
-        }
-
-        .empty-feed {
-            text-align: center;
-            padding: 60px 20px;
-            color: #666;
-            font-size: 18px;
-        }
-
-        .post {
-            background: #000;
-            border: 1px solid #262626;
-            margin-bottom: 20px;
-            animation: fadeInUp 0.5s ease;
-            border-radius: 3px;
-            position: relative;
-        }
-
-        .post-header {
-            padding: 14px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .post-user {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .post-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: 2px solid #FFD700;
-            object-fit: cover;
-        }
-
-        .post-username {
-            font-weight: 600;
-            color: #fff;
-            font-size: 14px;
-        }
-
-        .post-time {
-            font-size: 12px;
-            color: #8e8e8e;
-        }
-
-        .post-menu-btn {
-            background: none;
-            border: none;
-            color: #FFD700;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 4px 8px;
-            transition: color 0.2s ease;
-            position: relative;
-        }
-
-        .post-menu-btn:hover {
-            color: #FFA500;
-        }
-
-        .post-menu-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: #262626;
-            border: 1px solid #3a3a3a;
-            border-radius: 8px;
-            min-width: 150px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            z-index: 100;
-            overflow: hidden;
-            display: none;
-        }
-
-        .post-menu-dropdown.active {
-            display: block;
-            animation: fadeIn 0.2s ease;
-        }
-
-        .menu-option {
-            padding: 12px 16px;
-            color: #fff;
-            cursor: pointer;
-            transition: background 0.2s ease;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .menu-option:hover {
-            background: #3a3a3a;
-        }
-
-        .menu-option.delete {
-            color: #ff4444;
-        }
-
-        .menu-option.delete:hover {
-            background: rgba(255, 68, 68, 0.1);
-        }
-
-        .post-image-gallery {
-            position: relative;
-            width: 100%;
-            background: #000;
-        }
-        .gallery-container {
-            position: relative;
-        }
-        .gallery-slides {
-            display: flex;
-            overflow-x: hidden;
-            scroll-snap-type: x mandatory;
-            scroll-behavior: smooth;
-        }
-        .gallery-slide {
-            flex: 0 0 100%;
-            scroll-snap-align: start;
-        }
-        .gallery-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0,0,0,0.6);
-            color: #FFD700;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 12px 8px;
-            z-index: 5;
-            transition: all 0.2s ease;
-        }
-        .gallery-nav:hover {
-            background: rgba(0,0,0,0.8);
-        }
+        /* ===== GALLERY SLIDES ===== */
+        .post-image-gallery { position: relative; width: 100%; background: #000; }
+        .gallery-container { position: relative; }
+        .gallery-slides { display: flex; overflow-x: hidden; scroll-snap-type: x mandatory; scroll-behavior: smooth; }
+        .gallery-slide { flex: 0 0 100%; scroll-snap-align: start; }
+        .gallery-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: #FFD700; border: none; font-size: 24px; cursor: pointer; padding: 12px 8px; z-index: 5; transition: all 0.2s ease; }
+        .gallery-nav:hover { background: rgba(0,0,0,0.8); }
         .gallery-prev { left: 0; }
         .gallery-next { right: 0; }
-        .gallery-dots {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            padding: 8px;
-            background: rgba(0,0,0,0.5);
-        }
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #888;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .dot.active {
-            background: #FFD700;
-        }
+        .gallery-dots { display: flex; justify-content: center; gap: 8px; padding: 8px; background: rgba(0,0,0,0.5); }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #888; cursor: pointer; transition: all 0.2s ease; }
+        .dot.active { background: #FFD700; }
 
-        .post-actions {
-            padding: 12px 16px 8px;
-            display: flex;
-            gap: 16px;
-            align-items: center;
-        }
+        /* ===== POST ACTIONS ===== */
+        .post-actions { padding: 12px 16px 8px; display: flex; gap: 16px; align-items: center; }
+        .action-btn { background: none; border: none; cursor: pointer; font-size: 24px; transition: all 0.2s ease; padding: 0; display: flex; align-items: center; justify-content: center; }
+        .action-btn:hover { transform: scale(1.1); }
+        .action-btn svg { width: 24px; height: 24px; transition: all 0.2s ease; }
+        .action-btn.liked svg { fill: #FFD700; stroke: #FFD700; }
+        .post-likes { padding: 0 16px; margin-bottom: 8px; font-size: 14px; font-weight: 600; }
+        .post-caption { padding: 0 16px; margin-bottom: 8px; font-size: 14px; }
+        .comments-list { display: none; margin-top: 12px; padding: 0 16px; }
+        .comments-list.show { display: block; }
+        .view-comments { color: #8e8e8e; cursor: pointer; margin-bottom: 8px; padding: 0 16px; font-size: 14px; }
+        .view-comments:hover { color: #fff; }
+        .add-comment { padding: 12px 16px; border-top: 1px solid #262626; display: none; }
+        .add-comment.show { display: block; }
+        .comment-input { flex: 1; background: none; border: none; color: #fff; outline: none; padding: 8px; font-size: 14px; }
+        .comment-post-btn { background: none; border: none; color: #FFD700; font-weight: 600; cursor: pointer; font-size: 14px; }
+        .comment-post-btn:hover { color: #FFA500; }
 
-        .action-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 24px;
-            transition: all 0.2s ease;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        /* ===== EDIT LIKES MODAL ===== */
+        .edit-likes-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 5000; backdrop-filter: blur(6px); }
+        .edit-likes-modal.active { display: flex; }
+        .edit-likes-content { background: #1a1a1a; border: 2px solid #FFD700; border-radius: 20px; padding: 30px; width: 90%; max-width: 320px; text-align: center; animation: scaleIn 0.2s ease; }
+        .edit-likes-content h3 { color: #FFD700; margin-bottom: 16px; font-size: 18px; }
+        .edit-likes-input { width: 100%; padding: 12px; background: #222; border: 1.5px solid #FFD700; color: #fff; border-radius: 12px; font-size: 18px; text-align: center; font-family: inherit; margin-bottom: 8px; }
+        .edit-likes-hint { color: #888; font-size: 12px; margin-bottom: 16px; }
+        .edit-likes-btns { display: flex; gap: 10px; }
+        .edit-likes-save { flex: 1; background: #FFD700; color: #000; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .edit-likes-cancel { flex: 1; background: #333; color: #fff; border: none; padding: 12px; border-radius: 12px; cursor: pointer; font-size: 14px; }
 
-        .action-btn:hover {
-            transform: scale(1.1);
-        }
+        /* ===== FORMS ===== */
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #FFD700; font-weight: 600; }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #FFD700; background: #0d0d0d; color: #fff; font-size: 15px; font-family: inherit; transition: all 0.3s ease; }
+        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #FFA500; box-shadow: 0 0 10px rgba(255,215,0,0.3); }
+        .file-upload-label { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 20px; background: rgba(255,215,0,0.1); border: 2px dashed #FFD700; border-radius: 10px; cursor: pointer; color: #FFD700; font-weight: 600; transition: all 0.3s ease; }
+        .file-upload-label:hover { background: rgba(255,215,0,0.2); border-color: #FFA500; }
+        .image-preview { max-width: 200px; max-height: 200px; border-radius: 10px; border: 2px solid #FFD700; }
+        .circle-preview { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #FFD700; }
+        .checkbox-label { display: flex; align-items: center; gap: 10px; cursor: pointer; color: #FFD700; }
+        .form-buttons { display: flex; gap: 15px; margin-top: 30px; }
+        .btn-primary { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #000; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; flex: 1; transition: all 0.3s ease; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,215,0,0.4); }
+        .btn-secondary { background: #333; color: #fff; border: none; padding: 12px; border-radius: 10px; cursor: pointer; flex: 1; transition: all 0.3s ease; }
+        .btn-secondary:hover { background: #444; }
+        .error-message { background: rgba(220,20,60,0.9); color: white; padding: 10px; border-radius: 8px; margin-top: 10px; text-align: center; }
+        .success-message { background: rgba(34,197,94,0.9); color: white; padding: 15px; border-radius: 10px; margin-top: 15px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; }
+        .upload-status { color: #FFD700; font-size: 13px; margin-top: 8px; }
 
-        .action-btn svg {
-            width: 24px;
-            height: 24px;
-            transition: all 0.2s ease;
-        }
+        /* ===== MEDIA ORDERING ===== */
+        .media-ordering-container { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .media-block { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,215,0,0.1); border-radius: 8px; border: 1px solid #FFD700; }
+        .media-block-number { background: #FFD700; color: #000; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        .media-block-preview { width: 60px; height: 60px; border-radius: 5px; object-fit: cover; flex-shrink: 0; }
+        .media-block-video-icon { width: 60px; height: 60px; background: #000; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: #FFD700; font-size: 24px; flex-shrink: 0; }
+        .media-block-info { flex: 1; color: #FFD700; font-size: 13px; }
+        .media-block-controls { display: flex; flex-direction: column; gap: 5px; }
+        .media-block-btn { background: #FFD700; color: #000; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .media-block-btn:hover { background: #FFA500; }
+        .media-block-btn.remove { background: #ff4444; color: #fff; }
 
-        .action-btn.liked svg {
-            fill: #FFD700;
-            stroke: #FFD700;
-        }
+        /* ===== POST SELECTION MODALS ===== */
+        .post-selection-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; z-index: 3000; animation: fadeIn 0.3s ease; overflow: auto; padding: 20px; backdrop-filter: blur(10px); }
+        .post-selection-modal.active { display: flex; }
+        .post-selection-content { background: linear-gradient(135deg, #1a1a1a 0%, #000 100%); padding: 40px; border-radius: 25px; max-width: 900px; width: 100%; border: 3px solid #FFD700; position: relative; animation: scaleIn 0.3s ease; box-shadow: 0 20px 60px rgba(255,215,0,0.3); max-height: 85vh; overflow-y: auto; }
+        .post-selection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+        .post-card { background: rgba(255,215,0,0.05); border: 2px solid rgba(255,215,0,0.3); border-radius: 15px; overflow: hidden; cursor: pointer; transition: all 0.3s ease; }
+        .post-card:hover { transform: translateY(-5px); border-color: #FFD700; box-shadow: 0 8px 20px rgba(255,215,0,0.4); }
+        .post-card-image { width: 100%; height: 200px; object-fit: cover; background: #000; }
+        .post-card-video-placeholder { width: 100%; height: 200px; background: #000; display: flex; align-items: center; justify-content: center; color: #FFD700; font-size: 48px; }
+        .post-card-info { padding: 15px; }
+        .post-card-user { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .post-card-avatar { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #FFD700; object-fit: cover; }
+        .post-card-username { color: #FFD700; font-weight: 600; font-size: 14px; }
+        .post-card-caption { color: #ccc; font-size: 13px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
-        .post-likes, .post-caption {
-            padding: 0 16px;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        .post-likes {
-            font-weight: 600;
-        }
-
-        .comments-list {
-            display: none;
-            margin-top: 12px;
-            padding: 0 16px;
-        }
-
-        .comments-list.show {
-            display: block;
-        }
-
-        .view-comments {
-            color: #8e8e8e;
-            cursor: pointer;
-            margin-bottom: 8px;
-            padding: 0 16px;
-            font-size: 14px;
-        }
-
-        .view-comments:hover {
-            color: #fff;
-        }
-
-        .add-comment {
-            padding: 12px 16px;
-            border-top: 1px solid #262626;
-            display: none;
-        }
-
-        .add-comment.show {
-            display: block;
-        }
-
-        .comment-input {
-            flex: 1;
-            background: none;
-            border: none;
-            color: #fff;
-            outline: none;
-            padding: 8px;
-            font-size: 14px;
-        }
-
-        .comment-post-btn {
-            background: none;
-            border: none;
-            color: #FFD700;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .comment-post-btn:hover {
-            color: #FFA500;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #FFD700;
-            font-weight: 600;
-        }
-        .form-group input, .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            border: 2px solid #FFD700;
-            background: #0d0d0d;
-            color: #fff;
-            font-size: 15px;
-            font-family: inherit;
-            transition: all 0.3s ease;
-        }
-        .form-group input:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: #FFA500;
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-        }
-        .file-upload-label {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 20px;
-            background: rgba(255, 215, 0, 0.1);
-            border: 2px dashed #FFD700;
-            border-radius: 10px;
-            cursor: pointer;
-            color: #FFD700;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        .file-upload-label:hover {
-            background: rgba(255, 215, 0, 0.2);
-            border-color: #FFA500;
-        }
-        .image-preview {
-            max-width: 200px;
-            max-height: 200px;
-            border-radius: 10px;
-            border: 2px solid #FFD700;
-        }
-        .circle-preview {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid #FFD700;
-        }
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            color: #FFD700;
-        }
-        .form-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 30px;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-            color: #000;
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            flex: 1;
-            transition: all 0.3s ease;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
-        }
-        .btn-secondary {
-            background: #333;
-            color: #fff;
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
-            cursor: pointer;
-            flex: 1;
-            transition: all 0.3s ease;
-        }
-        .btn-secondary:hover {
-            background: #444;
-        }
-        .error-message {
-            background: rgba(220,20,60,0.9);
-            color: white;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 10px;
-            text-align: center;
-        }
-        .success-message {
-            background: rgba(34, 197, 94, 0.9);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 15px;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-weight: 600;
-        }
-        .upload-status {
-            color: #FFD700;
-            font-size: 13px;
-            margin-top: 8px;
-        }
-
-        .media-ordering-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .media-block {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            background: rgba(255, 215, 0, 0.1);
-            border-radius: 8px;
-            border: 1px solid #FFD700;
-        }
-        .media-block-number {
-            background: #FFD700;
-            color: #000;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            flex-shrink: 0;
-        }
-        .media-block-preview {
-            width: 60px;
-            height: 60px;
-            border-radius: 5px;
-            object-fit: cover;
-            flex-shrink: 0;
-        }
-        .media-block-video-icon {
-            width: 60px;
-            height: 60px;
-            background: #000;
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #FFD700;
-            font-size: 24px;
-            flex-shrink: 0;
-        }
-        .media-block-info {
-            flex: 1;
-            color: #FFD700;
-            font-size: 13px;
-        }
-        .media-block-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .media-block-btn {
-            background: #FFD700;
-            color: #000;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .media-block-btn:hover {
-            background: #FFA500;
-        }
-        .media-block-btn.remove {
-            background: #ff4444;
-            color: #fff;
-        }
-
-        .post-selection-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.92);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 3000;
-            animation: fadeIn 0.3s ease;
-            overflow: auto;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-        }
-
-        .post-selection-modal.active {
-            display: flex;
-        }
-
-        .post-selection-content {
-            background: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
-            padding: 40px;
-            border-radius: 25px;
-            max-width: 900px;
-            width: 100%;
-            border: 3px solid #FFD700;
-            position: relative;
-            animation: scaleIn 0.3s ease;
-            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.3);
-            max-height: 85vh;
-            overflow-y: auto;
-        }
-
-        .post-selection-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .post-card {
-            background: rgba(255, 215, 0, 0.05);
-            border: 2px solid rgba(255, 215, 0, 0.3);
-            border-radius: 15px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .post-card:hover {
-            transform: translateY(-5px);
-            border-color: #FFD700;
-            box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4);
-        }
-
-        .post-card-image {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            background: #000;
-        }
-
-        .post-card-video-placeholder {
-            width: 100%;
-            height: 200px;
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #FFD700;
-            font-size: 48px;
-        }
-
-        .post-card-info {
-            padding: 15px;
-        }
-
-        .post-card-user {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .post-card-avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            border: 2px solid #FFD700;
-            object-fit: cover;
-        }
-
-        .post-card-username {
-            color: #FFD700;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .post-card-caption {
-            color: #ccc;
-            font-size: 13px;
-            line-height: 1.4;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
+        /* ===== VERIFIED BADGE TOGGLE ===== */
+        .verified-toggle-wrap { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+        .verified-toggle-label { color: #FFD700; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .verified-preview-badge { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: #FFD700; border-radius: 50%; font-size: 10px; color: #000; font-weight: 900; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -1247,6 +344,12 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .loading-spinner { border: 3px solid rgba(255,215,0,0.3); border-top: 3px solid #FFD700; border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; display: inline-block; margin-left: 10px; }
         input[type="file"] { display: none; }
+
+        .panel-item { padding: 18px 20px; margin: 12px 0; background: #000; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; border-left: 5px solid; font-size: 16px; font-weight: 500; color: #FFD700; text-decoration: none; display: flex; align-items: center; gap: 15px; position: relative; overflow: hidden; }
+        .panel-item::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 0; transition: width 0.3s ease; opacity: 0.1; }
+        .panel-item:hover::before { width: 100%; }
+        .panel-item:hover { transform: translateX(10px); }
+        .league-icon { width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
     </style>
 </head>
 <body>
@@ -1279,9 +382,21 @@
         </div>
     </div>
 
+    <!-- FULL SCREEN LEAGUE PANEL -->
     <div class="league-panel" id="leaguePanel">
-        <span class="close-panel" onclick="closeLeaguePanel()">✕</span>
-        <div class="panel-items" id="leaguePanelItems"></div>
+        <div class="league-panel-header">
+            <span class="league-panel-title">Leagues &amp; Cups</span>
+            <span class="close-panel" onclick="closeLeaguePanel()">✕</span>
+        </div>
+        <div class="league-search-bar">
+            <div class="league-search-input-wrap">
+                <span class="league-search-icon">🔍</span>
+                <input type="text" class="league-search-input" id="leagueSearchInput" placeholder="Search leagues..." oninput="filterLeagues()">
+            </div>
+        </div>
+        <div class="league-grid-scroll">
+            <div class="league-grid" id="leagueGrid"></div>
+        </div>
     </div>
 
     <div class="modal" id="disclaimerModal">
@@ -1292,12 +407,10 @@
         </div>
     </div>
 
-    <!-- NEW: Auto-sliding story carousel (centered, side blur, auto slide every 2s) -->
     <div class="story-carousel-new" id="storyCarouselNew">
         <div class="story-track-new" id="storyTrackNew"></div>
     </div>
 
-    <!-- NEW: Matchday Deadline Countdown -->
     <div class="deadline-countdown">
         <div class="countdown-title">MATCHDAY DEADLINE (SAST 12:00 AM)</div>
         <div class="countdown-boxes">
@@ -1319,6 +432,7 @@
         <button class="create-post-btn" onclick="enterDeleteMode()">🗑️ Delete Post</button>
     </div>
 
+    <!-- CREATE POST MODAL -->
     <div class="modal" id="postModal">
         <div class="modal-content form-modal">
             <span class="modal-close" onclick="closePostModal()">✕</span>
@@ -1328,6 +442,15 @@
             <div class="form-group">
                 <label>Profile Name *</label>
                 <input type="text" id="profileName" placeholder="Enter profile name">
+            </div>
+            <!-- Verified badge toggle -->
+            <div class="form-group">
+                <div class="verified-toggle-wrap">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="verifiedBadgeToggle">
+                        <span class="verified-toggle-label">Add verified badge <span class="verified-preview-badge">✓</span></span>
+                    </label>
+                </div>
             </div>
             <div class="file-upload-wrapper">
                 <label>Profile Photo (Optional)</label>
@@ -1340,19 +463,15 @@
             </div>
             <div class="form-group">
                 <label>Post Media (Images, MP4 Videos via Cloudinary, YouTube)</label>
-                <!-- NEW: Cloudinary MP4 Upload with fixed endpoint -->
                 <input type="file" id="postVideoUpload" accept="video/mp4" onchange="previewVideoUpload()">
                 <label for="postVideoUpload" class="file-upload-label">🎥 Upload MP4 Video (Cloudinary)</label>
                 <div id="videoUploadStatus" class="upload-status"></div>
-                
                 <input type="file" id="postImagesUpload" accept="image/*" multiple onchange="previewPostImages()">
                 <label for="postImagesUpload" class="file-upload-label">🖼️ Add Images</label>
                 <div id="postImagesStatus" class="upload-status"></div>
-                
                 <label style="margin-top: 15px;">YouTube Video URL (Optional)</label>
                 <input type="text" id="youtubeUrlInput" placeholder="https://www.youtube.com/watch?v=..." style="margin-bottom: 10px;">
                 <button class="btn-primary" onclick="addYoutubeVideo()" style="width: 100%;">Add YouTube Video</button>
-                
                 <div id="mediaOrderingContainer" class="media-ordering-container"></div>
             </div>
             <div class="form-group">
@@ -1366,7 +485,7 @@
                 </label>
             </div>
             <div class="form-group" id="customTimeGroup" style="display: none;">
-                <label>📅 Custom Date & Time</label>
+                <label>📅 Custom Date &amp; Time</label>
                 <input type="datetime-local" id="customTimestamp">
             </div>
             <div class="form-buttons">
@@ -1376,6 +495,7 @@
         </div>
     </div>
 
+    <!-- EDIT POST MODAL -->
     <div class="modal" id="editPostModal">
         <div class="modal-content form-modal">
             <span class="modal-close" onclick="closeEditPostModal()">✕</span>
@@ -1385,6 +505,14 @@
             <div class="form-group">
                 <label>Profile Name</label>
                 <input type="text" id="editProfileName">
+            </div>
+            <div class="form-group">
+                <div class="verified-toggle-wrap">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="editVerifiedBadgeToggle">
+                        <span class="verified-toggle-label">Verified badge <span class="verified-preview-badge">✓</span></span>
+                    </label>
+                </div>
             </div>
             <div class="file-upload-wrapper">
                 <label>Profile Photo (Optional, leave blank to keep current)</label>
@@ -1400,11 +528,9 @@
                 <input type="file" id="editPostImagesUpload" accept="image/*" multiple onchange="previewEditPostImages()">
                 <label for="editPostImagesUpload" class="file-upload-label">🖼️ Add/Replace Images</label>
                 <div id="editPostImagesStatus" class="upload-status"></div>
-                
                 <label style="margin-top: 15px;">YouTube Video URL (Optional)</label>
                 <input type="text" id="editYoutubeUrlInput" placeholder="https://www.youtube.com/watch?v=...">
                 <button class="btn-primary" onclick="addEditYoutubeVideo()" style="width: 100%; margin-top: 5px;">Add YouTube Video</button>
-                
                 <div id="editMediaOrderingContainer" class="media-ordering-container"></div>
                 <div id="currentMediaList" style="margin-top:10px; color:#888; font-size:12px;"></div>
             </div>
@@ -1419,6 +545,7 @@
         </div>
     </div>
 
+    <!-- STORY MODAL -->
     <div class="modal" id="storyModal">
         <div class="modal-content form-modal">
             <span class="modal-close" onclick="closeStoryModal()">✕</span>
@@ -1441,6 +568,7 @@
         </div>
     </div>
 
+    <!-- EDIT LEAGUE ICONS MODAL -->
     <div class="modal" id="editLeagueIconsModal">
         <div class="modal-content">
             <span class="modal-close" onclick="closeEditLeagueIconsModal()">✕</span>
@@ -1449,6 +577,7 @@
         </div>
     </div>
 
+    <!-- SELECT EDIT POST MODAL -->
     <div class="post-selection-modal" id="selectEditPostModal">
         <div class="post-selection-content">
             <span class="modal-close" onclick="closeSelectEditPostModal()">✕</span>
@@ -1457,6 +586,7 @@
         </div>
     </div>
 
+    <!-- SELECT DELETE POST MODAL -->
     <div class="post-selection-modal" id="selectDeletePostModal">
         <div class="post-selection-content">
             <span class="modal-close" onclick="closeSelectDeletePostModal()">✕</span>
@@ -1465,7 +595,7 @@
         </div>
     </div>
 
-    <!-- NEW: Comment Modal (anyone can comment, localStorage username) -->
+    <!-- COMMENT MODAL -->
     <div id="commentModal" class="comment-modal">
         <div class="comment-modal-content">
             <div class="comment-modal-media" id="commentModalMedia"></div>
@@ -1473,6 +603,19 @@
                 <input type="text" id="commentUsername" class="comment-username-input" placeholder="Your name">
                 <textarea id="commentText" class="comment-textarea" rows="3" placeholder="Write a comment..."></textarea>
                 <button class="comment-submit-btn" id="submitCommentBtn">Post Comment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT LIKES MODAL -->
+    <div class="edit-likes-modal" id="editLikesModal">
+        <div class="edit-likes-content">
+            <h3>✏️ Edit Likes</h3>
+            <input type="number" class="edit-likes-input" id="editLikesInput" min="0" max="10000" placeholder="0">
+            <div class="edit-likes-hint">Max 10,000 likes</div>
+            <div class="edit-likes-btns">
+                <button class="edit-likes-save" onclick="saveEditedLikes()">Save</button>
+                <button class="edit-likes-cancel" onclick="closeEditLikesModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -1491,15 +634,15 @@
         let stories = [];
         let currentStoryIndex = 0;
         let autoSlideInterval = null;
-        let isCarouselVisible = true;
-        let isUserScrollingCarousel = false;
-        let userScrollResumeTimer = null;
         let uploadedProfilePhotoUrl = null;
         let editUploadedProfilePhotoUrl = null;
         let currentEditPostId = null;
-
         let mediaItems = [];
         let editMediaItems = [];
+        let currentEditLikesPostId = null;
+        let leaguesData = [];
+        // track which posts user has liked (session only)
+        let userLikedPosts = new Set();
 
         const defaultLeagues = [
             { id: 'premier', name: 'Premier League', url: 'adminpremier.html', color: '#3d195b', icon: 'https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg' },
@@ -1534,11 +677,8 @@
             startCountdown();
         };
 
-        // ---------- Countdown to 12:00 AM SAST ----------
-        function startCountdown() {
-            setInterval(updateCountdown, 30);
-            updateCountdown();
-        }
+        // ===== COUNTDOWN =====
+        function startCountdown() { setInterval(updateCountdown, 30); updateCountdown(); }
         function updateCountdown() {
             const now = new Date();
             const sastOffset = 2 * 60;
@@ -1546,26 +686,46 @@
             const sastNow = new Date(now.getTime() + (localOffset + sastOffset) * 60000);
             let deadline = new Date(sastNow);
             deadline.setHours(24, 0, 0, 0);
-            if (sastNow.getHours() === 0 && sastNow.getMinutes() === 0 && sastNow.getSeconds() === 0) deadline.setDate(deadline.getDate() + 1);
             const diff = deadline - sastNow;
-            if (diff <= 0) {
-                document.getElementById('hours').innerText = '00';
-                document.getElementById('minutes').innerText = '00';
-                document.getElementById('seconds').innerText = '00';
-                document.getElementById('milliseconds').innerText = '000';
-                return;
-            }
-            const hours = Math.floor(diff / 3600000);
-            const minutes = Math.floor((diff % 3600000) / 60000);
-            const seconds = Math.floor((diff % 60000) / 1000);
-            const ms = diff % 1000;
-            document.getElementById('hours').innerText = String(hours).padStart(2, '0');
-            document.getElementById('minutes').innerText = String(minutes).padStart(2, '0');
-            document.getElementById('seconds').innerText = String(seconds).padStart(2, '0');
-            document.getElementById('milliseconds').innerText = String(ms).padStart(3, '0');
+            if (diff <= 0) { document.getElementById('hours').innerText = '00'; document.getElementById('minutes').innerText = '00'; document.getElementById('seconds').innerText = '00'; document.getElementById('milliseconds').innerText = '000'; return; }
+            document.getElementById('hours').innerText = String(Math.floor(diff / 3600000)).padStart(2, '0');
+            document.getElementById('minutes').innerText = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+            document.getElementById('seconds').innerText = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+            document.getElementById('milliseconds').innerText = String(diff % 1000).padStart(3, '0');
         }
 
-        // ---------- Cloudinary MP4 Upload (FIXED: /auto/upload) ----------
+        // ===== FORMAT LIKES =====
+        function formatLikes(n) {
+            if (n >= 10000) return '10k';
+            if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+            return String(n);
+        }
+
+        // ===== EDIT LIKES (ADMIN) =====
+        function openEditLikesModal(postId) {
+            if (!isAdminMode) return;
+            currentEditLikesPostId = postId;
+            const post = posts.find(p => p.id === postId);
+            document.getElementById('editLikesInput').value = post ? (post.likes || 0) : 0;
+            document.getElementById('editLikesModal').classList.add('active');
+        }
+        function closeEditLikesModal() {
+            document.getElementById('editLikesModal').classList.remove('active');
+            currentEditLikesPostId = null;
+        }
+        async function saveEditedLikes() {
+            if (!currentEditLikesPostId) return;
+            let val = parseInt(document.getElementById('editLikesInput').value, 10);
+            if (isNaN(val) || val < 0) val = 0;
+            if (val > 10000) val = 10000;
+            await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${currentEditLikesPostId}.json`, { method: 'PATCH', body: JSON.stringify({ likes: val }) });
+            const post = posts.find(p => p.id === currentEditLikesPostId);
+            if (post) post.likes = val;
+            closeEditLikesModal();
+            renderPosts();
+        }
+
+        // ===== CLOUDINARY =====
         async function uploadToCloudinary(file) {
             const formData = new FormData();
             formData.append('file', file);
@@ -1590,7 +750,7 @@
             }
         }
 
-        // ---------- Story Carousel with Professional Sliding Animation ----------
+        // ===== STORY CAROUSEL =====
         async function loadStories() {
             try {
                 const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow.json`);
@@ -1601,13 +761,9 @@
                 startAutoSlide();
             } catch(e) { console.error(e); }
         }
-
         function renderStoryCarousel() {
             const track = document.getElementById('storyTrackNew');
-            if (!stories.length) {
-                track.innerHTML = '<div style="color:#666; text-align:center; width:100%; padding:20px;">No stories yet</div>';
-                return;
-            }
+            if (!stories.length) { track.innerHTML = '<div style="color:#666; text-align:center; width:100%; padding:20px;">No stories yet</div>'; return; }
             const total = stories.length;
             const prevIdx = (currentStoryIndex - 1 + total) % total;
             const nextIdx = (currentStoryIndex + 1) % total;
@@ -1617,37 +773,23 @@
                 const captionHtml = (story.caption && story.caption.trim()) ? `<div class="story-caption-new">${escapeHtml(story.caption)}</div>` : '';
                 const deleteBtn = isAdminMode ? `<div onclick="removeStory('${story.id}')" style="position:absolute;top:0;right:0;background:#ff4444;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;z-index:10;font-weight:bold;">✕</div>` : '';
                 return `<div class="story-item-new ${isCenter ? 'center' : 'side'}" style="position:relative;">
-                            <div class="story-ring-new">
-                                <div class="story-image-wrapper-new">
-                                    <img src="${story.imageUrl}" class="story-image-new" alt="story">
-                                </div>
-                                ${deleteBtn}
-                            </div>
-                            ${captionHtml}
-                        </div>`;
+                    <div class="story-ring-new"><div class="story-image-wrapper-new"><img src="${story.imageUrl}" class="story-image-new" alt="story"></div>${deleteBtn}</div>
+                    ${captionHtml}
+                </div>`;
             }).join('');
-            track.style.transform = 'translateX(0)';
         }
-
         function startAutoSlide() {
             if (autoSlideInterval) clearInterval(autoSlideInterval);
             if (stories.length > 1) autoSlideInterval = setInterval(() => { nextStory(); }, 2000);
         }
-
         function nextStory() {
-            if (stories.length) {
-                const track = document.getElementById('storyTrackNew');
-                track.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                track.style.transform = 'translateX(-150px)';
-                
-                currentStoryIndex = (currentStoryIndex + 1) % stories.length;
-                setTimeout(() => {
-                    track.style.transition = 'none';
-                    renderStoryCarousel();
-                }, 800);
-            }
+            if (!stories.length) return;
+            const track = document.getElementById('storyTrackNew');
+            track.style.transition = 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            track.style.transform = 'translateX(-150px)';
+            currentStoryIndex = (currentStoryIndex + 1) % stories.length;
+            setTimeout(() => { track.style.transition = 'none'; renderStoryCarousel(); }, 800);
         }
-
         async function removeStory(storyId) {
             if (!isAdminMode || !confirm('Remove this story?')) return;
             try {
@@ -1659,41 +801,57 @@
             } catch(e) { alert(e.message); }
         }
 
-        // ---------- Original functions (preserved fully) ----------
+        // ===== LEAGUES - FULL SCREEN PANEL =====
         async function loadLeagues() {
             try {
                 const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/leagues.json`);
                 const data = await res.json();
-                let leagues = defaultLeagues;
-                if (data) {
-                    leagues = defaultLeagues.map(league => {
-                        const saved = data[league.id] || {};
-                        return { ...league, icon: saved.icon || league.icon, bgImage: saved.bgImage || null };
-                    });
-                }
-                renderLeagues(leagues);
+                leaguesData = defaultLeagues.map(league => {
+                    const saved = (data && data[league.id]) ? data[league.id] : {};
+                    return { ...league, icon: saved.icon || league.icon, bgImage: saved.bgImage || null };
+                });
             } catch(e) {
-                console.error(e);
-                renderLeagues(defaultLeagues);
+                leaguesData = [...defaultLeagues];
             }
+            renderLeagueGrid(leaguesData);
         }
 
-        function renderLeagues(leagues) {
-            const container = document.getElementById('leaguePanelItems');
-            container.innerHTML = `<div class="league-panel-title">Leagues & Cups</div><div class="league-grid">` + leagues.map(league => {
-                const bgStyle = league.bgImage ? `background-image:url('${league.bgImage}'); background-size:cover; background-position:center;` : 'background:#000;';
+        function renderLeagueGrid(leagues) {
+            const grid = document.getElementById('leagueGrid');
+            if (!leagues.length) {
+                grid.innerHTML = '<div class="league-no-results">No leagues found</div>';
+                return;
+            }
+            grid.innerHTML = leagues.map(league => {
+                const bgStyle = league.bgImage
+                    ? `background-image: url('${league.bgImage}'); background-size: cover; background-position: center;`
+                    : `background: #1a1a1a;`;
+                const colorTint = league.color ? `rgba(${hexToRgb(league.color)}, 0.35)` : 'rgba(0,0,0,0.5)';
                 return `
-                    <a class="league-block" href="${league.url}" style="${bgStyle}">
-                        ${league.bgImage ? '<div class="league-block-overlay"></div>' : ''}
-                        <div class="league-block-content">
+                    <a class="league-block-wrap" href="${league.url}">
+                        <div class="league-block" style="${bgStyle}">
+                            <div class="league-block-overlay" style="background: ${colorTint};"></div>
                             <img src="${league.icon}" alt="${league.name}" class="league-block-icon" onerror="this.style.display='none'">
-                            <div class="league-block-name">${league.name}</div>
                         </div>
+                        <div class="league-block-name">${league.name}</div>
                     </a>
                 `;
-            }).join('') + `</div>`;
+            }).join('');
         }
 
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? `${parseInt(result[1],16)}, ${parseInt(result[2],16)}, ${parseInt(result[3],16)}` : '0,0,0';
+        }
+
+        function filterLeagues() {
+            const query = document.getElementById('leagueSearchInput').value.toLowerCase().trim();
+            if (!query) { renderLeagueGrid(leaguesData); return; }
+            const filtered = leaguesData.filter(l => l.name.toLowerCase().includes(query));
+            renderLeagueGrid(filtered);
+        }
+
+        // ===== EDIT LEAGUE ICONS =====
         function openEditLeagueIconsModal() {
             if (!isAdminMode) return;
             const container = document.getElementById('leagueIconsList');
@@ -1712,49 +870,32 @@
             `).join('');
             document.getElementById('editLeagueIconsModal').classList.add('active');
         }
+        function closeEditLeagueIconsModal() { document.getElementById('editLeagueIconsModal').classList.remove('active'); }
 
         async function uploadLeagueBg(leagueId) {
-            const fileInput = document.getElementById(`league-bg-${leagueId}`);
-            const file = fileInput.files[0];
+            const file = document.getElementById(`league-bg-${leagueId}`).files[0];
             if (!file) return;
             const statusDiv = document.getElementById(`league-bg-status-${leagueId}`);
             statusDiv.innerHTML = 'Uploading... <span class="loading-spinner"></span>';
             try {
                 const url = await uploadToImgBB(file);
-                await fetch(`${FIREBASE_CONFIG.databaseURL}/leagues/${leagueId}.json`, {
-                    method: 'PATCH',
-                    body: JSON.stringify({ bgImage: url })
-                });
+                await fetch(`${FIREBASE_CONFIG.databaseURL}/leagues/${leagueId}.json`, { method: 'PATCH', body: JSON.stringify({ bgImage: url }) });
                 statusDiv.innerHTML = '✅ Background updated!';
                 loadLeagues();
-            } catch(e) {
-                statusDiv.innerHTML = '❌ Upload failed';
-                console.error(e);
-            }
-        }
-
-        function closeEditLeagueIconsModal() {
-            document.getElementById('editLeagueIconsModal').classList.remove('active');
+            } catch(e) { statusDiv.innerHTML = '❌ Upload failed'; }
         }
 
         async function uploadLeagueIcon(leagueId) {
-            const fileInput = document.getElementById(`league-icon-${leagueId}`);
-            const file = fileInput.files[0];
+            const file = document.getElementById(`league-icon-${leagueId}`).files[0];
             if (!file) return;
             const statusDiv = document.getElementById(`league-icon-status-${leagueId}`);
             statusDiv.innerHTML = 'Uploading... <span class="loading-spinner"></span>';
             try {
                 const url = await uploadToImgBB(file);
-                await fetch(`${FIREBASE_CONFIG.databaseURL}/leagues/${leagueId}.json`, {
-                    method: 'PATCH',
-                    body: JSON.stringify({ icon: url })
-                });
+                await fetch(`${FIREBASE_CONFIG.databaseURL}/leagues/${leagueId}.json`, { method: 'PATCH', body: JSON.stringify({ icon: url }) });
                 statusDiv.innerHTML = '✅ Icon updated!';
                 loadLeagues();
-            } catch(e) {
-                statusDiv.innerHTML = '❌ Upload failed';
-                console.error(e);
-            }
+            } catch(e) { statusDiv.innerHTML = '❌ Upload failed'; }
         }
 
         async function uploadToImgBB(file) {
@@ -1768,45 +909,46 @@
                 const data = await response.json();
                 if (!data.success) throw new Error(data.error?.message || "ImgBB upload failed");
                 return data.data.url;
-            } catch (err) {
-                clearTimeout(timeoutId);
-                throw err;
-            }
+            } catch (err) { clearTimeout(timeoutId); throw err; }
         }
 
         async function uploadMultipleImages(files) {
             const urls = [];
-            for (let file of files) {
-                try {
-                    const url = await uploadToImgBB(file);
-                    urls.push(url);
-                } catch(e) { console.error(e); }
-            }
+            for (let file of files) { try { urls.push(await uploadToImgBB(file)); } catch(e) { console.error(e); } }
             return urls;
         }
 
-        // ---- UPDATED: Admin key verification without hardcoded fallback ----
+        // ===== ADMIN KEY - RENDER ONLY, IMPROVED ERROR MESSAGES =====
         async function promptAdminKey() {
             const key = prompt("Enter Admin Key:");
             if (key === null) return;
-            
+            if (!key.trim()) { alert("⚠️ Please enter a key."); return; }
+
             const loadingDiv = document.createElement('div');
-            loadingDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;color:#FFD700;font-size:20px;';
-            loadingDiv.textContent = 'Verifying...';
+            loadingDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;color:#FFD700;font-size:18px;gap:16px;';
+            loadingDiv.innerHTML = '<div class="loading-spinner" style="width:40px;height:40px;border-width:4px;"></div><div>Verifying key...</div>';
             document.body.appendChild(loadingDiv);
-            
+
             try {
                 const response = await fetch('https://efootball-league.onrender.com/verify-admin', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ key: key })
+                    body: JSON.stringify({ key: key.trim() })
                 });
-                const data = await response.json();
-                
-                if (loadingDiv && loadingDiv.parentNode) {
-                    loadingDiv.parentNode.removeChild(loadingDiv);
+
+                loadingDiv.parentNode && loadingDiv.parentNode.removeChild(loadingDiv);
+
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        alert("❌ Incorrect admin key. Please try again.");
+                    } else {
+                        alert(`⚠️ Server error (${response.status}). Please try again later.`);
+                    }
+                    return;
                 }
-                
+
+                const data = await response.json();
+
                 if (data && data.success === true) {
                     isAdminMode = true;
                     document.getElementById('adminSlideControls').style.display = 'block';
@@ -1814,72 +956,83 @@
                     document.getElementById('editLeagueIconsMenuItem').style.display = 'block';
                     renderPosts();
                     renderStoryCarousel();
-                    alert("Admin mode activated!");
+                    alert("✅ Admin mode activated! You now have full access.");
                     closeMenu();
                 } else {
-                    alert("Invalid admin key.");
+                    alert("❌ Incorrect admin key. Please try again.");
                 }
             } catch(e) {
-                if (loadingDiv && loadingDiv.parentNode) {
-                    loadingDiv.parentNode.removeChild(loadingDiv);
+                loadingDiv.parentNode && loadingDiv.parentNode.removeChild(loadingDiv);
+                if (e.name === 'TypeError' && e.message.includes('fetch')) {
+                    alert("🌐 Cannot reach the server. Check your internet connection and try again.");
+                } else {
+                    alert("⚠️ Something went wrong while verifying. Please try again.");
                 }
-                alert("Error verifying key. Please try again.");
             }
         }
 
-        // ---- UPDATED: Admin calendar verification without hardcoded fallback ----
         async function handleAdminCalendar(event) {
             event.preventDefault();
             const key = prompt("Enter Admin Key for Calendar:");
             if (key === null) return;
-            
+            if (!key.trim()) { alert("⚠️ Please enter a key."); return; }
+
             const loadingDiv = document.createElement('div');
-            loadingDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;color:#FFD700;font-size:20px;';
-            loadingDiv.textContent = 'Verifying...';
+            loadingDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;color:#FFD700;font-size:18px;gap:16px;';
+            loadingDiv.innerHTML = '<div class="loading-spinner" style="width:40px;height:40px;border-width:4px;"></div><div>Verifying key...</div>';
             document.body.appendChild(loadingDiv);
-            
+
             try {
                 const response = await fetch('https://efootball-league.onrender.com/verify-admin', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ key: key })
+                    body: JSON.stringify({ key: key.trim() })
                 });
-                const data = await response.json();
-                
-                if (loadingDiv && loadingDiv.parentNode) {
-                    loadingDiv.parentNode.removeChild(loadingDiv);
+
+                loadingDiv.parentNode && loadingDiv.parentNode.removeChild(loadingDiv);
+
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        alert("❌ Incorrect admin key. Please try again.");
+                    } else {
+                        alert(`⚠️ Server error (${response.status}). Please try again later.`);
+                    }
+                    return;
                 }
-                
+
+                const data = await response.json();
                 if (data && data.success === true) {
                     window.location.href = "admin-calendar.html";
                 } else {
-                    alert("Invalid admin key.");
+                    alert("❌ Incorrect admin key. Please try again.");
                 }
             } catch(e) {
-                if (loadingDiv && loadingDiv.parentNode) {
-                    loadingDiv.parentNode.removeChild(loadingDiv);
+                loadingDiv.parentNode && loadingDiv.parentNode.removeChild(loadingDiv);
+                if (e.name === 'TypeError' && e.message.includes('fetch')) {
+                    alert("🌐 Cannot reach the server. Check your internet connection and try again.");
+                } else {
+                    alert("⚠️ Something went wrong while verifying. Please try again.");
                 }
-                alert("Error verifying key. Please try again.");
             }
         }
 
+        // ===== NAV / PANEL CONTROLS =====
         function toggleMenu() { document.getElementById('hamburgerMenu').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); }
         function closeMenu() { document.getElementById('hamburgerMenu').classList.remove('active'); document.getElementById('overlay').classList.remove('active'); }
-        function closeLeaguePanel() { document.getElementById('leaguePanel').classList.remove('active'); document.getElementById('overlay').classList.remove('active'); }
+        function closeLeaguePanel() { document.getElementById('leaguePanel').classList.remove('active'); }
         function closeAllPanels() { closeMenu(); closeLeaguePanel(); }
-        document.getElementById('viewLeagueBtn').onclick = () => { document.getElementById('leaguePanel').classList.add('active'); document.getElementById('overlay').classList.add('active'); };
+
+        document.getElementById('viewLeagueBtn').onclick = () => {
+            document.getElementById('leaguePanel').classList.add('active');
+            document.getElementById('leagueSearchInput').value = '';
+            filterLeagues();
+        };
+
         function showDisclaimer() { closeMenu(); document.getElementById('disclaimerModal').classList.add('active'); }
         function closeDisclaimer() { document.getElementById('disclaimerModal').classList.remove('active'); }
 
-        // Story add (admin)
-        function showAddStoryModal() {
-            if (!isAdminMode) return;
-            document.getElementById('storyImageUpload').value = '';
-            document.getElementById('storyCaption').value = '';
-            document.getElementById('storyPreviewImg').src = '';
-            document.getElementById('storyImagePreview').style.display = 'none';
-            document.getElementById('storyModal').classList.add('active');
-        }
+        // ===== STORY ADMIN =====
+        function showAddStoryModal() { if (!isAdminMode) return; document.getElementById('storyImageUpload').value = ''; document.getElementById('storyCaption').value = ''; document.getElementById('storyPreviewImg').src = ''; document.getElementById('storyImagePreview').style.display = 'none'; document.getElementById('storyModal').classList.add('active'); }
         function closeStoryModal() { document.getElementById('storyModal').classList.remove('active'); }
         document.getElementById('addStoryBtn')?.addEventListener('click', showAddStoryModal);
         document.getElementById('submitStoryBtn')?.addEventListener('click', async () => {
@@ -1902,129 +1055,53 @@
             finally { btn.textContent='Add Story'; btn.disabled=false; }
         });
         document.getElementById('storyImageUpload')?.addEventListener('change', function(e) {
-            if (e.target.files[0]) {
-                const reader = new FileReader();
-                reader.onload = ev => { document.getElementById('storyPreviewImg').src = ev.target.result; document.getElementById('storyImagePreview').style.display = 'block'; };
-                reader.readAsDataURL(e.target.files[0]);
-            }
+            if (e.target.files[0]) { const reader = new FileReader(); reader.onload = ev => { document.getElementById('storyPreviewImg').src = ev.target.result; document.getElementById('storyImagePreview').style.display = 'block'; }; reader.readAsDataURL(e.target.files[0]); }
         });
 
-        // Post management (original functions)
-        function enterEditMode() {
-            if (!isAdminMode) return;
-            renderEditPostGrid();
-            document.getElementById('selectEditPostModal').classList.add('active');
-        }
-
-        function enterDeleteMode() {
-            if (!isAdminMode) return;
-            renderDeletePostGrid();
-            document.getElementById('selectDeletePostModal').classList.add('active');
-        }
-
-        function closeSelectEditPostModal() {
-            document.getElementById('selectEditPostModal').classList.remove('active');
-        }
-
-        function closeSelectDeletePostModal() {
-            document.getElementById('selectDeletePostModal').classList.remove('active');
-        }
+        // ===== POST MANAGEMENT =====
+        function enterEditMode() { if (!isAdminMode) return; renderEditPostGrid(); document.getElementById('selectEditPostModal').classList.add('active'); }
+        function enterDeleteMode() { if (!isAdminMode) return; renderDeletePostGrid(); document.getElementById('selectDeletePostModal').classList.add('active'); }
+        function closeSelectEditPostModal() { document.getElementById('selectEditPostModal').classList.remove('active'); }
+        function closeSelectDeletePostModal() { document.getElementById('selectDeletePostModal').classList.remove('active'); }
 
         function getPostThumbnail(post) {
-            if (post.media && post.media.length > 0) {
-                const firstItem = post.media[0];
-                if (firstItem.type === 'image') {
-                    return { type: 'image', url: firstItem.url };
-                } else if (firstItem.type === 'video') {
-                    return { type: 'video', url: firstItem.url };
-                }
-            } else if (post.images && post.images.length > 0) {
-                return { type: 'image', url: post.images[0] };
-            } else if (post.imageUrl) {
-                return { type: 'image', url: post.imageUrl };
-            }
+            if (post.media && post.media.length > 0) { const f = post.media[0]; return { type: f.type, url: f.url }; }
+            else if (post.images && post.images.length > 0) return { type: 'image', url: post.images[0] };
+            else if (post.imageUrl) return { type: 'image', url: post.imageUrl };
             return null;
         }
 
         function renderEditPostGrid() {
             const grid = document.getElementById('editPostGrid');
-            if (posts.length === 0) {
-                grid.innerHTML = '<p style="color: #888; text-align: center; padding: 40px;">No posts available to edit.</p>';
-                return;
-            }
-            const sorted = [...posts].sort((a, b) => b.timestamp - a.timestamp);
+            if (!posts.length) { grid.innerHTML = '<p style="color:#888;text-align:center;padding:40px;">No posts to edit.</p>'; return; }
+            const sorted = [...posts].sort((a,b) => b.timestamp - a.timestamp);
             grid.innerHTML = sorted.map(post => {
-                const thumbnail = getPostThumbnail(post);
-                let thumbnailHtml = '<div class="post-card-video-placeholder">📷</div>';
-                if (thumbnail) {
-                    if (thumbnail.type === 'image') {
-                        thumbnailHtml = `<img src="${thumbnail.url}" class="post-card-image" alt="post">`;
-                    } else if (thumbnail.type === 'video') {
-                        thumbnailHtml = '<div class="post-card-video-placeholder">▶</div>';
-                    }
-                }
-                return `
-                    <div class="post-card" onclick="selectPostForEdit('${post.id}')">
-                        ${thumbnailHtml}
-                        <div class="post-card-info">
-                            <div class="post-card-user">
-                                <img src="${post.userAvatar}" class="post-card-avatar" alt="avatar">
-                                <span class="post-card-username">${escapeHtml(post.username)}</span>
-                            </div>
-                            <div class="post-card-caption">${escapeHtml(post.caption)}</div>
-                        </div>
-                    </div>
-                `;
+                const t = getPostThumbnail(post);
+                const thumb = t ? (t.type === 'image' ? `<img src="${t.url}" class="post-card-image">` : '<div class="post-card-video-placeholder">▶</div>') : '<div class="post-card-video-placeholder">📷</div>';
+                return `<div class="post-card" onclick="selectPostForEdit('${post.id}')">${thumb}<div class="post-card-info"><div class="post-card-user"><img src="${post.userAvatar}" class="post-card-avatar"><span class="post-card-username">${escapeHtml(post.username)}</span></div><div class="post-card-caption">${escapeHtml(post.caption)}</div></div></div>`;
             }).join('');
         }
 
         function renderDeletePostGrid() {
             const grid = document.getElementById('deletePostGrid');
-            if (posts.length === 0) {
-                grid.innerHTML = '<p style="color: #888; text-align: center; padding: 40px;">No posts available to delete.</p>';
-                return;
-            }
-            const sorted = [...posts].sort((a, b) => b.timestamp - a.timestamp);
+            if (!posts.length) { grid.innerHTML = '<p style="color:#888;text-align:center;padding:40px;">No posts to delete.</p>'; return; }
+            const sorted = [...posts].sort((a,b) => b.timestamp - a.timestamp);
             grid.innerHTML = sorted.map(post => {
-                const thumbnail = getPostThumbnail(post);
-                let thumbnailHtml = '<div class="post-card-video-placeholder">📷</div>';
-                if (thumbnail) {
-                    if (thumbnail.type === 'image') {
-                        thumbnailHtml = `<img src="${thumbnail.url}" class="post-card-image" alt="post">`;
-                    } else if (thumbnail.type === 'video') {
-                        thumbnailHtml = '<div class="post-card-video-placeholder">▶</div>';
-                    }
-                }
-                return `
-                    <div class="post-card" onclick="selectPostForDelete('${post.id}')">
-                        ${thumbnailHtml}
-                        <div class="post-card-info">
-                            <div class="post-card-user">
-                                <img src="${post.userAvatar}" class="post-card-avatar" alt="avatar">
-                                <span class="post-card-username">${escapeHtml(post.username)}</span>
-                            </div>
-                            <div class="post-card-caption">${escapeHtml(post.caption)}</div>
-                        </div>
-                    </div>
-                `;
+                const t = getPostThumbnail(post);
+                const thumb = t ? (t.type === 'image' ? `<img src="${t.url}" class="post-card-image">` : '<div class="post-card-video-placeholder">▶</div>') : '<div class="post-card-video-placeholder">📷</div>';
+                return `<div class="post-card" onclick="selectPostForDelete('${post.id}')">${thumb}<div class="post-card-info"><div class="post-card-user"><img src="${post.userAvatar}" class="post-card-avatar"><span class="post-card-username">${escapeHtml(post.username)}</span></div><div class="post-card-caption">${escapeHtml(post.caption)}</div></div></div>`;
             }).join('');
         }
 
-        function selectPostForEdit(postId) {
-            closeSelectEditPostModal();
-            editPost(postId);
-        }
-
+        function selectPostForEdit(postId) { closeSelectEditPostModal(); editPost(postId); }
         async function selectPostForDelete(postId) {
-            if (!confirm('Are you sure you want to delete this post permanently?')) return;
+            if (!confirm('Delete this post permanently?')) return;
             try {
                 await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, { method: 'DELETE' });
                 posts = posts.filter(p => p.id !== postId);
                 renderDeletePostGrid();
                 renderPosts();
-            } catch(e) {
-                alert('Delete failed: ' + e.message);
-            }
+            } catch(e) { alert('Delete failed: ' + e.message); }
         }
 
         async function loadPosts() {
@@ -2043,100 +1120,66 @@
         }
 
         function renderGallery(mediaArray, postId) {
-            if (!mediaArray || mediaArray.length === 0) return '';
-            let html = `<div class="post-image-gallery" id="gallery-${postId}">`;
-            html += `<div class="gallery-container" style="position:relative;">`;
-            html += `<div class="gallery-slides" id="gallery-slides-${postId}" style="display:flex; overflow-x:hidden; scroll-snap-type:x mandatory;">`;
-            mediaArray.forEach((item, idx) => {
+            if (!mediaArray || !mediaArray.length) return '';
+            let html = `<div class="post-image-gallery"><div class="gallery-container"><div class="gallery-slides" id="gallery-slides-${postId}">`;
+            mediaArray.forEach(item => {
                 if (item.type === 'image') {
-                    html += `<div class="gallery-slide" style="flex:0 0 100%; scroll-snap-align:start;"><img src="${item.url}" class="gallery-img" alt="post image" style="width:100%; height:auto; object-fit:contain;"></div>`;
-                } else if (item.type === 'video') {
-                    const videoId = extractYoutubeId(item.url);
-                    if (videoId) {
-                        html += `<div class="gallery-slide" style="flex:0 0 100%; scroll-snap-align:start;"><iframe class="gallery-video" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
-                    } else {
-                        html += `<div class="gallery-slide" style="flex:0 0 100%; scroll-snap-align:start;"><video controls class="gallery-video" src="${item.url}" style="width:100%; height:auto;"></video></div>`;
-                    }
+                    html += `<div class="gallery-slide"><img src="${item.url}" class="gallery-img"></div>`;
+                } else {
+                    const vid = extractYoutubeId(item.url);
+                    html += `<div class="gallery-slide">${vid ? `<iframe class="gallery-video" src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe>` : `<video controls class="gallery-video" src="${item.url}"></video>`}</div>`;
                 }
             });
             html += `</div>`;
             if (mediaArray.length > 1) {
-                html += `<button class="gallery-nav gallery-prev" onclick="event.stopPropagation(); slideGallery('${postId}', -1)">‹</button>`;
-                html += `<button class="gallery-nav gallery-next" onclick="event.stopPropagation(); slideGallery('${postId}', 1)">›</button>`;
-                html += `<div class="gallery-dots" id="gallery-dots-${postId}">`;
-                for (let i = 0; i < mediaArray.length; i++) {
-                    html += `<span class="dot ${i === 0 ? 'active' : ''}" data-index="${i}" onclick="event.stopPropagation(); goToSlide('${postId}', ${i})"></span>`;
-                }
-                html += `</div>`;
+                html += `<button class="gallery-nav gallery-prev" onclick="event.stopPropagation();slideGallery('${postId}',-1)">‹</button>`;
+                html += `<button class="gallery-nav gallery-next" onclick="event.stopPropagation();slideGallery('${postId}',1)">›</button>`;
+                html += `<div class="gallery-dots" id="gallery-dots-${postId}">` + mediaArray.map((_,i) => `<span class="dot${i===0?' active':''}" onclick="event.stopPropagation();goToSlide('${postId}',${i})"></span>`).join('') + `</div>`;
             }
             html += `</div></div>`;
             return html;
         }
 
         window.slideGallery = function(postId, dir) {
-            const container = document.getElementById(`gallery-slides-${postId}`);
-            if (!container) return;
-            const scrollAmount = container.clientWidth;
-            container.scrollBy({ left: dir * scrollAmount, behavior: 'smooth' });
-            setTimeout(() => updateDots(postId, container), 200);
+            const c = document.getElementById(`gallery-slides-${postId}`);
+            if (!c) return;
+            c.scrollBy({ left: dir * c.clientWidth, behavior: 'smooth' });
+            setTimeout(() => updateDots(postId, c), 200);
         };
-        
         window.goToSlide = function(postId, index) {
-            const container = document.getElementById(`gallery-slides-${postId}`);
-            if (!container) return;
-            const scrollAmount = container.clientWidth * index;
-            container.scrollTo({ left: scrollAmount, behavior: 'smooth' });
-            updateDots(postId, container);
+            const c = document.getElementById(`gallery-slides-${postId}`);
+            if (!c) return;
+            c.scrollTo({ left: c.clientWidth * index, behavior: 'smooth' });
+            updateDots(postId, c);
         };
-        
         function updateDots(postId, container) {
-            const dotsContainer = document.getElementById(`gallery-dots-${postId}`);
-            if (!dotsContainer) return;
-            const scrollLeft = container.scrollLeft;
-            const slideWidth = container.clientWidth;
-            const activeIndex = Math.round(scrollLeft / slideWidth);
-            const dots = dotsContainer.querySelectorAll('.dot');
-            dots.forEach((dot, i) => {
-                if (i === activeIndex) dot.classList.add('active');
-                else dot.classList.remove('active');
-            });
+            const dc = document.getElementById(`gallery-dots-${postId}`);
+            if (!dc) return;
+            const active = Math.round(container.scrollLeft / container.clientWidth);
+            dc.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i === active));
         }
 
         function togglePostMenu(postId, event) {
             event.stopPropagation();
-            const dropdown = document.getElementById(`post-menu-${postId}`);
-            document.querySelectorAll('.post-menu-dropdown').forEach(d => {
-                if (d.id !== `post-menu-${postId}`) {
-                    d.classList.remove('active');
-                }
-            });
-            dropdown.classList.toggle('active');
+            document.querySelectorAll('.post-menu-dropdown').forEach(d => { if (d.id !== `post-menu-${postId}`) d.classList.remove('active'); });
+            document.getElementById(`post-menu-${postId}`).classList.toggle('active');
         }
+        document.addEventListener('click', () => document.querySelectorAll('.post-menu-dropdown').forEach(d => d.classList.remove('active')));
 
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.post-menu-btn')) {
-                document.querySelectorAll('.post-menu-dropdown').forEach(d => {
-                    d.classList.remove('active');
-                });
-            }
-        });
-
+        // ===== COMMENT MODAL =====
         let currentCommentPostId = null;
         function openCommentModal(postId) {
             currentCommentPostId = postId;
             const post = posts.find(p => p.id === postId);
             if (!post) return;
-            const media = (post.media && post.media[0]) ? post.media[0] : null;
-            const mediaHtml = media ? (media.type === 'image' ? `<img src="${media.url}" alt="media">` : `<video controls src="${media.url}"></video>`) : '<div style="padding:20px;">📷 No media</div>';
-            document.getElementById('commentModalMedia').innerHTML = mediaHtml;
-            const savedName = localStorage.getItem('comment_username');
-            document.getElementById('commentUsername').value = savedName || '';
+            const media = post.media && post.media[0] ? post.media[0] : null;
+            document.getElementById('commentModalMedia').innerHTML = media ? (media.type === 'image' ? `<img src="${media.url}">` : `<video controls src="${media.url}"></video>`) : '<div style="padding:20px;">📷</div>';
+            document.getElementById('commentUsername').value = localStorage.getItem('comment_username') || '';
             document.getElementById('commentText').value = '';
             document.getElementById('commentModal').classList.add('active');
         }
         document.getElementById('submitCommentBtn').onclick = async () => {
-            let username = document.getElementById('commentUsername').value.trim();
-            if (!username) username = "Anonymous";
+            let username = document.getElementById('commentUsername').value.trim() || "Anonymous";
             localStorage.setItem('comment_username', username);
             const text = document.getElementById('commentText').value.trim();
             if (!text) return alert('Write a comment');
@@ -2149,152 +1192,148 @@
             renderPosts();
             document.getElementById('commentModal').classList.remove('active');
         };
-        function closeCommentModal() { document.getElementById('commentModal').classList.remove('active'); }
-        document.getElementById('commentModal').addEventListener('click', (e) => { if (e.target === document.getElementById('commentModal')) closeCommentModal(); });
+        document.getElementById('commentModal').addEventListener('click', e => { if (e.target === document.getElementById('commentModal')) document.getElementById('commentModal').classList.remove('active'); });
 
+        // ===== RENDER POSTS =====
         function renderPosts() {
             const container = document.getElementById('feedContainer');
             const empty = document.getElementById('emptyFeed');
-            if (posts.length === 0) { 
-                empty.style.display = 'block'; 
-                empty.textContent = isAdminMode ? 'No posts. Create one!' : 'No posts yet.'; 
-                container.innerHTML = ''; 
-                return; 
-            }
+            if (!posts.length) { empty.style.display = 'block'; empty.textContent = isAdminMode ? 'No posts. Create one!' : 'No posts yet.'; container.innerHTML = ''; return; }
             empty.style.display = 'none';
-            const sorted = [...posts].sort((a, b) => b.timestamp - a.timestamp);
+            const sorted = [...posts].sort((a,b) => b.timestamp - a.timestamp);
             container.innerHTML = sorted.map(post => {
                 const commentsArr = post.comments ? Object.keys(post.comments).map(k => ({ id: k, ...post.comments[k] })) : [];
                 let mediaArray = [];
-                if (post.media && post.media.length > 0) {
-                    mediaArray = post.media;
-                } else if (post.images && post.images.length > 0) {
-                    mediaArray = post.images.map(url => ({ type: 'image', url: url }));
-                } else if (post.imageUrl) {
-                    mediaArray = [{ type: 'image', url: post.imageUrl }];
-                }
-                const galleryHtml = mediaArray.length ? renderGallery(mediaArray, post.id) : '';
+                if (post.media && post.media.length) mediaArray = post.media;
+                else if (post.images && post.images.length) mediaArray = post.images.map(url => ({ type: 'image', url }));
+                else if (post.imageUrl) mediaArray = [{ type: 'image', url: post.imageUrl }];
+
+                const isLiked = userLikedPosts.has(post.id);
+                const displayLikes = formatLikes(post.likes || 0);
+                const verifiedHtml = post.verified ? `<span class="verified-badge">✓</span>` : '';
+
                 const adminMenu = isAdminMode ? `
-                    <div style="position: relative;">
-                        <button class="post-menu-btn" onclick="togglePostMenu('${post.id}', event)">⋮</button>
+                    <div style="position:relative;">
+                        <button class="post-menu-btn" onclick="togglePostMenu('${post.id}',event)">⋮</button>
                         <div class="post-menu-dropdown" id="post-menu-${post.id}">
                             <div class="menu-option" onclick="editPostDirect('${post.id}')">✏️ Edit</div>
                             <div class="menu-option delete" onclick="deletePostDirect('${post.id}')">🗑️ Delete</div>
                         </div>
-                    </div>
+                    </div>` : '';
+
+                const editLikesBtn = isAdminMode ? `
+                    <button class="action-btn" onclick="openEditLikesModal('${post.id}')" title="Edit likes" style="font-size:18px;">✏️</button>
                 ` : '';
+
                 return `
                     <div class="post">
                         <div class="post-header">
                             <div class="post-user">
                                 <img src="${post.userAvatar}" class="post-avatar">
                                 <div>
-                                    <div class="post-username">${escapeHtml(post.username)}</div>
+                                    <div class="post-username">${escapeHtml(post.username)}${verifiedHtml}</div>
                                     <div class="post-time">${formatTimestamp(post.timestamp)}</div>
                                 </div>
                             </div>
                             ${adminMenu}
                         </div>
-                        ${galleryHtml}
+                        ${renderGallery(mediaArray, post.id)}
                         <div class="post-actions">
-                            <button class="action-btn ${post.likes > 0 ? 'liked' : ''}" onclick="likePost('${post.id}')">
-                                <svg aria-label="Like" fill="${post.likes > 0 ? '#FFD700' : 'none'}" height="24" viewBox="0 0 24 24" width="24">
+                            <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="likePost('${post.id}')">
+                                <svg aria-label="Like" fill="${isLiked ? '#FFD700' : 'none'}" height="24" viewBox="0 0 24 24" width="24">
                                     <path d="M16.792 3.904A4.989 4.989 0 0121.5 9.122c0 3.072-2.652 4.959-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.309-2.143-1.823-4.303-3.752C5.141 14.072 2.5 12.167 2.5 9.122a4.989 4.989 0 014.708-5.218 4.21 4.21 0 013.675 1.941c.84 1.175.98 1.763 1.12 1.763s.278-.588 1.11-1.766a4.17 4.17 0 013.679-1.938m0-2a6.04 6.04 0 00-4.797 2.127 6.052 6.052 0 00-4.787-2.127A6.985 6.985 0 00.5 9.122c0 3.61 2.55 5.827 5.015 7.97.283.246.569.494.853.747l1.027.918a44.998 44.998 0 003.518 3.018 2 2 0 002.174 0 45.263 45.263 0 003.626-3.115l.922-.824c.293-.26.59-.519.885-.774 2.334-2.025 4.98-4.32 4.98-7.94a6.985 6.985 0 00-6.708-7.218z" stroke="#FFD700" stroke-width="2"></path>
                                 </svg>
                             </button>
+                            ${editLikesBtn}
                             <button class="action-btn" onclick="openCommentModal('${post.id}')">
                                 <svg aria-label="Comment" fill="none" height="24" viewBox="0 0 24 24" width="24">
                                     <path d="M20.656 17.008a9.993 9.993 0 10-3.59 3.615L22 22z" stroke="#FFD700" stroke-linejoin="round" stroke-width="2"></path>
                                 </svg>
                             </button>
-                            ${isAdminMode ? `<button class="action-btn" onclick="pinPost('${post.id}')"><span>${post.pinned ? '📌 pinned' : '📌'}</span></button>` : ''}
+                            ${isAdminMode ? `<button class="action-btn" onclick="pinPost('${post.id}')"><span>${post.pinned ? '📌' : '📌'}</span></button>` : ''}
                         </div>
-                        <div class="post-likes">${post.likes} likes</div>
-                        <div class="post-caption"><strong>${escapeHtml(post.username)}</strong> ${escapeHtml(post.caption)}</div>
+                        <div class="post-likes">${displayLikes} likes</div>
+                        <div class="post-caption"><strong>${escapeHtml(post.username)}</strong>${verifiedHtml} ${escapeHtml(post.caption)}</div>
                         <div class="post-comments">
                             ${commentsArr.length ? `<div class="view-comments" onclick="toggleComments('${post.id}')">View all ${commentsArr.length} comments</div>` : ''}
                             <div class="comments-list" id="comments-${post.id}">
-                                ${commentsArr.length ? commentsArr.map(c => `<div style="padding:4px 0;"><strong>${escapeHtml(c.username)}</strong> ${escapeHtml(c.text)} <small style="color:#8e8e8e;">${formatTimestamp(c.timestamp)}</small> ${isAdminMode ? `<span style="color:#ff4444; cursor:pointer; margin-left:8px;" onclick="deleteComment('${post.id}','${c.id}')">🗑️</span>` : ''}</div>`).join('') : '<div style="color:#8e8e8e; padding:8px 0;">No comments yet.</div>'}
+                                ${commentsArr.length ? commentsArr.map(c => `<div style="padding:4px 0;"><strong>${escapeHtml(c.username)}</strong> ${escapeHtml(c.text)} <small style="color:#8e8e8e;">${formatTimestamp(c.timestamp)}</small>${isAdminMode ? ` <span style="color:#ff4444;cursor:pointer;margin-left:8px;" onclick="deleteComment('${post.id}','${c.id}')">🗑️</span>` : ''}</div>`).join('') : '<div style="color:#8e8e8e;padding:8px 0;">No comments yet.</div>'}
                             </div>
                         </div>
-                        ${isAdminMode ? `<div class="add-comment" id="add-comment-${post.id}"><div style="display:flex;"><input type="text" id="comment-input-${post.id}" class="comment-input" placeholder="Add a comment..." onkeypress="if(event.key==='Enter') addComment('${post.id}')"><button class="comment-post-btn" onclick="addComment('${post.id}')">Post</button></div></div>` : ''}
+                        ${isAdminMode ? `<div class="add-comment" id="add-comment-${post.id}"><div style="display:flex;"><input type="text" id="comment-input-${post.id}" class="comment-input" placeholder="Add a comment..." onkeypress="if(event.key==='Enter')addComment('${post.id}')"><button class="comment-post-btn" onclick="addComment('${post.id}')">Post</button></div></div>` : ''}
                     </div>
                 `;
             }).join('');
+
             setTimeout(() => {
                 posts.forEach(post => {
-                    const container = document.getElementById(`gallery-slides-${post.id}`);
-                    if (container) {
-                        container.addEventListener('scroll', () => updateDots(post.id, container));
-                    }
+                    const c = document.getElementById(`gallery-slides-${post.id}`);
+                    if (c) c.addEventListener('scroll', () => updateDots(post.id, c));
                 });
             }, 100);
         }
 
-        function editPostDirect(postId) {
-            editPost(postId);
-        }
-
+        function editPostDirect(postId) { editPost(postId); }
         async function deletePostDirect(postId) {
-            if (!confirm('Are you sure you want to delete this post permanently?')) return;
+            if (!confirm('Delete this post permanently?')) return;
             try {
                 await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, { method: 'DELETE' });
                 posts = posts.filter(p => p.id !== postId);
                 renderPosts();
-            } catch(e) {
-                alert('Delete failed: ' + e.message);
-            }
+            } catch(e) { alert('Delete failed: ' + e.message); }
         }
 
-        function toggleComments(id) { 
-            document.getElementById(`comments-${id}`).classList.toggle('show'); 
-            const add = document.getElementById(`add-comment-${id}`); 
-            if (add) add.classList.toggle('show'); 
+        function toggleComments(id) {
+            document.getElementById(`comments-${id}`).classList.toggle('show');
+            const add = document.getElementById(`add-comment-${id}`);
+            if (add) add.classList.toggle('show');
         }
-        
-        async function likePost(id) { 
-            const post = posts.find(p => p.id === id); 
-            if (!post) return; 
-            const newLikes = (post.likes || 0) + 1; 
-            await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${id}.json`, { method: 'PATCH', body: JSON.stringify({ likes: newLikes }) }); 
-            post.likes = newLikes; 
-            renderPosts(); 
+
+        async function likePost(id) {
+            const post = posts.find(p => p.id === id);
+            if (!post) return;
+            if (userLikedPosts.has(id)) return; // prevent double like
+            userLikedPosts.add(id);
+            const newLikes = Math.min((post.likes || 0) + 1, 10000);
+            await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${id}.json`, { method: 'PATCH', body: JSON.stringify({ likes: newLikes }) });
+            post.likes = newLikes;
+            renderPosts();
         }
-        
-        async function addComment(postId) { 
-            if (!isAdminMode) return; 
-            const input = document.getElementById(`comment-input-${postId}`); 
-            const text = input?.value.trim(); 
-            if (!text) return; 
-            const commentData = { username: "Admin", text, timestamp: Date.now() }; 
-            const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}/comments.json`, { method: 'POST', body: JSON.stringify(commentData) }); 
-            const result = await res.json(); 
-            const post = posts.find(p => p.id === postId); 
-            if (!post.comments) post.comments = {}; 
-            post.comments[result.name] = commentData; 
-            renderPosts(); 
-            setTimeout(() => { 
-                const cl = document.getElementById(`comments-${postId}`); 
-                if (cl) cl.classList.add('show'); 
-                const ac = document.getElementById(`add-comment-${postId}`); 
-                if (ac) ac.classList.add('show'); 
-            }, 100); 
+
+        async function addComment(postId) {
+            if (!isAdminMode) return;
+            const input = document.getElementById(`comment-input-${postId}`);
+            const text = input?.value.trim();
+            if (!text) return;
+            const commentData = { username: "Admin", text, timestamp: Date.now() };
+            const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}/comments.json`, { method: 'POST', body: JSON.stringify(commentData) });
+            const result = await res.json();
+            const post = posts.find(p => p.id === postId);
+            if (!post.comments) post.comments = {};
+            post.comments[result.name] = commentData;
+            renderPosts();
+            setTimeout(() => {
+                const cl = document.getElementById(`comments-${postId}`);
+                if (cl) cl.classList.add('show');
+                const ac = document.getElementById(`add-comment-${postId}`);
+                if (ac) ac.classList.add('show');
+            }, 100);
         }
-        
-        async function deleteComment(postId, commentId) { 
-            if (!isAdminMode || !confirm('Delete comment?')) return; 
-            await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}/comments/${commentId}.json`, { method: 'DELETE' }); 
-            delete posts.find(p => p.id === postId).comments[commentId]; 
-            renderPosts(); 
+
+        async function deleteComment(postId, commentId) {
+            if (!isAdminMode || !confirm('Delete comment?')) return;
+            await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}/comments/${commentId}.json`, { method: 'DELETE' });
+            delete posts.find(p => p.id === postId).comments[commentId];
+            renderPosts();
         }
-        
-        async function pinPost(postId) { 
-            if (!isAdminMode) return; 
-            const post = posts.find(p => p.id === postId); 
-            const newPinned = !post.pinned; 
-            await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, { method: 'PATCH', body: JSON.stringify({ pinned: newPinned }) }); 
-            post.pinned = newPinned; 
-            renderPosts(); 
+
+        async function pinPost(postId) {
+            if (!isAdminMode) return;
+            const post = posts.find(p => p.id === postId);
+            const newPinned = !post.pinned;
+            await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, { method: 'PATCH', body: JSON.stringify({ pinned: newPinned }) });
+            post.pinned = newPinned;
+            renderPosts();
         }
 
         function editPost(postId) {
@@ -2304,78 +1343,51 @@
             currentEditPostId = postId;
             document.getElementById('editProfileName').value = post.username;
             document.getElementById('editCaption').value = post.caption;
+            document.getElementById('editVerifiedBadgeToggle').checked = post.verified || false;
             document.getElementById('editProfilePhotoUpload').value = '';
             document.getElementById('editPostImagesUpload').value = '';
             document.getElementById('editYoutubeUrlInput').value = '';
             document.getElementById('editProfilePhotoPreview').style.display = 'none';
             document.getElementById('editFormSuccess').style.display = 'none';
             editUploadedProfilePhotoUrl = null;
-            if (post.media && post.media.length > 0) {
-                editMediaItems = JSON.parse(JSON.stringify(post.media));
-            } else if (post.images && post.images.length > 0) {
-                editMediaItems = post.images.map(url => ({ type: 'image', url: url }));
-            } else if (post.imageUrl) {
-                editMediaItems = [{ type: 'image', url: post.imageUrl }];
-            } else {
-                editMediaItems = [];
-            }
+            if (post.media && post.media.length) editMediaItems = JSON.parse(JSON.stringify(post.media));
+            else if (post.images && post.images.length) editMediaItems = post.images.map(url => ({ type: 'image', url }));
+            else if (post.imageUrl) editMediaItems = [{ type: 'image', url: post.imageUrl }];
+            else editMediaItems = [];
             renderEditMediaBlocks();
             document.getElementById('currentMediaList').innerHTML = editMediaItems.length ? `Current media: ${editMediaItems.length} item(s).` : 'No media currently.';
             document.getElementById('editPostModal').classList.add('active');
         }
-        
-        function closeEditPostModal() { 
-            document.getElementById('editPostModal').classList.remove('active'); 
-            currentEditPostId = null; 
-        }
-        
+        function closeEditPostModal() { document.getElementById('editPostModal').classList.remove('active'); currentEditPostId = null; }
+
         async function previewEditProfilePhoto() {
             const file = document.getElementById('editProfilePhotoUpload').files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = e => { 
-                document.getElementById('editProfilePhotoPreviewImg').src = e.target.result; 
-                document.getElementById('editProfilePhotoPreview').style.display = 'block'; 
-            };
+            reader.onload = e => { document.getElementById('editProfilePhotoPreviewImg').src = e.target.result; document.getElementById('editProfilePhotoPreview').style.display = 'block'; };
             reader.readAsDataURL(file);
             document.getElementById('editProfilePhotoStatus').innerHTML = 'Uploading... <span class="loading-spinner"></span>';
-            try { 
-                editUploadedProfilePhotoUrl = await uploadToImgBB(file); 
-                document.getElementById('editProfilePhotoStatus').innerHTML = '✅ Uploaded!'; 
-            } catch(e) { 
-                document.getElementById('editProfilePhotoStatus').innerHTML = '❌ Failed'; 
-                editUploadedProfilePhotoUrl = null; 
-            }
+            try { editUploadedProfilePhotoUrl = await uploadToImgBB(file); document.getElementById('editProfilePhotoStatus').innerHTML = '✅ Uploaded!'; }
+            catch(e) { document.getElementById('editProfilePhotoStatus').innerHTML = '❌ Failed'; editUploadedProfilePhotoUrl = null; }
         }
-        
+
         async function previewEditPostImages() {
             const files = Array.from(document.getElementById('editPostImagesUpload').files);
-            if (files.length === 0) return;
+            if (!files.length) return;
             document.getElementById('editPostImagesStatus').innerHTML = 'Uploading images...';
             try {
                 const urls = await uploadMultipleImages(files);
-                urls.forEach(url => {
-                    editMediaItems.push({ type: 'image', url: url });
-                });
+                urls.forEach(url => editMediaItems.push({ type: 'image', url }));
                 renderEditMediaBlocks();
                 document.getElementById('editPostImagesStatus').innerHTML = `✅ ${urls.length} image(s) added.`;
-            } catch(e) { 
-                document.getElementById('editPostImagesStatus').innerHTML = '❌ Upload failed'; 
-            }
+            } catch(e) { document.getElementById('editPostImagesStatus').innerHTML = '❌ Upload failed'; }
         }
 
         function addEditYoutubeVideo() {
             const url = document.getElementById('editYoutubeUrlInput').value.trim();
-            if (!url) {
-                alert('Please enter a YouTube URL');
-                return;
-            }
-            const videoId = extractYoutubeId(url);
-            if (!videoId) {
-                alert('Invalid YouTube URL');
-                return;
-            }
-            editMediaItems.push({ type: 'video', url: url });
+            if (!url) { alert('Enter a YouTube URL'); return; }
+            if (!extractYoutubeId(url)) { alert('Invalid YouTube URL'); return; }
+            editMediaItems.push({ type: 'video', url });
             renderEditMediaBlocks();
             document.getElementById('editYoutubeUrlInput').value = '';
         }
@@ -2386,144 +1398,93 @@
             editMediaItems.forEach((item, index) => {
                 const block = document.createElement('div');
                 block.className = 'media-block';
-                let preview = '';
-                if (item.type === 'image') {
-                    preview = `<img src="${item.url}" class="media-block-preview">`;
-                } else {
-                    preview = `<div class="media-block-video-icon">▶</div>`;
-                }
                 block.innerHTML = `
-                    <div class="media-block-number">${index + 1}</div>
-                    ${preview}
-                    <div class="media-block-info">${item.type === 'image' ? 'Image' : 'YouTube Video'}</div>
+                    <div class="media-block-number">${index+1}</div>
+                    ${item.type === 'image' ? `<img src="${item.url}" class="media-block-preview">` : '<div class="media-block-video-icon">▶</div>'}
+                    <div class="media-block-info">${item.type === 'image' ? 'Image' : 'Video'}</div>
                     <div class="media-block-controls">
-                        ${index > 0 ? `<button class="media-block-btn" onclick="moveEditMedia(${index}, -1)">▲</button>` : ''}
-                        ${index < editMediaItems.length - 1 ? `<button class="media-block-btn" onclick="moveEditMedia(${index}, 1)">▼</button>` : ''}
+                        ${index > 0 ? `<button class="media-block-btn" onclick="moveEditMedia(${index},-1)">▲</button>` : ''}
+                        ${index < editMediaItems.length-1 ? `<button class="media-block-btn" onclick="moveEditMedia(${index},1)">▼</button>` : ''}
                         <button class="media-block-btn remove" onclick="removeEditMedia(${index})">✕</button>
-                    </div>
-                `;
+                    </div>`;
                 container.appendChild(block);
             });
         }
+        function moveEditMedia(index, dir) { const ni = index+dir; if (ni<0||ni>=editMediaItems.length) return; [editMediaItems[index],editMediaItems[ni]]=[editMediaItems[ni],editMediaItems[index]]; renderEditMediaBlocks(); }
+        function removeEditMedia(index) { editMediaItems.splice(index,1); renderEditMediaBlocks(); }
 
-        function moveEditMedia(index, direction) {
-            const newIndex = index + direction;
-            if (newIndex < 0 || newIndex >= editMediaItems.length) return;
-            [editMediaItems[index], editMediaItems[newIndex]] = [editMediaItems[newIndex], editMediaItems[index]];
-            renderEditMediaBlocks();
-        }
-
-        function removeEditMedia(index) {
-            editMediaItems.splice(index, 1);
-            renderEditMediaBlocks();
-        }
-        
         async function updatePost() {
             if (!isAdminMode || !currentEditPostId) return;
             const newUsername = document.getElementById('editProfileName').value.trim();
             const newCaption = document.getElementById('editCaption').value.trim();
-            if (!newUsername || !newCaption) { 
-                alert("Profile name and caption required"); 
-                return; 
-            }
-            if (!confirm('Are you sure you want to save these changes?')) return;
-            const updateData = { username: newUsername, caption: newCaption };
+            const newVerified = document.getElementById('editVerifiedBadgeToggle').checked;
+            if (!newUsername || !newCaption) { alert("Profile name and caption required"); return; }
+            if (!confirm('Save changes?')) return;
+            const updateData = { username: newUsername, caption: newCaption, verified: newVerified };
             if (editUploadedProfilePhotoUrl) updateData.userAvatar = editUploadedProfilePhotoUrl;
             if (editMediaItems.length) updateData.media = editMediaItems;
             try {
                 await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${currentEditPostId}.json`, { method: 'PATCH', body: JSON.stringify(updateData) });
                 const post = posts.find(p => p.id === currentEditPostId);
-                post.username = newUsername;
-                post.caption = newCaption;
-                if (editUploadedProfilePhotoUrl) post.userAvatar = editUploadedProfilePhotoUrl;
-                if (editMediaItems.length) post.media = editMediaItems;
+                Object.assign(post, updateData);
                 const successDiv = document.getElementById('editFormSuccess');
-                successDiv.innerHTML = '<span style="font-size:24px;">✅</span> Changes saved successfully!';
+                successDiv.innerHTML = '<span style="font-size:24px;">✅</span> Changes saved!';
                 successDiv.style.display = 'flex';
-                setTimeout(() => {
-                    renderPosts();
-                    closeEditPostModal();
-                }, 1500);
-            } catch(e) { 
-                alert("Update failed: " + e.message); 
-            }
+                setTimeout(() => { renderPosts(); closeEditPostModal(); }, 1500);
+            } catch(e) { alert("Update failed: " + e.message); }
         }
 
-        function showCreatePostModal() { 
-            if (!isAdminMode) return; 
-            document.getElementById('postModalTitle').textContent = 'Create New Post'; 
-            document.getElementById('profileName').value = ''; 
-            document.getElementById('postCaption').value = ''; 
-            document.getElementById('useRealTime').checked = true; 
-            toggleCustomTime(); 
-            document.getElementById('profilePhotoUpload').value = ''; 
-            document.getElementById('postImagesUpload').value = ''; 
+        // ===== CREATE POST =====
+        function showCreatePostModal() {
+            if (!isAdminMode) return;
+            document.getElementById('profileName').value = '';
+            document.getElementById('postCaption').value = '';
+            document.getElementById('verifiedBadgeToggle').checked = false;
+            document.getElementById('useRealTime').checked = true;
+            toggleCustomTime();
+            document.getElementById('profilePhotoUpload').value = '';
+            document.getElementById('postImagesUpload').value = '';
             document.getElementById('postVideoUpload').value = '';
             document.getElementById('youtubeUrlInput').value = '';
-            document.getElementById('profilePhotoPreview').style.display = 'none'; 
+            document.getElementById('profilePhotoPreview').style.display = 'none';
             document.getElementById('postFormError').style.display = 'none';
             document.getElementById('postFormSuccess').style.display = 'none';
-            uploadedProfilePhotoUrl = null; 
+            uploadedProfilePhotoUrl = null;
             mediaItems = [];
             renderMediaBlocks();
-            document.getElementById('postModal').classList.add('active'); 
+            document.getElementById('postModal').classList.add('active');
         }
-        
-        function closePostModal() { 
-            document.getElementById('postModal').classList.remove('active'); 
-        }
-        
-        function toggleCustomTime() { 
-            document.getElementById('customTimeGroup').style.display = document.getElementById('useRealTime').checked ? 'none' : 'block'; 
-        }
-        
-        async function previewProfilePhoto() { 
-            const file = document.getElementById('profilePhotoUpload').files[0]; 
-            if (!file) return; 
-            const reader = new FileReader(); 
-            reader.onload = e => { 
-                document.getElementById('profilePhotoPreviewImg').src = e.target.result; 
-                document.getElementById('profilePhotoPreview').style.display = 'block'; 
-            }; 
-            reader.readAsDataURL(file); 
-            document.getElementById('profilePhotoStatus').innerHTML = 'Uploading... <span class="loading-spinner"></span>'; 
-            try { 
-                uploadedProfilePhotoUrl = await uploadToImgBB(file); 
-                document.getElementById('profilePhotoStatus').innerHTML = '✅ Uploaded!'; 
-            } catch(e) { 
-                document.getElementById('profilePhotoStatus').innerHTML = '❌ Failed'; 
-                uploadedProfilePhotoUrl = null; 
-            } 
+        function closePostModal() { document.getElementById('postModal').classList.remove('active'); }
+        function toggleCustomTime() { document.getElementById('customTimeGroup').style.display = document.getElementById('useRealTime').checked ? 'none' : 'block'; }
+
+        async function previewProfilePhoto() {
+            const file = document.getElementById('profilePhotoUpload').files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => { document.getElementById('profilePhotoPreviewImg').src = e.target.result; document.getElementById('profilePhotoPreview').style.display = 'block'; };
+            reader.readAsDataURL(file);
+            document.getElementById('profilePhotoStatus').innerHTML = 'Uploading... <span class="loading-spinner"></span>';
+            try { uploadedProfilePhotoUrl = await uploadToImgBB(file); document.getElementById('profilePhotoStatus').innerHTML = '✅ Uploaded!'; }
+            catch(e) { document.getElementById('profilePhotoStatus').innerHTML = '❌ Failed'; uploadedProfilePhotoUrl = null; }
         }
 
         async function previewPostImages() {
             const files = Array.from(document.getElementById('postImagesUpload').files);
-            if (files.length === 0) return;
+            if (!files.length) return;
             document.getElementById('postImagesStatus').innerHTML = 'Uploading images...';
             try {
                 const urls = await uploadMultipleImages(files);
-                urls.forEach(url => {
-                    mediaItems.push({ type: 'image', url: url });
-                });
+                urls.forEach(url => mediaItems.push({ type: 'image', url }));
                 renderMediaBlocks();
                 document.getElementById('postImagesStatus').innerHTML = `✅ ${urls.length} image(s) added.`;
-            } catch(e) { 
-                document.getElementById('postImagesStatus').innerHTML = '❌ Upload failed'; 
-            }
+            } catch(e) { document.getElementById('postImagesStatus').innerHTML = '❌ Upload failed'; }
         }
 
         function addYoutubeVideo() {
             const url = document.getElementById('youtubeUrlInput').value.trim();
-            if (!url) {
-                alert('Please enter a YouTube URL');
-                return;
-            }
-            const videoId = extractYoutubeId(url);
-            if (!videoId) {
-                alert('Invalid YouTube URL');
-                return;
-            }
-            mediaItems.push({ type: 'video', url: url });
+            if (!url) { alert('Enter a YouTube URL'); return; }
+            if (!extractYoutubeId(url)) { alert('Invalid YouTube URL'); return; }
+            mediaItems.push({ type: 'video', url });
             renderMediaBlocks();
             document.getElementById('youtubeUrlInput').value = '';
         }
@@ -2534,110 +1495,82 @@
             mediaItems.forEach((item, index) => {
                 const block = document.createElement('div');
                 block.className = 'media-block';
-                let preview = '';
-                if (item.type === 'image') {
-                    preview = `<img src="${item.url}" class="media-block-preview">`;
-                } else {
-                    preview = `<div class="media-block-video-icon">▶</div>`;
-                }
                 block.innerHTML = `
-                    <div class="media-block-number">${index + 1}</div>
-                    ${preview}
+                    <div class="media-block-number">${index+1}</div>
+                    ${item.type === 'image' ? `<img src="${item.url}" class="media-block-preview">` : '<div class="media-block-video-icon">▶</div>'}
                     <div class="media-block-info">${item.type === 'image' ? 'Image' : 'Video'}</div>
                     <div class="media-block-controls">
-                        ${index > 0 ? `<button class="media-block-btn" onclick="moveMedia(${index}, -1)">▲</button>` : ''}
-                        ${index < mediaItems.length - 1 ? `<button class="media-block-btn" onclick="moveMedia(${index}, 1)">▼</button>` : ''}
+                        ${index > 0 ? `<button class="media-block-btn" onclick="moveMedia(${index},-1)">▲</button>` : ''}
+                        ${index < mediaItems.length-1 ? `<button class="media-block-btn" onclick="moveMedia(${index},1)">▼</button>` : ''}
                         <button class="media-block-btn remove" onclick="removeMedia(${index})">✕</button>
-                    </div>
-                `;
+                    </div>`;
                 container.appendChild(block);
             });
         }
+        function moveMedia(index, dir) { const ni = index+dir; if (ni<0||ni>=mediaItems.length) return; [mediaItems[index],mediaItems[ni]]=[mediaItems[ni],mediaItems[index]]; renderMediaBlocks(); }
+        function removeMedia(index) { mediaItems.splice(index,1); renderMediaBlocks(); }
 
-        function moveMedia(index, direction) {
-            const newIndex = index + direction;
-            if (newIndex < 0 || newIndex >= mediaItems.length) return;
-            [mediaItems[index], mediaItems[newIndex]] = [mediaItems[newIndex], mediaItems[index]];
-            renderMediaBlocks();
-        }
-
-        function removeMedia(index) {
-            mediaItems.splice(index, 1);
-            renderMediaBlocks();
-        }
-        
-        async function submitPost() { 
-            if (!isAdminMode) return; 
-            const profileName = document.getElementById('profileName').value.trim(); 
-            const caption = document.getElementById('postCaption').value.trim(); 
+        async function submitPost() {
+            if (!isAdminMode) return;
+            const profileName = document.getElementById('profileName').value.trim();
+            const caption = document.getElementById('postCaption').value.trim();
+            const verified = document.getElementById('verifiedBadgeToggle').checked;
             const errorDiv = document.getElementById('postFormError');
             const successDiv = document.getElementById('postFormSuccess');
             errorDiv.style.display = 'none';
             successDiv.style.display = 'none';
-            if (!profileName || !caption) { 
-                errorDiv.textContent = 'Profile name and caption are required';
-                errorDiv.style.display = 'block';
-                return; 
-            } 
+            if (!profileName || !caption) { errorDiv.textContent = 'Profile name and caption are required'; errorDiv.style.display = 'block'; return; }
             let timestamp;
             if (document.getElementById('useRealTime').checked) {
                 timestamp = Date.now();
             } else {
                 const customTime = document.getElementById('customTimestamp').value;
-                if (!customTime) {
-                    errorDiv.textContent = 'Please select a custom date and time';
-                    errorDiv.style.display = 'block';
-                    return;
-                }
+                if (!customTime) { errorDiv.textContent = 'Select a custom date and time'; errorDiv.style.display = 'block'; return; }
                 timestamp = new Date(customTime).getTime();
             }
-            const postData = { 
-                username: profileName, 
-                userAvatar: uploadedProfilePhotoUrl || 'https://via.placeholder.com/150/FFD700/000000?text=' + profileName.charAt(0).toUpperCase(), 
+            const postData = {
+                username: profileName,
+                userAvatar: uploadedProfilePhotoUrl || `https://via.placeholder.com/150/FFD700/000000?text=${profileName.charAt(0).toUpperCase()}`,
                 media: mediaItems,
-                caption: caption, 
-                likes: 0, 
-                comments: {}, 
-                pinned: false, 
-                timestamp: timestamp 
-            }; 
-            try { 
-                const btn = document.getElementById('submitPostBtn'); 
-                btn.textContent = 'Posting...'; 
-                btn.disabled = true; 
-                const response = await fetch(`${FIREBASE_CONFIG.databaseURL}/posts.json`, { method: 'POST', body: JSON.stringify(postData) }); 
-                const result = await response.json(); 
-                posts.push({ id: result.name, ...postData }); 
+                caption,
+                likes: 0,
+                comments: {},
+                pinned: false,
+                verified,
+                timestamp
+            };
+            try {
+                const btn = document.getElementById('submitPostBtn');
+                btn.textContent = 'Posting...'; btn.disabled = true;
+                const response = await fetch(`${FIREBASE_CONFIG.databaseURL}/posts.json`, { method: 'POST', body: JSON.stringify(postData) });
+                const result = await response.json();
+                posts.push({ id: result.name, ...postData });
                 successDiv.innerHTML = '<span style="font-size:24px;">✅</span> Post uploaded successfully!';
                 successDiv.style.display = 'flex';
-                setTimeout(() => {
-                    renderPosts(); 
-                    closePostModal(); 
-                }, 1500);
-                btn.textContent = 'Post'; 
-                btn.disabled = false; 
-            } catch(e) { 
+                setTimeout(() => { renderPosts(); closePostModal(); }, 1500);
+                btn.textContent = 'Post'; btn.disabled = false;
+            } catch(e) {
                 errorDiv.textContent = 'Upload failed: ' + e.message;
                 errorDiv.style.display = 'block';
-                document.getElementById('submitPostBtn').textContent = 'Post'; 
-                document.getElementById('submitPostBtn').disabled = false; 
-            } 
+                document.getElementById('submitPostBtn').textContent = 'Post';
+                document.getElementById('submitPostBtn').disabled = false;
+            }
         }
 
-        function formatTimestamp(ts) { 
-            const diff = Date.now() - ts; 
-            const mins = Math.floor(diff / 60000); 
-            if (mins < 1) return 'just now'; 
-            if (mins < 60) return `${mins}m ago`; 
-            if (mins < 1440) return `${Math.floor(mins / 60)}h ago`; 
-            return `${Math.floor(mins / 1440)}d ago`; 
+        function formatTimestamp(ts) {
+            const diff = Date.now() - ts;
+            const mins = Math.floor(diff / 60000);
+            if (mins < 1) return 'just now';
+            if (mins < 60) return `${mins}m ago`;
+            if (mins < 1440) return `${Math.floor(mins/60)}h ago`;
+            return `${Math.floor(mins/1440)}d ago`;
         }
-        
-        function escapeHtml(str) { 
-            if (!str) return ''; 
-            const div = document.createElement('div'); 
-            div.textContent = str; 
-            return div.innerHTML; 
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
         }
     </script>
 </body>
