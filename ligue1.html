@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1745,4 +1746,1285 @@ function openManagerHistoryModal() {
         entriesHtml += `
           <div class="manager-history-entry">
             <span class="mgr-name">${escapeHtml(entry.name)}</span>
-            <span class="mgr-status">${status
+            <span class="mgr-status">${statusEmoji} ${entry.status}</span>
+            <span class="mgr-md">Joined: MD ${entry.matchdayJoined || '?'} ${leftText}</span>
+            <div class="mgr-actions">
+              <button class="edit-mgr-btn" data-team="${escapeHtml(team)}" data-key="${entry.key}">✏️</button>
+              <button class="delete-mgr-btn" data-team="${escapeHtml(team)}" data-key="${entry.key}">🗑️</button>
+            </div>
+          </div>
+        `;
+      }
+      if (!entriesHtml) entriesHtml = '<div style="color:rgba(255,255,255,0.3);padding:8px 0;">No managers yet.</div>';
+
+      html += `
+        <div class="team-manager-section">
+          <div class="team-title">${escapeHtml(team)}</div>
+          <div id="mgrHistory_${escapeHtml(team)}">${entriesHtml}</div>
+          <div style="margin-top:8px;">
+            <button class="add-mgr-btn" data-team="${escapeHtml(team)}" style="background:rgba(0,255,135,0.2);border:1px solid var(--razzmatazz);color:var(--white);padding:6px 18px;border-radius:20px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:1rem;">+ Add Manager</button>
+          </div>
+          <div id="mgrForm_${escapeHtml(team)}" style="display:none;margin-top:12px;"></div>
+        </div>
+      `;
+    }
+    html += `<div class="modal-btns"><button class="modal-btn-cancel" id="closeMgrModal">Close</button></div>`;
+    showModal(html);
+
+    document.getElementById('closeMgrModal').onclick = closeModal;
+
+    document.querySelectorAll('.add-mgr-btn').forEach(btn => {
+      btn.onclick = () => {
+        const team = btn.dataset.team;
+        showManagerForm(team, null);
+      };
+    });
+
+    document.querySelectorAll('.edit-mgr-btn').forEach(btn => {
+      btn.onclick = () => {
+        const team = btn.dataset.team;
+        const key = btn.dataset.key;
+        const history = managerHistory[team] || [];
+        const entry = history.find(e => e.key === key);
+        if (entry) showManagerForm(team, entry);
+      };
+    });
+
+    document.querySelectorAll('.delete-mgr-btn').forEach(btn => {
+      btn.onclick = async () => {
+        const team = btn.dataset.team;
+        const key = btn.dataset.key;
+        if (!confirm(`Delete this manager entry for ${team}?`)) return;
+        try {
+          incrementPending();
+          await database.ref(getSeasonPath(currentSeasonId, `managerHistory/${team}/${key}`)).remove();
+          decrementPending();
+          await loadManagerHistory();
+          render();
+        } catch(e) { alert('Error: ' + e.message); }
+      };
+    });
+  };
+
+  function showManagerForm(team, entry) {
+    const container = document.getElementById(`mgrForm_${team}`);
+    if (!container) return;
+    document.querySelectorAll('.manager-inline-form').forEach(f => f.style.display = 'none');
+    container.style.display = 'block';
+    const isEdit = !!entry;
+    const name = entry ? entry.name : '';
+    const status = entry ? entry.status : 'active';
+    const matchdayJoined = entry ? entry.matchdayJoined : '';
+    const matchdayLeft = entry ? entry.matchdayLeft : '';
+    container.innerHTML = `
+      <div class="manager-inline-form">
+        <div>
+          <label>Name</label>
+          <input type="text" class="mgr-name-input" value="${escapeHtml(name)}" placeholder="Manager name">
+        </div>
+        <div>
+          <label>Status</label>
+          <select class="mgr-status-select">
+            <option value="active" ${status === 'active' ? 'selected' : ''}>Active 🟢</option>
+            <option value="sacked" ${status === 'sacked' ? 'selected' : ''}>Sacked 🔴</option>
+            <option value="retired" ${status === 'retired' ? 'selected' : ''}>Retired 🟡</option>
+          </select>
+        </div>
+        <div>
+          <label>Matchday Joined</label>
+          <input type="number" class="mgr-md-joined" value="${matchdayJoined}" placeholder="e.g. 1">
+        </div>
+        <div>
+          <label>Matchday Left (optional)</label>
+          <input type="number" class="mgr-md-left" value="${matchdayLeft}" placeholder="e.g. 10">
+        </div>
+        <div>
+          <button class="save-mgr-btn" data-team="${team}" data-key="${entry ? entry.key : ''}" style="margin-top:8px;">${isEdit ? 'Update' : 'Save'}</button>
+          <button class="cancel-mgr-btn" style="margin-top:8px;background:transparent;border:1px solid var(--razzmatazz);color:var(--white);padding:8px 16px;border-radius:20px;cursor:pointer;">Cancel</button>
+        </div>
+      </div>
+    `;
+
+    container.querySelector('.save-mgr-btn').onclick = async () => {
+      const nameInput = container.querySelector('.mgr-name-input');
+      const statusSelect = container.querySelector('.mgr-status-select');
+      const mdJoinedInput = container.querySelector('.mgr-md-joined');
+      const mdLeftInput = container.querySelector('.mgr-md-left');
+      const name = nameInput.value.trim();
+      const status = statusSelect.value;
+      const matchdayJoined = parseInt(mdJoinedInput.value) || 0;
+      const matchdayLeft = mdLeftInput.value ? parseInt(mdLeftInput.value) : null;
+      if (!name) { alert('Manager name required.'); return; }
+      const key = container.querySelector('.save-mgr-btn').dataset.key;
+      const teamName = team;
+
+      const updates = {};
+      const currentHistory = managerHistory[teamName] || [];
+      if (status === 'active') {
+        for (const e of currentHistory) {
+          if (e.status === 'active' && e.key !== key) {
+            updates[`${getSeasonPath(currentSeasonId, 'managerHistory')}/${teamName}/${e.key}/status`] = 'sacked';
+          }
+        }
+      }
+
+      const entryData = { name, status, matchdayJoined, matchdayLeft };
+      const path = getSeasonPath(currentSeasonId, `managerHistory/${teamName}`);
+      try {
+        incrementPending();
+        if (key) {
+          await database.ref(`${path}/${key}`).update(entryData);
+          for (const updatePath in updates) {
+            await database.ref(updatePath).set(updates[updatePath]);
+          }
+        } else {
+          const newRef = await database.ref(path).push(entryData);
+          for (const updatePath in updates) {
+            await database.ref(updatePath).set(updates[updatePath]);
+          }
+        }
+        decrementPending();
+        await loadManagerHistory();
+        render();
+      } catch(e) { alert('Error: ' + e.message); }
+    };
+
+    container.querySelector('.cancel-mgr-btn').onclick = () => {
+      container.style.display = 'none';
+    };
+  }
+
+  render();
+}
+
+// ─── Load existing navbar logo and other assets ───
+async function loadNavbarLogo() {
+  const snap = await database.ref('Ligue1/navbar_logo').once('value');
+  navbarLogoUrl = snap.val() || '';
+  const c = document.getElementById('logoContainer');
+  c.innerHTML = navbarLogoUrl
+    ? `<img src="${navbarLogoUrl}" class="navbar-logo" alt="Ligue 1 Logo">`
+    : `<div class="navbar-logo-placeholder">⚽ LIGUE 1</div>`;
+}
+
+async function loadTableHeaderBgImage() {
+  const snap = await database.ref('Ligue1/table_header_bg').once('value');
+  tableHeaderBgImageUrl = snap.val() || '';
+}
+
+async function loadTableHeaderImage() {
+  const snap = await database.ref('Ligue1/tableHeaderImage').once('value');
+  tableHeaderImageUrl = snap.val() || '';
+}
+
+async function setTableHeaderImage(url) {
+  await database.ref('Ligue1/tableHeaderImage').set(url);
+  await loadTableHeaderImage();
+}
+
+// ─── CHANGE 2: Load Watch Match videos ───
+async function loadWatchMatchEmbed() {
+  const oldSnap = await database.ref('Ligue1/watchMatch/embedCode').once('value');
+  const oldEmbedCode = oldSnap.val() || '';
+  if (oldEmbedCode) {
+    watchMatchVideos = [{ id: 'legacy', title: 'Match Video', embedCode: oldEmbedCode }];
+  } else {
+    watchMatchVideos = [];
+  }
+
+  const videosSnap = await database.ref('Ligue1/watchMatch/videos').once('value');
+  const videosData = videosSnap.val() || {};
+  const newVideos = [];
+  for (const key in videosData) {
+    const video = videosData[key];
+    if (video && video.embedCode) {
+      newVideos.push({ id: key, title: video.title || 'Match Video', embedCode: video.embedCode });
+    }
+  }
+
+  if (newVideos.length > 0) {
+    if (watchMatchVideos.length > 0 && watchMatchVideos[0].id === 'legacy') {
+      const existingIds = new Set(watchMatchVideos.map(v => v.id));
+      for (const v of newVideos) {
+        if (!existingIds.has(v.id)) {
+          watchMatchVideos.push(v);
+        }
+      }
+    } else {
+      watchMatchVideos = newVideos;
+    }
+  }
+
+  console.log('[loadWatchMatchEmbed] Loaded', watchMatchVideos.length, 'videos');
+}
+
+async function addWatchMatchVideo(title, embedCode) {
+  let finalEmbed = embedCode.trim();
+  if (finalEmbed.includes("youtube.com/watch?v=") || finalEmbed.includes("youtu.be/")) {
+    let videoId = '';
+    if (finalEmbed.includes("youtu.be/")) videoId = finalEmbed.split("youtu.be/")[1].split(/[?#]/)[0];
+    else { const u = new URLSearchParams(new URL(finalEmbed).search); videoId = u.get('v'); }
+    if (videoId) finalEmbed = `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+  }
+
+  const videoData = { title: title.trim() || 'Match Video', embedCode: finalEmbed };
+  const newRef = await database.ref('Ligue1/watchMatch/videos').push(videoData);
+  watchMatchVideos.push({ id: newRef.key, title: videoData.title, embedCode: videoData.embedCode });
+  if (document.querySelector('.tab-btn.active')?.dataset.tab === 'watch') renderWatchMatch();
+}
+
+async function deleteWatchMatchVideo(videoId) {
+  if (videoId === 'legacy') {
+    await database.ref('Ligue1/watchMatch/embedCode').remove();
+    watchMatchVideos = watchMatchVideos.filter(v => v.id !== 'legacy');
+  } else {
+    await database.ref(`Ligue1/watchMatch/videos/${videoId}`).remove();
+    watchMatchVideos = watchMatchVideos.filter(v => v.id !== videoId);
+  }
+  if (document.querySelector('.tab-btn.active')?.dataset.tab === 'watch') renderWatchMatch();
+}
+
+function openAddVideoModal() {
+  showModal(`
+    <h3>🎬 Add Match Video</h3>
+    <label>Video Title</label>
+    <input type="text" id="newVideoTitle" placeholder="e.g. PSG VS MARSEILLE" value="">
+    <label>YouTube URL or Embed Code</label>
+    <input type="text" id="newVideoEmbed" placeholder="Paste YouTube URL or iframe code">
+    <div id="addVideoStatus"></div>
+    <div class="modal-btns">
+      <button class="modal-btn-primary" id="saveVideoBtn">Add Video</button>
+      <button class="modal-btn-cancel" id="cancelVideoBtn">Cancel</button>
+    </div>
+  `);
+
+  document.getElementById('cancelVideoBtn').onclick = closeModal;
+
+  document.getElementById('saveVideoBtn').onclick = async () => {
+    const title = document.getElementById('newVideoTitle').value.trim();
+    const embed = document.getElementById('newVideoEmbed').value.trim();
+    const status = document.getElementById('addVideoStatus');
+    if (!embed) {
+      status.innerHTML = '<div class="status-msg status-error">Please enter a video URL or embed code.</div>';
+      return;
+    }
+    const btn = document.getElementById('saveVideoBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span> Adding...';
+    try {
+      await addWatchMatchVideo(title, embed);
+      status.innerHTML = '<div class="status-msg status-success">Video added!</div>';
+      setTimeout(() => { closeModal(); renderWatchMatch(); }, 1200);
+    } catch(e) {
+      status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+      btn.disabled = false;
+      btn.innerHTML = 'Add Video';
+    }
+  };
+}
+
+function renderWatchMatch() {
+  let html = '';
+
+  if (watchMatchVideos.length === 0) {
+    html = `<div class="empty-state"><div class="empty-icon">🎬</div><p>No match videos available yet.</p></div>`;
+  } else {
+    html = '<div class="watch-videos-container">';
+    for (const video of watchMatchVideos) {
+      html += `
+        <div class="watch-video-item">
+          <div class="inline-media">
+            <div class="video-wrapper">${video.embedCode}</div>
+          </div>
+          <div class="watch-video-title">${escapeHtml(video.title)}</div>
+          ${isAdminMode ? `<button class="watch-video-delete-btn" data-id="${video.id}">🗑️ Delete Video</button>` : ''}
+        </div>
+      `;
+    }
+    html += '</div>';
+  }
+
+  if (isAdminMode) {
+    html += `<button class="add-btn-main" id="addVideoBtn" style="margin-top:20px;">➕ Add Video</button>`;
+  }
+
+  document.getElementById('contentCard').innerHTML = html;
+
+  document.querySelectorAll('.watch-video-delete-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.dataset.id;
+      if (confirm(`Delete this video?`)) {
+        await deleteWatchMatchVideo(id);
+      }
+    };
+  });
+
+  document.getElementById('addVideoBtn')?.addEventListener('click', openAddVideoModal);
+}
+
+async function loadTeamIcons() {
+  const snapshot = await database.ref('Ligue1/teamIcons').once('value');
+  const data = snapshot.val() || {};
+  for (const [team, value] of Object.entries(data)) {
+    if (value.imageUrl) teamIconsCache[team] = value.imageUrl;
+  }
+}
+
+async function loadCalendarEvents() {
+  const snap = await database.ref('Ligue1/calendarEvents').once('value');
+  calendarEventsData = snap.val() || {};
+}
+
+async function loadBackgroundImage() {
+  const snap = await database.ref('Ligue1/settings/backgroundImage').once('value');
+  const settings = snap.val() || {};
+  bgImageUrl = settings.url || '';
+  bgSize = settings.size || 'cover';
+  bgPosition = settings.position || 'center';
+  if (bgImageUrl) {
+    document.body.style.setProperty('--bg-image', `url(${bgImageUrl})`);
+    document.body.style.setProperty('--bg-size', bgSize);
+    document.body.style.setProperty('--bg-pos', bgPosition);
+    document.body.classList.add('has-bg');
+  } else {
+    document.body.classList.remove('has-bg');
+  }
+}
+
+async function setBackgroundImage(url, size, position) {
+  await database.ref('Ligue1/settings/backgroundImage').set({ url, size, position });
+  await loadBackgroundImage();
+}
+
+async function applyResultToTable(homeTeam, awayTeam, homeScore, awayScore, forfeitType) {
+  const isNoContest = forfeitType === 'no_contest';
+  if (isNoContest) return;
+  const tableSnap = await database.ref(getSeasonPath(currentSeasonId, 'table')).once('value');
+  const tableVal = tableSnap.val() || {};
+  function findTeamEntry(name) {
+    for (const [key, val] of Object.entries(tableVal)) {
+      if (val.name === name) return { key, data: { ...val } };
+    }
+    return null;
+  }
+  const homeEntry = findTeamEntry(homeTeam);
+  const awayEntry = findTeamEntry(awayTeam);
+  if (!homeEntry || !awayEntry) return;
+  const hd = homeEntry.data;
+  const ad = awayEntry.data;
+  const isForfeitWin = (forfeitType === 'forfeit_no_reply' || forfeitType === 'forfeit_agreement');
+  if (isForfeitWin) {
+    if (homeScore > awayScore) {
+      hd.p = (hd.p || 0) + 1; hd.w = (hd.w || 0) + 1; hd.pts = (hd.pts || 0) + 3;
+      ad.p = (ad.p || 0) + 1; ad.l = (ad.l || 0) + 1; ad.gd = (ad.gd || 0) - 3;
+    } else {
+      ad.p = (ad.p || 0) + 1; ad.w = (ad.w || 0) + 1; ad.pts = (ad.pts || 0) + 3;
+      hd.p = (hd.p || 0) + 1; hd.l = (hd.l || 0) + 1; hd.gd = (hd.gd || 0) - 3;
+    }
+  } else {
+    hd.p = (hd.p || 0) + 1; hd.gs = (hd.gs || 0) + homeScore; hd.gc = (hd.gc || 0) + awayScore; hd.gd = (hd.gd || 0) + (homeScore - awayScore);
+    ad.p = (ad.p || 0) + 1; ad.gs = (ad.gs || 0) + awayScore; ad.gc = (ad.gc || 0) + homeScore; ad.gd = (ad.gd || 0) + (awayScore - homeScore);
+    if (homeScore > awayScore) { hd.w = (hd.w || 0) + 1; hd.pts = (hd.pts || 0) + 3; ad.l = (ad.l || 0) + 1; }
+    else if (homeScore < awayScore) { ad.w = (ad.w || 0) + 1; ad.pts = (ad.pts || 0) + 3; hd.l = (hd.l || 0) + 1; }
+    else { hd.d = (hd.d || 0) + 1; hd.pts = (hd.pts || 0) + 1; ad.d = (ad.d || 0) + 1; ad.pts = (ad.pts || 0) + 1; }
+  }
+  await database.ref(getSeasonPath(currentSeasonId, `table/${homeEntry.key}`)).set(hd);
+  await database.ref(getSeasonPath(currentSeasonId, `table/${awayEntry.key}`)).set(ad);
+}
+
+async function loadSeasonsMetadata() {
+  const snapshot = await database.ref('Ligue1/seasons').once('value');
+  const seasons = snapshot.val() || {};
+  availableSeasons = [];
+  for (const key in seasons) {
+    if (!key.startsWith('season_')) continue;
+    const id = parseInt(key.split('_')[1]);
+    if (!isNaN(id)) availableSeasons.push(id);
+    if (seasons[key].active === true) activeSeasonId = id;
+  }
+  const season2Exists = availableSeasons.includes(2);
+  const oldTable = await database.ref('Ligue1/table').once('value');
+  if (!season2Exists && oldTable.exists()) {
+    const oldResults = await database.ref('Ligue1/results').once('value');
+    await database.ref('Ligue1/seasons/season_2/table').set(oldTable.val() || {});
+    await database.ref('Ligue1/seasons/season_2/results').set(oldResults.val() || {});
+    await database.ref('Ligue1/seasons/season_2/active').set(true);
+    availableSeasons.push(2); activeSeasonId = 2;
+  }
+  if (!availableSeasons.includes(1)) {
+    await database.ref('Ligue1/seasons/season_1/table').set({});
+    await database.ref('Ligue1/seasons/season_1/results').set({});
+    await database.ref('Ligue1/seasons/season_1/active').set(false);
+    availableSeasons.push(1);
+  }
+  const migrationFlag = await database.ref('Ligue1/migrationDone').once('value');
+  if (!migrationFlag.val()) {
+    const oldScorers = await database.ref('Ligue1/topScorer/list').once('value');
+    const oldAssists = await database.ref('Ligue1/topAssistant/list').once('value');
+    if (oldScorers.exists()) await database.ref('Ligue1/seasons/season_3/topScorers/list').set(oldScorers.val());
+    if (oldAssists.exists()) await database.ref('Ligue1/seasons/season_3/topAssistants/list').set(oldAssists.val());
+    await database.ref('Ligue1/migrationDone').set(true);
+  }
+  availableSeasons.sort((a, b) => a - b);
+  if (!availableSeasons.includes(activeSeasonId) && availableSeasons.length) activeSeasonId = availableSeasons[0];
+  currentSeasonId = activeSeasonId;
+  updateSeasonUI();
+  await loadCurrentSeasonData();
+  await loadManagerNamesForSeason();
+}
+
+function updateSeasonUI() {
+  document.getElementById('seasonNumber').textContent = `Season ${currentSeasonId}`;
+  const idx = availableSeasons.indexOf(currentSeasonId);
+  document.getElementById('prevSeasonBtn').disabled = idx <= 0;
+  document.getElementById('nextSeasonBtn').disabled = idx >= availableSeasons.length - 1;
+  document.getElementById('seasonAdminPanel').style.display = isAdminMode ? 'flex' : 'none';
+}
+
+async function loadCurrentSeasonData() {
+  const [tableSnap, resultsSnap] = await Promise.all([
+    database.ref(getSeasonPath(currentSeasonId, 'table')).once('value'),
+    database.ref(getSeasonPath(currentSeasonId, 'results')).once('value'),
+  ]);
+  teamsData = tableSnap.val() ? Object.entries(tableSnap.val()).map(([k, v]) => ({ key: k, ...v })) : [];
+  resultsData = resultsSnap.val() ? Object.entries(resultsSnap.val()).map(([k, v]) => ({ key: k, ...v })) : [];
+}
+
+async function loadManagerNamesForSeason() {
+  const snap = await database.ref(getSeasonPath(currentSeasonId, 'managerMap')).once('value');
+  playerMap = snap.val() || {};
+}
+
+async function loadTopScorerData() {
+  const snap = await database.ref(getSeasonPath(currentSeasonId, 'topScorers/list')).once('value');
+  topScorerList = snap.val() ? Object.entries(snap.val()).map(([k, v]) => ({ key: k, ...v })) : [];
+}
+
+async function loadTopAssistantData() {
+  const snap = await database.ref(getSeasonPath(currentSeasonId, 'topAssistants/list')).once('value');
+  topAssistantList = snap.val() ? Object.entries(snap.val()).map(([k, v]) => ({ key: k, ...v })) : [];
+}
+
+async function switchSeason(delta) {
+  const idx = availableSeasons.indexOf(currentSeasonId);
+  const nIdx = idx + delta;
+  if (nIdx < 0 || nIdx >= availableSeasons.length) return;
+  currentSeasonId = availableSeasons[nIdx];
+  updateSeasonUI(); await loadCurrentSeasonData(); await loadManagerNamesForSeason();
+  await loadTopScorerData(); await loadTopAssistantData();
+  await loadManagerHistory();
+  renderCurrentTab();
+}
+
+async function addNewSeason() {
+  const raw = prompt("Enter new season number:"); if (!raw) return;
+  const id = parseInt(raw);
+  if (isNaN(id)) { alert("Invalid number"); return; }
+  if (availableSeasons.includes(id)) { alert("Season already exists"); return; }
+  await database.ref(`Ligue1/seasons/season_${id}/table`).set({});
+  await database.ref(`Ligue1/seasons/season_${id}/results`).set({});
+  await database.ref(`Ligue1/seasons/season_${id}/managerMap`).set({});
+  await database.ref(`Ligue1/seasons/season_${id}/topScorers/list`).set({});
+  await database.ref(`Ligue1/seasons/season_${id}/topAssistants/list`).set({});
+  availableSeasons.push(id); availableSeasons.sort((a, b) => a - b);
+  currentSeasonId = id; updateSeasonUI(); await loadCurrentSeasonData(); await loadManagerNamesForSeason(); await loadTopScorerData(); await loadTopAssistantData(); await loadManagerHistory(); renderCurrentTab();
+}
+
+async function renameSeason() {
+  const raw = prompt(`New number for Season ${currentSeasonId}:`); if (!raw) return;
+  const id = parseInt(raw); if (isNaN(id)) return;
+  if (availableSeasons.includes(id) && id !== currentSeasonId) { alert("Number taken"); return; }
+  const [t, r, m, ts, ta] = await Promise.all([
+    database.ref(getSeasonPath(currentSeasonId, 'table')).once('value'),
+    database.ref(getSeasonPath(currentSeasonId, 'results')).once('value'),
+    database.ref(getSeasonPath(currentSeasonId, 'managerMap')).once('value'),
+    database.ref(getSeasonPath(currentSeasonId, 'topScorers')).once('value'),
+    database.ref(getSeasonPath(currentSeasonId, 'topAssistants')).once('value'),
+  ]);
+  const wasActive = activeSeasonId === currentSeasonId;
+  await database.ref(`Ligue1/seasons/season_${id}/table`).set(t.val() || {});
+  await database.ref(`Ligue1/seasons/season_${id}/results`).set(r.val() || {});
+  await database.ref(`Ligue1/seasons/season_${id}/managerMap`).set(m.val() || {});
+  await database.ref(`Ligue1/seasons/season_${id}/topScorers`).set(ts.val() || {});
+  await database.ref(`Ligue1/seasons/season_${id}/topAssistants`).set(ta.val() || {});
+  if (wasActive) await database.ref(`Ligue1/seasons/season_${id}/active`).set(true);
+  await database.ref(`Ligue1/seasons/season_${currentSeasonId}`).remove();
+  availableSeasons = availableSeasons.filter(s => s !== currentSeasonId);
+  availableSeasons.push(id); availableSeasons.sort((a, b) => a - b);
+  if (activeSeasonId === currentSeasonId) activeSeasonId = id;
+  currentSeasonId = id; updateSeasonUI(); await loadCurrentSeasonData(); await loadManagerNamesForSeason(); await loadTopScorerData(); await loadTopAssistantData(); await loadManagerHistory(); renderCurrentTab();
+}
+
+async function setActiveSeason() {
+  const updates = {};
+  availableSeasons.forEach(s => { updates[`Ligue1/seasons/season_${s}/active`] = (s === currentSeasonId); });
+  await database.ref().update(updates); activeSeasonId = currentSeasonId;
+  alert(`Season ${currentSeasonId} set as active.`);
+}
+
+function getResultStatusForTeam(team, matchText) {
+  const lower = matchText.toLowerCase();
+  if (lower.includes("no contest") || lower.includes("f - f")) return "F";
+  const isForfeit = lower.includes("forfeit") || lower.includes("forfeited");
+  const parts = matchText.match(/([A-Za-z\s]+?)\s+(\d+)\s*[-–]\s*(\d+)\s+([A-Za-z\s]+)/);
+  if (parts) {
+    let home = parts[1].trim(), hs = parseInt(parts[2]), as2 = parseInt(parts[3]), away = parts[4].trim();
+    if (home === team && hs > as2) return isForfeit ? "WF" : "W";
+    if (home === team && hs < as2) return isForfeit ? "LF" : "L";
+    if (away === team && as2 > hs) return isForfeit ? "WF" : "W";
+    if (away === team && as2 < hs) return isForfeit ? "LF" : "L";
+    if ((home === team || away === team) && hs === as2) return "D";
+  }
+  return null;
+}
+
+function getTeamLast5(team) {
+  const sorted = resultsData.filter(r => r.matchText && r.matchText.includes(team)).sort((a, b) => (b.md || 0) - (a.md || 0));
+  const last5 = sorted.slice(0, 5).map(r => getResultStatusForTeam(team, r.matchText)).filter(Boolean);
+  while (last5.length < 5) last5.push(null);
+  return last5.reverse();
+}
+
+function getLatestArrow(team) {
+  const sorted = resultsData.filter(r => r.matchText && r.matchText.includes(team)).sort((a, b) => (b.md || 0) - (a.md || 0));
+  if (!sorted.length) return null;
+  const s = getResultStatusForTeam(team, sorted[0].matchText);
+  if (s === "W" || s === "WF") return "↑";
+  if (s === "L" || s === "LF") return "↓";
+  if (s === "D") return "→";
+  return "⚪";
+}
+
+async function loadSlideshow() {
+  const [imgSnap, durSnap] = await Promise.all([
+    database.ref('Ligue1/slideshow/images').once('value'),
+    database.ref('Ligue1/slideshow/duration').once('value'),
+  ]);
+  slideshowImages = imgSnap.val() || [];
+  slideshowDuration = durSnap.val() || 3000;
+  if (slideInterval) clearInterval(slideInterval);
+  const imgEl = document.getElementById('slideshowImg');
+  if (slideshowImages.length) {
+    imgEl.style.display = 'block'; currentSlideIdx = 0; updateSlide();
+    slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx + 1) % slideshowImages.length; updateSlide(); }, slideshowDuration);
+  } else { imgEl.style.display = 'none'; }
+}
+
+function updateSlide() {
+  const img = document.getElementById('slideshowImg');
+  img.src = slideshowImages[currentSlideIdx];
+  const dots = document.getElementById('dotsContainer');
+  dots.innerHTML = '';
+  slideshowImages.forEach((_, i) => {
+    const d = document.createElement('span');
+    d.className = 'dot' + (i === currentSlideIdx ? ' active' : '');
+    d.onclick = () => { currentSlideIdx = i; updateSlide(); if (slideInterval) { clearInterval(slideInterval); slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx + 1) % slideshowImages.length; updateSlide(); }, slideshowDuration); } };
+    dots.appendChild(d);
+  });
+}
+
+function renderTable() {
+  const sorted = [...teamsData].sort((a, b) => (b.pts || 0) - (a.pts || 0) || (b.gd || 0) - (a.gd || 0));
+  let headerHtml = tableHeaderImageUrl ? `<img src="${tableHeaderImageUrl}" class="table-header-img" alt="Table Header">` : `🏆 League Table`;
+  let html = `
+    <div class="table-actions">
+      <span class="table-actions-title">${headerHtml}</span>
+      ${isAdminMode ? `<button class="add-btn" id="addTeamBtnInner">+ Add Team</button>` : ''}
+      <button class="three-dot-btn" id="threeDotBtn">⋮</button>
+    </div>
+    <div class="table-scroll-wrap">
+      <table class="stats-table">
+        <thead><tr><th style="min-width:64px;">Pos</th><th style="min-width:260px;">Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GS</th><th>GC</th><th>GD</th><th>Pts</th><th>Last 5</th>${isAdminMode ? '<th>Actions</th>' : ''}</tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="legend-row" id="legendContainer"></div>
+  `;
+  document.getElementById('contentCard').innerHTML = html;
+  const tbody = document.getElementById('tableBody');
+  sorted.forEach((team, idx) => {
+    const pos = idx + 1;
+    let barClass = '', rowClass = '';
+    if (currentSeasonId === 1) { if (pos <= 4) barClass = 'vbar-blue'; }
+    else if (currentSeasonId === 2) { if (pos <= 4) barClass = 'vbar-blue'; else if (pos <= 8) barClass = 'vbar-orange'; else if (pos <= 12) barClass = 'vbar-green'; if (pos === 8) rowClass = 'dashed-sep'; }
+    else { if (pos <= 4) barClass = 'vbar-blue'; else if (pos <= 8) barClass = 'vbar-orange'; else if (pos <= 12) barClass = 'vbar-green'; else if (pos >= 18) barClass = 'vbar-red'; if (pos === 8) rowClass = 'dashed-sep'; if (pos === 17) rowClass = 'dashed-sep-red'; }
+    const row = document.createElement('tr');
+    if (rowClass) row.className = rowClass;
+    const posCell = document.createElement('td');
+    posCell.className = 'rank-cell stat-number';
+    if (barClass) posCell.innerHTML = `<div class="pos-bar-wrap"><span class="vbar ${barClass}"></span>${pos}</div>`;
+    else posCell.textContent = pos;
+    row.appendChild(posCell);
+    let arrowHtml = '';
+    if (showFormArrows) { const a = getLatestArrow(team.name); if (a === '↑') arrowHtml = '<span class="arrow-up">↑</span> '; else if (a === '↓') arrowHtml = '<span class="arrow-down">↓</span> '; else if (a === '→') arrowHtml = '<span class="arrow-side">→</span> '; else arrowHtml = '<span class="arrow-side" style="opacity:0.3;">—</span> '; }
+    const displayName = (currentView === 'player') ? (getActiveManagerName(team.name) || team.name) : team.name;
+    const iconHtml = getTeamIconHtml(team.name, 'team-icon-sm');
+    const clubCell = document.createElement('td');
+    clubCell.innerHTML = `<div class="team-cell-inner">${arrowHtml}${iconHtml}<span class="team-name-text">${displayName}</span></div>`;
+    row.appendChild(clubCell);
+    function mkNumCell(val) { const td = document.createElement('td'); td.textContent = val; td.className = 'stat-number'; return td; }
+    row.appendChild(mkNumCell(team.p || 0));
+    const w = currentSeasonId === 2 ? '🤷‍♂️' : (team.w || 0);
+    const d = currentSeasonId === 2 ? '🤷‍♂️' : (team.d || 0);
+    const l = currentSeasonId === 2 ? '🤷‍♂️' : (team.l || 0);
+    row.appendChild(mkNumCell(w)); row.appendChild(mkNumCell(d)); row.appendChild(mkNumCell(l));
+    const gs = (currentSeasonId === 1 || currentSeasonId === 2) ? '🤷‍♂️' : (team.gs || 0);
+    const gc = (currentSeasonId === 1 || currentSeasonId === 2) ? '🤷‍♂️' : (team.gc || 0);
+    row.appendChild(mkNumCell(gs)); row.appendChild(mkNumCell(gc));
+    const gd = team.gd || 0;
+    row.appendChild(mkNumCell(gd > 0 ? `+${gd}` : `${gd}`));
+    const ptsCell = document.createElement('td'); ptsCell.className = 'pts-cell stat-number'; ptsCell.textContent = team.pts || 0; row.appendChild(ptsCell);
+    const last5Cell = document.createElement('td');
+    if (showLast5) { const last5 = getTeamLast5(team.name); const wrap = document.createElement('div'); wrap.className = 'form-circles'; last5.forEach(res => { const span = document.createElement('span'); span.className = 'circle-result'; if (res === 'W') { span.classList.add('cW'); span.textContent = '✓'; } else if (res === 'L') { span.classList.add('cL'); span.textContent = '✗'; } else if (res === 'D') { span.classList.add('cD'); span.textContent = '–'; } else if (res === 'F') { span.classList.add('cF'); span.textContent = 'F'; } else if (res === 'WF') { span.classList.add('cWF'); span.textContent = 'F'; } else if (res === 'LF') { span.classList.add('cLF'); span.textContent = 'F'; } else { span.classList.add('cBlank'); } wrap.appendChild(span); }); last5Cell.appendChild(wrap); }
+    row.appendChild(last5Cell);
+    if (isAdminMode) { const actCell = document.createElement('td'); actCell.innerHTML = `<button class="btn-sm btn-edit" data-key="${team.key}">✏️</button> <button class="btn-sm btn-delete" data-key="${team.key}">🗑️</button>`; row.appendChild(actCell); }
+    tbody.appendChild(row);
+  });
+  const legend = document.getElementById('legendContainer');
+  let legendHtml = '';
+  if (currentSeasonId === 1) { legendHtml = '<span class="legend-item"><span class="vbar vbar-blue" style="display:inline-block;"></span> UEFA Champions League</span>'; }
+  else { legendHtml = `<span class="legend-item"><span class="vbar vbar-blue" style="display:inline-block;"></span> UEFA Champions League</span><span class="legend-item"><span class="vbar vbar-orange" style="display:inline-block;"></span> Europa League</span><span class="legend-item"><span class="legend-dashed"></span> FIFA Club World Cup</span><span class="legend-item"><span class="vbar vbar-green" style="display:inline-block;"></span> UEFA Conference League</span>`; if (currentSeasonId >= 3) legendHtml += '<span class="legend-item"><span class="vbar vbar-red" style="display:inline-block;"></span> Relegation</span>'; }
+  legend.innerHTML = legendHtml;
+  if (isAdminMode) {
+    document.getElementById('addTeamBtnInner')?.addEventListener('click', () => openTeamForm(null));
+    document.querySelectorAll('.btn-edit[data-key]').forEach(btn => { const t = teamsData.find(x => x.key === btn.dataset.key); if (t) btn.onclick = () => openTeamForm(t.key, t); });
+    document.querySelectorAll('.btn-delete[data-key]').forEach(btn => { btn.onclick = async () => { if (confirm('Delete this team?')) await database.ref(getSeasonPath(currentSeasonId, `table/${btn.dataset.key}`)).remove(); }; });
+  }
+  attachThreeDotHandler();
+}
+
+function renderFixtures() {
+  const premierFixtures = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
+    if (!eventData || !eventData.tournaments) continue;
+    for (const tournament of eventData.tournaments) {
+      let isPremier = false;
+      if (tournament.name) { const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, ''); if (normalized === 'ligue1') isPremier = true; }
+      if (isPremier && tournament.fixtures && Array.isArray(tournament.fixtures)) {
+        for (const fix of tournament.fixtures) { premierFixtures.push({ date: dateStr, tournament: tournament.name || 'Ligue 1', home: fix.home || '', away: fix.away || '' }); }
+      }
+    }
+  }
+  premierFixtures.sort((a, b) => { const da = new Date(a.date), db = new Date(b.date); const aFuture = da >= today, bFuture = db >= today; if (aFuture && bFuture) return da - db; if (!aFuture && !bFuture) return da - db; return aFuture ? -1 : 1; });
+  const allTeams = [...new Set(premierFixtures.flatMap(f => [f.home, f.away]).filter(Boolean))].sort();
+  const allMonths = [...new Set(premierFixtures.map(f => f.date.substring(0, 7)))].sort();
+  let filtered = [...premierFixtures];
+  if (currentFixTeamFilter && currentFixTeamFilter !== 'all') filtered = filtered.filter(f => f.home === currentFixTeamFilter || f.away === currentFixTeamFilter);
+  if (currentFixMonthFilter && currentFixMonthFilter !== 'all') filtered = filtered.filter(f => f.date.startsWith(currentFixMonthFilter));
+  const grouped = {};
+  for (const fix of filtered) { if (!grouped[fix.date]) grouped[fix.date] = []; grouped[fix.date].push(fix); }
+  const sortedDates = Object.keys(grouped).sort((a, b) => { const da = new Date(a), db = new Date(b); const aFuture = da >= today, bFuture = db >= today; if (aFuture && bFuture) return da - db; if (!aFuture && !bFuture) return da - db; return aFuture ? -1 : 1; });
+  const monthLabels = { '01': 'January', '02': 'February', '03': 'March', '04': 'April', '05': 'May', '06': 'June', '07': 'July', '08': 'August', '09': 'September', '10': 'October', '11': 'November', '12': 'December' };
+  let filtersHtml = `<div class="filters-bar"><div class="filter-group"><label>Team</label><select id="fixTeamFilter"><option value="all">All Teams</option>${allTeams.map(t => `<option value="${t}" ${currentFixTeamFilter === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div><div class="filter-group"><label>Month</label><select id="fixMonthFilter"><option value="all">All Months</option>${allMonths.map(m => { const [y, mo] = m.split('-'); return `<option value="${m}" ${currentFixMonthFilter === m ? 'selected' : ''}>${monthLabels[mo] || mo} ${y}</option>`; }).join('')}</select></div><div class="filter-group"><button id="clearFixFiltersBtn" class="clear-filters">Clear Filters</button></div><div class="filter-stats">${filtered.length} fixture${filtered.length !== 1 ? 's' : ''} found</div><a href="manager-calendar.html" class="view-calendar-btn">📅 View Calendar</a></div>`;
+  let contentHtml = '';
+  if (sortedDates.length === 0) { contentHtml = '<div class="empty-state"><div class="empty-icon">📅</div><p>No Ligue 1 fixtures found</p></div>'; }
+  else {
+    for (const dateStr of sortedDates) {
+      const dateObj = new Date(dateStr);
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const dayName = dayNames[dateObj.getDay()];
+      const day = dateObj.getDate();
+      const [y, mo] = dateStr.split('-');
+      const monthName = monthLabels[mo] || mo;
+      const isPast = dateObj < today;
+      const dateLabel = `${dayName}, ${day} ${monthName} ${y}${isPast ? ' · Played' : ''}`;
+      contentHtml += `<div class="fixture-date-group"><div class="fixture-date-label">📅 ${dateLabel}</div>`;
+      for (const fix of grouped[dateStr]) {
+        const homeIconHtml = getTeamIconHtml(fix.home, 'team-icon-lg');
+        const awayIconHtml = getTeamIconHtml(fix.away, 'team-icon-lg');
+        contentHtml += `<div class="fixture-card"><div class="fixture-tournament-label">🏆 ${escapeHtml(fix.tournament)}</div><div class="fixture-match-row"><div class="fixture-team-side">${homeIconHtml}<span class="fixture-team-name">${escapeHtml(fix.home)}</span></div><div class="fixture-vs">VS</div><div class="fixture-team-side">${awayIconHtml}<span class="fixture-team-name">${escapeHtml(fix.away)}</span></div></div></div>`;
+      }
+      contentHtml += `</div>`;
+    }
+  }
+  document.getElementById('contentCard').innerHTML = filtersHtml + contentHtml;
+  document.getElementById('fixTeamFilter')?.addEventListener('change', e => { currentFixTeamFilter = e.target.value; renderFixtures(); });
+  document.getElementById('fixMonthFilter')?.addEventListener('change', e => { currentFixMonthFilter = e.target.value; renderFixtures(); });
+  document.getElementById('clearFixFiltersBtn')?.addEventListener('click', () => { currentFixTeamFilter = ''; currentFixMonthFilter = ''; renderFixtures(); });
+}
+
+function parseResultCard(r) {
+  let homeTeam = '', awayTeam = '', homeScore = '', awayScore = '', isForfeit = false, forfeitType = '';
+  const text = r.matchText || '';
+  const lower = text.toLowerCase();
+  if (lower.includes('no contest') || lower.includes('f - f')) isForfeit = true;
+  else if (lower.includes('forfeit')) isForfeit = true;
+  if (isForfeit && text.includes('F - F')) {
+    const parts = text.split(/\s*F\s*-\s*F\s*/i);
+    if (parts.length >= 2) { homeTeam = parts[0].trim().replace(/\(.*\)/g, '').trim(); awayTeam = parts[1].trim().replace(/\(.*\)/g, '').trim(); homeScore = 'F'; awayScore = 'F'; }
+    if (text.includes('No Contest')) forfeitType = 'No Contest';
+    else if (text.includes('Forfeited - No Reply')) forfeitType = 'Forfeited - No Reply';
+    else if (text.includes('Forfeited on Agreement')) forfeitType = 'Forfeited on Agreement';
+    else forfeitType = 'Forfeit';
+  } else {
+    const match = text.match(/(\d+)\s*-\s*(\d+)/);
+    if (match) {
+      homeScore = match[1]; awayScore = match[2];
+      const parts = text.split(/\s+\d+\s*-\s*\d+\s+/);
+      if (parts.length >= 2) { homeTeam = parts[0].trim(); awayTeam = parts[1].trim().replace(/\(.*\)/g, '').trim(); }
+      if (lower.includes('forfeited - no reply')) forfeitType = 'Forfeited - No Reply';
+      else if (lower.includes('forfeited on agreement')) forfeitType = 'Forfeited on Agreement';
+      else if (lower.includes('forfeit')) forfeitType = 'Forfeit';
+    }
+  }
+  return { homeTeam, awayTeam, homeScore, awayScore, isForfeit, forfeitType, md: r.md };
+}
+
+function renderResults() {
+  let filtered = [...resultsData];
+  if (currentMdFilter && currentMdFilter !== 'all') { const mdNum = parseInt(currentMdFilter); filtered = filtered.filter(r => r.md === mdNum); }
+  if (currentTeamFilter && currentTeamFilter !== 'all') { filtered = filtered.filter(r => { const { homeTeam, awayTeam } = parseResultCard(r); return homeTeam === currentTeamFilter || awayTeam === currentTeamFilter; }); }
+  const sorted = filtered.sort((a, b) => (b.md || 0) - (a.md || 0));
+  const allMatchdays = [...new Set(resultsData.map(r => r.md).filter(md => md !== undefined && md !== null))].sort((a, b) => a - b);
+  const allTeams = [...new Set(resultsData.map(r => { const { homeTeam, awayTeam } = parseResultCard(r); return [homeTeam, awayTeam]; }).flat().filter(Boolean))].sort();
+  let filtersHtml = `<div class="filters-bar"><div class="filter-group"><label>Matchday</label><select id="mdFilterSelect"><option value="all" ${!currentMdFilter || currentMdFilter === 'all' ? 'selected' : ''}>All Matchdays</option>${allMatchdays.map(md => `<option value="${md}" ${currentMdFilter == md ? 'selected' : ''}>Matchday ${md}</option>`).join('')}</select></div><div class="filter-group"><label>Team</label><select id="teamFilterSelect"><option value="all" ${!currentTeamFilter || currentTeamFilter === 'all' ? 'selected' : ''}>All Teams</option>${allTeams.map(team => `<option value="${team}" ${currentTeamFilter === team ? 'selected' : ''}>${team}</option>`).join('')}</select></div><div class="filter-group"><button id="clearFiltersBtn" class="clear-filters">Clear Filters</button></div><div class="filter-stats">${filtered.length} match${filtered.length !== 1 ? 'es' : ''} found</div>${isAdminMode ? `<button class="scan-img-btn" id="scanResultTopBtn">📸 Scan Image</button><button class="add-result-top-btn" id="addResultTopBtn">⚽ + Add Result</button>` : ''}</div>`;
+  let matchesHtml = '';
+  if (!sorted.length) { matchesHtml = '<div class="empty-state"><div class="empty-icon">🏆</div><p>No results match the filters</p></div>'; }
+  else {
+    matchesHtml = '<div class="matches-list">';
+    sorted.forEach((r, i) => {
+      const { homeTeam, awayTeam, homeScore, awayScore, isForfeit, forfeitType } = parseResultCard(r);
+      const homeIcon = getTeamIconHtml(homeTeam, 'team-icon-lg');
+      const awayIcon = getTeamIconHtml(awayTeam, 'team-icon-lg');
+      let scoreHtml = '';
+      if (isForfeit && homeScore === 'F') scoreHtml = `<div class="forfeit-display">F — F</div><div class="aggregate-text">${forfeitType}</div>`;
+      else if (forfeitType) scoreHtml = `<div class="score-display">${homeScore} — ${awayScore}</div><div class="aggregate-text">${forfeitType}</div>`;
+      else scoreHtml = `<div class="score-display">${homeScore} — ${awayScore}</div>`;
+      const homeScorers = r.goalScorers?.home || [];
+      const awayScorers = r.goalScorers?.away || [];
+      const homeScorersHtml = homeScorers.map(s => `<span class="goal-scorer-item">⚽ ${s.player}${s.goals > 1 ? ` (${s.goals})` : ''}</span>`).join('');
+      const awayScorersHtml = awayScorers.map(s => `<span class="goal-scorer-item">⚽ ${s.player}${s.goals > 1 ? ` (${s.goals})` : ''}</span>`).join('');
+      const aggHtml = r.aggregate ? `<div class="aggregate-text">Agg: ${r.aggregate}</div>` : '';
+      matchesHtml += `<div class="match-card" style="animation-delay:${i * 0.05}s"><div class="match-row"><div class="team-side">${homeIcon}<span class="team-name-big">${homeTeam}</span>${homeScorersHtml ? `<div class="goal-scorers">${homeScorersHtml}</div>` : ''}</div><div class="match-center">${scoreHtml}${aggHtml}</div><div class="team-side">${awayIcon}<span class="team-name-big">${awayTeam}</span>${awayScorersHtml ? `<div class="goal-scorers">${awayScorersHtml}</div>` : ''}</div></div><div class="match-meta">${r.date ? `<span class="meta-tag">📅 ${r.date}</span>` : ''}${r.venue ? `<span class="meta-tag">📍 ${r.venue}</span>` : ''}${r.matchType ? `<span class="meta-tag">${r.matchType}</span>` : ''}${r.md ? `<span class="meta-tag">MD ${r.md}</span>` : ''}</div>${isAdminMode ? `<div class="admin-row"><button class="btn-sm btn-edit" data-id="${r.key}">✏️ Edit</button><button class="btn-sm btn-delete" data-id="${r.key}">🗑️ Delete</button></div>` : ''}</div>`;
+    });
+    matchesHtml += '</div>';
+  }
+  document.getElementById('contentCard').innerHTML = filtersHtml + matchesHtml;
+  document.getElementById('mdFilterSelect')?.addEventListener('change', e => { currentMdFilter = e.target.value; renderResults(); });
+  document.getElementById('teamFilterSelect')?.addEventListener('change', e => { currentTeamFilter = e.target.value; renderResults(); });
+  document.getElementById('clearFiltersBtn')?.addEventListener('click', () => { currentMdFilter = ''; currentTeamFilter = ''; renderResults(); });
+  document.getElementById('addResultTopBtn')?.addEventListener('click', () => openResultForm(null));
+  document.getElementById('scanResultTopBtn')?.addEventListener('click', () => openMultiScanModal());
+  if (isAdminMode) {
+    document.querySelectorAll('.btn-edit[data-id]').forEach(btn => { const r = resultsData.find(x => x.key === btn.dataset.id); if (r) btn.onclick = () => openResultForm(r); });
+    document.querySelectorAll('.btn-delete[data-id]').forEach(btn => { btn.onclick = async () => { if (confirm('Delete result?')) await database.ref(getSeasonPath(currentSeasonId, `results/${btn.dataset.id}`)).remove(); }; });
+  }
+}
+
+function renderTopScorers() {
+  const sorted = [...topScorerList].sort((a, b) => (b.count || 0) - (a.count || 0));
+  const top3 = sorted.slice(0, 3);
+  const rest = sorted.slice(3);
+  let top3Html = '';
+  if (top3.length) {
+    top3Html = '<div class="top3-container">';
+    top3.forEach((player, idx) => {
+      const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
+      const teamIconUrl = teamIconsCache[player.team] || '';
+      const playerImageUrl = player.imageUrl || '';
+      top3Html += `<div class="top3-block">${isAdminMode ? `<div class="edit-block-btn" data-key="${player.key}" data-type="scorer">✏️</div>` : ''}<div class="player-image-wrapper"><div class="medal-badge">${medal}</div><img class="player-img" src="${playerImageUrl || 'https://via.placeholder.com/320x320?text=No+Image'}" alt="${player.name}" onerror="this.src='https://via.placeholder.com/320x320?text=No+Image'"><div class="player-name-overlay">${escapeHtml(player.name || '')}</div>${teamIconUrl ? `<div class="team-icon-overlay"><img src="${teamIconUrl}" alt="${player.team}"></div>` : ''}</div><div class="top3-count">⚽ ${player.count || 0}</div></div>`;
+    });
+    top3Html += '</div>';
+  }
+  let restHtml = '';
+  if (rest.length) {
+    restHtml = `<div class="rest-table-wrapper"><div class="table-scroll-wrap"><table class="stats-list"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>Goals</th>${isAdminMode ? '<th>Actions</th>' : ''}</tr></thead><tbody>`;
+    rest.forEach((p, i) => {
+      const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
+      restHtml += `<tr><td>${i + 4}</td><td style="font-size:1.5rem;">${escapeHtml(p.name || '')}</td><td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${escapeHtml(p.team || '')}</span></div></td><td><span class="count-badge">${p.count || 0}</span></td>${isAdminMode ? `<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>` : ''}</tr>`;
+    });
+    restHtml += `</tbody></table></div></div>`;
+  }
+  let html = top3Html + restHtml;
+  if (!sorted.length) html = '<div class="empty-state"><div class="empty-icon">⚽</div><p>No scorers yet</p></div>';
+  if (isAdminMode) html += `<div style="display:flex;gap:16px;flex-wrap:wrap;"><button class="scan-img-btn" id="scanScorerBtn">📸 Scan Image</button><button class="add-btn-main" id="addScorerBtn">+ Add Scorer</button></div>`;
+  document.getElementById('contentCard').innerHTML = html;
+  document.querySelectorAll('.edit-block-btn').forEach(btn => { btn.addEventListener('click', e => { e.stopPropagation(); const player = topScorerList.find(p => p.key === btn.dataset.key); if (player) openStatModal('scorer', player); }); });
+  if (isAdminMode) {
+    document.getElementById('scanScorerBtn')?.addEventListener('click', () => openScanScorerModal('scorer'));
+    document.getElementById('addScorerBtn')?.addEventListener('click', () => openStatModal('scorer'));
+    document.querySelectorAll('.btn-edit[data-id]').forEach(btn => { const e = topScorerList.find(x => x.key === btn.dataset.id); if (e) btn.onclick = () => openStatModal('scorer', e); });
+    document.querySelectorAll('.btn-delete[data-id]').forEach(btn => { btn.onclick = async () => { if (confirm('Delete?')) { await database.ref(getSeasonPath(currentSeasonId, `topScorers/list/${btn.dataset.id}`)).remove(); await loadTopScorerData(); renderTopScorers(); } }; });
+  }
+}
+
+function renderTopAssistants() {
+  const sorted = [...topAssistantList].sort((a, b) => (b.count || 0) - (a.count || 0));
+  const top3 = sorted.slice(0, 3);
+  const rest = sorted.slice(3);
+  let top3Html = '';
+  if (top3.length) {
+    top3Html = '<div class="top3-container">';
+    top3.forEach((player, idx) => {
+      const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
+      const teamIconUrl = teamIconsCache[player.team] || '';
+      const playerImageUrl = player.imageUrl || '';
+      top3Html += `<div class="top3-block">${isAdminMode ? `<div class="edit-block-btn" data-key="${player.key}" data-type="assistant">✏️</div>` : ''}<div class="player-image-wrapper"><div class="medal-badge">${medal}</div><img class="player-img" src="${playerImageUrl || 'https://via.placeholder.com/320x320?text=No+Image'}" alt="${player.name}" onerror="this.src='https://via.placeholder.com/320x320?text=No+Image'"><div class="player-name-overlay">${escapeHtml(player.name || '')}</div>${teamIconUrl ? `<div class="team-icon-overlay"><img src="${teamIconUrl}" alt="${player.team}"></div>` : ''}</div><div class="top3-count">🎯 ${player.count || 0}</div></div>`;
+    });
+    top3Html += '</div>';
+  }
+  let restHtml = '';
+  if (rest.length) {
+    restHtml = `<div class="rest-table-wrapper"><div class="table-scroll-wrap"><table class="stats-list"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>Assists</th>${isAdminMode ? '<th>Actions</th>' : ''}</tr></thead><tbody>`;
+    rest.forEach((p, i) => {
+      const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
+      restHtml += `<tr><td>${i + 4}</td><td style="font-size:1.5rem;">${escapeHtml(p.name || '')}</td><td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${escapeHtml(p.team || '')}</span></div></td><td><span class="count-badge">${p.count || 0}</span></td>${isAdminMode ? `<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>` : ''}</tr>`;
+    });
+    restHtml += `</tbody></table></div></div>`;
+  }
+  let html = top3Html + restHtml;
+  if (!sorted.length) html = '<div class="empty-state"><div class="empty-icon">🎯</div><p>No assistants yet</p></div>';
+  if (isAdminMode) html += `<div style="display:flex;gap:16px;flex-wrap:wrap;"><button class="scan-img-btn" id="scanAssistBtn">📸 Scan Image</button><button class="add-btn-main" id="addAssistBtn">+ Add Assistant</button></div>`;
+  document.getElementById('contentCard').innerHTML = html;
+  document.querySelectorAll('.edit-block-btn').forEach(btn => { btn.addEventListener('click', e => { e.stopPropagation(); const player = topAssistantList.find(p => p.key === btn.dataset.key); if (player) openStatModal('assistant', player); }); });
+  if (isAdminMode) {
+    document.getElementById('scanAssistBtn')?.addEventListener('click', () => openScanScorerModal('assistant'));
+    document.getElementById('addAssistBtn')?.addEventListener('click', () => openStatModal('assistant'));
+    document.querySelectorAll('.btn-edit[data-id]').forEach(btn => { const e = topAssistantList.find(x => x.key === btn.dataset.id); if (e) btn.onclick = () => openStatModal('assistant', e); });
+    document.querySelectorAll('.btn-delete[data-id]').forEach(btn => { btn.onclick = async () => { if (confirm('Delete?')) { await database.ref(getSeasonPath(currentSeasonId, `topAssistants/list/${btn.dataset.id}`)).remove(); await loadTopAssistantData(); renderTopAssistants(); } }; });
+  }
+}
+
+function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
+
+function renderCurrentTab(tabOverride) {
+  const tab = tabOverride || document.querySelector('.tab-btn.active')?.dataset.tab || 'table';
+  if (pendingSaves > 0) {
+    pendingRenderTab = tab;
+    return;
+  }
+  pendingRenderTab = null;
+  document.getElementById('contentCard').innerHTML = '<div class="loading-spinner"><div class="spinner"></div><span>Loading…</span></div>';
+  if (tab === 'table') renderTable();
+  else if (tab === 'fixtures') renderFixtures();
+  else if (tab === 'results') renderResults();
+  else if (tab === 'topscorers') renderTopScorers();
+  else if (tab === 'topassists') renderTopAssistants();
+  else if (tab === 'watch') renderWatchMatch();
+}
+
+let editingTeamKey = null;
+function openTeamForm(key, data) {
+  editingTeamKey = key;
+  document.getElementById('teamNameInput').value = data?.name || '';
+  document.getElementById('teamP').value = data?.p ?? '';
+  document.getElementById('teamW').value = data?.w ?? '';
+  document.getElementById('teamD').value = data?.d ?? '';
+  document.getElementById('teamL').value = data?.l ?? '';
+  document.getElementById('teamGS').value = data?.gs ?? '';
+  document.getElementById('teamGC').value = data?.gc ?? '';
+  document.getElementById('teamGD').value = data?.gd ?? '';
+  document.getElementById('teamPts').value = data?.pts ?? '';
+  document.getElementById('teamForm').classList.add('active');
+}
+
+document.getElementById('saveTeamBtn').onclick = async () => {
+  const name = document.getElementById('teamNameInput').value.trim();
+  if (!name) { alert("Team name required"); return; }
+  const data = { name, p: parseInt(document.getElementById('teamP').value) || 0, w: parseInt(document.getElementById('teamW').value) || 0, d: parseInt(document.getElementById('teamD').value) || 0, l: parseInt(document.getElementById('teamL').value) || 0, gs: parseInt(document.getElementById('teamGS').value) || 0, gc: parseInt(document.getElementById('teamGC').value) || 0, gd: parseInt(document.getElementById('teamGD').value) || 0, pts: parseInt(document.getElementById('teamPts').value) || 0 };
+  const btn = document.getElementById('saveTeamBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+  const statusDiv = document.createElement('div');
+  statusDiv.className = 'status-msg';
+  const btnsContainer = document.querySelector('.modal-btns');
+  btnsContainer.parentNode.insertBefore(statusDiv, btnsContainer.nextSibling);
+  try {
+    incrementPending();
+    if (editingTeamKey) await database.ref(getSeasonPath(currentSeasonId, `table/${editingTeamKey}`)).set(data);
+    else await database.ref(getSeasonPath(currentSeasonId, 'table')).push(data);
+    decrementPending();
+    btn.innerHTML = '✓ Saved!';
+    btn.style.color = '#166534';
+    statusDiv.className = 'status-msg status-success';
+    statusDiv.textContent = 'Team saved successfully!';
+    setTimeout(() => {
+      closeModal();
+      renderCurrentTab();
+    }, 1500);
+  } catch(e) {
+    decrementPending();
+    statusDiv.className = 'status-msg status-error';
+    statusDiv.textContent = 'Error: ' + e.message;
+    btn.disabled = false;
+    btn.innerHTML = 'Save';
+    btn.style.color = '';
+  }
+};
+document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamForm').classList.remove('active');
+
+function formatResultText(homeTeam, homeScore, awayTeam, awayScore, forfeitType) {
+  if (forfeitType === "no_contest") return `${homeTeam} F - F ${awayTeam} (No Contest)`;
+  if (forfeitType === "forfeit_no_reply") return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam} (Forfeited - No Reply)`;
+  if (forfeitType === "forfeit_agreement") return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam} (Forfeited on Agreement)`;
+  return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam}`;
+}
+
+let editingResultKey = null;
+
+function renderScorerList(side) {
+  const list = side === 'home' ? tempScorersHome : tempScorersAway;
+  const container = document.getElementById(`${side}ScorerList`);
+  if (!container) return;
+  container.innerHTML = list.map((s, idx) => `<div class="scorer-badge">⚽ ${s.player} (${s.goals})<button class="remove-scorer" data-side="${side}" data-idx="${idx}">✖</button></div>`).join('');
+  container.querySelectorAll('.remove-scorer').forEach(btn => { btn.onclick = () => { const idx = parseInt(btn.dataset.idx); if (btn.dataset.side === 'home') tempScorersHome.splice(idx, 1); else tempScorersAway.splice(idx, 1); renderScorerList(btn.dataset.side); }; });
+}
+
+async function openResultForm(r) {
+  editingResultKey = r?.key || null;
+  tempScorersHome = r?.goalScorers?.home ? [...r.goalScorers.home] : [];
+  tempScorersAway = r?.goalScorers?.away ? [...r.goalScorers.away] : [];
+  const teamNames = teamsData.map(t => t.name).sort();
+  const homeOpts = teamNames.map(t => `<option value="${t}" ${r?.homeTeam === t ? 'selected' : ''}>${t}</option>`).join('');
+  const awayOpts = teamNames.map(t => `<option value="${t}" ${r?.awayTeam === t ? 'selected' : ''}>${t}</option>`).join('');
+  let existingForfeit = 'none', existingHS = 0, existingAS = 0;
+  if (r) {
+    const text = r.matchText || '';
+    const lower = text.toLowerCase();
+    if (lower.includes('no contest')) existingForfeit = 'no_contest';
+    else if (lower.includes('forfeited - no reply')) existingForfeit = 'forfeit_no_reply';
+    else if (lower.includes('forfeited on agreement')) existingForfeit = 'forfeit_agreement';
+    const match = text.match(/(\d+)\s*-\s*(\d+)/);
+    if (match) { existingHS = parseInt(match[1]); existingAS = parseInt(match[2]); }
+  }
+  showModal(`
+    <h3>${r ? 'Edit Result' : 'Add Result'}</h3>
+    <label>Home Team</label><select id="rHome"><option value="">Select Home Team</option>${homeOpts}</select>
+    <label>Away Team</label><select id="rAway"><option value="">Select Away Team</option>${awayOpts}</select>
+    <label>Home Score</label><input id="rHS" type="number" value="${existingHS}">
+    <label>Away Score</label><input id="rAS" type="number" value="${existingAS}">
+    <label>Forfeit Type</label><select id="rForfeit"><option value="none" ${existingForfeit === 'none' ? 'selected' : ''}>Normal Result</option><option value="no_contest" ${existingForfeit === 'no_contest' ? 'selected' : ''}>No Contest (F-F)</option><option value="forfeit_no_reply" ${existingForfeit === 'forfeit_no_reply' ? 'selected' : ''}>Forfeited – No Reply</option><option value="forfeit_agreement" ${existingForfeit === 'forfeit_agreement' ? 'selected' : ''}>Forfeited on Agreement</option></select>
+    <label>Matchday</label><input id="rMd" type="number" value="${r?.md || ''}">
+    <label>Date (optional)</label><input id="rDate" placeholder="e.g. 15 May 2025" value="${r?.date || ''}">
+    <label>Venue (optional)</label><input id="rVenue" placeholder="Venue" value="${r?.venue || ''}">
+    <label>Match Type (optional)</label><input id="rType" placeholder="e.g. Matchday 5" value="${r?.matchType || ''}">
+    <label>Aggregate Score (optional)</label><input id="rAgg" placeholder="e.g. 4-2" value="${r?.aggregate || ''}">
+    <div class="scorer-section"><h4>⚽ Home Team Scorers</h4><div style="display:flex;gap:10px;margin-bottom:10px;"><input type="text" id="homeScorerName" placeholder="Player name" style="flex:2;"><input type="number" id="homeScorerGoals" placeholder="Goals" value="1" style="width:90px;"><button id="addHomeScorer" class="modal-btn-primary" style="padding:10px 20px;">Add</button></div><div id="homeScorerList" class="scorer-list"></div></div>
+    <div class="scorer-section"><h4>⚽ Away Team Scorers</h4><div style="display:flex;gap:10px;margin-bottom:10px;"><input type="text" id="awayScorerName" placeholder="Player name" style="flex:2;"><input type="number" id="awayScorerGoals" placeholder="Goals" value="1" style="width:90px;"><button id="addAwayScorer" class="modal-btn-primary" style="padding:10px 20px;">Add</button></div><div id="awayScorerList" class="scorer-list"></div></div>
+    <div class="modal-btns"><button class="modal-btn-primary" id="saveResultBtn">Save</button><button class="modal-btn-cancel" id="cancelResultBtn">Cancel</button></div>
+    <div id="resultStatus"></div>
+  `);
+  renderScorerList('home'); renderScorerList('away');
+  document.getElementById('cancelResultBtn').onclick = closeModal;
+  document.getElementById('addHomeScorer').onclick = () => { const name = document.getElementById('homeScorerName').value.trim(); const goals = parseInt(document.getElementById('homeScorerGoals').value) || 1; if (!name) return; tempScorersHome.push({ player: name, goals }); renderScorerList('home'); document.getElementById('homeScorerName').value = ''; document.getElementById('homeScorerGoals').value = '1'; };
+  document.getElementById('addAwayScorer').onclick = () => { const name = document.getElementById('awayScorerName').value.trim(); const goals = parseInt(document.getElementById('awayScorerGoals').value) || 1; if (!name) return; tempScorersAway.push({ player: name, goals }); renderScorerList('away'); document.getElementById('awayScorerName').value = ''; document.getElementById('awayScorerGoals').value = '1'; };
+  document.getElementById('saveResultBtn').onclick = async () => {
+    const homeTeam = document.getElementById('rHome').value;
+    const awayTeam = document.getElementById('rAway').value;
+    let hs = parseInt(document.getElementById('rHS').value) || 0;
+    let as2 = parseInt(document.getElementById('rAS').value) || 0;
+    const forfeit = document.getElementById('rForfeit').value;
+    const md = parseInt(document.getElementById('rMd').value) || 0;
+    const date = document.getElementById('rDate').value.trim();
+    const venue = document.getElementById('rVenue').value.trim();
+    const matchType = document.getElementById('rType').value.trim();
+    const aggregate = document.getElementById('rAgg').value.trim();
+    if (!homeTeam || !awayTeam) { alert("Both teams required"); return; }
+    if (homeTeam === awayTeam) { alert("Teams cannot be the same"); return; }
+    const matchText = formatResultText(homeTeam, hs, awayTeam, as2, forfeit === 'none' ? '' : forfeit);
+    const resultData = { matchText, md, ...(date && { date }), ...(venue && { venue }), ...(matchType && { matchType }), ...(aggregate && { aggregate }), goalScorers: { home: tempScorersHome, away: tempScorersAway } };
+    const path = getSeasonPath(currentSeasonId, 'results');
+    const btn = document.getElementById('saveResultBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+    const statusDiv = document.getElementById('resultStatus');
+    statusDiv.innerHTML = '';
+    try {
+      incrementPending();
+      if (!editingResultKey) await applyResultToTable(homeTeam, awayTeam, hs, as2, forfeit === 'none' ? '' : forfeit);
+      if (editingResultKey) await database.ref(`${path}/${editingResultKey}`).set(resultData);
+      else await database.ref(path).push(resultData);
+      decrementPending();
+      btn.innerHTML = '✓ Saved!';
+      btn.style.color = '#166534';
+      statusDiv.className = 'status-msg status-success';
+      statusDiv.textContent = 'Result saved!';
+      setTimeout(() => { closeModal(); renderCurrentTab(); }, 1500);
+    } catch(e) {
+      decrementPending();
+      statusDiv.className = 'status-msg status-error';
+      statusDiv.textContent = 'Error: ' + e.message;
+      btn.disabled = false; btn.innerHTML = 'Save'; btn.style.color = '';
+    }
+  };
+}
+
+async function openStatModal(type, entry = null) {
+  const isScorer = type === 'scorer' || type === 'topscorer';
+  const currentImageUrl = entry?.imageUrl || '';
+  showModal(`
+    <h3>${entry ? 'Edit' : 'Add'} ${isScorer ? 'Top Scorer' : 'Top Assistant'}</h3>
+    <label>Player Name</label><input id="statName" placeholder="Player Name" value="${escapeHtml(entry?.name || '')}">
+    <label>Team</label><input id="statTeam" placeholder="Team" value="${escapeHtml(entry?.team || '')}">
+    <label>${isScorer ? 'Goals' : 'Assists'}</label><input id="statCount" type="number" value="${entry?.count || 0}">
+    <label>Player Photo (upload will remove background automatically)</label><input type="file" id="statPhoto" accept="image/*">
+    <div id="photoPreview" style="margin-top:10px;">${currentImageUrl ? `<img src="${currentImageUrl}" style="max-width:120px; border-radius:12px;">` : 'No photo'}</div>
+    <div class="modal-btns"><button class="modal-btn-primary" id="saveStatBtn">Save</button><button class="modal-btn-cancel" id="cancelStatBtn">Cancel</button></div>
+    <div id="statStatus"></div>
+  `);
+  document.getElementById('cancelStatBtn').onclick = closeModal;
+  const fileInput = document.getElementById('statPhoto');
+  const previewDiv = document.getElementById('photoPreview');
+  fileInput.onchange = async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    previewDiv.innerHTML = '<div class="status-msg status-loading">Processing image (remove.bg)...</div>';
+    try {
+      let processedBlob; try { processedBlob = await removeBackground(file); } catch(e) { processedBlob = file; }
+      const url = await uploadToImgBB(processedBlob);
+      previewDiv.innerHTML = `<img src="${url}" style="max-width:120px; border-radius:12px;"><div class="status-msg status-success">Photo ready</div>`;
+      fileInput.dataset.uploadedUrl = url;
+    } catch(e) { previewDiv.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`; }
+  };
+  document.getElementById('saveStatBtn').onclick = async () => {
+    const name = document.getElementById('statName').value.trim();
+    const team = document.getElementById('statTeam').value.trim();
+    const count = parseInt(document.getElementById('statCount').value) || 0;
+    if (!name || !team) { alert("Fill all fields"); return; }
+    let imageUrl = currentImageUrl;
+    if (fileInput.files.length && fileInput.dataset.uploadedUrl) imageUrl = fileInput.dataset.uploadedUrl;
+    const data = { name, team, count, imageUrl };
+    const path = isScorer ? getSeasonPath(currentSeasonId, 'topScorers/list') : getSeasonPath(currentSeasonId, 'topAssistants/list');
+    const btn = document.getElementById('saveStatBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+    const statusDiv = document.getElementById('statStatus');
+    statusDiv.innerHTML = '';
+    try {
+      incrementPending();
+      if (entry?.key) await database.ref(`${path}/${entry.key}`).set(data);
+      else await database.ref(path).push(data);
+      decrementPending();
+      btn.innerHTML = '✓ Saved!';
+      btn.style.color = '#166534';
+      statusDiv.className = 'status-msg status-success';
+      statusDiv.textContent = 'Saved!';
+      setTimeout(() => { closeModal(); renderCurrentTab(); }, 1500);
+    } catch(e) {
+      decrementPending();
+      statusDiv.className = 'status-msg status-error';
+      statusDiv.textContent = 'Error: ' + e.message;
+      btn.disabled = false; btn.innerHTML = 'Save'; btn.style.color = '';
+    }
+  };
+}
+
+function attachThreeDotHandler() {
+  const btn = document.getElementById('threeDotBtn');
+  if (!btn) return;
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    if (popupEl) { popupEl.remove(); popupEl = null; return; }
+    const rect = btn.getBoundingClientRect();
+    popupEl = document.createElement('div'); popupEl.className = 'popup-menu';
+    popupEl.style.position = 'absolute';
+    popupEl.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+    popupEl.style.left = (rect.left + window.scrollX - 80) + 'px';
+    const opts = [
+      { label: currentView === 'team' ? 'Show Manager Names' : 'Show Team Names', fn: () => { currentView = currentView === 'team' ? 'player' : 'team'; renderTable(); } },
+      { label: showFormArrows ? 'Hide Form Arrows' : 'Show Form Arrows', fn: () => { showFormArrows = !showFormArrows; renderTable(); } },
+      { label: showLast5 ? 'Hide Last 5' : 'Show Last 5', fn: () => { showLast5 = !showLast5; renderTable(); } },
+    ];
+    if (isAdminMode) {
+      opts.unshift({ label: 'Edit Manager History', fn: () => { if (popupEl) { popupEl.remove(); popupEl = null; } openManagerHistoryModal(); } });
+    }
+    opts.forEach(o => { const d = document.createElement('div'); d.textContent = o.label; d.onclick = () => { if (popupEl) { popupEl.remove(); popupEl = null; } o.fn(); }; popupEl.appendChild(d); });
+    document.body.appendChild(popupEl);
+  };
+  document.addEventListener('click', e => { if (popupEl && !popupEl.contains(e.target) && e.target !== btn) { popupEl.remove(); popupEl = null; } });
+}
+
+function openAdminSettings() {
+  showModal(`<h3>⚙️ Admin Settings</h3><div class="settings-grid">
+    <button class="settings-btn" id="setLogoBtn">🖼️ Upload Navbar Logo</button>
+    <button class="settings-btn" id="setTableHeaderBtn">🏆 Upload Table Header Image</button>
+    <button class="settings-btn" id="setBgBtn">🌄 Set Background Image</button>
+    <button class="settings-btn" id="manageSlideBtn">🎞️ Manage Main Slideshow</button>
+    <button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button>
+    <button class="settings-btn" id="manageHeaderBgBtn">🖼️ Table Header Background (legacy)</button>
+    <button class="settings-btn" id="manageWatchVideosBtn">🎥 Manage Watch Videos</button>
+    <button class="settings-btn" id="manageTeamNameMappingsBtn">🔁 Manage Team Name Mappings</button>
+    <button class="settings-btn" id="manageTeamLogoMappingsBtn">🏷️ Manage Team Logo Mappings</button>
+  </div><div class="modal-btns"><button class="modal-btn-cancel" id="closeAdminBtn" style="width:100%;">Close</button></div>`);
+  document.getElementById('closeAdminBtn').onclick = closeModal;
+  document.getElementById('setLogoBtn').onclick = uploadNavbarLogo;
+  document.getElementById('setTableHeaderBtn').onclick = uploadTableHeaderImage;
+  document.getElementById('setBgBtn').onclick = openBgCropTool;
+  document.getElementById('manageSlideBtn').onclick = manageSlideshowUI;
+  document.getElementById('addIconBtn').onclick = uploadTeamIcon;
+  document.getElementById('manageHeaderBgBtn').onclick = uploadHeaderBgImage;
+  document.getElementById('manageWatchVideosBtn').onclick = () => { closeModal(); openAddVideoModal(); };
+  document.getElementById('manageTeamNameMappingsBtn').onclick = () => { closeModal(); openManageTeamNameMappingsModal(); };
+  document.getElementById('manageTeamLogoMappingsBtn').onclick = () => { closeModal(); openManageTeamLogoMappingsModal(); };
+}
+
+async function uploadTableHeaderImage() {
+  const file = await pickFile('image/*'); if (!file) return;
+  try {
+    const statusDiv = document.createElement('div'); statusDiv.className = 'status-msg status-loading'; statusDiv.textContent = 'Uploading…';
+    document.getElementById('modalContent').appendChild(statusDiv);
+    const url = await uploadToImgBB(file); await setTableHeaderImage(url);
+    statusDiv.className = 'status-msg status-success'; statusDiv.textContent = 'Table Header Image updated!';
+    setTimeout(closeModal, 1500);
+  } catch(e) { alert('Upload failed: ' + e.message); }
+}
+
+async function openBgCropTool() {
+  const file = await pickFile('image/*'); if (!file) return;
+  const objectUrl = URL.createObjectURL(file);
+  showModal(`<h3>🌄 Set Background Image</h3><div class="crop-container" id="cropContainer"><img class="crop-img" id="cropImg" src="${objectUrl}" draggable="false"></div><div class="crop-controls"><label>Zoom</label><input class="crop-slider" id="zoomSlider" type="range" min="0.5" max="2" step="0.01" value="1"><label>Horizontal Position</label><input class="crop-slider" id="posXSlider" type="range" min="0" max="100" step="1" value="50"><label>Vertical Position</label><input class="crop-slider" id="posYSlider" type="range" min="0" max="100" step="1" value="50"></div><div class="modal-btns"><button class="modal-btn-primary" id="applyCropBtn">Apply Background</button><button class="modal-btn-cancel" id="cancelCropBtn">Cancel</button></div>`);
+  const img = document.getElementById('cropImg');
+  const zoomSlider = document.getElementById('zoomSlider');
+  const posXSlider = document.getElementById('posXSlider');
+  const posYSlider = document.getElementById('posYSlider');
+  let zoom = 1, posX = 50, posY = 50;
+  function updatePreview() { const scale = zoom; const px = (posX / 100) * (1 - 1 / scale) * 100; const py = (posY / 100) * (1 - 1 / scale) * 100; img.style.transform = `scale(${scale}) translate(${px}%, ${py}%)`; }
+  zoomSlider.oninput = () => { zoom = parseFloat(zoomSlider.value); updatePreview(); };
+  posXSlider.oninput = () => { posX = parseFloat(posXSlider.value); updatePreview(); };
+  posYSlider.oninput = () => { posY = parseFloat(posYSlider.value); updatePreview(); };
+  img.onload = () => { updatePreview(); };
+  document.getElementById('cancelCropBtn').onclick = () => { URL.revokeObjectURL(objectUrl); closeModal(); };
+  document.getElementById('applyCropBtn').onclick = async () => {
+    const btn = document.getElementById('applyCropBtn'); btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Uploading...';
+    try { const url = await uploadToImgBB(file); await setBackgroundImage(url, 'cover', `${posX}% ${posY}%`); btn.innerHTML = '✓ Applied!'; setTimeout(() => { closeModal(); URL.revokeObjectURL(objectUrl); }, 1000); }
+    catch(e) { alert('Failed: ' + e.message); btn.disabled = false; btn.innerHTML = 'Apply Background'; }
+  };
+}
+
+async function uploadNavbarLogo() {
+  const file = await pickFile('image/*'); if (!file) return;
+  try { const statusDiv = document.createElement('div'); statusDiv.className = 'status-msg status-loading'; statusDiv.textContent = 'Uploading…'; document.getElementById('modalContent').appendChild(statusDiv); const url = await uploadToImgBB(file); await database.ref('Ligue1/navbar_logo').set(url); navbarLogoUrl = url; await loadNavbarLogo(); statusDiv.className = 'status-msg status-success'; statusDiv.textContent = 'Logo updated!'; setTimeout(closeModal, 1500); } catch(e) { alert('Upload failed: ' + e.message); }
+}
+
+async function uploadTeamIcon() {
+  const teamName = prompt("Enter team name exactly as it appears:"); if (!teamName) return;
+  const file = await pickFile('image/*'); if (!file) return;
+  showModal(`<h3>Processing Icon</h3><div class="loading-spinner"><div class="spinner"></div><span>Removing background…</span></div>`);
+  try { let transparentBlob; try { transparentBlob = await removeBackground(file); } catch(e) { transparentBlob = file; } const url = await uploadToImgBB(transparentBlob); await database.ref(`Ligue1/teamIcons/${teamName}`).set({ imageUrl: url, updatedAt: Date.now() }); teamIconsCache[teamName] = url; renderCurrentTab(); closeModal(); alert(`Icon saved for "${teamName}"!`); } catch(e) { alert('Failed: ' + e.message); closeModal(); }
+}
+
+async function uploadHeaderBgImage() {
+  const file = await pickFile('image/*'); if (!file) return;
+  try { const url = await uploadToImgBB(file); await database.ref('Ligue1/table_header_bg').set(url); tableHeaderBgImageUrl = url; closeModal(); alert('Header background updated (legacy feature)'); } catch(e) { alert('Upload failed: ' + e.message); }
+}
+
+async function manageSlideshowUI() {
+  const refresh = () => {
+    let preview = '<div class="img-preview-grid">';
+    slideshowImages.forEach((url, idx) => { preview += `<div class="preview-thumb"><img src="${url}"><span class="thumb-del" data-idx="${idx}" style="cursor:pointer;position:absolute;top:-10px;right:-10px;background:#ef4444;color:white;border:none;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:bold;">✕</span></div>`; });
+    preview += '</div>';
+    showModal(`<h3>Manage Slideshow</h3>${preview}<label>Add New Slide</label><input type="file" id="newSlideFile" accept="image/*"><button class="add-btn-main" id="uploadSlideBtn" style="margin-top:12px;">+ Add Slide</button><label style="margin-top:20px;">Duration (seconds)</label><input type="number" id="slideDur" value="${slideshowDuration / 1000}" step="0.5" min="1" max="10"><div class="modal-btns"><button class="modal-btn-primary" id="saveDurBtn">Save Duration</button><button class="modal-btn-cancel" id="closeSlideBtn">Close</button></div><div id="slideStatus"></div>`);
+    document.querySelectorAll('.thumb-del').forEach(btn => { btn.onclick = async () => { const idx = parseInt(btn.dataset.idx); slideshowImages.splice(idx, 1); await database.ref('Ligue1/slideshow/images').set(slideshowImages); await loadSlideshow(); refresh(); }; });
+    document.getElementById('uploadSlideBtn').onclick = async () => { const file = document.getElementById('newSlideFile').files[0]; const statusDiv = document.getElementById('slideStatus'); if (!file) { statusDiv.innerHTML = '<div class="status-msg status-error">Select a file first</div>'; return; } try { statusDiv.innerHTML = '<div class="status-msg status-loading">Uploading…</div>'; const url = await uploadToImgBB(file); slideshowImages.push(url); await database.ref('Ligue1/slideshow/images').set(slideshowImages); await loadSlideshow(); refresh(); } catch(e) { statusDiv.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`; } };
+    document.getElementById('saveDurBtn').onclick = async () => { let sec = parseFloat(document.getElementById('slideDur').value); if (isNaN(sec)) sec = 3; sec = Math.min(10, Math.max(1, sec)); await database.ref('Ligue1/slideshow/duration').set(sec * 1000); slideshowDuration = sec * 1000; await loadSlideshow(); document.getElementById('slideStatus').innerHTML = '<div class="status-msg status-success">Duration saved!</div>'; setTimeout(closeModal, 1000); };
+    document.getElementById('closeSlideBtn').onclick = closeModal;
+  };
+  refresh();
+}
+
+function toggleMenu() { document.getElementById('sideMenu').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); }
+function closeMenu() { document.getElementById('sideMenu').classList.remove('active'); document.getElementById('overlay').classList.remove('active'); }
+document.getElementById('menuBtn').onclick = toggleMenu;
+document.getElementById('closeMenuBtn').onclick = closeMenu;
+document.getElementById('overlay').onclick = closeMenu;
+document.getElementById('homeBtn').onclick = () => window.location.href = 'feed.html';
+
+document.getElementById('adminModeBtn').onclick = async () => {
+  const key = prompt("Enter admin key:");
+  if (key === null) return;
+
+  const loadingModal = document.createElement('div');
+  loadingModal.className = 'modal-overlay active';
+  loadingModal.style.display = 'flex';
+  loadingModal.innerHTML = `
+    <div class="modal-card" style="max-width:400px;text-align:center;">
+      <h3>⏳ Verifying...</h3>
+      <div class="loading-spinner" style="padding:20px;">
+        <div class="spinner"></div>
+        <span>Checking credentials...</span>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(loadingModal);
+
+  try {
+    const response = await fetch('https://efootball-league.onrender.com/verify-admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: key })
+    });
+    const data = await response.json();
+
+    loadingModal.remove();
+
+    if (data.success === true) {
+      isAdminMode = true;
+      alert("Admin mode activated ✅");
+      document.getElementById('seasonAdminPanel').style.display = 'flex';
+      renderCurrentTab();
+      if (!document.getElementById('adminSettingsItem')) {
+        const item = document.createElement('div');
+        item.id = 'adminSettingsItem';
+        item.className = 'menu-item';
+        item.innerHTML = '⚙️ Admin Settings';
+        item.onclick = () => { openAdminSettings(); closeMenu(); };
+        document.getElementById('sideMenu').appendChild(item);
+      }
+    } else {
+      alert("Incorrect key");
+    }
+  } catch(e) {
+    loadingModal.remove();
+    alert("Error verifying admin key: " + e.message);
+  }
+};
+
+document.getElementById('debugInfoBtn').onclick = () => { openDebugInfoModal(); closeMenu(); };
+
+document.getElementById('prevSeasonBtn').onclick = () => switchSeason(-1);
+document.getElementById('nextSeasonBtn').onclick = () => switchSeason(1);
+document.getElementById('addSeasonBtn').onclick = () => isAdminMode && addNewSeason();
+document.getElementById('renameSeasonBtn').onclick = () => isAdminMode && renameSeason();
+document.getElementById('setActiveSeasonBtn').onclick = () => isAdminMode && setActiveSeason();
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderCurrentTab();
+  });
+});
+
+function attachRealtimeListeners() {
+  database.ref(getSeasonPath(currentSeasonId, 'table')).on('value', snap => { teamsData = snap.val() ? Object.entries(snap.val()).map(([k, v]) => ({ key: k, ...v })) : []; if (document.querySelector('.tab-btn.active')?.dataset.tab === 'table') renderTable(); });
+  database.ref(getSeasonPath(currentSeasonId, 'results')).on('value', snap => { resultsData = snap.val() ? Object.entries(snap.val()).map(([k, v]) => ({ key: k, ...v })) : []; const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab; if (activeTab === 'results') renderResults(); if (activeTab === 'table') renderTable(); });
+  database.ref(getSeasonPath(currentSeasonId, 'topScorers/list')).on('value', async () => { await loadTopScorerData(); if (document.querySelector('.tab-btn.active')?.dataset.tab === 'topscorers') renderTopScorers(); });
+  database.ref(getSeasonPath(currentSeasonId, 'topAssistants/list')).on('value', async () => { await loadTopAssistantData(); if (document.querySelector('.tab-btn.active')?.dataset.tab === 'topassists') renderTopAssistants(); });
+  database.ref('Ligue1/calendarEvents').on('value', snap => { calendarEventsData = snap.val() || {}; if (document.querySelector('.tab-btn.active')?.dataset.tab === 'fixtures') renderFixtures(); });
+}
+
+// ─── INIT ───
+async function init() {
+  await loadBackgroundImage();
+  await loadTableHeaderImage();
+  await loadSlideshow();
+  await loadTeamIcons();
+  await loadNavbarLogo();
+  await loadTableHeaderBgImage();
+  await loadWatchMatchEmbed();
+  await loadCalendarEvents();
+  await loadTeamNameMappings();
+  await loadTeamLogoMappings();
+  await loadManagerHistory();
+
+  await loadSeasonsMetadata();
+  await loadTopScorerData();
+  await loadTopAssistantData();
+  attachRealtimeListeners();
+  renderCurrentTab();
+}
+
+init();
+</script>
+</body>
+</html>
