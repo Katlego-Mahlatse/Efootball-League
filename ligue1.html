@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (function() {
+      var designWidth = 1200;
+      var screenWidth = window.screen.width;
+      var scale = screenWidth / designWidth;
+      scale = Math.min(1.0, Math.max(0.3, scale));
+      var viewportMeta = document.createElement('meta');
+      viewportMeta.name = 'viewport';
+      viewportMeta.content = 'width=1200, initial-scale=' + scale + ', user-scalable=yes';
+      document.head.appendChild(viewportMeta);
+    })();
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --electric-violet: #00FF87;
+      --razzmatazz: #00C46A;
+      --valentino: #000D2E;
+      --white: #ffffff;
+      --deep-blue: #001F5B;
+      --turquoise: #00FF87;
+      --glass-bg: rgba(0, 255, 135, 0.05);
+      --glass-border: rgba(0, 255, 135, 0.25);
+      --glass-blur: blur(12px);
+    }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--deep-blue);
+      min-height: 100vh;
+      overflow-x: auto;
+      min-width: 1200px;
+      width: 1200px;
+      margin: 0 auto;
+      font-size: 20px;
+      padding-bottom: 3rem;
+      position: relative;
+    }
+    body.has-bg::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: var(--bg-image);
+      background-size: var(--bg-size, cover);
+      background-position: var(--bg-pos, center);
+      background-repeat: no-repeat;
+      z-index: -2;
+    }
+    body.has-bg::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 13, 46, 0.65);
+      z-index: -1;
+    }
+
+    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-24px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes cardSlideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .navbar {
+      background: linear-gradient(90deg, #000D2E 0%, #001F5B 50%, #00FF87 100%);
+      border-bottom: 2px solid var(--white);
+      padding: 0 2rem;
+      height: 100px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+      animation: fadeInDown 0.5s ease both;
+    }
+    .navbar-logo { height: 74px; max-width: 260px; object-fit: contain; cursor: pointer; transition: transform 0.3s; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+    .navbar-logo:hover { transform: scale(1.05); }
+    .navbar-logo-placeholder { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 3px; color: var(--white); cursor: pointer; font-weight: bold; }
+    .menu-btn { background: var(--deep-blue); border: 2px solid var(--white); width: 70px; height: 70px; border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; cursor: pointer; transition: all 0.3s; }
+    .menu-btn span { width: 32px; height: 4px; background: var(--white); border-radius: 4px; transition: all 0.3s; }
+    .menu-btn:hover { background: var(--valentino); transform: rotate(90deg); }
+
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 199; display: none; backdrop-filter: blur(3px); }
+    .overlay.active { display: block; }
+    .side-menu { position: fixed; top: 0; right: -360px; width: 360px; height: 100%; background: rgba(0, 13, 46, 0.98); backdrop-filter: blur(20px); border-left: 2px solid var(--razzmatazz); z-index: 200; padding: 40px 28px; transition: right 0.35s cubic-bezier(.4,0,.2,1); }
+    .side-menu.active { right: 0; }
+    .close-menu { text-align: right; font-size: 2.8rem; cursor: pointer; color: var(--white); margin-bottom: 40px; line-height: 1; transition: color 0.2s; }
+    .close-menu:hover { color: var(--razzmatazz); }
+    .menu-item { padding: 20px 28px; margin: 12px 0; border: 1px solid rgba(0, 196, 106, 0.3); border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 1.5rem; color: var(--white); transition: all 0.2s; font-family: 'Rajdhani', sans-serif; }
+    .menu-item:hover { background: var(--razzmatazz); border-color: var(--white); color: var(--white); transform: translateX(8px); }
+
+    .slideshow-wrapper { padding: 36px 36px 20px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.7s ease 0.2s both; }
+    .slideshow-frame { width: 100%; max-width: 1100px; border-radius: 32px; overflow: hidden; box-shadow: 0 8px 40px rgba(0, 255, 135, 0.25); border: 2px solid var(--razzmatazz); background: #000; display: flex; justify-content: center; align-items: center; }
+    .slideshow-img { width: 100%; height: auto; max-height: 520px; object-fit: contain; display: block; transition: opacity 0.5s ease; }
+    .dots-container { margin-top: 20px; display: flex; gap: 12px; }
+    .dot { width: 14px; height: 14px; border-radius: 50%; background: rgba(0, 196, 106, 0.3); cursor: pointer; transition: all 0.25s; }
+    .dot.active { background: var(--razzmatazz); transform: scale(1.4); box-shadow: 0 0 12px rgba(0, 196, 106, 0.7); }
+
+    .season-bar { display: flex; justify-content: center; margin: 24px 0 16px; }
+    .season-controls { display: flex; align-items: center; gap: 20px; background: var(--turquoise); border: none; padding: 12px 32px; border-radius: 80px; backdrop-filter: blur(8px); }
+    .season-arrow { background: transparent; border: none; width: 56px; height: 56px; border-radius: 50%; font-size: 2rem; cursor: pointer; font-weight: bold; transition: all 0.2s; line-height: 1; display: flex; align-items: center; justify-content: center; color: white; }
+    #prevSeasonBtn { background: var(--razzmatazz); }
+    #prevSeasonBtn:hover:not(:disabled) { background: #009a55; transform: scale(1.1); }
+    #nextSeasonBtn { background: var(--electric-violet); }
+    #nextSeasonBtn:hover:not(:disabled) { background: #00d96e; transform: scale(1.1); }
+    .season-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+    .season-number { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 3px; color: #000000; min-width: 180px; text-align: center; background: rgba(255,255,255,0.8); padding: 4px 16px; border-radius: 40px; }
+    .season-admin-btns { display: flex; gap: 10px; margin-left: 10px; }
+    .season-admin-btn { background: rgba(0, 255, 135, 0.15); border: 1px solid var(--razzmatazz); padding: 8px 20px; border-radius: 40px; font-weight: 600; cursor: pointer; color: var(--white); font-size: 1.1rem; font-family: 'Rajdhani', sans-serif; transition: all 0.2s; }
+    .season-admin-btn:hover { background: var(--razzmatazz); }
+
+    .tabs-container { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 28px 36px 0; background: linear-gradient(90deg, var(--razzmatazz), var(--electric-violet)); border: 2px solid var(--white); border-radius: 80px; padding: 12px 20px; backdrop-filter: blur(8px); max-width: 1100px; margin-left: auto; margin-right: auto; animation: fadeInUp 0.5s ease 0.3s both; }
+    .tabs-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+    .tab-btn { background: transparent; border: none; font-family: 'Rajdhani', sans-serif; font-size: 1.3rem; font-weight: 700; padding: 10px 28px; cursor: pointer; color: rgba(255,255,255,0.7); border-radius: 60px; letter-spacing: 0.5px; transition: all 0.25s; white-space: nowrap; }
+    .tab-btn.active { background: var(--electric-violet); color: #000000; }
+    .tab-btn:hover:not(.active) { color: var(--white); background: rgba(255,255,255,0.2); }
+
+    .content-card { margin: 24px 36px 40px; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 32px; padding: 32px; min-height: 200px; animation: fadeInUp 0.5s ease 0.4s both; }
+
+    .loading-spinner { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px; gap: 24px; }
+    .spinner { width: 60px; height: 60px; border: 5px solid rgba(0, 196, 106, 0.2); border-top-color: var(--razzmatazz); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    .loading-spinner span { color: rgba(255,255,255,0.6); font-size: 1.4rem; font-family: 'Rajdhani', sans-serif; }
+    .btn-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 8px; vertical-align: middle; }
+
+    .empty-state { text-align: center; padding: 80px 20px; color: rgba(255,255,255,0.4); }
+    .empty-state .empty-icon { font-size: 5rem; margin-bottom: 20px; }
+    .empty-state p { font-size: 2rem; font-weight: 500; font-family: 'Rajdhani', sans-serif; }
+
+    .table-scroll-wrap { overflow-x: auto; border-radius: 20px; position: relative; }
+
+    .stats-table { width: 100%; border-collapse: collapse; font-family: 'Rajdhani', sans-serif; min-width: 900px; background: var(--glass-bg); backdrop-filter: var(--glass-blur); color: var(--white); }
+    .stats-table thead th { background: rgba(0, 255, 135, 0.3); color: var(--white); font-size: 1.3rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; padding: 16px 18px; border-bottom: 2px solid var(--razzmatazz); white-space: nowrap; z-index: 20; }
+    .stats-table th:first-child, .stats-table td:first-child { position: sticky; left: 0; z-index: 25; background: var(--glass-bg); backdrop-filter: var(--glass-blur); width: 64px; min-width: 64px; }
+    .stats-table thead th:first-child { background: rgba(0, 255, 135, 0.3); z-index: 30; }
+    .stats-table th:nth-child(2), .stats-table td:nth-child(2) { position: sticky; left: 64px; z-index: 24; background: var(--glass-bg); backdrop-filter: var(--glass-blur); box-shadow: 4px 0 8px -2px rgba(0,0,0,0.45); border-right: 2px solid rgba(0, 196, 106, 0.35); }
+    .stats-table thead th:nth-child(2) { background: rgba(0, 255, 135, 0.3); z-index: 30; }
+    .stats-table tbody tr { border-bottom: 1px solid rgba(0, 196, 106, 0.2); transition: background 0.2s; }
+    .stats-table tbody tr:hover { background: rgba(0, 255, 135, 0.15); }
+    .stats-table td { padding: 14px 18px; color: var(--white); font-size: 1.3rem; font-weight: 600; white-space: nowrap; }
+    .stats-table td.stat-number { font-size: 2.6rem !important; font-weight: 800; line-height: 1.2; }
+    .team-name-text { font-weight: 700; font-size: 2.8rem !important; color: var(--white); }
+    .pts-cell { font-weight: 800; color: var(--white); font-size: 1.5rem; }
+    .rank-cell { font-weight: 700; color: var(--white); font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; }
+
+    .table-actions { display: flex; justify-content: flex-end; gap: 12px; padding: 14px 18px; background: rgba(0, 255, 135, 0.3); border-radius: 20px 20px 0 0; border: 2px solid rgba(0, 196, 106, 0.2); border-bottom: 3px solid var(--razzmatazz); align-items: center; }
+    .table-actions-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--white); letter-spacing: 2px; flex: 1; display: flex; align-items: center; }
+    .table-header-img { max-height: 60px; max-width: 260px; object-fit: contain; }
+    .add-btn { background: rgba(255,255,255,0.15); border: 2px solid var(--razzmatazz); color: var(--white); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.2rem; padding: 10px 24px; border-radius: 40px; cursor: pointer; transition: all 0.2s; }
+    .add-btn:hover { background: var(--razzmatazz); color: var(--white); transform: translateY(-2px); }
+    .three-dot-btn { background: rgba(255,255,255,0.15); border: 2px solid var(--razzmatazz); color: var(--white); font-size: 2.2rem; width: 52px; height: 52px; border-radius: 50%; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+    .three-dot-btn:hover { background: var(--razzmatazz); color: var(--white); }
+
+    .scan-img-btn { background: rgba(0, 255, 135, 0.2); border: 2px solid var(--turquoise); color: var(--white); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.2rem; padding: 10px 24px; border-radius: 40px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+    .scan-img-btn:hover { background: var(--turquoise); color: #000; transform: translateY(-2px); }
+
+    .stats-list { width: 100%; border-collapse: collapse; font-family: 'Rajdhani', sans-serif; background: var(--glass-bg); backdrop-filter: var(--glass-blur); color: var(--white); }
+    .stats-list thead th { background: rgba(0, 255, 135, 0.3); color: var(--white); font-size: 1.4rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; padding: 18px 22px; border-bottom: 2px solid var(--razzmatazz); }
+    .stats-list tbody tr { border-bottom: 1px solid rgba(0, 196, 106, 0.2); transition: background 0.2s; }
+    .stats-list tbody tr:hover { background: rgba(0, 255, 135, 0.15); }
+    .stats-list td { padding: 18px 22px; color: var(--white); font-size: 1.4rem; font-weight: 600; }
+    .stats-list td:first-child { color: var(--white); font-family: 'Bebas Neue', sans-serif; font-size: 2rem; font-weight: bold; }
+    .count-badge { background: rgba(0,0,0,0.5); border: 1px solid var(--razzmatazz); color: var(--white); padding: 6px 22px; border-radius: 50px; font-weight: 700; font-size: 1.4rem; }
+    .stat-team-cell { display: flex; align-items: center; gap: 16px; color: var(--white); }
+
+    .top3-container { display: flex; justify-content: center; gap: 0; margin-bottom: 40px; flex-wrap: nowrap; width: 100%; }
+    .top3-block { position: relative; text-align: center; flex: 1; background: rgba(0, 255, 135, 0.2); border-radius: 0; padding: 0; transition: transform 0.3s; margin: 0; min-width: 0; }
+    .top3-block:first-child { border-top-left-radius: 32px; border-bottom-left-radius: 32px; }
+    .top3-block:last-child { border-top-right-radius: 32px; border-bottom-right-radius: 32px; }
+    .top3-block:hover { transform: translateY(-8px); z-index: 5; }
+    .player-image-wrapper { position: relative; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; border: 3px solid var(--razzmatazz); background: var(--deep-blue); margin: 0; border-radius: 0; }
+    .top3-block:first-child .player-image-wrapper { border-top-left-radius: 32px; border-bottom-left-radius: 32px; }
+    .top3-block:last-child .player-image-wrapper { border-top-right-radius: 32px; border-bottom-right-radius: 32px; }
+    .player-img { width: 100%; height: 100%; object-fit: cover; }
+    .medal-badge { position: absolute; top: 12px; left: 12px; font-size: 3rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); z-index: 2; }
+    .edit-block-btn { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.6); border: 1px solid var(--razzmatazz); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.6rem; color: var(--white); transition: all 0.2s; z-index: 3; }
+    .edit-block-btn:hover { background: var(--razzmatazz); transform: scale(1.1); }
+    .player-name-overlay { position: absolute; bottom: 16px; left: 16px; background: linear-gradient(90deg, rgba(0,0,0,0.7), rgba(0,0,0,0.3)); color: white; font-family: 'Rajdhani', sans-serif; font-weight: 800; font-size: 1.6rem; padding: 6px 16px; border-radius: 40px; backdrop-filter: blur(4px); z-index: 2; letter-spacing: 0.5px; border-left: 3px solid var(--razzmatazz); pointer-events: none; }
+    .team-icon-overlay { position: absolute; bottom: 12px; right: 12px; width: 56px; height: 56px; background: rgba(0,0,0,0.4); border-radius: 50%; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); padding: 6px; z-index: 2; }
+    .team-icon-overlay img { width: 100%; height: 100%; object-fit: contain; }
+    .top3-count { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--razzmatazz); background: rgba(0,0,0,0.3); display: inline-block; padding: 8px 20px; border-radius: 60px; letter-spacing: 2px; margin-top: 12px; margin-bottom: 16px; }
+    .rest-table-wrapper { margin-top: 20px; border-top: 2px solid var(--razzmatazz); padding-top: 24px; overflow-x: auto; }
+
+    .filters-bar { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; margin-bottom: 30px; padding: 20px; background: rgba(0, 255, 135, 0.2); border-radius: 28px; }
+    .filter-group { display: flex; flex-direction: column; gap: 8px; }
+    .filter-group label { font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.6); }
+    .filter-group select, .filter-group button { background: rgba(0, 13, 46, 0.8); border: 1px solid var(--razzmatazz); border-radius: 40px; padding: 12px 20px; font-family: 'Rajdhani', sans-serif; font-size: 1.2rem; font-weight: 600; color: var(--white); cursor: pointer; transition: all 0.2s; }
+    .filter-group select:hover, .filter-group button:hover { background: var(--razzmatazz); border-color: var(--white); }
+    .clear-filters { background: rgba(0, 196, 106, 0.2); }
+    .filter-stats { font-size: 1rem; color: rgba(255,255,255,0.5); margin-left: auto; align-self: center; }
+
+    .view-calendar-btn { background: rgba(0, 196, 106, 0.15); border: 2px solid var(--razzmatazz); color: var(--white); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.2rem; padding: 12px 28px; border-radius: 40px; cursor: pointer; transition: all 0.25s; display: flex; align-items: center; gap: 8px; white-space: nowrap; align-self: flex-end; text-decoration: none; }
+    .view-calendar-btn:hover { background: var(--razzmatazz); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0, 196, 106, 0.4); }
+
+    .fixture-date-group { margin-bottom: 32px; animation: cardSlideIn 0.4s ease both; }
+    .fixture-date-label { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 3px; color: var(--white); margin-bottom: 14px; padding: 10px 20px; background: rgba(0, 196, 106, 0.2); border-radius: 50px; border-left: 4px solid var(--razzmatazz); display: inline-block; }
+    .fixture-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 28px; padding: 28px 40px; margin-bottom: 16px; transition: all 0.25s; animation: cardSlideIn 0.4s ease both; border: 1px solid rgba(0, 255, 135, 0.3); }
+    .fixture-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0, 196, 106, 0.35); }
+    .fixture-tournament-label { font-size: 1rem; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; font-family: 'Rajdhani', sans-serif; }
+    .fixture-match-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .fixture-team-side { display: flex; flex-direction: column; align-items: center; gap: 12px; flex: 1; text-align: center; }
+    .fixture-team-name { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 2.2rem; color: var(--white); }
+    .fixture-vs { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; color: var(--white); letter-spacing: 4px; flex-shrink: 0; opacity: 0.6; }
+
+    .matches-list { display: flex; flex-direction: column; gap: 24px; }
+    .match-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 28px; padding: 32px 48px; transition: all 0.25s; animation: cardSlideIn 0.4s ease both; border: 1px solid rgba(0, 255, 135, 0.3); }
+    .match-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0, 196, 106, 0.35); }
+    .match-row { display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+    .team-side { display: flex; flex-direction: column; align-items: center; gap: 16px; flex: 1; text-align: center; }
+    .team-name-big { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 2.8rem; color: var(--white); letter-spacing: 0.3px; }
+    .match-center { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; min-width: 180px; }
+    .score-display { font-family: 'Bebas Neue', sans-serif; font-size: 4.5rem; color: var(--white); letter-spacing: 6px; background: rgba(0,0,0,0.3); padding: 14px 42px; border-radius: 80px; border: 2px solid rgba(0, 196, 106, 0.3); }
+    .forfeit-display { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; color: #ffaaaa; letter-spacing: 4px; background: rgba(0,0,0,0.5); padding: 12px 28px; border-radius: 60px; border: 2px solid #ffaaaa; }
+    .aggregate-text { font-size: 1.6rem; color: rgba(255,255,255,0.7); font-family: 'Rajdhani', sans-serif; }
+    .goal-scorers { margin-top: 12px; }
+    .goal-scorer-item { display: inline-block; background: rgba(0,0,0,0.4); border: 1px solid rgba(0, 196, 106, 0.5); padding: 5px 14px; border-radius: 30px; margin: 3px; font-size: 1.2rem; color: var(--white); }
+    .match-meta { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 24px; justify-content: center; }
+    .meta-tag { font-size: 1.4rem; font-weight: 500; color: var(--white); background: rgba(0,0,0,0.3); padding: 10px 24px; border-radius: 50px; border: 1px solid rgba(0, 196, 106, 0.3); font-family: 'Inter', sans-serif; }
+    .admin-row { display: flex; gap: 16px; justify-content: flex-end; margin-top: 24px; }
+    .btn-sm { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.5rem; padding: 12px 32px; border-radius: 50px; border: none; cursor: pointer; transition: all 0.2s; letter-spacing: 1px; }
+    .btn-edit { background: rgba(0, 255, 135, 0.3); color: var(--white); border: 1px solid var(--razzmatazz); }
+    .btn-edit:hover { background: var(--razzmatazz); color: var(--white); }
+    .btn-delete { background: rgba(100,0,0,0.3); color: #ffaaaa; border: 1px solid rgba(220,50,50,0.3); }
+    .btn-delete:hover { background: #cc3333; color: white; }
+
+    .add-btn-main { display: inline-flex; align-items: center; gap: 14px; background: rgba(0, 255, 135, 0.3); border: 2px solid var(--razzmatazz); color: var(--white); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 2rem; padding: 20px 56px; border-radius: 100px; cursor: pointer; margin-top: 40px; transition: all 0.2s; letter-spacing: 1px; }
+    .add-btn-main:hover { background: var(--razzmatazz); color: var(--white); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0, 196, 106, 0.4); }
+
+    .add-result-top-btn { display: inline-flex; align-items: center; gap: 10px; background: var(--razzmatazz); border: 2px solid var(--razzmatazz); color: var(--white); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.2rem; padding: 12px 28px; border-radius: 40px; cursor: pointer; transition: all 0.2s; letter-spacing: 1px; white-space: nowrap; }
+    .add-result-top-btn:hover { background: #009a55; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0, 196, 106, 0.4); }
+
+    .inline-media { width: 100%; border-radius: 32px; overflow: hidden; background: #000; }
+    .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; }
+    .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+    .watch-video-item { margin-bottom: 40px; }
+    .watch-video-item:last-child { margin-bottom: 0; }
+    .watch-video-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; color: var(--white); letter-spacing: 2px; margin-top: 12px; text-align: center; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+    .watch-video-delete-btn { display: block; margin: 12px auto 0; background: rgba(180,0,0,0.4); border: 1px solid #cc3333; color: #ffaaaa; padding: 8px 24px; border-radius: 30px; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; transition: all 0.2s; }
+    .watch-video-delete-btn:hover { background: #cc3333; color: white; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); backdrop-filter: blur(6px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+    .modal-overlay.active { display: flex; }
+    .modal-card { background: rgba(0, 13, 46, 0.98); border: 2px solid var(--razzmatazz); border-radius: 40px; padding: 44px; max-width: 860px; width: 100%; max-height: 88vh; overflow-y: auto; font-family: 'Rajdhani', sans-serif; animation: fadeInUp 0.35s ease both; }
+    .modal-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; color: var(--razzmatazz); letter-spacing: 2px; margin-bottom: 28px; }
+    .modal-card label { display: block; color: rgba(255,255,255,0.55); font-size: 1.2rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; margin-top: 20px; }
+    .modal-card input, .modal-card select, .modal-card textarea { width: 100%; padding: 16px 22px; background: rgba(255,255,255,0.06); border: 1px solid var(--razzmatazz); border-radius: 28px; color: white; font-family: 'Rajdhani', sans-serif; font-size: 1.4rem; font-weight: 500; outline: none; }
+    .modal-card textarea { min-height: 100px; }
+    .modal-card input:focus, .modal-card select:focus { box-shadow: 0 0 0 3px rgba(0, 196, 106, 0.3); }
+    .scorer-section { border-top: 1px solid rgba(255,255,255,0.15); margin-top: 18px; padding-top: 18px; }
+    .scorer-section h4 { color: var(--razzmatazz); font-size: 1.4rem; margin-bottom: 12px; font-family: 'Rajdhani', sans-serif; font-weight: 700; }
+    .scorer-list { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+    .scorer-badge { background: rgba(0, 255, 135, 0.3); border: 1px solid var(--razzmatazz); border-radius: 32px; padding: 7px 18px; font-size: 1.1rem; display: inline-flex; align-items: center; gap: 10px; color: var(--white); }
+    .remove-scorer { background: #b91c1c; color: white; border: none; border-radius: 50%; width: 26px; height: 26px; font-size: 16px; cursor: pointer; }
+    .modal-btns { display: flex; gap: 18px; margin-top: 28px; }
+    .modal-btn-primary, .modal-btn-cancel { flex: 1; padding: 16px; border-radius: 28px; font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 1px; cursor: pointer; }
+    .modal-btn-primary { background: var(--razzmatazz); color: white; border: none; transition: background 0.2s; }
+    .modal-btn-primary:hover { background: #009a55; }
+    .modal-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .modal-btn-cancel { background: rgba(255,255,255,0.07); border: 1px solid var(--razzmatazz); color: rgba(255,255,255,0.7); }
+    .status-msg { margin-top: 14px; padding: 12px 18px; border-radius: 14px; font-weight: bold; text-align: center; font-size: 1.2rem; }
+    .status-success { background: #dcfce7; color: #166534; }
+    .status-error { background: #fee2e2; color: #991b1b; }
+    .status-loading { background: #fef3c7; color: #92400e; }
+    .settings-grid { display: flex; flex-direction: column; gap: 16px; }
+    .settings-btn { background: rgba(0, 255, 135, 0.2); border: 1px solid var(--razzmatazz); color: var(--white); padding: 18px 26px; border-radius: 28px; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-size: 1.5rem; font-weight: 600; display: flex; align-items: center; gap: 16px; transition: all 0.2s; }
+    .settings-btn:hover { background: var(--razzmatazz); }
+
+    .popup-menu { position: absolute; background: rgba(0, 13, 46, 0.98); border: 1px solid var(--razzmatazz); border-radius: 20px; padding: 8px 0; z-index: 150; box-shadow: 0 8px 32px rgba(0,0,0,0.4); animation: fadeIn 0.2s ease; min-width: 220px; }
+    .popup-menu div { padding: 12px 20px; cursor: pointer; color: var(--white); transition: all 0.2s; font-weight: 600; font-size: 1.3rem; font-family: 'Rajdhani', sans-serif; }
+    .popup-menu div:hover { background: rgba(0, 196, 106, 0.2); transform: translateX(8px); }
+
+    .img-preview-grid { display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0; justify-content: center; }
+    .preview-thumb { position: relative; width: 180px; height: 180px; }
+    .preview-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 14px; border: 2px solid var(--razzmatazz); }
+    .thumb-del { position: absolute; top: -10px; right: -10px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+
+    .pos-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .vbar { width: 6px; height: 28px; border-radius: 3px; }
+    .vbar-blue { background: #0033cc; }
+    .vbar-orange { background: #f97316; }
+    .vbar-green { background: #22c55e; }
+    .vbar-red { background: #ef4444; }
+    .team-cell-inner { display: flex; align-items: center; gap: 14px; }
+    .team-icon { width: 80px; height: 80px; object-fit: contain; display: inline-block; background: transparent; border: none; border-radius: 0; transition: transform 0.25s; }
+    .team-icon:hover { transform: scale(1.1); }
+    .team-icon-sm { width: 80px; height: 80px; object-fit: contain; background: transparent; border: none; border-radius: 0; transition: transform 0.25s; }
+    .team-icon-sm:hover { transform: scale(1.1); }
+    .team-icon-lg { width: 120px; height: 120px; object-fit: contain; background: transparent; border: none; border-radius: 0; transition: transform 0.25s; }
+    .team-icon-lg:hover { transform: scale(1.05); }
+    .form-circles { display: flex; gap: 6px; align-items: center; }
+    .circle-result { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: bold; transition: transform 0.2s; }
+    .circle-result:hover { transform: scale(1.2); }
+    .cW { background: #22c55e; color: white; }
+    .cL { background: #b91c1c; color: white; }
+    .cD { background: #6b7280; color: white; }
+    .cF { background: #b91c1c; color: white; }
+    .cWF { background: #22c55e; color: white; }
+    .cLF { background: #b91c1c; color: white; }
+    .cBlank { background: rgba(0, 255, 135, 0.3); }
+    .arrow-up { color: #22c55e; font-size: 1.6rem; }
+    .arrow-down { color: #b91c1c; font-size: 1.6rem; }
+    .arrow-side { color: var(--white); font-size: 1.6rem; opacity: 0.7; }
+    .dashed-sep td { border-bottom: 3px dashed var(--razzmatazz) !important; }
+    .dashed-sep-red td { border-bottom: 3px dashed #b91c1c !important; }
+    .legend-row { margin-top: 24px; padding: 16px 20px; background: rgba(0, 255, 135, 0.2); border-radius: 20px; display: flex; gap: 28px; flex-wrap: wrap; justify-content: center; }
+    .legend-item { display: inline-flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.7); font-size: 1.1rem; }
+    .legend-dashed { display: inline-block; width: 28px; height: 3px; border-bottom: 3px dashed rgba(255,255,255,0.7); vertical-align: middle; }
+
+    footer { text-align: center; padding: 36px; color: rgba(255,255,255,0.3); font-size: 1.1rem; border-top: 1px solid rgba(0, 196, 106, 0.3); margin-top: 24px; }
+
+    .crop-container { position: relative; width: 100%; height: 400px; overflow: hidden; background: #111; border-radius: 20px; margin: 20px 0; cursor: grab; }
+    .crop-img { position: absolute; transform-origin: 0 0; user-select: none; pointer-events: none; max-width: none; }
+    .crop-controls { margin: 15px 0; }
+    .crop-slider { width: 100%; }
+
+    .scan-preview-img { max-width: 100%; border-radius: 16px; border: 2px solid var(--razzmatazz); margin: 12px 0; display: block; }
+    .gemini-result-box { background: rgba(0, 255, 135, 0.15); border: 1px solid var(--electric-violet); border-radius: 20px; padding: 20px; margin: 16px 0; }
+    .gemini-result-box h4 { color: var(--turquoise); font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px; margin-bottom: 12px; }
+
+    .match-scan-block { background: rgba(0, 255, 135, 0.1); border: 1px solid rgba(0, 255, 135, 0.4); border-radius: 24px; padding: 24px; margin-bottom: 20px; position: relative; }
+    .match-scan-block-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .match-scan-block-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--turquoise); letter-spacing: 2px; }
+    .match-scan-remove-btn { background: rgba(180,0,0,0.4); border: 1px solid #cc3333; color: #ffaaaa; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; font-size: 1.4rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .match-scan-remove-btn:hover { background: #cc3333; color: white; }
+    .match-img-thumbs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+    .match-img-thumb { position: relative; width: 100px; height: 100px; }
+    .match-img-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; border: 2px solid var(--razzmatazz); }
+    .match-img-thumb-del { position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+    .add-match-img-btn { background: rgba(0, 255, 135, 0.15); border: 2px dashed var(--turquoise); color: var(--turquoise); border-radius: 10px; width: 100px; height: 100px; cursor: pointer; font-size: 2rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .add-match-img-btn:hover { background: rgba(0, 255, 135, 0.3); }
+    .add-match-block-btn { display: inline-flex; align-items: center; gap: 10px; background: rgba(0, 255, 135, 0.2); border: 2px dashed var(--electric-violet); color: var(--electric-violet); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.3rem; padding: 14px 32px; border-radius: 40px; cursor: pointer; transition: all 0.2s; margin: 10px 0; width: 100%; justify-content: center; }
+    .add-match-block-btn:hover { background: rgba(0, 255, 135, 0.4); color: var(--white); }
+    .scan-all-btn { background: var(--turquoise); border: none; color: #000; font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 2px; padding: 18px 48px; border-radius: 50px; cursor: pointer; transition: all 0.2s; width: 100%; margin-top: 16px; }
+    .scan-all-btn:hover { background: #00d96e; transform: translateY(-2px); }
+    .scan-all-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .preview-match-card { background: rgba(0, 255, 135, 0.12); border: 1px solid var(--electric-violet); border-radius: 20px; padding: 22px; margin-bottom: 20px; }
+    .preview-match-card h4 { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: var(--turquoise); letter-spacing: 2px; margin-bottom: 14px; }
+    .preview-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+    .preview-field-row.three { grid-template-columns: 1fr 1fr 80px; }
+    .modal-card-wide { max-width: 1000px !important; }
+
+    .debug-log-entry { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 1rem; font-family: 'Inter', monospace; display: flex; gap: 12px; align-items: flex-start; }
+    .debug-log-entry .log-time { color: rgba(255,255,255,0.4); font-size: 0.8rem; min-width: 80px; flex-shrink: 0; }
+    .debug-log-entry .log-level { font-weight: 700; min-width: 60px; flex-shrink: 0; }
+    .debug-log-entry .log-level.info { color: #60a5fa; }
+    .debug-log-entry .log-level.warn { color: #fbbf24; }
+    .debug-log-entry .log-level.error { color: #f87171; }
+    .debug-log-entry .log-level.debug { color: #a78bfa; }
+    .debug-log-entry .log-msg { word-break: break-all; color: rgba(255,255,255,0.85); }
+    .debug-log-entry .log-msg .stack { color: rgba(255,255,255,0.4); font-size: 0.85rem; display: block; margin-top: 4px; }
+    .debug-log-container { max-height: 500px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 16px; padding: 8px; margin: 12px 0; }
+    .debug-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+    .debug-stat-card { background: rgba(0, 255, 135, 0.12); border: 1px solid rgba(0, 255, 135, 0.3); border-radius: 16px; padding: 16px; text-align: center; }
+    .debug-stat-card .stat-value { font-size: 2.4rem; font-weight: 800; color: var(--white); font-family: 'Bebas Neue', sans-serif; }
+    .debug-stat-card .stat-label { font-size: 0.9rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+    .debug-clear-btn { background: rgba(0, 196, 106, 0.2); border: 1px solid var(--razzmatazz); color: var(--white); padding: 8px 20px; border-radius: 30px; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; transition: all 0.2s; }
+    .debug-clear-btn:hover { background: var(--razzmatazz); }
+    .debug-timestamp { color: rgba(255,255,255,0.3); font-size: 0.85rem; text-align: right; margin-top: 8px; }
+
+    .manager-history-entry { background: rgba(0, 255, 135, 0.08); border-radius: 16px; padding: 12px 16px; margin-bottom: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+    .manager-history-entry .mgr-name { font-weight: 700; font-size: 1.2rem; color: var(--white); min-width: 120px; }
+    .manager-history-entry .mgr-status { font-size: 1.2rem; }
+    .manager-history-entry .mgr-md { color: rgba(255,255,255,0.7); font-size: 1rem; }
+    .manager-history-entry .mgr-actions { display: flex; gap: 6px; margin-left: auto; }
+    .manager-history-entry .mgr-actions button { background: rgba(0, 255, 135, 0.2); border: 1px solid var(--razzmatazz); color: var(--white); border-radius: 20px; padding: 4px 14px; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-size: 1rem; transition: 0.2s; }
+    .manager-history-entry .mgr-actions button:hover { background: var(--razzmatazz); }
+    .manager-inline-form { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 16px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
+    .manager-inline-form label { font-size: 0.8rem; margin-top: 0; color: rgba(255,255,255,0.5); display: block; }
+    .manager-inline-form input, .manager-inline-form select { padding: 8px 12px; background: rgba(255,255,255,0.06); border: 1px solid var(--razzmatazz); border-radius: 12px; color: white; font-family: 'Rajdhani', sans-serif; font-size: 1rem; width: 100%; }
+    .manager-inline-form button { background: var(--razzmatazz); border: none; color: white; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; }
+    .manager-inline-form button:hover { background: #009a55; }
+    .team-manager-section { border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 16px; margin-bottom: 16px; }
+    .team-manager-section .team-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--turquoise); margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="navbar">
+  <div id="logoContainer"></div>
+  <button class="menu-btn" id="menuBtn"><span></span><span></span><span></span></button>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="side-menu" id="sideMenu">
+  <div class="close-menu" id="closeMenuBtn">&#x2715;</div>
+  <div class="menu-item" id="homeBtn">🏠 Home</div>
+  <div class="menu-item" id="adminModeBtn">🔐 Admin Mode</div>
+  <div class="menu-item" id="debugInfoBtn">🐛 Debug Info</div>
+</div>
+
+<div class="slideshow-wrapper">
+  <div class="slideshow-frame">
+    <img id="slideshowImg" class="slideshow-img" src="" alt="Slideshow" style="display:none;">
+  </div>
+  <div class="dots-container" id="dotsContainer"></div>
+</div>
+
+<div class="season-bar">
+  <div class="season-controls">
+    <button class="season-arrow" id="prevSeasonBtn">&#8249;</button>
+    <div class="season-number" id="seasonNumber">Season 2</div>
+    <button class="season-arrow" id="nextSeasonBtn">&#8250;</button>
+    <div id="seasonAdminPanel" style="display:none;" class="season-admin-btns">
+      <button class="season-admin-btn" id="addSeasonBtn">+ New</button>
+      <button class="season-admin-btn" id="renameSeasonBtn">Rename</button>
+      <button class="season-admin-btn" id="setActiveSeasonBtn">Set Active</button>
+    </div>
+  </div>
+</div>
+
+<div class="tabs-container">
+  <div class="tabs-row">
+    <button class="tab-btn active" data-tab="table">TABLE</button>
+    <button class="tab-btn" data-tab="fixtures">FIXTURES</button>
+    <button class="tab-btn" data-tab="results">RESULTS</button>
+    <button class="tab-btn" data-tab="topscorers">TOP SCORERS</button>
+    <button class="tab-btn" data-tab="topassists">TOP ASSISTANTS</button>
+    <button class="tab-btn" data-tab="watch">WATCH MATCH</button>
+  </div>
+</div>
+
+<div class="content-card" id="contentCard">
+  <div class="loading-spinner"><div class="spinner"></div><span>Loading…</span></div>
+</div>
+
+<footer>Ligue 1 © 2025 | Official Fan Hub</footer>
+
+<div id="genericModal" class="modal-overlay">
+  <div class="modal-card" id="modalContent"></div>
+</div>
+
+<div id="teamForm" class="modal-overlay">
+  <div class="modal-card">
+    <h3>Add / Edit Team</h3>
+    <label>Team Name</label><input type="text" id="teamNameInput" placeholder="Team Name">
+    <label>Played (P)</label><input type="number" id="teamP">
+    <label>Wins (W)</label><input type="number" id="teamW">
+    <label>Draws (D)</label><input type="number" id="teamD">
+    <label>Losses (L)</label><input type="number" id="teamL">
+    <label>Goals Scored (GS)</label><input type="number" id="teamGS">
+    <label>Goals Conceded (GC)</label><input type="number" id="teamGC">
+    <label>Goal Difference (GD)</label><input type="number" id="teamGD">
+    <label>Points (Pts)</label><input type="number" id="teamPts">
+    <div class="modal-btns">
+      <button class="modal-btn-primary" id="saveTeamBtn">Save</button>
+      <button class="modal-btn-cancel" id="cancelTeamBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DEBUG LOG SYSTEM ───
+const debugLogs = [];
+const MAX_DEBUG_LOGS = 500;
+
+function addDebugLog(level, msg, stack = null) {
+  const entry = {
+    time: new Date().toLocaleTimeString(),
+    timestamp: Date.now(),
+    level: level,
+    message: msg,
+    stack: stack
+  };
+  debugLogs.push(entry);
+  if (debugLogs.length > MAX_DEBUG_LOGS) debugLogs.shift();
+}
+
+const origConsoleLog = console.log;
+const origConsoleError = console.error;
+const origConsoleWarn = console.warn;
+const origConsoleInfo = console.info;
+const origConsoleDebug = console.debug;
+
+console.log = function(...args) {
+  origConsoleLog.apply(console, args);
+  addDebugLog('info', args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
+};
+console.error = function(...args) {
+  origConsoleError.apply(console, args);
+  const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ');
+  const stack = args.find(a => a instanceof Error)?.stack || null;
+  addDebugLog('error', msg, stack);
+};
+console.warn = function(...args) {
+  origConsoleWarn.apply(console, args);
+  addDebugLog('warn', args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
+};
+console.info = function(...args) {
+  origConsoleInfo.apply(console, args);
+  addDebugLog('info', args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
+};
+console.debug = function(...args) {
+  origConsoleDebug.apply(console, args);
+  addDebugLog('debug', args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
+};
+
+window.onerror = function(message, source, lineno, colno, error) {
+  const stack = error?.stack || null;
+  addDebugLog('error', `${message} at ${source}:${lineno}:${colno}`, stack);
+  return false;
+};
+
+window.addEventListener('unhandledrejection', function(e) {
+  const msg = e.reason?.message || String(e.reason);
+  const stack = e.reason?.stack || null;
+  addDebugLog('error', `Unhandled Promise Rejection: ${msg}`, stack);
+});
+
+// ─── eFootball → Real team name mapping ───
+const EFOOTBALL_TEAM_MAP = {
+  'manchester b': 'Man City',
+  'manchester united': 'Man United',
+  'inter milan': 'Inter Milan',
+  'arsenal fc': 'Arsenal FC',
+  'fc barcelona': 'Barcelona',
+  'paris saint-germain': 'PSG',
+  'piemonte bn': 'Juventus',
+  'madrid chamartin b': 'Real Madrid',
+  'tottenham wb': 'Tottenham',
+  'chelsea b': 'Chelsea',
+  'liverpool r': 'Liverpool',
+  'ac milan': 'AC Milan',
+  'al nassr': 'Al Nassr',
+  'newcastle wb': 'Newcastle',
+  'aston rb': 'Aston Villa',
+  'madrid ross rb': 'Atletico',
+  'galatasaray': 'Galatasaray',
+  'borussia dortmund': 'Dortmund',
+  'marseille': 'Marseille',
+  'napoli': 'SSC Napoli'
+};
+
+function mapTeamName(raw) {
+  if (!raw) return raw;
+  const lower = raw.trim().toLowerCase();
+  return EFOOTBALL_TEAM_MAP[lower] || raw.trim();
+}
+
+const GROQ_API_KEY = "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";
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
+  authDomain: "efootball-412.firebaseapp.com",
+  databaseURL: "https://efootball-412-default-rtdb.firebaseio.com",
+  projectId: "efootball-412",
+  storageBucket: "efootball-412.firebasestorage.app",
+  messagingSenderId: "596548424249",
+  appId: "1:596548424249:web:4349f6e87a40a1590bf3e8"
+};
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
+const RMBG_KEY = "zdkDj9iwQqbGNe8sJu7AEuE8";
+
+let isAdminMode = false;
+let currentSeasonId = 2;
+let availableSeasons = [];
+let activeSeasonId = 2;
+let teamsData = [], resultsData = [];
+let teamIconsCache = {};
+let slideshowImages = [], slideshowDuration = 3000, slideInterval = null, currentSlideIdx = 0;
+let navbarLogoUrl = '';
+let tableHeaderBgImageUrl = '';
+let tableHeaderImageUrl = '';
+let watchMatchEmbedCode = '';
+let playerMap = {};
+let topScorerList = [], topAssistantList = [];
+let calendarEventsData = {};
+let showFormArrows = false;
+let showLast5 = true;
+let currentView = "team";
+let popupEl = null;
+let tempScorersHome = [], tempScorersAway = [];
+let currentMdFilter = '';
+let currentTeamFilter = '';
+let currentFixTeamFilter = '';
+let currentFixMonthFilter = '';
+let bgImageUrl = '';
+let bgSize = 'cover';
+let bgPosition = 'center';
+
+// ─── Multi-scan state ───
+let multiScanMatches = [];
+let multiScanIdCounter = 0;
+
+// ─── Background saving ───
+let pendingSaves = 0;
+let pendingRenderTab = null;
+
+// ─── Team Logo Mappings ───
+let teamLogoMappings = {};
+
+// ─── Manager History ───
+let managerHistory = {};
+
+// ─── Watch Match videos ───
+let watchMatchVideos = [];
+
+function incrementPending() { pendingSaves++; }
+function decrementPending() { pendingSaves--; if (pendingSaves === 0 && pendingRenderTab) { const tab = pendingRenderTab; pendingRenderTab = null; renderCurrentTab(tab); } }
+
+function getSeasonPath(seasonNum, subPath = "") {
+  return `Ligue1/seasons/season_${seasonNum}${subPath ? "/" + subPath : ""}`;
+}
+
+async function uploadToImgBB(blob) {
+  const fd = new FormData(); fd.append('image', blob);
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: fd });
+  const data = await res.json();
+  if (!data.success) throw new Error(data.error?.message || 'ImgBB upload failed');
+  return data.data.url;
+}
+
+async function removeBackground(file) {
+  const fd = new FormData();
+  fd.append('image_file', file);
+  fd.append('size', 'auto');
+  const res = await fetch('https://api.remove.bg/v1.0/removebg', { method: 'POST', headers: { 'X-Api-Key': RMBG_KEY }, body: fd });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err?.errors?.[0]?.title || 'remove.bg failed'); }
+  return await res.blob();
+}
+
+function pickFile(accept) {
+  return new Promise(res => {
+    const inp = document.createElement('input'); inp.type = 'file'; inp.accept = accept;
+    inp.onchange = e => res(e.target.files[0] || null); inp.click();
+  });
+}
+
+function pickFiles(accept) {
+  return new Promise(res => {
+    const inp = document.createElement('input'); inp.type = 'file'; inp.accept = accept; inp.multiple = true;
+    inp.onchange = e => res(Array.from(e.target.files));
+    inp.click();
+  });
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function getTeamIconHtml(teamName, className = "team-icon-sm") {
+  const url = teamIconsCache[teamName];
+  return url ? `<img class="${className}" src="${url}" alt="${teamName}" onerror="this.style.display='none';">` : '';
+}
+
+function showModal(html, wide = false) {
+  const mc = document.getElementById('modalContent');
+  mc.innerHTML = html;
+  mc.className = wide ? 'modal-card modal-card-wide' : 'modal-card';
+  document.getElementById('genericModal').classList.add('active');
+}
+function closeModal() { document.getElementById('genericModal').classList.remove('active'); }
+
+// ─── DEBUG INFO MODAL ───
+function openDebugInfoModal() {
+  const errorCount = debugLogs.filter(l => l.level === 'error').length;
+  const warnCount = debugLogs.filter(l => l.level === 'warn').length;
+  const infoCount = debugLogs.filter(l => l.level === 'info').length;
+
+  let logsHtml = debugLogs.slice().reverse().map(l => {
+    const levelClass = l.level;
+    const stackHtml = l.stack ? `<span class="stack">${escapeHtml(l.stack)}</span>` : '';
+    return `<div class="debug-log-entry">
+      <span class="log-time">${escapeHtml(l.time)}</span>
+      <span class="log-level ${levelClass}">${l.level.toUpperCase()}</span>
+      <span class="log-msg">${escapeHtml(l.message)}${stackHtml}</span>
+    </div>`;
+  }).join('');
+
+  if (!logsHtml) logsHtml = '<div style="color:rgba(255,255,255,0.3);padding:20px;text-align:center;">No logs captured yet.</div>';
+
+  showModal(`
+    <h3>🐛 Comprehensive Debug Information</h3>
+    <div class="debug-stats-grid">
+      <div class="debug-stat-card"><div class="stat-value">${debugLogs.length}</div><div class="stat-label">Total Logs</div></div>
+      <div class="debug-stat-card" style="border-color:#f87171;"><div class="stat-value" style="color:#f87171;">${errorCount}</div><div class="stat-label">Errors</div></div>
+      <div class="debug-stat-card" style="border-color:#fbbf24;"><div class="stat-value" style="color:#fbbf24;">${warnCount}</div><div class="stat-label">Warnings</div></div>
+      <div class="debug-stat-card" style="border-color:#60a5fa;"><div class="stat-value" style="color:#60a5fa;">${infoCount}</div><div class="stat-label">Info</div></div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0;">
+      <span style="color:rgba(255,255,255,0.4);font-size:1rem;">System Status: <span style="color:var(--turquoise);">● Online</span></span>
+      <button class="debug-clear-btn" id="debugClearBtn">Clear Logs</button>
+    </div>
+
+    <div class="debug-log-container" id="debugLogContainer">
+      ${logsHtml}
+    </div>
+
+    <div class="debug-timestamp">Debug session started: ${new Date().toLocaleString()}</div>
+
+    <div style="margin-top:16px;padding:14px;background:rgba(0,255,135,0.1);border-radius:16px;border:1px solid rgba(0,255,135,0.3);">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.95rem;color:rgba(255,255,255,0.6);">
+        <div>Season: <strong style="color:white;">${currentSeasonId}</strong></div>
+        <div>Teams: <strong style="color:white;">${teamsData.length}</strong></div>
+        <div>Results: <strong style="color:white;">${resultsData.length}</strong></div>
+        <div>Admin Mode: <strong style="color:white;">${isAdminMode ? '✅ Active' : '❌ Inactive'}</strong></div>
+        <div>Top Scorers: <strong style="color:white;">${topScorerList.length}</strong></div>
+        <div>Top Assistants: <strong style="color:white;">${topAssistantList.length}</strong></div>
+      </div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="modal-btn-cancel" id="closeDebugBtn">Close</button>
+    </div>
+  `);
+
+  document.getElementById('closeDebugBtn').onclick = closeModal;
+
+  document.getElementById('debugClearBtn').onclick = function() {
+    debugLogs.length = 0;
+    const container = document.getElementById('debugLogContainer');
+    if (container) container.innerHTML = '<div style="color:rgba(255,255,255,0.3);padding:20px;text-align:center;">Logs cleared.</div>';
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// MULTI-SCAN RESULT MODAL
+// ═══════════════════════════════════════════════════════════
+
+function createScanMatchBlock(id) {
+  return { id, images: [] };
+}
+
+function renderMultiScanModal() {
+  let blocksHtml = multiScanMatches.map((match, mIdx) => {
+    let thumbsHtml = match.images.map((img, iIdx) => `
+      <div class="match-img-thumb">
+        <img src="${img.dataUrl}" alt="img">
+        <button class="match-img-thumb-del" data-mid="${match.id}" data-iidx="${iIdx}">✕</button>
+      </div>
+    `).join('');
+    thumbsHtml += `<button class="add-match-img-btn" data-mid="${match.id}" title="Add images">+</button>`;
+    return `
+      <div class="match-scan-block" id="msblock_${match.id}">
+        <div class="match-scan-block-header">
+          <span class="match-scan-block-title">Match ${mIdx + 1}</span>
+          ${multiScanMatches.length > 1 ? `<button class="match-scan-remove-btn" data-removemid="${match.id}">✕</button>` : ''}
+        </div>
+        <div class="match-img-thumbs" id="thumbs_${match.id}">${thumbsHtml}</div>
+        <div style="color:rgba(255,255,255,0.4);font-size:1rem;">${match.images.length} image${match.images.length !== 1 ? 's' : ''} added</div>
+      </div>
+    `;
+  }).join('');
+
+  const totalImages = multiScanMatches.reduce((sum, m) => sum + m.images.length, 0);
+  const canScan = totalImages > 0;
+
+  showModal(`
+    <h3>📸 Scan Match Images</h3>
+    <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;font-size:1.1rem;">Add images for each match. You can add multiple images per match — AI reads them all together.</p>
+    <div id="multiScanBlocks">${blocksHtml}</div>
+    <button class="add-match-block-btn" id="addMatchBlockBtn">+ Add Another Match</button>
+    <button class="scan-all-btn" id="scanAllBtn" ${canScan ? '' : 'disabled'}>🔍 SCAN ALL MATCHES</button>
+    <div id="scanAllStatus"></div>
+    <div class="modal-btns" style="margin-top:16px;">
+      <button class="modal-btn-cancel" id="cancelMultiScanBtn">Cancel</button>
+    </div>
+  `, true);
+
+  document.getElementById('cancelMultiScanBtn').onclick = () => { multiScanMatches = []; closeModal(); };
+  document.getElementById('addMatchBlockBtn').onclick = () => {
+    multiScanIdCounter++;
+    multiScanMatches.push(createScanMatchBlock(multiScanIdCounter));
+    renderMultiScanModal();
+  };
+  document.querySelectorAll('[data-removemid]').forEach(btn => {
+    btn.onclick = () => {
+      const mid = parseInt(btn.dataset.removemid);
+      multiScanMatches = multiScanMatches.filter(m => m.id !== mid);
+      renderMultiScanModal();
+    };
+  });
+  document.querySelectorAll('.add-match-img-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const mid = parseInt(btn.dataset.mid);
+      const files = await pickFiles('image/*');
+      if (!files.length) return;
+      const match = multiScanMatches.find(m => m.id === mid);
+      if (!match) return;
+      for (const file of files) {
+        const dataUrl = await fileToDataUrl(file);
+        match.images.push({ file, dataUrl });
+      }
+      renderMultiScanModal();
+    };
+  });
+  document.querySelectorAll('[data-iidx]').forEach(btn => {
+    btn.onclick = () => {
+      const mid = parseInt(btn.dataset.mid);
+      const iIdx = parseInt(btn.dataset.iidx);
+      const match = multiScanMatches.find(m => m.id === mid);
+      if (match) { match.images.splice(iIdx, 1); renderMultiScanModal(); }
+    };
+  });
+  document.getElementById('scanAllBtn').onclick = () => scanAllMatches();
+}
+
+async function scanAllMatches() {
+  const statusEl = document.getElementById('scanAllStatus');
+  const scanBtn = document.getElementById('scanAllBtn');
+  if (scanBtn) { scanBtn.disabled = true; scanBtn.innerHTML = '<span class="btn-spinner"></span> Scanning…'; }
+  if (statusEl) statusEl.innerHTML = '<div class="status-msg status-loading">🤖 AI is reading your images…</div>';
+
+  const results = [];
+  for (let i = 0; i < multiScanMatches.length; i++) {
+    const match = multiScanMatches[i];
+    if (!match.images.length) continue;
+    if (statusEl) statusEl.innerHTML = `<div class="status-msg status-loading">🤖 Scanning Match ${i + 1} of ${multiScanMatches.length}…</div>`;
+    try {
+      const scanned = await scanMatchImages(match.images);
+      results.push({ matchIdx: i + 1, scanned });
+    } catch(e) {
+      results.push({ matchIdx: i + 1, scanned: null, error: e.message });
+    }
+  }
+
+  openMultiScanPreviewModal(results);
+}
+
+async function scanMatchImages(images) {
+  const contentParts = [
+    {
+      type: 'text',
+      text: `Analyze these football/soccer match screenshot(s) and extract the following information in JSON format only (no markdown, no explanation):
+{
+  "homeTeam": "team name as shown in image",
+  "awayTeam": "team name as shown in image",
+  "homeScore": 0,
+  "awayScore": 0,
+  "homeScorers": [{"player": "name", "goals": 1}],
+  "awayScorers": [{"player": "name", "goals": 1}],
+  "homeAssists": [{"player": "name", "assists": 1}],
+  "awayAssists": [{"player": "name", "assists": 1}],
+  "matchday": null
+}
+Use team names EXACTLY as shown in the image. If you cannot find scorers or assists, return empty arrays. Return ONLY the JSON object.`
+    }
+  ];
+
+  for (const img of images) {
+    const base64 = await fileToBase64(img.file);
+    const mimeType = img.file.type || 'image/jpeg';
+    contentParts.push({
+      type: 'image_url',
+      image_url: { url: `data:${mimeType};base64,${base64}` }
+    });
+  }
+
+  if (Object.keys(teamLogoMappings).length > 0) {
+    contentParts.push({ type: 'text', text: 'These are reference team logos to help you identify teams:' });
+    for (const [teamName, mapping] of Object.entries(teamLogoMappings)) {
+      contentParts.push({ type: 'text', text: `This logo = "${teamName}" (also known as "${mapping.efootballName}" in eFootball)` });
+      contentParts.push({ type: 'image_url', image_url: { url: mapping.imageUrl } });
+    }
+  }
+
+  const response = await fetch(GROQ_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_API_KEY },
+    body: JSON.stringify({
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      messages: [{ role: 'user', content: contentParts }],
+      max_tokens: 1000,
+      temperature: 0
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err?.error?.message || 'Groq API error');
+  }
+
+  const data = await response.json();
+  const text = data.choices?.[0]?.message?.content || '';
+  const clean = text.replace(/```json|```/g, '').trim();
+  const parsed = JSON.parse(clean);
+
+  parsed.homeTeam = mapTeamName(parsed.homeTeam);
+  parsed.awayTeam = mapTeamName(parsed.awayTeam);
+
+  return parsed;
+}
+
+let previewMatches = [];
+
+function openMultiScanPreviewModal(results) {
+  previewMatches = results.map(r => {
+    if (r.error || !r.scanned) {
+      return {
+        matchIdx: r.matchIdx,
+        error: r.error || 'Unknown error',
+        homeTeam: '', awayTeam: '',
+        homeScore: 0, awayScore: 0,
+        forfeitType: 'none',
+        matchday: '',
+        date: '', venue: '', matchType: '', aggregate: '',
+        homeScorers: [], awayScorers: [],
+        homeAssists: [], awayAssists: []
+      };
+    }
+    const s = r.scanned;
+    return {
+      matchIdx: r.matchIdx,
+      error: null,
+      homeTeam: s.homeTeam || '',
+      awayTeam: s.awayTeam || '',
+      homeScore: s.homeScore ?? 0,
+      awayScore: s.awayScore ?? 0,
+      forfeitType: 'none',
+      matchday: s.matchday || '',
+      date: '', venue: '', matchType: '', aggregate: '',
+      homeScorers: s.homeScorers || [],
+      awayScorers: s.awayScorers || [],
+      homeAssists: s.homeAssists || [],
+      awayAssists: s.awayAssists || []
+    };
+  });
+
+  renderPreviewModal();
+}
+
+function renderPreviewModal() {
+  const teamNames = teamsData.map(t => t.name).sort();
+
+  let matchesHtml = previewMatches.map((m, idx) => {
+    if (m.error) {
+      return `<div class="preview-match-card" style="border-color:#cc3333;">
+        <h4 style="color:#ffaaaa;">⚠️ Match ${m.matchIdx} — Scan Failed</h4>
+        <p style="color:#ffaaaa;font-size:1.1rem;">${escapeHtml(m.error)}</p>
+        <p style="color:rgba(255,255,255,0.5);font-size:1rem;">Fill in manually below or remove this match.</p>
+        ${buildMatchEditFields(m, idx, teamNames)}
+        <button class="match-scan-remove-btn" style="margin-top:12px;width:auto;border-radius:20px;padding:8px 20px;font-size:1.1rem;" data-removeidx="${idx}">Remove</button>
+      </div>`;
+    }
+    return `<div class="preview-match-card">
+      <h4>✅ Match ${m.matchIdx}</h4>
+      <div style="color:rgba(255,255,255,0.7);font-size:1.2rem;margin-bottom:14px;">
+        AI detected: <strong style="color:white;">${escapeHtml(m.homeTeam)} ${m.homeScore} — ${m.awayScore} ${escapeHtml(m.awayTeam)}</strong>
+      </div>
+      ${buildMatchEditFields(m, idx, teamNames)}
+      <button class="match-scan-remove-btn" style="margin-top:12px;width:auto;border-radius:20px;padding:8px 20px;font-size:1.1rem;" data-removeidx="${idx}">Remove Match</button>
+    </div>`;
+  }).join('');
+
+  showModal(`
+    <h3>✅ Review & Confirm All Matches</h3>
+    <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;font-size:1.1rem;">Review each match before saving. Edit anything the AI got wrong.</p>
+    <div id="previewMatchesContainer">${matchesHtml}</div>
+    <div style="margin-top:24px;padding:16px;background:rgba(0,255,135,0.1);border:1px solid var(--turquoise);border-radius:20px;">
+      <p style="color:var(--turquoise);font-size:1.1rem;font-weight:600;">⚠️ Confirming will save all matches to: Results, Table, Top Scorers & Top Assistants</p>
+    </div>
+    <div class="modal-btns" style="margin-top:20px;">
+      <button class="modal-btn-primary" id="confirmAllScanBtn">✅ CONFIRM & SAVE ALL</button>
+      <button class="modal-btn-cancel" id="cancelPreviewBtn">Cancel</button>
+    </div>
+    <div id="confirmSaveStatus"></div>
+  `, true);
+
+  document.getElementById('cancelPreviewBtn').onclick = () => { multiScanMatches = []; closeModal(); };
+  document.querySelectorAll('[data-removeidx]').forEach(btn => {
+    btn.onclick = () => {
+      const idx = parseInt(btn.dataset.removeidx);
+      previewMatches.splice(idx, 1);
+      renderPreviewModal();
+    };
+  });
+  document.getElementById('confirmAllScanBtn').onclick = () => confirmAndSaveAll();
+  setTimeout(attachPreviewModalListeners, 50);
+}
+
+function buildMatchEditFields(m, idx, teamNames) {
+  const makeOpts = (selected) => teamNames.map(t => `<option value="${t}" ${t === selected ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('');
+
+  const hsHome = (m.homeScorers || []).map((s, i) => `
+    <span class="scorer-badge">⚽ ${escapeHtml(s.player)} (${s.goals})
+      <button class="remove-scorer" data-matchidx="${idx}" data-side="homeScorers" data-sidx="${i}">✖</button>
+    </span>`).join('');
+  const hsAway = (m.awayScorers || []).map((s, i) => `
+    <span class="scorer-badge">⚽ ${escapeHtml(s.player)} (${s.goals})
+      <button class="remove-scorer" data-matchidx="${idx}" data-side="awayScorers" data-sidx="${i}">✖</button>
+    </span>`).join('');
+  const haHome = (m.homeAssists || []).map((a, i) => `
+    <span class="scorer-badge">🎯 ${escapeHtml(a.player)} (${a.assists})
+      <button class="remove-scorer" data-matchidx="${idx}" data-side="homeAssists" data-sidx="${i}">✖</button>
+    </span>`).join('');
+  const haAway = (m.awayAssists || []).map((a, i) => `
+    <span class="scorer-badge">🎯 ${escapeHtml(a.player)} (${a.assists})
+      <button class="remove-scorer" data-matchidx="${idx}" data-side="awayAssists" data-sidx="${i}">✖</button>
+    </span>`).join('');
+
+  return `
+    <div class="preview-field-row">
+      <div>
+        <label>Home Team</label>
+        <select data-field="homeTeam" data-idx="${idx}">
+          <option value="">Select Home Team</option>${makeOpts(m.homeTeam)}
+        </select>
+      </div>
+      <div>
+        <label>Away Team</label>
+        <select data-field="awayTeam" data-idx="${idx}">
+          <option value="">Select Away Team</option>${makeOpts(m.awayTeam)}
+        </select>
+      </div>
+    </div>
+    <div class="preview-field-row three">
+      <div>
+        <label>Home Score</label>
+        <input type="number" data-field="homeScore" data-idx="${idx}" value="${m.homeScore}">
+      </div>
+      <div>
+        <label>Away Score</label>
+        <input type="number" data-field="awayScore" data-idx="${idx}" value="${m.awayScore}">
+      </div>
+      <div>
+        <label>MD</label>
+        <input type="number" data-field="matchday" data-idx="${idx}" value="${m.matchday || ''}">
+      </div>
+    </div>
+    <div class="preview-field-row">
+      <div>
+        <label>Forfeit Type</label>
+        <select data-field="forfeitType" data-idx="${idx}">
+          <option value="none" ${m.forfeitType === 'none' ? 'selected' : ''}>Normal Result</option>
+          <option value="no_contest" ${m.forfeitType === 'no_contest' ? 'selected' : ''}>No Contest (F-F)</option>
+          <option value="forfeit_no_reply" ${m.forfeitType === 'forfeit_no_reply' ? 'selected' : ''}>Forfeited – No Reply</option>
+          <option value="forfeit_agreement" ${m.forfeitType === 'forfeit_agreement' ? 'selected' : ''}>Forfeited on Agreement</option>
+        </select>
+      </div>
+      <div>
+        <label>Date (optional)</label>
+        <input type="text" data-field="date" data-idx="${idx}" value="${escapeHtml(m.date || '')}" placeholder="e.g. 15 May 2025">
+      </div>
+    </div>
+    <div class="preview-field-row">
+      <div>
+        <label>Venue (optional)</label>
+        <input type="text" data-field="venue" data-idx="${idx}" value="${escapeHtml(m.venue || '')}" placeholder="Venue">
+      </div>
+      <div>
+        <label>Match Type (optional)</label>
+        <input type="text" data-field="matchType" data-idx="${idx}" value="${escapeHtml(m.matchType || '')}" placeholder="e.g. Matchday 5">
+      </div>
+    </div>
+    <div class="preview-field-row">
+      <div>
+        <label>Aggregate (optional)</label>
+        <input type="text" data-field="aggregate" data-idx="${idx}" value="${escapeHtml(m.aggregate || '')}" placeholder="e.g. 4-2">
+      </div>
+    </div>
+
+    <div class="scorer-section">
+      <h4>⚽ Home Scorers</h4>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input type="text" id="hs_name_${idx}" placeholder="Player" style="flex:2;">
+        <input type="number" id="hs_goals_${idx}" value="1" style="width:70px;">
+        <button class="modal-btn-primary add-scorer-btn" data-matchidx="${idx}" data-side="homeScorers" style="padding:8px 16px;font-size:1rem;">Add</button>
+      </div>
+      <div class="scorer-list">${hsHome}</div>
+    </div>
+    <div class="scorer-section">
+      <h4>⚽ Away Scorers</h4>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input type="text" id="as_name_${idx}" placeholder="Player" style="flex:2;">
+        <input type="number" id="as_goals_${idx}" value="1" style="width:70px;">
+        <button class="modal-btn-primary add-scorer-btn" data-matchidx="${idx}" data-side="awayScorers" style="padding:8px 16px;font-size:1rem;">Add</button>
+      </div>
+      <div class="scorer-list">${hsAway}</div>
+    </div>
+    <div class="scorer-section">
+      <h4>🎯 Home Assists</h4>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input type="text" id="ha_name_${idx}" placeholder="Player" style="flex:2;">
+        <input type="number" id="ha_assists_${idx}" value="1" style="width:70px;">
+        <button class="modal-btn-primary add-assist-btn" data-matchidx="${idx}" data-side="homeAssists" style="padding:8px 16px;font-size:1rem;">Add</button>
+      </div>
+      <div class="scorer-list">${haHome}</div>
+    </div>
+    <div class="scorer-section">
+      <h4>🎯 Away Assists</h4>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input type="text" id="aa_name_${idx}" placeholder="Player" style="flex:2;">
+        <input type="number" id="aa_assists_${idx}" value="1" style="width:70px;">
+        <button class="modal-btn-primary add-assist-btn" data-matchidx="${idx}" data-side="awayAssists" style="padding:8px 16px;font-size:1rem;">Add</button>
+      </div>
+      <div class="scorer-list">${haAway}</div>
+    </div>
+  `;
+}
+
+function attachPreviewModalListeners() {
+  document.querySelectorAll('[data-field][data-idx]').forEach(el => {
+    el.addEventListener('change', () => {
+      const idx = parseInt(el.dataset.idx);
+      const field = el.dataset.field;
+      let val = el.value;
+      if (field === 'homeScore' || field === 'awayScore' || field === 'matchday') val = parseInt(val) || 0;
+      previewMatches[idx][field] = val;
+    });
+    el.addEventListener('input', () => {
+      const idx = parseInt(el.dataset.idx);
+      const field = el.dataset.field;
+      let val = el.value;
+      if (field === 'homeScore' || field === 'awayScore' || field === 'matchday') val = parseInt(val) || 0;
+      previewMatches[idx][field] = val;
+    });
+  });
+
+  document.querySelectorAll('.remove-scorer[data-matchidx]').forEach(btn => {
+    btn.onclick = () => {
+      const idx = parseInt(btn.dataset.matchidx);
+      const side = btn.dataset.side;
+      const sIdx = parseInt(btn.dataset.sidx);
+      previewMatches[idx][side].splice(sIdx, 1);
+      renderPreviewModal();
+      setTimeout(attachPreviewModalListeners, 0);
+    };
+  });
+
+  document.querySelectorAll('.add-scorer-btn').forEach(btn => {
+    btn.onclick = () => {
+      const idx = parseInt(btn.dataset.matchidx);
+      const side = btn.dataset.side;
+      const prefix = side === 'homeScorers' ? 'hs' : 'as';
+      const name = document.getElementById(`${prefix}_name_${idx}`)?.value.trim();
+      const goals = parseInt(document.getElementById(`${prefix}_goals_${idx}`)?.value) || 1;
+      if (!name) return;
+      previewMatches[idx][side].push({ player: name, goals });
+      renderPreviewModal();
+      setTimeout(attachPreviewModalListeners, 0);
+    };
+  });
+
+  document.querySelectorAll('.add-assist-btn').forEach(btn => {
+    btn.onclick = () => {
+      const idx = parseInt(btn.dataset.matchidx);
+      const side = btn.dataset.side;
+      const prefix = side === 'homeAssists' ? 'ha' : 'aa';
+      const name = document.getElementById(`${prefix}_name_${idx}`)?.value.trim();
+      const assists = parseInt(document.getElementById(`${prefix}_assists_${idx}`)?.value) || 1;
+      if (!name) return;
+      previewMatches[idx][side].push({ player: name, assists });
+      renderPreviewModal();
+      setTimeout(attachPreviewModalListeners, 0);
+    };
+  });
+}
+
+async function confirmAndSaveAll() {
+  const btn = document.getElementById('confirmAllScanBtn');
+  const statusEl = document.getElementById('confirmSaveStatus');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Saving…'; }
+
+  document.querySelectorAll('[data-field][data-idx]').forEach(el => {
+    const idx = parseInt(el.dataset.idx);
+    const field = el.dataset.field;
+    if (idx >= previewMatches.length) return;
+    let val = el.value;
+    if (field === 'homeScore' || field === 'awayScore' || field === 'matchday') val = parseInt(val) || 0;
+    previewMatches[idx][field] = val;
+  });
+
+  let savedCount = 0;
+  const errors = [];
+
+  for (const m of previewMatches) {
+    if (!m.homeTeam || !m.awayTeam) { errors.push(`Match ${m.matchIdx}: teams missing`); continue; }
+    if (m.homeTeam === m.awayTeam) { errors.push(`Match ${m.matchIdx}: same team on both sides`); continue; }
+
+    try {
+      const hs = m.homeScore || 0;
+      const as2 = m.awayScore || 0;
+      const forfeit = m.forfeitType || 'none';
+      const matchText = formatResultText(m.homeTeam, hs, m.awayTeam, as2, forfeit === 'none' ? '' : forfeit);
+
+      const resultData = {
+        matchText,
+        md: m.matchday || 0,
+        ...(m.date && { date: m.date }),
+        ...(m.venue && { venue: m.venue }),
+        ...(m.matchType && { matchType: m.matchType }),
+        ...(m.aggregate && { aggregate: m.aggregate }),
+        goalScorers: { home: m.homeScorers || [], away: m.awayScorers || [] }
+      };
+
+      incrementPending();
+      await database.ref(getSeasonPath(currentSeasonId, 'results')).push(resultData);
+      await applyResultToTable(m.homeTeam, m.awayTeam, hs, as2, forfeit === 'none' ? '' : forfeit);
+      await applyScorersFromScan(m.homeScorers || [], m.homeTeam);
+      await applyScorersFromScan(m.awayScorers || [], m.awayTeam);
+      await applyAssistsFromScan(m.homeAssists || [], m.homeTeam);
+      await applyAssistsFromScan(m.awayAssists || [], m.awayTeam);
+      decrementPending();
+
+      savedCount++;
+    } catch(e) {
+      errors.push(`Match ${m.matchIdx}: ${e.message}`);
+    }
+  }
+
+  await loadCurrentSeasonData();
+  await loadTopScorerData();
+  await loadTopAssistantData();
+
+  if (errors.length) {
+    if (statusEl) statusEl.innerHTML = `<div class="status-msg status-error">Saved ${savedCount} match(es). Errors: ${errors.join('; ')}</div>`;
+    if (btn) { btn.disabled = false; btn.innerHTML = '✅ CONFIRM & SAVE ALL'; }
+  } else {
+    if (statusEl) statusEl.innerHTML = `<div class="status-msg status-success">✅ ${savedCount} match(es) saved successfully!</div>`;
+    multiScanMatches = [];
+    setTimeout(() => { closeModal(); renderCurrentTab(); }, 1500);
+  }
+}
+
+async function applyScorersFromScan(scorers, team) {
+  if (!scorers || !scorers.length) return;
+  const path = getSeasonPath(currentSeasonId, 'topScorers/list');
+  for (const s of scorers) {
+    if (!s.player) continue;
+    const existing = topScorerList.find(p =>
+      p.name.toLowerCase() === s.player.toLowerCase() && p.team.toLowerCase() === team.toLowerCase()
+    );
+    if (existing && existing.key) {
+      const newCount = (existing.count || 0) + (s.goals || 1);
+      incrementPending();
+      await database.ref(`${path}/${existing.key}/count`).set(newCount);
+      decrementPending();
+    } else {
+      incrementPending();
+      await database.ref(path).push({ name: s.player, team, count: s.goals || 1, imageUrl: '' });
+      decrementPending();
+    }
+  }
+  await loadTopScorerData();
+}
+
+async function applyAssistsFromScan(assists, team) {
+  if (!assists || !assists.length) return;
+  const path = getSeasonPath(currentSeasonId, 'topAssistants/list');
+  for (const a of assists) {
+    if (!a.player) continue;
+    const existing = topAssistantList.find(p =>
+      p.name.toLowerCase() === a.player.toLowerCase() && p.team.toLowerCase() === team.toLowerCase()
+    );
+    if (existing && existing.key) {
+      const newCount = (existing.count || 0) + (a.assists || 1);
+      incrementPending();
+      await database.ref(`${path}/${existing.key}/count`).set(newCount);
+      decrementPending();
+    } else {
+      incrementPending();
+      await database.ref(path).push({ name: a.player, team, count: a.assists || 1, imageUrl: '' });
+      decrementPending();
+    }
+  }
+  await loadTopAssistantData();
+}
+
+function openMultiScanModal() {
+  multiScanMatches = [];
+  multiScanIdCounter = 1;
+  multiScanMatches.push(createScanMatchBlock(multiScanIdCounter));
+  renderMultiScanModal();
+}
+
+async function openScanScorerModal(type) {
+  const isScorer = type === 'scorer';
+  showModal(`
+    <h3>📸 Scan ${isScorer ? 'Top Scorers' : 'Top Assistants'} Image</h3>
+    <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;font-size:1.2rem;">Upload one or more screenshots. AI will extract data from all of them combined.</p>
+    <label>Select Images (multiple allowed)</label>
+    <input type="file" id="scanStatFiles" accept="image/*" multiple>
+    <div id="scanStatPreview" class="img-preview-grid"></div>
+    <div id="scanStatStatus"></div>
+    <div class="modal-btns" style="margin-top:20px;">
+      <button class="modal-btn-primary" id="scanStatBtn">🔍 Scan Image</button>
+      <button class="modal-btn-cancel" id="cancelStatScanBtn">Cancel</button>
+    </div>
+  `);
+
+  document.getElementById('cancelStatScanBtn').onclick = closeModal;
+
+  const fileInput = document.getElementById('scanStatFiles');
+  const previewDiv = document.getElementById('scanStatPreview');
+
+  fileInput.onchange = function() {
+    previewDiv.innerHTML = '';
+    for (const file of this.files) {
+      const url = URL.createObjectURL(file);
+      const thumb = document.createElement('div');
+      thumb.className = 'preview-thumb';
+      thumb.innerHTML = `<img src="${url}"><span class="thumb-del" data-file="${file.name}" style="cursor:pointer;">✕</span>`;
+      previewDiv.appendChild(thumb);
+    }
+    previewDiv.querySelectorAll('.thumb-del').forEach(el => {
+      el.onclick = function(e) {
+        e.stopPropagation();
+        const name = this.dataset.file;
+        const dt = new DataTransfer();
+        for (const f of fileInput.files) {
+          if (f.name !== name) dt.items.add(f);
+        }
+        fileInput.files = dt.files;
+        fileInput.dispatchEvent(new Event('change'));
+      };
+    });
+  };
+
+  document.getElementById('scanStatBtn').onclick = async function() {
+    const files = document.getElementById('scanStatFiles').files;
+    if (!files.length) { document.getElementById('scanStatStatus').innerHTML = '<div class="status-msg status-error">Please select at least one image.</div>'; return; }
+
+    const btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span> Scanning...';
+    document.getElementById('scanStatStatus').innerHTML = '<div class="status-msg status-loading">🤖 AI is reading your image(s)...</div>';
+
+    try {
+      const result = await scanStatImage(Array.from(files), type);
+      closeModal();
+      openScannedStatForm(type, result);
+    } catch(e) {
+      document.getElementById('scanStatStatus').innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+      btn.disabled = false;
+      btn.innerHTML = '🔍 Scan Image';
+    }
+  };
+}
+
+async function scanStatImage(files, scanType) {
+  const contentParts = [];
+  let prompt = '';
+  if (scanType === 'scorer') {
+    prompt = `Analyze this football/soccer top scorers screenshot and extract the top scorer data in JSON format only (no markdown, no explanation):
+{"players": [{"name": "player name", "team": "team name", "goals": 0}]}
+Extract ALL players visible. Return ONLY the JSON object.`;
+  } else {
+    prompt = `Analyze this football/soccer top assists screenshot and extract the top assistants data in JSON format only (no markdown, no explanation):
+{"players": [{"name": "player name", "team": "team name", "assists": 0}]}
+Extract ALL players visible. Return ONLY the JSON object.`;
+  }
+  contentParts.push({ type: 'text', text: prompt });
+
+  for (const file of files) {
+    const base64 = await fileToBase64(file);
+    const mimeType = file.type || 'image/jpeg';
+    contentParts.push({
+      type: 'image_url',
+      image_url: { url: `data:${mimeType};base64,${base64}` }
+    });
+  }
+
+  const response = await fetch(GROQ_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_API_KEY },
+    body: JSON.stringify({
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      messages: [{ role: 'user', content: contentParts }],
+      max_tokens: 1000,
+      temperature: 0
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err?.error?.message || 'Groq API error');
+  }
+
+  const data = await response.json();
+  const text = data.choices?.[0]?.message?.content || '';
+  const clean = text.replace(/```json|```/g, '').trim();
+  const parsed = JSON.parse(clean);
+
+  if (parsed.players) {
+    parsed.players = parsed.players.map(p => ({ ...p, team: mapTeamName(p.team) }));
+  }
+  return parsed;
+}
+
+function openScannedStatForm(type, scanned) {
+  const isScorer = type === 'scorer';
+  const players = scanned.players || [];
+  const countKey = isScorer ? 'goals' : 'assists';
+  const label = isScorer ? 'Goals' : 'Assists';
+  const emoji = isScorer ? '⚽' : '🎯';
+
+  let playersHtml = players.map((p, i) => `
+    <div style="display:grid;grid-template-columns:1fr 1fr 80px;gap:10px;margin-bottom:10px;">
+      <input type="text" id="sp_name_${i}" value="${escapeHtml(p.name || '')}" placeholder="Player name">
+      <input type="text" id="sp_team_${i}" value="${escapeHtml(p.team || '')}" placeholder="Team">
+      <input type="number" id="sp_count_${i}" value="${p[countKey] || 0}" placeholder="${label}">
+    </div>
+  `).join('');
+
+  if (!players.length) {
+    playersHtml = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 80px;gap:10px;margin-bottom:10px;">
+        <input type="text" id="sp_name_0" value="" placeholder="Player name">
+        <input type="text" id="sp_team_0" value="" placeholder="Team">
+        <input type="number" id="sp_count_0" value="0" placeholder="${label}">
+      </div>
+    `;
+  }
+
+  showModal(`
+    <h3>${emoji} Scanned ${isScorer ? 'Top Scorers' : 'Top Assistants'} — Review & Save</h3>
+    <div class="gemini-result-box">
+      <h4>🤖 ${players.length} Player${players.length !== 1 ? 's' : ''} Detected</h4>
+      <p style="color:rgba(255,255,255,0.6);font-size:1.1rem;">Review and edit before saving.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 80px;gap:10px;margin-bottom:8px;">
+      <label style="margin:0;">Player</label>
+      <label style="margin:0;">Team</label>
+      <label style="margin:0;">${label}</label>
+    </div>
+    <div id="scannedPlayersList">${playersHtml}</div>
+    <div class="modal-btns">
+      <button class="modal-btn-primary" id="saveScannedStatsBtn">Save All</button>
+      <button class="modal-btn-cancel" id="cancelScannedStatsBtn">Cancel</button>
+    </div>
+    <div id="saveScannedStatus"></div>
+  `);
+
+  document.getElementById('cancelScannedStatsBtn').onclick = closeModal;
+
+  document.getElementById('saveScannedStatsBtn').onclick = async () => {
+    const btn = document.getElementById('saveScannedStatsBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+
+    const path = isScorer
+      ? getSeasonPath(currentSeasonId, 'topScorers/list')
+      : getSeasonPath(currentSeasonId, 'topAssistants/list');
+
+    const count = Math.max(players.length, 1);
+    let saved = 0;
+    for (let i = 0; i < count; i++) {
+      const nameEl = document.getElementById(`sp_name_${i}`);
+      const teamEl = document.getElementById(`sp_team_${i}`);
+      const countEl = document.getElementById(`sp_count_${i}`);
+      if (!nameEl) continue;
+      const name = nameEl.value.trim();
+      const team = teamEl.value.trim();
+      const cnt = parseInt(countEl.value) || 0;
+      if (!name || !team) continue;
+
+      const list = isScorer ? topScorerList : topAssistantList;
+      const existing = list.find(p => p.name.toLowerCase() === name.toLowerCase() && p.team.toLowerCase() === team.toLowerCase());
+      if (existing && existing.key) {
+        const newCount = (existing.count || 0) + cnt;
+        incrementPending();
+        await database.ref(`${path}/${existing.key}/count`).set(newCount);
+        decrementPending();
+      } else {
+        const entryData = { name, team, count: cnt, imageUrl: '' };
+        incrementPending();
+        await database.ref(path).push(entryData);
+        decrementPending();
+      }
+      saved++;
+    }
+
+    if (isScorer) await loadTopScorerData();
+    else await loadTopAssistantData();
+
+    btn.innerHTML = `✓ Saved ${saved} player${saved !== 1 ? 's' : ''}!`;
+    setTimeout(() => { closeModal(); }, 900);
+  };
+}
+
+// ─── FEATURE 3: Load Team Name Mappings from Firebase ───
+async function loadTeamNameMappings() {
+  const snap = await database.ref('Ligue1/teamNameMappings').once('value');
+  const data = snap.val() || {};
+  const hardcoded = {
+    'manchester b': 'Man City',
+    'manchester united': 'Man United',
+    'inter milan': 'Inter Milan',
+    'arsenal fc': 'Arsenal FC',
+    'fc barcelona': 'Barcelona',
+    'paris saint-germain': 'PSG',
+    'piemonte bn': 'Juventus',
+    'madrid chamartin b': 'Real Madrid',
+    'tottenham wb': 'Tottenham',
+    'chelsea b': 'Chelsea',
+    'liverpool r': 'Liverpool',
+    'ac milan': 'AC Milan',
+    'al nassr': 'Al Nassr',
+    'newcastle wb': 'Newcastle',
+    'aston rb': 'Aston Villa',
+    'madrid ross rb': 'Atletico',
+    'galatasaray': 'Galatasaray',
+    'borussia dortmund': 'Dortmund',
+    'marseille': 'Marseille',
+    'napoli': 'SSC Napoli'
+  };
+  Object.assign(EFOOTBALL_TEAM_MAP, hardcoded);
+  for (const key in data) {
+    const entry = data[key];
+    if (entry.efootballName && entry.realName) {
+      EFOOTBALL_TEAM_MAP[entry.efootballName.toLowerCase()] = entry.realName;
+    }
+  }
+  console.log('[loadTeamNameMappings] Mappings loaded, current map:', EFOOTBALL_TEAM_MAP);
+}
+
+function openManageTeamNameMappingsModal() {
+  const render = async () => {
+    const snap = await database.ref('Ligue1/teamNameMappings').once('value');
+    const data = snap.val() || {};
+    let listHtml = '';
+    for (const key in data) {
+      const entry = data[key];
+      listHtml += `
+        <div style="display:flex;align-items:center;gap:16px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <span style="flex:1;font-weight:600;color:var(--white);">${escapeHtml(entry.efootballName)}</span>
+          <span style="flex:1;color:var(--white);">→ ${escapeHtml(entry.realName)}</span>
+          <button class="btn-sm btn-delete" data-key="${key}" style="padding:6px 16px;font-size:1rem;">Delete</button>
+        </div>
+      `;
+    }
+    if (!listHtml) listHtml = '<div style="color:rgba(255,255,255,0.4);padding:20px 0;">No mappings yet.</div>';
+
+    showModal(`
+      <h3>🔁 Manage Team Name Mappings</h3>
+      <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;">These mappings are used to convert eFootball team names to real names during AI scanning.</p>
+      <div style="max-height:300px;overflow-y:auto;margin-bottom:20px;">
+        ${listHtml}
+      </div>
+      <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:20px;">
+        <h4 style="color:var(--turquoise);font-size:1.4rem;margin-bottom:12px;">Add New Mapping</h4>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <input type="text" id="newEfootballName" placeholder="eFootball name" style="flex:1;min-width:160px;">
+          <input type="text" id="newRealName" placeholder="Real name" style="flex:1;min-width:160px;">
+          <button class="modal-btn-primary" id="addMappingBtn" style="flex:0 0 auto;padding:12px 28px;">Add</button>
+        </div>
+        <div id="mappingStatus"></div>
+      </div>
+      <div class="modal-btns">
+        <button class="modal-btn-cancel" id="closeMappingBtn">Close</button>
+      </div>
+    `);
+
+    document.getElementById('closeMappingBtn').onclick = closeModal;
+
+    document.getElementById('addMappingBtn').onclick = async () => {
+      const efootballName = document.getElementById('newEfootballName').value.trim();
+      const realName = document.getElementById('newRealName').value.trim();
+      const status = document.getElementById('mappingStatus');
+      if (!efootballName || !realName) {
+        status.innerHTML = '<div class="status-msg status-error">Both fields required.</div>';
+        return;
+      }
+      const btn = document.getElementById('addMappingBtn');
+      btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Adding...';
+      try {
+        incrementPending();
+        await database.ref('Ligue1/teamNameMappings').push({ efootballName, realName });
+        decrementPending();
+        await loadTeamNameMappings();
+        status.innerHTML = '<div class="status-msg status-success">Mapping added! Refreshing...</div>';
+        setTimeout(() => { render(); }, 1000);
+      } catch(e) {
+        status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+        btn.disabled = false; btn.innerHTML = 'Add';
+      }
+    };
+
+    document.querySelectorAll('[data-key]').forEach(el => {
+      el.onclick = async () => {
+        if (!confirm('Delete this mapping?')) return;
+        const key = el.dataset.key;
+        try {
+          incrementPending();
+          await database.ref(`Ligue1/teamNameMappings/${key}`).remove();
+          decrementPending();
+          await loadTeamNameMappings();
+          render();
+        } catch(e) {
+          alert('Delete failed: ' + e.message);
+        }
+      };
+    });
+  };
+  render();
+}
+
+// ─── FEATURE 4: Load Team Logo Mappings ───
+async function loadTeamLogoMappings() {
+  const snap = await database.ref('Ligue1/teamLogoMappings').once('value');
+  teamLogoMappings = snap.val() || {};
+  console.log('[loadTeamLogoMappings] Loaded:', Object.keys(teamLogoMappings).length, 'logos');
+}
+
+function openManageTeamLogoMappingsModal() {
+  const render = async () => {
+    const snap = await database.ref('Ligue1/teamLogoMappings').once('value');
+    const data = snap.val() || {};
+    let listHtml = '';
+    for (const teamName in data) {
+      const entry = data[teamName];
+      listHtml += `
+        <div style="display:flex;align-items:center;gap:16px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <img src="${escapeHtml(entry.imageUrl)}" style="width:40px;height:40px;object-fit:contain;border-radius:6px;background:#fff;">
+          <span style="flex:1;font-weight:600;color:var(--white);">${escapeHtml(teamName)}</span>
+          <span style="flex:1;color:rgba(255,255,255,0.7);">eFootball: ${escapeHtml(entry.efootballName || '')}</span>
+          <button class="btn-sm btn-delete" data-team="${escapeHtml(teamName)}" style="padding:6px 16px;font-size:1rem;">Delete</button>
+        </div>
+      `;
+    }
+    if (!listHtml) listHtml = '<div style="color:rgba(255,255,255,0.4);padding:20px 0;">No logo mappings yet.</div>';
+
+    showModal(`
+      <h3>🏷️ Manage Team Logo Mappings</h3>
+      <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;">These logos are sent to AI to help identify teams during scanning.</p>
+      <div style="max-height:300px;overflow-y:auto;margin-bottom:20px;">
+        ${listHtml}
+      </div>
+      <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:20px;">
+        <h4 style="color:var(--turquoise);font-size:1.4rem;margin-bottom:12px;">Add New Logo Mapping</h4>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+          <input type="text" id="newLogoTeamName" placeholder="Team name (e.g. PSG)" style="flex:1;min-width:140px;">
+          <input type="text" id="newLogoEfootballName" placeholder="eFootball name (optional)" style="flex:1;min-width:140px;">
+          <input type="file" id="newLogoFile" accept="image/*" style="flex:1;min-width:140px;">
+        </div>
+        <div id="logoStatus"></div>
+        <button class="modal-btn-primary" id="addLogoBtn" style="margin-top:12px;padding:12px 28px;">Add Logo</button>
+      </div>
+      <div class="modal-btns">
+        <button class="modal-btn-cancel" id="closeLogoBtn">Close</button>
+      </div>
+    `);
+
+    document.getElementById('closeLogoBtn').onclick = closeModal;
+
+    document.getElementById('addLogoBtn').onclick = async () => {
+      const teamName = document.getElementById('newLogoTeamName').value.trim();
+      const efootballName = document.getElementById('newLogoEfootballName').value.trim();
+      const file = document.getElementById('newLogoFile').files[0];
+      const status = document.getElementById('logoStatus');
+      if (!teamName || !file) {
+        status.innerHTML = '<div class="status-msg status-error">Team name and image required.</div>';
+        return;
+      }
+      const btn = document.getElementById('addLogoBtn');
+      btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Uploading...';
+      try {
+        const url = await uploadToImgBB(file);
+        incrementPending();
+        await database.ref(`Ligue1/teamLogoMappings/${teamName}`).set({ imageUrl: url, efootballName });
+        decrementPending();
+        await loadTeamLogoMappings();
+        status.innerHTML = '<div class="status-msg status-success">Logo added! Refreshing...</div>';
+        setTimeout(() => { render(); }, 1000);
+      } catch(e) {
+        status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+        btn.disabled = false; btn.innerHTML = 'Add Logo';
+      }
+    };
+
+    document.querySelectorAll('[data-team]').forEach(el => {
+      el.onclick = async () => {
+        const team = el.dataset.team;
+        if (!confirm(`Delete logo for "${team}"?`)) return;
+        try {
+          incrementPending();
+          await database.ref(`Ligue1/teamLogoMappings/${team}`).remove();
+          decrementPending();
+          await loadTeamLogoMappings();
+          render();
+        } catch(e) {
+          alert('Delete failed: ' + e.message);
+        }
+      };
+    });
+  };
+  render();
+}
+
+// ─── FEATURE 7: Manager History ───
+async function loadManagerHistory() {
+  const snap = await database.ref(getSeasonPath(currentSeasonId, 'managerHistory')).once('value');
+  managerHistory = snap.val() || {};
+  for (const team in managerHistory) {
+    const entries = managerHistory[team];
+    if (!Array.isArray(entries)) {
+      const arr = [];
+      for (const key in entries) {
+        arr.push({ key, ...entries[key] });
+      }
+      managerHistory[team] = arr;
+    }
+  }
+  console.log('[loadManagerHistory] Loaded for season', currentSeasonId);
+}
+
+function getActiveManagerName(teamName) {
+  const history = managerHistory[teamName];
+  if (!history || !Array.isArray(history)) return null;
+  const active = history.find(entry => entry.status === 'active');
+  return active ? active.name : null;
+}
+
+function openManagerHistoryModal() {
+  const render = async () => {
+    await loadManagerHistory();
+    const teamNames = teamsData.map(t => t.name).sort();
+    let html = `<h3>📋 Manager History</h3>
+      <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;">Manage manager appointments, sackings, and retirements per team.</p>`;
+    for (const team of teamNames) {
+      const history = managerHistory[team] || [];
+      const sorted = [...history].sort((a, b) => (a.matchdayJoined || 0) - (b.matchdayJoined || 0));
+      let entriesHtml = '';
+      for (const entry of sorted) {
+        const statusEmoji = entry.status === 'active' ? '🟢' : entry.status === 'sacked' ? '🔴' : '🟡';
+        const leftText = entry.matchdayLeft ? `→ MD ${entry.matchdayLeft}` : '';
+        entriesHtml += `
+          <div class="manager-history-entry">
+            <span class="mgr-name">${escapeHtml(entry.name)}</span>
+            <span class="mgr-status">${status
