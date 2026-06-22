@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -97,6 +98,42 @@
     .close-menu:hover { color: var(--razzmatazz); }
     .menu-item { padding: 20px 28px; margin: 12px 0; border: 1px solid rgba(233,0,82,0.3); border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 1.5rem; color: var(--white); transition: all 0.2s; font-family: 'Rajdhani', sans-serif; }
     .menu-item:hover { background: var(--razzmatazz); border-color: var(--white); color: var(--white); transform: translateX(8px); }
+
+    /* AI Chat Panel */
+    .ai-chat-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 298; display: none; backdrop-filter: blur(3px); }
+    .ai-chat-overlay.active { display: block; }
+    .ai-chat-panel { position: fixed; top: 0; right: -480px; width: 480px; height: 100%; background: rgba(10,43,94,0.98); backdrop-filter: blur(20px); border-left: 2px solid var(--razzmatazz); z-index: 299; display: flex; flex-direction: column; transition: right 0.35s cubic-bezier(.4,0,.2,1); }
+    .ai-chat-panel.active { right: 0; }
+    .ai-chat-header { padding: 20px 24px; border-bottom: 2px solid var(--razzmatazz); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; background: rgba(54,13,58,0.5); }
+    .ai-chat-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--white); letter-spacing: 2px; }
+    .ai-chat-header .close-chat { font-size: 2.4rem; cursor: pointer; color: var(--white); transition: color 0.2s; line-height: 1; }
+    .ai-chat-header .close-chat:hover { color: var(--razzmatazz); }
+    .ai-chat-messages { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+    .chat-msg { max-width: 85%; padding: 14px 20px; border-radius: 20px; font-size: 1rem; line-height: 1.5; word-wrap: break-word; animation: fadeInUp 0.3s ease both; }
+    .chat-msg.user { align-self: flex-end; background: var(--razzmatazz); color: var(--white); border-bottom-right-radius: 4px; }
+    .chat-msg.ai { align-self: flex-start; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); color: var(--white); border-bottom-left-radius: 4px; }
+    .chat-msg .msg-time { font-size: 0.65rem; opacity: 0.5; margin-top: 6px; display: block; }
+    .chat-msg .msg-images { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .chat-msg .msg-images img { max-width: 120px; max-height: 120px; border-radius: 12px; border: 1px solid var(--razzmatazz); object-fit: cover; }
+    .typing-indicator { align-self: flex-start; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 20px; border-bottom-left-radius: 4px; padding: 14px 24px; display: none; }
+    .typing-indicator.active { display: block; }
+    .typing-indicator span { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--white); margin: 0 3px; animation: typingBounce 1.4s infinite both; }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-10px); } }
+    .ai-chat-input-area { padding: 16px 24px; border-top: 1px solid rgba(233,0,82,0.3); flex-shrink: 0; background: rgba(54,13,58,0.3); }
+    .ai-chat-input-row { display: flex; gap: 12px; align-items: flex-end; }
+    .ai-chat-input-row textarea { flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--razzmatazz); border-radius: 20px; padding: 12px 18px; color: var(--white); font-family: 'Rajdhani', sans-serif; font-size: 1rem; resize: none; min-height: 48px; max-height: 120px; outline: none; transition: border-color 0.2s; }
+    .ai-chat-input-row textarea:focus { border-color: var(--turquoise); }
+    .ai-chat-input-row .chat-btn { background: var(--razzmatazz); border: none; color: var(--white); width: 48px; height: 48px; border-radius: 50%; font-size: 1.4rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ai-chat-input-row .chat-btn:hover { background: #b8003f; transform: scale(1.05); }
+    .ai-chat-input-row .chat-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .ai-chat-input-row .chat-upload-btn { background: rgba(150,60,255,0.2); border: 1px solid var(--electric-violet); color: var(--white); width: 48px; height: 48px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ai-chat-input-row .chat-upload-btn:hover { background: var(--electric-violet); }
+    .chat-image-preview { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 0 4px; }
+    .chat-image-preview .preview-thumb { width: 60px; height: 60px; position: relative; }
+    .chat-image-preview .preview-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; border: 2px solid var(--razzmatazz); }
+    .chat-image-preview .preview-thumb .remove-preview { position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
     .slideshow-wrapper { padding: 36px 36px 20px; display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.7s ease 0.2s both; }
     .slideshow-frame { width: 100%; max-width: 1100px; border-radius: 32px; overflow: hidden; box-shadow: 0 8px 40px rgba(150,60,255,0.25); border: 2px solid var(--razzmatazz); background: #000; display: flex; justify-content: center; align-items: center; }
@@ -322,12 +359,10 @@
     .crop-controls { margin: 15px 0; }
     .crop-slider { width: 100%; }
 
-    /* Multi-scan modal styles */
     .scan-preview-img { max-width: 100%; border-radius: 16px; border: 2px solid var(--razzmatazz); margin: 12px 0; display: block; }
     .gemini-result-box { background: rgba(150,60,255,0.15); border: 1px solid var(--electric-violet); border-radius: 20px; padding: 20px; margin: 16px 0; }
     .gemini-result-box h4 { color: var(--turquoise); font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px; margin-bottom: 12px; }
 
-    /* Multi-match scan blocks */
     .match-scan-block { background: rgba(150,60,255,0.1); border: 1px solid rgba(150,60,255,0.4); border-radius: 24px; padding: 24px; margin-bottom: 20px; position: relative; }
     .match-scan-block-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .match-scan-block-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--turquoise); letter-spacing: 2px; }
@@ -345,33 +380,21 @@
     .scan-all-btn:hover { background: #00b0b3; transform: translateY(-2px); }
     .scan-all-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-    /* Preview confirm modal */
     .preview-match-card { background: rgba(150,60,255,0.12); border: 1px solid var(--electric-violet); border-radius: 20px; padding: 22px; margin-bottom: 20px; }
     .preview-match-card h4 { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: var(--turquoise); letter-spacing: 2px; margin-bottom: 14px; }
     .preview-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
     .preview-field-row.three { grid-template-columns: 1fr 1fr 80px; }
     .modal-card-wide { max-width: 1000px !important; }
 
-    /* Debug log styles */
-    .debug-log-entry { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 1rem; font-family: 'Inter', monospace; display: flex; gap: 12px; align-items: flex-start; }
-    .debug-log-entry .log-time { color: rgba(255,255,255,0.4); font-size: 0.8rem; min-width: 80px; flex-shrink: 0; }
-    .debug-log-entry .log-level { font-weight: 700; min-width: 60px; flex-shrink: 0; }
-    .debug-log-entry .log-level.info { color: #60a5fa; }
-    .debug-log-entry .log-level.warn { color: #fbbf24; }
-    .debug-log-entry .log-level.error { color: #f87171; }
-    .debug-log-entry .log-level.debug { color: #a78bfa; }
-    .debug-log-entry .log-msg { word-break: break-all; color: rgba(255,255,255,0.85); }
-    .debug-log-entry .log-msg .stack { color: rgba(255,255,255,0.4); font-size: 0.85rem; display: block; margin-top: 4px; }
-    .debug-log-container { max-height: 500px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 16px; padding: 8px; margin: 12px 0; }
-    .debug-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
-    .debug-stat-card { background: rgba(150,60,255,0.12); border: 1px solid rgba(150,60,255,0.3); border-radius: 16px; padding: 16px; text-align: center; }
-    .debug-stat-card .stat-value { font-size: 2.4rem; font-weight: 800; color: var(--white); font-family: 'Bebas Neue', sans-serif; }
-    .debug-stat-card .stat-label { font-size: 0.9rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+    /* Debug log styles - cleaned up for error-only */
+    .debug-error-entry { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.95rem; font-family: 'Inter', monospace; display: flex; gap: 12px; align-items: flex-start; background: rgba(180,0,0,0.08); border-left: 3px solid #f87171; margin-bottom: 6px; border-radius: 4px; }
+    .debug-error-entry .err-time { color: rgba(255,255,255,0.4); font-size: 0.75rem; min-width: 80px; flex-shrink: 0; }
+    .debug-error-entry .err-msg { color: #fca5a5; word-break: break-all; flex: 1; }
+    .debug-error-entry .err-stack { color: rgba(255,255,255,0.3); font-size: 0.8rem; display: block; margin-top: 4px; padding-left: 12px; border-left: 2px solid rgba(255,255,255,0.1); }
+    .debug-empty { color: rgba(255,255,255,0.3); padding: 30px 20px; text-align: center; font-size: 1.2rem; }
     .debug-clear-btn { background: rgba(233,0,82,0.2); border: 1px solid var(--razzmatazz); color: var(--white); padding: 8px 20px; border-radius: 30px; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; transition: all 0.2s; }
     .debug-clear-btn:hover { background: var(--razzmatazz); }
-    .debug-timestamp { color: rgba(255,255,255,0.3); font-size: 0.85rem; text-align: right; margin-top: 8px; }
 
-    /* Manager history inline form */
     .manager-history-entry { background: rgba(150,60,255,0.08); border-radius: 16px; padding: 12px 16px; margin-bottom: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
     .manager-history-entry .mgr-name { font-weight: 700; font-size: 1.2rem; color: var(--white); min-width: 120px; }
     .manager-history-entry .mgr-status { font-size: 1.2rem; }
@@ -401,6 +424,27 @@
   <div class="menu-item" id="homeBtn">🏠 Home</div>
   <div class="menu-item" id="adminModeBtn">🔐 Admin Mode</div>
   <div class="menu-item" id="debugInfoBtn">🐛 Debug Info</div>
+</div>
+
+<!-- AI Chat Panel -->
+<div class="ai-chat-overlay" id="aiChatOverlay"></div>
+<div class="ai-chat-panel" id="aiChatPanel">
+  <div class="ai-chat-header">
+    <h2>🤖 AI Assistant</h2>
+    <span class="close-chat" id="closeChatBtn">&#x2715;</span>
+  </div>
+  <div class="ai-chat-messages" id="aiChatMessages">
+    <div class="chat-msg ai">👋 Hello! I'm your AI assistant. I can read the league data and help you manage results, teams, scorers, and more. Ask me anything!</div>
+  </div>
+  <div class="typing-indicator" id="typingIndicator"><span></span><span></span><span></span></div>
+  <div class="ai-chat-input-area">
+    <div class="chat-image-preview" id="chatImagePreview"></div>
+    <div class="ai-chat-input-row">
+      <button class="chat-upload-btn" id="chatUploadBtn" title="Attach image(s)">📎</button>
+      <textarea id="chatInput" rows="1" placeholder="Ask me anything about the league..."></textarea>
+      <button class="chat-btn" id="chatSendBtn">➤</button>
+    </div>
+  </div>
 </div>
 
 <div class="slideshow-wrapper">
@@ -464,6 +508,8 @@
 </div>
 
 <script>
+const RENDER_URL = 'https://efootball-league.onrender.com';
+
 // ─── DEBUG LOG SYSTEM ───
 const debugLogs = [];
 const MAX_DEBUG_LOGS = 500;
@@ -523,38 +569,22 @@ window.addEventListener('unhandledrejection', function(e) {
   addDebugLog('error', `Unhandled Promise Rejection: ${msg}`, stack);
 });
 
-// ─── eFootball → Real team name mapping ───
-const EFOOTBALL_TEAM_MAP = {
-  'manchester b': 'Man City',
-  'manchester united': 'Man United',
-  'inter milan': 'Inter Milan',
-  'arsenal fc': 'Arsenal FC',
-  'fc barcelona': 'Barcelona',
-  'paris saint-germain': 'PSG',
-  'piemonte bn': 'Juventus',
-  'madrid chamartin b': 'Real Madrid',
-  'tottenham wb': 'Tottenham',
-  'chelsea b': 'Chelsea',
-  'liverpool r': 'Liverpool',
-  'ac milan': 'AC Milan',
-  'al nassr': 'Al Nassr',
-  'newcastle wb': 'Newcastle',
-  'aston rb': 'Aston Villa',
-  'madrid ross rb': 'Atletico',
-  'galatasaray': 'Galatasaray',
-  'borussia dortmund': 'Dortmund',
-  'marseille': 'Marseille',
-  'napoli': 'SSC Napoli'
-};
+// ─── Team name mapping: Firebase only, case + space insensitive ───
+// No hardcoded map — loaded from Firebase in loadTeamNameMappings()
+let teamNameMap = {};
 
 function mapTeamName(raw) {
   if (!raw) return raw;
-  const lower = raw.trim().toLowerCase();
-  return EFOOTBALL_TEAM_MAP[lower] || raw.trim();
+  const normalized = raw.trim().toLowerCase().replace(/\s/g, '');
+  // Search in Firebase-loaded map (keys are stored as provided, but we normalize for comparison)
+  for (const key in teamNameMap) {
+    const keyNorm = key.trim().toLowerCase().replace(/\s/g, '');
+    if (keyNorm === normalized) {
+      return teamNameMap[key];
+    }
+  }
+  return raw.trim();
 }
-
-const GROQ_API_KEY = "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";
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
@@ -602,18 +632,20 @@ let bgPosition = 'center';
 let multiScanMatches = [];
 let multiScanIdCounter = 0;
 
-// ─── FEATURE 2: Background saving ───
+// ─── Background saving ───
 let pendingSaves = 0;
 let pendingRenderTab = null;
 
-// ─── FEATURE 4: Team Logo Mappings ───
-let teamLogoMappings = {}; // { "Man City": { imageUrl: "...", efootballName: "manchester b" } }
-
-// ─── FEATURE 7: Manager History ───
+// ─── Manager History ───
 let managerHistory = {}; // { "Man City": [ { key, name, status, matchdayJoined, matchdayLeft } ] }
 
-// ─── CHANGE 2: Watch Match videos ───
+// ─── Watch Match videos ───
 let watchMatchVideos = []; // Array of { id, title, embedCode }
+
+// ─── AI Chat state ───
+let chatHistory = [];
+let chatUploadedFiles = [];
+let isProcessingChat = false;
 
 // ─── Helper: increment/decrement pending saves ───
 function incrementPending() { pendingSaves++; }
@@ -686,66 +718,44 @@ function showModal(html, wide = false) {
 }
 function closeModal() { document.getElementById('genericModal').classList.remove('active'); }
 
-// ─── DEBUG INFO MODAL ───
+// ─── DEBUG INFO MODAL — Error-only log ───
 function openDebugInfoModal() {
-  const errorCount = debugLogs.filter(l => l.level === 'error').length;
-  const warnCount = debugLogs.filter(l => l.level === 'warn').length;
-  const infoCount = debugLogs.filter(l => l.level === 'info').length;
+  const errors = debugLogs.filter(l => l.level === 'error');
 
-  let logsHtml = debugLogs.slice().reverse().map(l => {
-    const levelClass = l.level;
-    const stackHtml = l.stack ? `<span class="stack">${escapeHtml(l.stack)}</span>` : '';
-    return `<div class="debug-log-entry">
-      <span class="log-time">${escapeHtml(l.time)}</span>
-      <span class="log-level ${levelClass}">${l.level.toUpperCase()}</span>
-      <span class="log-msg">${escapeHtml(l.message)}${stackHtml}</span>
-    </div>`;
-  }).join('');
-
-  if (!logsHtml) logsHtml = '<div style="color:rgba(255,255,255,0.3);padding:20px;text-align:center;">No logs captured yet.</div>';
+  let logsHtml = '';
+  if (errors.length === 0) {
+    logsHtml = '<div class="debug-empty">✅ No errors logged</div>';
+  } else {
+    logsHtml = errors.slice().reverse().map(l => {
+      const stackHtml = l.stack ? `<span class="err-stack">${escapeHtml(l.stack)}</span>` : '';
+      return `<div class="debug-error-entry">
+        <span class="err-time">${escapeHtml(l.time)}</span>
+        <span class="err-msg">${escapeHtml(l.message)}${stackHtml}</span>
+      </div>`;
+    }).join('');
+  }
 
   showModal(`
-    <h3>🐛 Comprehensive Debug Information</h3>
-    <div class="debug-stats-grid">
-      <div class="debug-stat-card"><div class="stat-value">${debugLogs.length}</div><div class="stat-label">Total Logs</div></div>
-      <div class="debug-stat-card" style="border-color:#f87171;"><div class="stat-value" style="color:#f87171;">${errorCount}</div><div class="stat-label">Errors</div></div>
-      <div class="debug-stat-card" style="border-color:#fbbf24;"><div class="stat-value" style="color:#fbbf24;">${warnCount}</div><div class="stat-label">Warnings</div></div>
-      <div class="debug-stat-card" style="border-color:#60a5fa;"><div class="stat-value" style="color:#60a5fa;">${infoCount}</div><div class="stat-label">Info</div></div>
-    </div>
-
+    <h3>🐛 Error Log</h3>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0;">
-      <span style="color:rgba(255,255,255,0.4);font-size:1rem;">System Status: <span style="color:var(--turquoise);">● Online</span></span>
-      <button class="debug-clear-btn" id="debugClearBtn">Clear Logs</button>
+      <span style="color:rgba(255,255,255,0.4);font-size:1rem;">${errors.length} error${errors.length !== 1 ? 's' : ''} captured</span>
+      <button class="debug-clear-btn" id="debugClearBtn">Clear Errors</button>
     </div>
-
-    <div class="debug-log-container" id="debugLogContainer">
+    <div style="max-height:500px;overflow-y:auto;background:rgba(0,0,0,0.3);border-radius:16px;padding:8px;margin:12px 0;">
       ${logsHtml}
     </div>
-
-    <div class="debug-timestamp">Debug session started: ${new Date().toLocaleString()}</div>
-
-    <div style="margin-top:16px;padding:14px;background:rgba(150,60,255,0.1);border-radius:16px;border:1px solid rgba(150,60,255,0.3);">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.95rem;color:rgba(255,255,255,0.6);">
-        <div>Season: <strong style="color:white;">${currentSeasonId}</strong></div>
-        <div>Teams: <strong style="color:white;">${teamsData.length}</strong></div>
-        <div>Results: <strong style="color:white;">${resultsData.length}</strong></div>
-        <div>Admin Mode: <strong style="color:white;">${isAdminMode ? '✅ Active' : '❌ Inactive'}</strong></div>
-        <div>Top Scorers: <strong style="color:white;">${topScorerList.length}</strong></div>
-        <div>Top Assistants: <strong style="color:white;">${topAssistantList.length}</strong></div>
-      </div>
-    </div>
-
     <div class="modal-btns">
       <button class="modal-btn-cancel" id="closeDebugBtn">Close</button>
     </div>
   `);
 
   document.getElementById('closeDebugBtn').onclick = closeModal;
-
   document.getElementById('debugClearBtn').onclick = function() {
-    debugLogs.length = 0;
-    const container = document.getElementById('debugLogContainer');
-    if (container) container.innerHTML = '<div style="color:rgba(255,255,255,0.3);padding:20px;text-align:center;">Logs cleared.</div>';
+    // Remove only error entries
+    for (let i = debugLogs.length - 1; i >= 0; i--) {
+      if (debugLogs[i].level === 'error') debugLogs.splice(i, 1);
+    }
+    openDebugInfoModal();
   };
 }
 
@@ -835,7 +845,7 @@ async function scanAllMatches() {
   const statusEl = document.getElementById('scanAllStatus');
   const scanBtn = document.getElementById('scanAllBtn');
   if (scanBtn) { scanBtn.disabled = true; scanBtn.innerHTML = '<span class="btn-spinner"></span> Scanning…'; }
-  if (statusEl) statusEl.innerHTML = '<div class="status-msg status-loading">🤖 AI is reading your images…</div>';
+  if (statusEl) statusEl.innerHTML = '<div class="status-msg status-loading">📡 Loading team name mappings from Firebase...</div>';
 
   const results = [];
   for (let i = 0; i < multiScanMatches.length; i++) {
@@ -843,7 +853,7 @@ async function scanAllMatches() {
     if (!match.images.length) continue;
     if (statusEl) statusEl.innerHTML = `<div class="status-msg status-loading">🤖 Scanning Match ${i + 1} of ${multiScanMatches.length}…</div>`;
     try {
-      const scanned = await scanMatchImages(match.images);
+      const scanned = await scanMatchImages(match.images, statusEl);
       results.push({ matchIdx: i + 1, scanned });
     } catch(e) {
       results.push({ matchIdx: i + 1, scanned: null, error: e.message });
@@ -853,7 +863,7 @@ async function scanAllMatches() {
   openMultiScanPreviewModal(results);
 }
 
-async function scanMatchImages(images) {
+async function scanMatchImages(images, statusEl) {
   const contentParts = [
     {
       type: 'text',
@@ -873,6 +883,8 @@ Use team names EXACTLY as shown in the image. If you cannot find scorers or assi
     }
   ];
 
+  if (statusEl) statusEl.innerHTML = '<div class="status-msg status-loading">🖼️ Preparing images for AI analysis...</div>';
+
   for (const img of images) {
     const base64 = await fileToBase64(img.file);
     const mimeType = img.file.type || 'image/jpeg';
@@ -882,18 +894,12 @@ Use team names EXACTLY as shown in the image. If you cannot find scorers or assi
     });
   }
 
-  // FEATURE 4: Append team logo references
-  if (Object.keys(teamLogoMappings).length > 0) {
-    contentParts.push({ type: 'text', text: 'These are reference team logos to help you identify teams:' });
-    for (const [teamName, mapping] of Object.entries(teamLogoMappings)) {
-      contentParts.push({ type: 'text', text: `This logo = "${teamName}" (also known as "${mapping.efootballName}" in eFootball)` });
-      contentParts.push({ type: 'image_url', image_url: { url: mapping.imageUrl } });
-    }
-  }
+  if (statusEl) statusEl.innerHTML = '<div class="status-msg status-loading">🤖 Sending images to AI (this may take a moment)...</div>';
 
-  const response = await fetch(GROQ_API_URL, {
+  // Route through Render
+  const response = await fetch(RENDER_URL + '/scan', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_API_KEY },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       messages: [{ role: 'user', content: contentParts }],
@@ -904,8 +910,10 @@ Use team names EXACTLY as shown in the image. If you cannot find scorers or assi
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err?.error?.message || 'Groq API error');
+    throw new Error(err?.error?.message || 'Scan API error');
   }
+
+  if (statusEl) statusEl.innerHTML = '<div class="status-msg status-loading">📖 Reading AI response...</div>';
 
   const data = await response.json();
   const text = data.choices?.[0]?.message?.content || '';
@@ -914,6 +922,8 @@ Use team names EXACTLY as shown in the image. If you cannot find scorers or assi
 
   parsed.homeTeam = mapTeamName(parsed.homeTeam);
   parsed.awayTeam = mapTeamName(parsed.awayTeam);
+
+  if (statusEl) statusEl.innerHTML = `<div class="status-msg status-success">✅ Teams identified: ${parsed.homeTeam} vs ${parsed.awayTeam}</div>`;
 
   return parsed;
 }
@@ -1220,11 +1230,15 @@ async function confirmAndSaveAll() {
         goalScorers: { home: m.homeScorers || [], away: m.awayScorers || [] }
       };
 
+      if (statusEl) statusEl.innerHTML = '<div class="status-msg status-loading">💾 Saving result to database...</div>';
       incrementPending();
       await database.ref(getSeasonPath(currentSeasonId, 'results')).push(resultData);
+      if (statusEl) statusEl.innerHTML = '<div class="status-msg status-loading">📊 Updating league table...</div>';
       await applyResultToTable(m.homeTeam, m.awayTeam, hs, as2, forfeit === 'none' ? '' : forfeit);
+      if (statusEl) statusEl.innerHTML = '<div class="status-msg status-loading">⚽ Updating top scorers...</div>';
       await applyScorersFromScan(m.homeScorers || [], m.homeTeam);
       await applyScorersFromScan(m.awayScorers || [], m.awayTeam);
+      if (statusEl) statusEl.innerHTML = '<div class="status-msg status-loading">🎯 Updating top assistants...</div>';
       await applyAssistsFromScan(m.homeAssists || [], m.homeTeam);
       await applyAssistsFromScan(m.awayAssists || [], m.awayTeam);
       decrementPending();
@@ -1249,16 +1263,28 @@ async function confirmAndSaveAll() {
   }
 }
 
-// ─── FEATURE 6: Smart Player Merging (applies to both scorers and assists) ───
+// ─── Smart Player Merging — case and space insensitive ───
+function normalizeName(name) {
+  return (name || '').toLowerCase().replace(/\s/g, '');
+}
+
+function findMatchingPlayer(list, playerName, teamName) {
+  const pNorm = normalizeName(playerName);
+  const tNorm = normalizeName(teamName);
+  for (const item of list) {
+    if (normalizeName(item.name) === pNorm && normalizeName(item.team) === tNorm) {
+      return item;
+    }
+  }
+  return null;
+}
+
 async function applyScorersFromScan(scorers, team) {
   if (!scorers || !scorers.length) return;
   const path = getSeasonPath(currentSeasonId, 'topScorers/list');
   for (const s of scorers) {
     if (!s.player) continue;
-    // Search case-insensitive
-    const existing = topScorerList.find(p =>
-      p.name.toLowerCase() === s.player.toLowerCase() && p.team.toLowerCase() === team.toLowerCase()
-    );
+    const existing = findMatchingPlayer(topScorerList, s.player, team);
     if (existing && existing.key) {
       const newCount = (existing.count || 0) + (s.goals || 1);
       incrementPending();
@@ -1270,7 +1296,6 @@ async function applyScorersFromScan(scorers, team) {
       decrementPending();
     }
   }
-  // Reload local list after batch
   await loadTopScorerData();
 }
 
@@ -1279,9 +1304,7 @@ async function applyAssistsFromScan(assists, team) {
   const path = getSeasonPath(currentSeasonId, 'topAssistants/list');
   for (const a of assists) {
     if (!a.player) continue;
-    const existing = topAssistantList.find(p =>
-      p.name.toLowerCase() === a.player.toLowerCase() && p.team.toLowerCase() === team.toLowerCase()
-    );
+    const existing = findMatchingPlayer(topAssistantList, a.player, team);
     if (existing && existing.key) {
       const newCount = (existing.count || 0) + (a.assists || 1);
       incrementPending();
@@ -1303,11 +1326,9 @@ function openMultiScanModal() {
   renderMultiScanModal();
 }
 
-// ─── FEATURE 5: Multiple Images for Scorer/Assist Scan ───
-// Modified: openScanScorerModal now allows multiple files and previews
+// ─── Scan Scorer / Assistant (multiple images) ───
 async function openScanScorerModal(type) {
   const isScorer = type === 'scorer';
-  // We'll generate modal with multi-file input and preview grid
   showModal(`
     <h3>📸 Scan ${isScorer ? 'Top Scorers' : 'Top Assistants'} Image</h3>
     <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;font-size:1.2rem;">Upload one or more screenshots. AI will extract data from all of them combined.</p>
@@ -1326,7 +1347,6 @@ async function openScanScorerModal(type) {
   const fileInput = document.getElementById('scanStatFiles');
   const previewDiv = document.getElementById('scanStatPreview');
 
-  // Show previews
   fileInput.onchange = function() {
     previewDiv.innerHTML = '';
     for (const file of this.files) {
@@ -1335,20 +1355,16 @@ async function openScanScorerModal(type) {
       thumb.className = 'preview-thumb';
       thumb.innerHTML = `<img src="${url}"><span class="thumb-del" data-file="${file.name}" style="cursor:pointer;">✕</span>`;
       previewDiv.appendChild(thumb);
-      // For removal we need to track files; we'll handle by re-building list.
     }
-    // Add remove handlers
     previewDiv.querySelectorAll('.thumb-del').forEach(el => {
       el.onclick = function(e) {
         e.stopPropagation();
-        // Find the file by name and remove from input
         const name = this.dataset.file;
         const dt = new DataTransfer();
         for (const f of fileInput.files) {
           if (f.name !== name) dt.items.add(f);
         }
         fileInput.files = dt.files;
-        // Re-trigger change to update preview
         fileInput.dispatchEvent(new Event('change'));
       };
     });
@@ -1356,27 +1372,27 @@ async function openScanScorerModal(type) {
 
   document.getElementById('scanStatBtn').onclick = async function() {
     const files = document.getElementById('scanStatFiles').files;
-    if (!files.length) { document.getElementById('scanStatStatus').innerHTML = '<div class="status-msg status-error">Please select at least one image.</div>'; return; }
+    const statusEl = document.getElementById('scanStatStatus');
+    if (!files.length) { statusEl.innerHTML = '<div class="status-msg status-error">Please select at least one image.</div>'; return; }
 
     const btn = this;
     btn.disabled = true;
     btn.innerHTML = '<span class="btn-spinner"></span> Scanning...';
-    document.getElementById('scanStatStatus').innerHTML = '<div class="status-msg status-loading">🤖 AI is reading your image(s)...</div>';
+    statusEl.innerHTML = '<div class="status-msg status-loading">📡 Loading team name mappings from Firebase...</div>';
 
     try {
-      const result = await scanStatImage(Array.from(files), type);
+      const result = await scanStatImage(Array.from(files), type, statusEl);
       closeModal();
       openScannedStatForm(type, result);
     } catch(e) {
-      document.getElementById('scanStatStatus').innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+      statusEl.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
       btn.disabled = false;
       btn.innerHTML = '🔍 Scan Image';
     }
   };
 }
 
-// Modified scanStatImage to accept array of files
-async function scanStatImage(files, scanType) {
+async function scanStatImage(files, scanType, statusEl) {
   const contentParts = [];
   let prompt = '';
   if (scanType === 'scorer') {
@@ -1390,6 +1406,8 @@ Extract ALL players visible. Return ONLY the JSON object.`;
   }
   contentParts.push({ type: 'text', text: prompt });
 
+  if (statusEl) statusEl.innerHTML = '<div class="status-msg status-loading">🖼️ Preparing images for AI analysis...</div>';
+
   for (const file of files) {
     const base64 = await fileToBase64(file);
     const mimeType = file.type || 'image/jpeg';
@@ -1399,9 +1417,11 @@ Extract ALL players visible. Return ONLY the JSON object.`;
     });
   }
 
-  const response = await fetch(GROQ_API_URL, {
+  if (statusEl) statusEl.innerHTML = '<div class="status-msg status-loading">🤖 Sending images to AI (this may take a moment)...</div>';
+
+  const response = await fetch(RENDER_URL + '/scan', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_API_KEY },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       messages: [{ role: 'user', content: contentParts }],
@@ -1412,8 +1432,10 @@ Extract ALL players visible. Return ONLY the JSON object.`;
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err?.error?.message || 'Groq API error');
+    throw new Error(err?.error?.message || 'Scan API error');
   }
+
+  if (statusEl) statusEl.innerHTML = '<div class="status-msg status-loading">📖 Reading AI response...</div>';
 
   const data = await response.json();
   const text = data.choices?.[0]?.message?.content || '';
@@ -1423,10 +1445,11 @@ Extract ALL players visible. Return ONLY the JSON object.`;
   if (parsed.players) {
     parsed.players = parsed.players.map(p => ({ ...p, team: mapTeamName(p.team) }));
   }
+
+  if (statusEl) statusEl.innerHTML = `<div class="status-msg status-success">✅ ${parsed.players?.length || 0} player(s) detected</div>`;
   return parsed;
 }
 
-// ─── FEATURE 6: Merge logic in openScannedStatForm save ───
 function openScannedStatForm(type, scanned) {
   const isScorer = type === 'scorer';
   const players = scanned.players || [];
@@ -1456,7 +1479,7 @@ function openScannedStatForm(type, scanned) {
     <h3>${emoji} Scanned ${isScorer ? 'Top Scorers' : 'Top Assistants'} — Review & Save</h3>
     <div class="gemini-result-box">
       <h4>🤖 ${players.length} Player${players.length !== 1 ? 's' : ''} Detected</h4>
-      <p style="color:rgba(255,255,255,0.6);font-size:1.1rem;">Review and edit before saving.</p>
+      <p style="color:rgba(255,255,255,0.6);font-size:1.1rem;">Review and edit before saving. Existing players will be merged (goals/assists added).</p>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 80px;gap:10px;margin-bottom:8px;">
       <label style="margin:0;">Player</label>
@@ -1494,9 +1517,8 @@ function openScannedStatForm(type, scanned) {
       const cnt = parseInt(countEl.value) || 0;
       if (!name || !team) continue;
 
-      // Merge: check existing
       const list = isScorer ? topScorerList : topAssistantList;
-      const existing = list.find(p => p.name.toLowerCase() === name.toLowerCase() && p.team.toLowerCase() === team.toLowerCase());
+      const existing = findMatchingPlayer(list, name, team);
       if (existing && existing.key) {
         const newCount = (existing.count || 0) + cnt;
         incrementPending();
@@ -1511,54 +1533,26 @@ function openScannedStatForm(type, scanned) {
       saved++;
     }
 
-    // Refresh local lists
     if (isScorer) await loadTopScorerData();
     else await loadTopAssistantData();
 
     btn.innerHTML = `✓ Saved ${saved} player${saved !== 1 ? 's' : ''}!`;
-    setTimeout(() => { closeModal(); }, 900);
+    setTimeout(() => { closeModal(); renderCurrentTab(); }, 900);
   };
 }
 
-// ─── FEATURE 3: Load Team Name Mappings from Firebase ───
+// ─── Load Team Name Mappings from Firebase ───
 async function loadTeamNameMappings() {
   const snap = await database.ref('teamNameMappings').once('value');
   const data = snap.val() || {};
-  // Merge with hardcoded, Firebase takes priority
-  // We'll clear and re-populate EFOOTBALL_TEAM_MAP with hardcoded first, then overwrite
-  // But we don't want to lose hardcoded; we'll copy into a temp and assign.
-  const hardcoded = {
-    'manchester b': 'Man City',
-    'manchester united': 'Man United',
-    'inter milan': 'Inter Milan',
-    'arsenal fc': 'Arsenal FC',
-    'fc barcelona': 'Barcelona',
-    'paris saint-germain': 'PSG',
-    'piemonte bn': 'Juventus',
-    'madrid chamartin b': 'Real Madrid',
-    'tottenham wb': 'Tottenham',
-    'chelsea b': 'Chelsea',
-    'liverpool r': 'Liverpool',
-    'ac milan': 'AC Milan',
-    'al nassr': 'Al Nassr',
-    'newcastle wb': 'Newcastle',
-    'aston rb': 'Aston Villa',
-    'madrid ross rb': 'Atletico',
-    'galatasaray': 'Galatasaray',
-    'borussia dortmund': 'Dortmund',
-    'marseille': 'Marseille',
-    'napoli': 'SSC Napoli'
-  };
-  // Start with hardcoded
-  Object.assign(EFOOTBALL_TEAM_MAP, hardcoded);
-  // Overwrite with Firebase data
+  teamNameMap = {};
   for (const key in data) {
     const entry = data[key];
     if (entry.efootballName && entry.realName) {
-      EFOOTBALL_TEAM_MAP[entry.efootballName.toLowerCase()] = entry.realName;
+      teamNameMap[entry.efootballName] = entry.realName;
     }
   }
-  console.log('[loadTeamNameMappings] Mappings loaded, current map:', EFOOTBALL_TEAM_MAP);
+  console.log('[loadTeamNameMappings] Mappings loaded, count:', Object.keys(teamNameMap).length);
 }
 
 // ─── Admin UI: Manage Team Name Mappings ───
@@ -1601,7 +1595,6 @@ function openManageTeamNameMappingsModal() {
 
     document.getElementById('closeMappingBtn').onclick = closeModal;
 
-    // Add mapping
     document.getElementById('addMappingBtn').onclick = async () => {
       const efootballName = document.getElementById('newEfootballName').value.trim();
       const realName = document.getElementById('newRealName').value.trim();
@@ -1625,7 +1618,6 @@ function openManageTeamNameMappingsModal() {
       }
     };
 
-    // Delete buttons
     document.querySelectorAll('[data-key]').forEach(el => {
       el.onclick = async () => {
         if (!confirm('Delete this mapping?')) return;
@@ -1645,110 +1637,13 @@ function openManageTeamNameMappingsModal() {
   render();
 }
 
-// ─── FEATURE 4: Load Team Logo Mappings ───
-async function loadTeamLogoMappings() {
-  const snap = await database.ref('teamLogoMappings').once('value');
-  teamLogoMappings = snap.val() || {};
-  console.log('[loadTeamLogoMappings] Loaded:', Object.keys(teamLogoMappings).length, 'logos');
-}
-
-// ─── Admin UI: Manage Team Logo Mappings ───
-function openManageTeamLogoMappingsModal() {
-  const render = async () => {
-    const snap = await database.ref('teamLogoMappings').once('value');
-    const data = snap.val() || {};
-    let listHtml = '';
-    for (const teamName in data) {
-      const entry = data[teamName];
-      listHtml += `
-        <div style="display:flex;align-items:center;gap:16px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-          <img src="${escapeHtml(entry.imageUrl)}" style="width:40px;height:40px;object-fit:contain;border-radius:6px;background:#fff;">
-          <span style="flex:1;font-weight:600;color:var(--white);">${escapeHtml(teamName)}</span>
-          <span style="flex:1;color:rgba(255,255,255,0.7);">eFootball: ${escapeHtml(entry.efootballName || '')}</span>
-          <button class="btn-sm btn-delete" data-team="${escapeHtml(teamName)}" style="padding:6px 16px;font-size:1rem;">Delete</button>
-        </div>
-      `;
-    }
-    if (!listHtml) listHtml = '<div style="color:rgba(255,255,255,0.4);padding:20px 0;">No logo mappings yet.</div>';
-
-    showModal(`
-      <h3>🏷️ Manage Team Logo Mappings</h3>
-      <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;">These logos are sent to AI to help identify teams during scanning.</p>
-      <div style="max-height:300px;overflow-y:auto;margin-bottom:20px;">
-        ${listHtml}
-      </div>
-      <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:20px;">
-        <h4 style="color:var(--turquoise);font-size:1.4rem;margin-bottom:12px;">Add New Logo Mapping</h4>
-        <div style="display:flex;flex-wrap:wrap;gap:12px;">
-          <input type="text" id="newLogoTeamName" placeholder="Team name (e.g. Man City)" style="flex:1;min-width:140px;">
-          <input type="text" id="newLogoEfootballName" placeholder="eFootball name (optional)" style="flex:1;min-width:140px;">
-          <input type="file" id="newLogoFile" accept="image/*" style="flex:1;min-width:140px;">
-        </div>
-        <div id="logoStatus"></div>
-        <button class="modal-btn-primary" id="addLogoBtn" style="margin-top:12px;padding:12px 28px;">Add Logo</button>
-      </div>
-      <div class="modal-btns">
-        <button class="modal-btn-cancel" id="closeLogoBtn">Close</button>
-      </div>
-    `);
-
-    document.getElementById('closeLogoBtn').onclick = closeModal;
-
-    document.getElementById('addLogoBtn').onclick = async () => {
-      const teamName = document.getElementById('newLogoTeamName').value.trim();
-      const efootballName = document.getElementById('newLogoEfootballName').value.trim();
-      const file = document.getElementById('newLogoFile').files[0];
-      const status = document.getElementById('logoStatus');
-      if (!teamName || !file) {
-        status.innerHTML = '<div class="status-msg status-error">Team name and image required.</div>';
-        return;
-      }
-      const btn = document.getElementById('addLogoBtn');
-      btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Uploading...';
-      try {
-        const url = await uploadToImgBB(file);
-        incrementPending();
-        await database.ref(`teamLogoMappings/${teamName}`).set({ imageUrl: url, efootballName });
-        decrementPending();
-        await loadTeamLogoMappings();
-        status.innerHTML = '<div class="status-msg status-success">Logo added! Refreshing...</div>';
-        setTimeout(() => { render(); }, 1000);
-      } catch(e) {
-        status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
-        btn.disabled = false; btn.innerHTML = 'Add Logo';
-      }
-    };
-
-    // Delete buttons
-    document.querySelectorAll('[data-team]').forEach(el => {
-      el.onclick = async () => {
-        const team = el.dataset.team;
-        if (!confirm(`Delete logo for "${team}"?`)) return;
-        try {
-          incrementPending();
-          await database.ref(`teamLogoMappings/${team}`).remove();
-          decrementPending();
-          await loadTeamLogoMappings();
-          render();
-        } catch(e) {
-          alert('Delete failed: ' + e.message);
-        }
-      };
-    });
-  };
-  render();
-}
-
-// ─── FEATURE 7: Manager History ───
+// ─── Manager History ───
 async function loadManagerHistory() {
   const snap = await database.ref(getSeasonPath(currentSeasonId, 'managerHistory')).once('value');
   managerHistory = snap.val() || {};
-  // Ensure each team has an array
   for (const team in managerHistory) {
-    // convert object to array if needed (it's stored as pushKey -> entry)
     const entries = managerHistory[team];
     if (!Array.isArray(entries)) {
-      // Convert object to array
       const arr = [];
       for (const key in entries) {
         arr.push({ key, ...entries[key] });
@@ -1756,7 +1651,6 @@ async function loadManagerHistory() {
       managerHistory[team] = arr;
     }
   }
-  console.log('[loadManagerHistory] Loaded for season', currentSeasonId);
 }
 
 function getActiveManagerName(teamName) {
@@ -1766,18 +1660,14 @@ function getActiveManagerName(teamName) {
   return active ? active.name : null;
 }
 
-// ─── Admin UI: Manager History Modal (replaces old showEditManagersModal) ───
 function openManagerHistoryModal() {
   const render = async () => {
-    // Load fresh data
     await loadManagerHistory();
-    // Build HTML for each team
     const teamNames = teamsData.map(t => t.name).sort();
     let html = `<h3>📋 Manager History</h3>
       <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;">Manage manager appointments, sackings, and retirements per team.</p>`;
     for (const team of teamNames) {
       const history = managerHistory[team] || [];
-      // Sort by matchdayJoined (ascending)
       const sorted = [...history].sort((a, b) => (a.matchdayJoined || 0) - (b.matchdayJoined || 0));
       let entriesHtml = '';
       for (const entry of sorted) {
@@ -1804,7 +1694,6 @@ function openManagerHistoryModal() {
           <div style="margin-top:8px;">
             <button class="add-mgr-btn" data-team="${escapeHtml(team)}" style="background:rgba(150,60,255,0.2);border:1px solid var(--razzmatazz);color:var(--white);padding:6px 18px;border-radius:20px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:1rem;">+ Add Manager</button>
           </div>
-          <!-- Inline form placeholder -->
           <div id="mgrForm_${escapeHtml(team)}" style="display:none;margin-top:12px;"></div>
         </div>
       `;
@@ -1814,7 +1703,6 @@ function openManagerHistoryModal() {
 
     document.getElementById('closeMgrModal').onclick = closeModal;
 
-    // Attach event listeners for add, edit, delete
     document.querySelectorAll('.add-mgr-btn').forEach(btn => {
       btn.onclick = () => {
         const team = btn.dataset.team;
@@ -1826,7 +1714,6 @@ function openManagerHistoryModal() {
       btn.onclick = () => {
         const team = btn.dataset.team;
         const key = btn.dataset.key;
-        // Find entry
         const history = managerHistory[team] || [];
         const entry = history.find(e => e.key === key);
         if (entry) showManagerForm(team, entry);
@@ -1842,7 +1729,6 @@ function openManagerHistoryModal() {
           incrementPending();
           await database.ref(getSeasonPath(currentSeasonId, `managerHistory/${team}/${key}`)).remove();
           decrementPending();
-          // Reload and re-render
           await loadManagerHistory();
           render();
         } catch(e) { alert('Error: ' + e.message); }
@@ -1850,11 +1736,9 @@ function openManagerHistoryModal() {
     });
   };
 
-  // Helper to show inline form for a team
   function showManagerForm(team, entry) {
     const container = document.getElementById(`mgrForm_${team}`);
     if (!container) return;
-    // Hide any other open forms
     document.querySelectorAll('.manager-inline-form').forEach(f => f.style.display = 'none');
     container.style.display = 'block';
     const isEdit = !!entry;
@@ -1891,7 +1775,6 @@ function openManagerHistoryModal() {
       </div>
     `;
 
-    // Save button
     container.querySelector('.save-mgr-btn').onclick = async () => {
       const nameInput = container.querySelector('.mgr-name-input');
       const statusSelect = container.querySelector('.mgr-status-select');
@@ -1905,7 +1788,6 @@ function openManagerHistoryModal() {
       const key = container.querySelector('.save-mgr-btn').dataset.key;
       const teamName = team;
 
-      // If status is 'active', set all other managers of this team to 'sacked'
       const updates = {};
       const currentHistory = managerHistory[teamName] || [];
       if (status === 'active') {
@@ -1916,28 +1798,22 @@ function openManagerHistoryModal() {
         }
       }
 
-      // Prepare entry data
       const entryData = { name, status, matchdayJoined, matchdayLeft };
       const path = getSeasonPath(currentSeasonId, `managerHistory/${teamName}`);
       try {
         incrementPending();
         if (key) {
-          // Update existing
           await database.ref(`${path}/${key}`).update(entryData);
-          // Also apply status updates
           for (const updatePath in updates) {
             await database.ref(updatePath).set(updates[updatePath]);
           }
         } else {
-          // New
           const newRef = await database.ref(path).push(entryData);
-          // Apply status updates (if any)
           for (const updatePath in updates) {
             await database.ref(updatePath).set(updates[updatePath]);
           }
         }
         decrementPending();
-        // Reload and re-render
         await loadManagerHistory();
         render();
       } catch(e) { alert('Error: ' + e.message); }
@@ -1951,7 +1827,7 @@ function openManagerHistoryModal() {
   render();
 }
 
-// ─── Load existing navbar logo and other assets ───
+// ─── Load assets ───
 async function loadNavbarLogo() {
   const snap = await database.ref('premier_league_navbar_logo').once('value');
   navbarLogoUrl = snap.val() || '';
@@ -1976,22 +1852,17 @@ async function setTableHeaderImage(url) {
   await loadTableHeaderImage();
 }
 
-// ─── CHANGE 2: Load Watch Match videos ───
 async function loadWatchMatchEmbed() {
-  // First, try to load the old single embedCode for backward compatibility
   const oldSnap = await database.ref('premier_league/watchMatch/embedCode').once('value');
   const oldEmbedCode = oldSnap.val() || '';
   if (oldEmbedCode) {
-    // If old embed exists, add it as a video with default title
     watchMatchVideos = [{ id: 'legacy', title: 'Match Video', embedCode: oldEmbedCode }];
   } else {
     watchMatchVideos = [];
   }
 
-  // Now load the new videos array
   const videosSnap = await database.ref('premier_league/watchMatch/videos').once('value');
   const videosData = videosSnap.val() || {};
-  // Convert object to array
   const newVideos = [];
   for (const key in videosData) {
     const video = videosData[key];
@@ -2000,12 +1871,8 @@ async function loadWatchMatchEmbed() {
     }
   }
 
-  // If there are new videos, replace the legacy one (or add to it?)
-  // If legacy exists and there are new videos, we keep legacy as the first item
   if (newVideos.length > 0) {
-    // If we have a legacy video (from old embedCode), keep it and add new ones
     if (watchMatchVideos.length > 0 && watchMatchVideos[0].id === 'legacy') {
-      // Keep legacy as first, then add new videos (avoid duplicates by id)
       const existingIds = new Set(watchMatchVideos.map(v => v.id));
       for (const v of newVideos) {
         if (!existingIds.has(v.id)) {
@@ -2013,20 +1880,12 @@ async function loadWatchMatchEmbed() {
         }
       }
     } else {
-      // No legacy, just use new videos
       watchMatchVideos = newVideos;
     }
   }
-
-  // If legacy was the only one and there are no new videos, keep it
-  // If there are new videos and no legacy, we already set it above
-
-  console.log('[loadWatchMatchEmbed] Loaded', watchMatchVideos.length, 'videos');
 }
 
-// ─── CHANGE 2: Add a new watch video ───
 async function addWatchMatchVideo(title, embedCode) {
-  // Convert YouTube URLs to embed iframes
   let finalEmbed = embedCode.trim();
   if (finalEmbed.includes("youtube.com/watch?v=") || finalEmbed.includes("youtu.be/")) {
     let videoId = '';
@@ -2037,27 +1896,21 @@ async function addWatchMatchVideo(title, embedCode) {
 
   const videoData = { title: title.trim() || 'Match Video', embedCode: finalEmbed };
   const newRef = await database.ref('premier_league/watchMatch/videos').push(videoData);
-  // Add to local array
   watchMatchVideos.push({ id: newRef.key, title: videoData.title, embedCode: videoData.embedCode });
-  // Re-render if on watch tab
   if (document.querySelector('.tab-btn.active')?.dataset.tab === 'watch') renderWatchMatch();
 }
 
-// ─── CHANGE 2: Delete a watch video ───
 async function deleteWatchMatchVideo(videoId) {
   if (videoId === 'legacy') {
-    // If it's the legacy video, delete the old embedCode from Firebase
     await database.ref('premier_league/watchMatch/embedCode').remove();
     watchMatchVideos = watchMatchVideos.filter(v => v.id !== 'legacy');
   } else {
     await database.ref(`premier_league/watchMatch/videos/${videoId}`).remove();
     watchMatchVideos = watchMatchVideos.filter(v => v.id !== videoId);
   }
-  // Re-render if on watch tab
   if (document.querySelector('.tab-btn.active')?.dataset.tab === 'watch') renderWatchMatch();
 }
 
-// ─── CHANGE 2: Open Add Video Modal ───
 function openAddVideoModal() {
   showModal(`
     <h3>🎬 Add Match Video</h3>
@@ -2097,7 +1950,6 @@ function openAddVideoModal() {
   };
 }
 
-// ─── CHANGE 2: Updated renderWatchMatch ───
 function renderWatchMatch() {
   let html = '';
 
@@ -2125,7 +1977,6 @@ function renderWatchMatch() {
 
   document.getElementById('contentCard').innerHTML = html;
 
-  // Attach delete handlers
   document.querySelectorAll('.watch-video-delete-btn').forEach(btn => {
     btn.onclick = async () => {
       const id = btn.dataset.id;
@@ -2136,11 +1987,6 @@ function renderWatchMatch() {
   });
 
   document.getElementById('addVideoBtn')?.addEventListener('click', openAddVideoModal);
-}
-
-async function updateWatchMatchEmbed() {
-  // This function is kept for backward compatibility but now opens the add video modal
-  openAddVideoModal();
 }
 
 async function loadTeamIcons() {
@@ -2288,7 +2134,7 @@ async function switchSeason(delta) {
   currentSeasonId = availableSeasons[nIdx];
   updateSeasonUI(); await loadCurrentSeasonData(); await loadManagerNamesForSeason();
   await loadTopScorerData(); await loadTopAssistantData();
-  await loadManagerHistory(); // FEATURE 7
+  await loadManagerHistory();
   renderCurrentTab();
 }
 
@@ -2399,7 +2245,6 @@ function updateSlide() {
   });
 }
 
-// ─── Modified renderTable to use getActiveManagerName ───
 function renderTable() {
   const sorted = [...teamsData].sort((a, b) => (b.pts || 0) - (a.pts || 0) || (b.gd || 0) - (a.gd || 0));
   let headerHtml = tableHeaderImageUrl ? `<img src="${tableHeaderImageUrl}" class="table-header-img" alt="Table Header">` : `🏆 League Table`;
@@ -2434,7 +2279,6 @@ function renderTable() {
     row.appendChild(posCell);
     let arrowHtml = '';
     if (showFormArrows) { const a = getLatestArrow(team.name); if (a === '↑') arrowHtml = '<span class="arrow-up">↑</span> '; else if (a === '↓') arrowHtml = '<span class="arrow-down">↓</span> '; else if (a === '→') arrowHtml = '<span class="arrow-side">→</span> '; else arrowHtml = '<span class="arrow-side" style="opacity:0.3;">—</span> '; }
-    // FEATURE 7: Use active manager name if view is 'player'
     const displayName = (currentView === 'player') ? (getActiveManagerName(team.name) || team.name) : team.name;
     const iconHtml = getTeamIconHtml(team.name, 'team-icon-sm');
     const clubCell = document.createElement('td');
@@ -2667,17 +2511,12 @@ function renderTopAssistants() {
 
 function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
 
-// ─── CHANGE 2: renderWatchMatch is now defined above ───
-
-// ─── Modified renderCurrentTab with background save awareness ───
 function renderCurrentTab(tabOverride) {
   const tab = tabOverride || document.querySelector('.tab-btn.active')?.dataset.tab || 'table';
-  // If there are pending saves, queue the render and don't wipe content
   if (pendingSaves > 0) {
     pendingRenderTab = tab;
     return;
   }
-  // Clear pendingRenderTab if any
   pendingRenderTab = null;
   document.getElementById('contentCard').innerHTML = '<div class="loading-spinner"><div class="spinner"></div><span>Loading…</span></div>';
   if (tab === 'table') renderTable();
@@ -2702,7 +2541,7 @@ function openTeamForm(key, data) {
   document.getElementById('teamPts').value = data?.pts ?? '';
   document.getElementById('teamForm').classList.add('active');
 }
-// ─── FEATURE 1: Save button UX for team form ───
+
 document.getElementById('saveTeamBtn').onclick = async () => {
   const name = document.getElementById('teamNameInput').value.trim();
   if (!name) { alert("Team name required"); return; }
@@ -2712,7 +2551,6 @@ document.getElementById('saveTeamBtn').onclick = async () => {
   btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
   const statusDiv = document.createElement('div');
   statusDiv.className = 'status-msg';
-  // Insert after the button row
   const btnsContainer = document.querySelector('.modal-btns');
   btnsContainer.parentNode.insertBefore(statusDiv, btnsContainer.nextSibling);
   try {
@@ -2721,7 +2559,7 @@ document.getElementById('saveTeamBtn').onclick = async () => {
     else await database.ref(getSeasonPath(currentSeasonId, 'table')).push(data);
     decrementPending();
     btn.innerHTML = '✓ Saved!';
-    btn.style.color = '#166534'; // green feel
+    btn.style.color = '#166534';
     statusDiv.className = 'status-msg status-success';
     statusDiv.textContent = 'Team saved successfully!';
     setTimeout(() => {
@@ -2756,7 +2594,6 @@ function renderScorerList(side) {
   container.querySelectorAll('.remove-scorer').forEach(btn => { btn.onclick = () => { const idx = parseInt(btn.dataset.idx); if (btn.dataset.side === 'home') tempScorersHome.splice(idx, 1); else tempScorersAway.splice(idx, 1); renderScorerList(btn.dataset.side); }; });
 }
 
-// ─── FEATURE 1: Save button UX for result form ───
 async function openResultForm(r) {
   editingResultKey = r?.key || null;
   tempScorersHome = r?.goalScorers?.home ? [...r.goalScorers.home] : [];
@@ -2835,7 +2672,6 @@ async function openResultForm(r) {
   };
 }
 
-// ─── FEATURE 1: Save button UX for stat modal ───
 async function openStatModal(type, entry = null) {
   const isScorer = type === 'scorer' || type === 'topscorer';
   const currentImageUrl = entry?.imageUrl || '';
@@ -2895,7 +2731,6 @@ async function openStatModal(type, entry = null) {
   };
 }
 
-// ─── Modified three-dot handler to open new manager history modal ───
 function attachThreeDotHandler() {
   const btn = document.getElementById('threeDotBtn');
   if (!btn) return;
@@ -2913,7 +2748,6 @@ function attachThreeDotHandler() {
       { label: showLast5 ? 'Hide Last 5' : 'Show Last 5', fn: () => { showLast5 = !showLast5; renderTable(); } },
     ];
     if (isAdminMode) {
-      // Replace old "Edit Manager Names" with new modal
       opts.unshift({ label: 'Edit Manager History', fn: () => { if (popupEl) { popupEl.remove(); popupEl = null; } openManagerHistoryModal(); } });
     }
     opts.forEach(o => { const d = document.createElement('div'); d.textContent = o.label; d.onclick = () => { if (popupEl) { popupEl.remove(); popupEl = null; } o.fn(); }; popupEl.appendChild(d); });
@@ -2922,23 +2756,6 @@ function attachThreeDotHandler() {
   document.addEventListener('click', e => { if (popupEl && !popupEl.contains(e.target) && e.target !== btn) { popupEl.remove(); popupEl = null; } });
 }
 
-// ─── FEATURE 7: The old showEditManagersModal is kept but not used; we keep it for safety. ───
-function showEditManagersModal() {
-  // This is kept for compatibility, but replaced by openManagerHistoryModal in menu.
-  // It can remain.
-  const teams = teamsData.map(t => t.name).sort();
-  let inputs = teams.map(t => `<div style="margin:10px 0;"><label>${t}</label><input type="text" id="mgr_${t.replace(/\s/g, '_')}" value="${(playerMap[t] || '').replace(/"/g, '&quot;')}" placeholder="Manager name"></div>`).join('');
-  showModal(`<h3>Edit Manager Names</h3><div style="max-height:400px;overflow-y:auto;margin:10px 0;">${inputs}</div><div class="modal-btns"><button class="modal-btn-primary" id="saveMgrsBtn">Save</button><button class="modal-btn-cancel" id="cancelMgrsBtn">Cancel</button></div>`);
-  document.getElementById('cancelMgrsBtn').onclick = closeModal;
-  document.getElementById('saveMgrsBtn').onclick = async () => {
-    const map = {}; teams.forEach(t => { const v = document.getElementById(`mgr_${t.replace(/\s/g, '_')}`)?.value.trim(); if (v) map[t] = v; });
-    const btn = document.getElementById('saveMgrsBtn'); btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
-    try { await database.ref(getSeasonPath(currentSeasonId, 'managerMap')).set(map); playerMap = map; btn.innerHTML = '✓ Saved!'; setTimeout(() => { closeModal(); renderTable(); }, 800); }
-    catch(e) { alert('Error: ' + e.message); btn.innerHTML = 'Save'; btn.disabled = false; }
-  };
-}
-
-// ─── Modified openAdminSettings ───
 function openAdminSettings() {
   showModal(`<h3>⚙️ Admin Settings</h3><div class="settings-grid">
     <button class="settings-btn" id="setLogoBtn">🖼️ Upload Navbar Logo</button>
@@ -2948,9 +2765,7 @@ function openAdminSettings() {
     <button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button>
     <button class="settings-btn" id="manageHeaderBgBtn">🖼️ Table Header Background (legacy)</button>
     <button class="settings-btn" id="manageWatchVideosBtn">🎥 Manage Watch Videos</button>
-    <!-- FEATURE 3 & 4: New buttons -->
     <button class="settings-btn" id="manageTeamNameMappingsBtn">🔁 Manage Team Name Mappings</button>
-    <button class="settings-btn" id="manageTeamLogoMappingsBtn">🏷️ Manage Team Logo Mappings</button>
   </div><div class="modal-btns"><button class="modal-btn-cancel" id="closeAdminBtn" style="width:100%;">Close</button></div>`);
   document.getElementById('closeAdminBtn').onclick = closeModal;
   document.getElementById('setLogoBtn').onclick = uploadNavbarLogo;
@@ -2961,7 +2776,6 @@ function openAdminSettings() {
   document.getElementById('manageHeaderBgBtn').onclick = uploadHeaderBgImage;
   document.getElementById('manageWatchVideosBtn').onclick = () => { closeModal(); openAddVideoModal(); };
   document.getElementById('manageTeamNameMappingsBtn').onclick = () => { closeModal(); openManageTeamNameMappingsModal(); };
-  document.getElementById('manageTeamLogoMappingsBtn').onclick = () => { closeModal(); openManageTeamLogoMappingsModal(); };
 }
 
 async function uploadTableHeaderImage() {
@@ -3035,12 +2849,515 @@ document.getElementById('closeMenuBtn').onclick = closeMenu;
 document.getElementById('overlay').onclick = closeMenu;
 document.getElementById('homeBtn').onclick = () => window.location.href = 'feed.html';
 
-// ─── CHANGE 1: Admin Key Verification via API ───
+// ─── AI CHAT SYSTEM ───
+
+let aiChatOpen = false;
+let aiChatPendingConfirmation = null; // { actionType, data, messageId }
+
+function toggleAIChat() {
+  aiChatOpen = !aiChatOpen;
+  document.getElementById('aiChatOverlay').classList.toggle('active', aiChatOpen);
+  document.getElementById('aiChatPanel').classList.toggle('active', aiChatOpen);
+  if (aiChatOpen) {
+    document.getElementById('chatInput').focus();
+  }
+}
+
+function addChatMessage(role, content, images = []) {
+  const container = document.getElementById('aiChatMessages');
+  const div = document.createElement('div');
+  div.className = `chat-msg ${role}`;
+  const time = new Date().toLocaleTimeString();
+  let html = '';
+  if (content) {
+    // Strip ACTION blocks for display
+    let displayContent = content;
+    if (role === 'ai') {
+      displayContent = content.replace(/ACTION:\{[^}]*\}/g, '').trim();
+      if (!displayContent) displayContent = '✅ Action executed.';
+    }
+    html += `<div class="msg-text">${displayContent}</div>`;
+  }
+  if (images && images.length) {
+    html += `<div class="msg-images">${images.map(img => `<img src="${img}" alt="upload">`).join('')}</div>`;
+  }
+  html += `<span class="msg-time">${time}</span>`;
+  div.innerHTML = html;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function showTyping() { document.getElementById('typingIndicator').classList.add('active'); }
+function hideTyping() { document.getElementById('typingIndicator').classList.remove('active'); }
+
+function buildSystemPrompt() {
+  const teamLines = teamsData.map(t =>
+    `${t.name}: P${t.p||0} W${t.w||0} D${t.d||0} L${t.l||0} GS${t.gs||0} GC${t.gc||0} GD${t.gd||0} Pts${t.pts||0}`
+  ).join('\n');
+
+  const resultLines = resultsData.slice(-20).map(r =>
+    `${r.matchText} (MD ${r.md||'?'})`
+  ).join('\n');
+
+  const scorerLines = topScorerList.slice(0, 15).map(p =>
+    `${p.name} (${p.team}) — ${p.count} goals`
+  ).join('\n');
+
+  const assistLines = topAssistantList.slice(0, 15).map(p =>
+    `${p.name} (${p.team}) — ${p.count} assists`
+  ).join('\n');
+
+  return `You are an AI assistant for the eFootball Premier League management system. You have full context and control.
+
+CURRENT SEASON: ${currentSeasonId}
+
+TEAMS:
+${teamLines}
+
+RECENT RESULTS (last 20):
+${resultLines || 'No results yet.'}
+
+TOP SCORERS:
+${scorerLines || 'No scorers yet.'}
+
+TOP ASSISTANTS:
+${assistLines || 'No assistants yet.'}
+
+You can perform actions by outputting a special JSON block in your response like this:
+ACTION:{"type":"ACTION_TYPE","data":{...}}
+
+Available action types:
+- ADD_RESULT: {homeTeam, awayTeam, homeScore, awayScore, matchday, forfeitType?, date?, venue?, matchType?, aggregate?, homeScorers?:[{player,goals}], awayScorers?:[{player,goals}], homeAssists?:[{player,assists}], awayAssists?:[{player,assists}]}
+- UPDATE_TABLE: {teamName, p, w, d, l, gs, gc, gd, pts}
+- ADD_SCORER: {playerName, team, goals}
+- ADD_ASSISTANT: {playerName, team, assists}
+- DELETE_RESULT: {key}
+- ADD_TEAM: {teamName, p, w, d, l, gs, gc, gd, pts}
+- DELETE_TEAM: {teamName}
+- ADD_VIDEO: {title, embedCode}
+- UPDATE_SCORER: {key, goals} (or {playerName, team, goals} to find by name)
+- UPDATE_ASSISTANT: {key, assists} (or {playerName, team, assists} to find by name)
+
+For destructive actions (DELETE_RESULT, DELETE_TEAM), you MUST ask the user to confirm first. Do not execute them without confirmation.
+
+When the user asks you to do something, first understand their request, then respond in a friendly, concise way, and if an action is needed, include the ACTION block.
+
+If the user asks for information, just respond naturally without an action block.
+
+Keep responses brief and helpful. Use team names exactly as they appear in the data.`;
+
+}
+
+async function sendChatMessage() {
+  if (isProcessingChat) return;
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text && chatUploadedFiles.length === 0) return;
+
+  isProcessingChat = true;
+  const sendBtn = document.getElementById('chatSendBtn');
+  sendBtn.disabled = true;
+
+  // Show user message
+  const previewUrls = chatUploadedFiles.map(f => f.dataUrl);
+  addChatMessage('user', text, previewUrls);
+  input.value = '';
+  document.getElementById('chatImagePreview').innerHTML = '';
+  chatUploadedFiles = [];
+
+  // Build conversation history
+  const messages = [];
+  // System prompt
+  messages.push({ role: 'system', content: buildSystemPrompt() });
+
+  // Add conversation history (last 10 exchanges)
+  const msgEls = document.querySelectorAll('#aiChatMessages .chat-msg');
+  const historyMessages = [];
+  for (const el of msgEls) {
+    const role = el.classList.contains('user') ? 'user' : 'assistant';
+    const textEl = el.querySelector('.msg-text');
+    if (textEl) {
+      // Clean any ACTION blocks from stored history
+      let content = textEl.textContent;
+      // Don't strip for assistant messages in history if they contain action blocks — we want the AI to know what actions were taken
+      historyMessages.push({ role, content });
+    }
+  }
+  // Only include last 10
+  const recent = historyMessages.slice(-10);
+  for (const m of recent) {
+    messages.push(m);
+  }
+
+  // Add current user message (without images in text, images go separately)
+  if (text) {
+    messages.push({ role: 'user', content: text });
+  }
+
+  // If we have images, use /scan endpoint with vision
+  let response;
+  let hasImages = false;
+  const imageFiles = [];
+
+  // Collect image files from preview
+  const previewDiv = document.getElementById('chatImagePreview');
+  // Actually we already have chatUploadedFiles cleared, but we stored them in previewUrls above.
+  // We need to re-collect from the preview div if we want to send them.
+  // Let's use the previewUrls we already captured.
+  // But we need the actual files for base64. We stored them in chatUploadedFiles before clearing.
+  // We already cleared chatUploadedFiles. Let's store them in a temp variable.
+
+  // Actually we should restructure: before clearing, capture files
+  // We'll use a closure variable.
+  // Let's redo this more carefully.
+
+  // I'll use a different approach: capture files before clearing.
+  const filesToSend = [...chatUploadedFiles];
+  const previewUrlsToSend = filesToSend.map(f => f.dataUrl);
+
+  // Clear preview now
+  document.getElementById('chatImagePreview').innerHTML = '';
+  chatUploadedFiles = [];
+
+  if (filesToSend.length > 0) {
+    hasImages = true;
+    // Build vision content
+    const contentParts = [];
+    if (text) {
+      contentParts.push({ type: 'text', text: text });
+    } else {
+      contentParts.push({ type: 'text', text: 'Analyze these images and respond accordingly.' });
+    }
+    for (const f of filesToSend) {
+      const base64 = await fileToBase64(f.file);
+      const mimeType = f.file.type || 'image/jpeg';
+      contentParts.push({
+        type: 'image_url',
+        image_url: { url: `data:${mimeType};base64,${base64}` }
+      });
+    }
+    // Send to /scan
+    const payload = {
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      messages: [...messages.slice(0, -1), { role: 'user', content: contentParts }],
+      max_tokens: 1500,
+      temperature: 0.3
+    };
+    const res = await fetch(RENDER_URL + '/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(await res.text());
+    response = await res.json();
+  } else {
+    // Text-only to /chat
+    const payload = {
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      messages: messages,
+      max_tokens: 1500,
+      temperature: 0.3
+    };
+    const res = await fetch(RENDER_URL + '/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(await res.text());
+    response = await res.json();
+  }
+
+  const aiContent = response.choices?.[0]?.message?.content || 'Sorry, I could not process that.';
+
+  // Parse action blocks
+  const actionMatch = aiContent.match(/ACTION:\s*(\{[^}]*\})/);
+  let actionBlock = null;
+  let displayContent = aiContent;
+
+  if (actionMatch) {
+    try {
+      actionBlock = JSON.parse(actionMatch[1]);
+      displayContent = aiContent.replace(/ACTION:\s*\{[^}]*\}/, '').trim();
+      if (!displayContent) displayContent = '✅ Action executed.';
+    } catch(e) {
+      console.warn('Failed to parse action block:', e);
+    }
+  }
+
+  // Show AI message (without action block)
+  addChatMessage('ai', displayContent);
+
+  // Execute action if present
+  if (actionBlock && actionBlock.type) {
+    await executeChatAction(actionBlock);
+  }
+
+  hideTyping();
+  isProcessingChat = false;
+  sendBtn.disabled = false;
+  document.getElementById('chatInput').focus();
+}
+
+async function executeChatAction(action) {
+  const type = action.type;
+  const data = action.data || {};
+
+  // Check for destructive actions requiring confirmation
+  if (type === 'DELETE_RESULT' || type === 'DELETE_TEAM') {
+    const target = type === 'DELETE_RESULT' ? data.key : data.teamName;
+    if (!target) {
+      addChatMessage('ai', '❌ Missing target for deletion.');
+      return;
+    }
+    // Store pending confirmation
+    aiChatPendingConfirmation = { actionType: type, data, messageId: Date.now() };
+    addChatMessage('ai', `⚠️ Are you sure you want to delete "${target}"? Reply with "YES" to confirm or "NO" to cancel.`);
+    return;
+  }
+
+  // If we have a pending confirmation, check if user said YES
+  if (aiChatPendingConfirmation) {
+    // This is handled in the main flow — we check for confirmation in the next user message.
+    // We'll handle it in sendChatMessage by checking for "YES" / "NO" when pending.
+    // For now, just return.
+    return;
+  }
+
+  // Execute non-destructive actions
+  try {
+    let resultMsg = '';
+    switch (type) {
+      case 'ADD_RESULT': {
+        const { homeTeam, awayTeam, homeScore, awayScore, matchday, forfeitType, date, venue, matchType, aggregate, homeScorers, awayScorers, homeAssists, awayAssists } = data;
+        if (!homeTeam || !awayTeam || homeScore === undefined || awayScore === undefined) {
+          addChatMessage('ai', '❌ Missing required fields for ADD_RESULT.');
+          return;
+        }
+        const forfeit = forfeitType || 'none';
+        const matchText = formatResultText(homeTeam, homeScore, awayTeam, awayScore, forfeit === 'none' ? '' : forfeit);
+        const resultData = {
+          matchText,
+          md: matchday || 0,
+          ...(date && { date }),
+          ...(venue && { venue }),
+          ...(matchType && { matchType }),
+          ...(aggregate && { aggregate }),
+          goalScorers: {
+            home: homeScorers || [],
+            away: awayScorers || []
+          },
+          assists: {
+            home: homeAssists || [],
+            away: awayAssists || []
+          }
+        };
+        incrementPending();
+        await database.ref(getSeasonPath(currentSeasonId, 'results')).push(resultData);
+        await applyResultToTable(homeTeam, awayTeam, homeScore, awayScore, forfeit === 'none' ? '' : forfeit);
+        if (homeScorers) await applyScorersFromScan(homeScorers, homeTeam);
+        if (awayScorers) await applyScorersFromScan(awayScorers, awayTeam);
+        if (homeAssists) await applyAssistsFromScan(homeAssists, homeTeam);
+        if (awayAssists) await applyAssistsFromScan(awayAssists, awayTeam);
+        decrementPending();
+        await loadCurrentSeasonData();
+        await loadTopScorerData();
+        await loadTopAssistantData();
+        resultMsg = `✅ Added result: ${homeTeam} ${homeScore} — ${awayScore} ${awayTeam}`;
+        addChatMessage('ai', resultMsg);
+        renderCurrentTab();
+        break;
+      }
+      case 'UPDATE_TABLE': {
+        const { teamName, p, w, d, l, gs, gc, gd, pts } = data;
+        if (!teamName) { addChatMessage('ai', '❌ Missing teamName.'); return; }
+        const team = teamsData.find(t => t.name === teamName);
+        if (!team) { addChatMessage('ai', `❌ Team "${teamName}" not found.`); return; }
+        const update = {};
+        if (p !== undefined) update.p = p;
+        if (w !== undefined) update.w = w;
+        if (d !== undefined) update.d = d;
+        if (l !== undefined) update.l = l;
+        if (gs !== undefined) update.gs = gs;
+        if (gc !== undefined) update.gc = gc;
+        if (gd !== undefined) update.gd = gd;
+        if (pts !== undefined) update.pts = pts;
+        incrementPending();
+        await database.ref(getSeasonPath(currentSeasonId, `table/${team.key}`)).update(update);
+        decrementPending();
+        await loadCurrentSeasonData();
+        resultMsg = `✅ Updated stats for ${teamName}`;
+        addChatMessage('ai', resultMsg);
+        renderCurrentTab();
+        break;
+      }
+      case 'ADD_SCORER': {
+        const { playerName, team, goals } = data;
+        if (!playerName || !team || goals === undefined) {
+          addChatMessage('ai', '❌ Missing fields for ADD_SCORER.');
+          return;
+        }
+        const existing = findMatchingPlayer(topScorerList, playerName, team);
+        const path = getSeasonPath(currentSeasonId, 'topScorers/list');
+        incrementPending();
+        if (existing && existing.key) {
+          const newCount = (existing.count || 0) + goals;
+          await database.ref(`${path}/${existing.key}/count`).set(newCount);
+          resultMsg = `✅ Updated ${playerName} (${team}) — added ${goals} goals (now ${newCount})`;
+        } else {
+          await database.ref(path).push({ name: playerName, team, count: goals, imageUrl: '' });
+          resultMsg = `✅ Added ${playerName} (${team}) with ${goals} goals`;
+        }
+        decrementPending();
+        await loadTopScorerData();
+        addChatMessage('ai', resultMsg);
+        renderCurrentTab();
+        break;
+      }
+      case 'ADD_ASSISTANT': {
+        const { playerName, team, assists } = data;
+        if (!playerName || !team || assists === undefined) {
+          addChatMessage('ai', '❌ Missing fields for ADD_ASSISTANT.');
+          return;
+        }
+        const existing = findMatchingPlayer(topAssistantList, playerName, team);
+        const path = getSeasonPath(currentSeasonId, 'topAssistants/list');
+        incrementPending();
+        if (existing && existing.key) {
+          const newCount = (existing.count || 0) + assists;
+          await database.ref(`${path}/${existing.key}/count`).set(newCount);
+          resultMsg = `✅ Updated ${playerName} (${team}) — added ${assists} assists (now ${newCount})`;
+        } else {
+          await database.ref(path).push({ name: playerName, team, count: assists, imageUrl: '' });
+          resultMsg = `✅ Added ${playerName} (${team}) with ${assists} assists`;
+        }
+        decrementPending();
+        await loadTopAssistantData();
+        addChatMessage('ai', resultMsg);
+        renderCurrentTab();
+        break;
+      }
+      case 'ADD_TEAM': {
+        const { teamName, p, w, d, l, gs, gc, gd, pts } = data;
+        if (!teamName) { addChatMessage('ai', '❌ Missing teamName.'); return; }
+        const exists = teamsData.some(t => t.name === teamName);
+        if (exists) { addChatMessage('ai', `❌ Team "${teamName}" already exists.`); return; }
+        const newData = {
+          name: teamName,
+          p: p || 0, w: w || 0, d: d || 0, l: l || 0,
+          gs: gs || 0, gc: gc || 0, gd: gd || 0, pts: pts || 0
+        };
+        incrementPending();
+        await database.ref(getSeasonPath(currentSeasonId, 'table')).push(newData);
+        decrementPending();
+        await loadCurrentSeasonData();
+        resultMsg = `✅ Added team: ${teamName}`;
+        addChatMessage('ai', resultMsg);
+        renderCurrentTab();
+        break;
+      }
+      case 'ADD_VIDEO': {
+        const { title, embedCode } = data;
+        if (!embedCode) { addChatMessage('ai', '❌ Missing embedCode.'); return; }
+        await addWatchMatchVideo(title || 'Match Video', embedCode);
+        resultMsg = `✅ Added video: ${title || 'Match Video'}`;
+        addChatMessage('ai', resultMsg);
+        renderCurrentTab();
+        break;
+      }
+      case 'UPDATE_SCORER': {
+        const { key, playerName, team, goals } = data;
+        const path = getSeasonPath(currentSeasonId, 'topScorers/list');
+        let targetKey = key;
+        let targetEntry = null;
+        if (!targetKey && playerName && team) {
+          targetEntry = findMatchingPlayer(topScorerList, playerName, team);
+          if (targetEntry) targetKey = targetEntry.key;
+        }
+        if (!targetKey) { addChatMessage('ai', '❌ Could not find scorer to update.'); return; }
+        incrementPending();
+        if (goals !== undefined) {
+          await database.ref(`${path}/${targetKey}/count`).set(goals);
+        }
+        decrementPending();
+        await loadTopScorerData();
+        resultMsg = `✅ Updated scorer's goals to ${goals}`;
+        addChatMessage('ai', resultMsg);
+        renderCurrentTab();
+        break;
+      }
+      case 'UPDATE_ASSISTANT': {
+        const { key, playerName, team, assists } = data;
+        const path = getSeasonPath(currentSeasonId, 'topAssistants/list');
+        let targetKey = key;
+        let targetEntry = null;
+        if (!targetKey && playerName && team) {
+          targetEntry = findMatchingPlayer(topAssistantList, playerName, team);
+          if (targetEntry) targetKey = targetEntry.key;
+        }
+        if (!targetKey) { addChatMessage('ai', '❌ Could not find assistant to update.'); return; }
+        incrementPending();
+        if (assists !== undefined) {
+          await database.ref(`${path}/${targetKey}/count`).set(assists);
+        }
+        decrementPending();
+        await loadTopAssistantData();
+        resultMsg = `✅ Updated assistant's assists to ${assists}`;
+        addChatMessage('ai', resultMsg);
+        renderCurrentTab();
+        break;
+      }
+      default:
+        addChatMessage('ai', `❌ Unknown action type: ${type}`);
+        return;
+    }
+  } catch(e) {
+    addChatMessage('ai', `❌ Failed to execute action: ${e.message}`);
+    console.error('Action execution error:', e);
+  }
+}
+
+// Handle chat input
+document.getElementById('chatSendBtn').onclick = sendChatMessage;
+document.getElementById('chatInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendChatMessage();
+  }
+});
+
+// Chat upload
+document.getElementById('chatUploadBtn').onclick = async () => {
+  const files = await pickFiles('image/*');
+  if (!files.length) return;
+  const previewDiv = document.getElementById('chatImagePreview');
+  for (const file of files) {
+    const dataUrl = await fileToDataUrl(file);
+    chatUploadedFiles.push({ file, dataUrl });
+    const thumb = document.createElement('div');
+    thumb.className = 'preview-thumb';
+    thumb.innerHTML = `<img src="${dataUrl}"><span class="remove-preview" data-idx="${chatUploadedFiles.length - 1}">✕</span>`;
+    previewDiv.appendChild(thumb);
+  }
+  previewDiv.querySelectorAll('.remove-preview').forEach(el => {
+    el.onclick = function() {
+      const idx = parseInt(this.dataset.idx);
+      chatUploadedFiles.splice(idx, 1);
+      this.closest('.preview-thumb').remove();
+      // Re-index remove buttons
+      document.querySelectorAll('#chatImagePreview .remove-preview').forEach((b, i) => b.dataset.idx = i);
+    };
+  });
+};
+
+// Close chat
+document.getElementById('closeChatBtn').onclick = toggleAIChat;
+document.getElementById('aiChatOverlay').onclick = toggleAIChat;
+
+// ─── ADMIN MODE BUTTON ───
 document.getElementById('adminModeBtn').onclick = async () => {
   const key = prompt("Enter admin key:");
-  if (key === null) return; // User cancelled
+  if (key === null) return;
 
-  // Show loading modal
   const loadingModal = document.createElement('div');
   loadingModal.className = 'modal-overlay active';
   loadingModal.style.display = 'flex';
@@ -3056,14 +3373,12 @@ document.getElementById('adminModeBtn').onclick = async () => {
   document.body.appendChild(loadingModal);
 
   try {
-    const response = await fetch('https://efootball-league.onrender.com/verify-admin', {
+    const response = await fetch(RENDER_URL + '/verify-admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key: key })
     });
     const data = await response.json();
-
-    // Remove loading modal
     loadingModal.remove();
 
     if (data.success === true) {
@@ -3071,6 +3386,22 @@ document.getElementById('adminModeBtn').onclick = async () => {
       alert("Admin mode activated ✅");
       document.getElementById('seasonAdminPanel').style.display = 'flex';
       renderCurrentTab();
+
+      // Add AI Assistant menu item if not present
+      if (!document.getElementById('aiAssistantMenuItem')) {
+        const item = document.createElement('div');
+        item.id = 'aiAssistantMenuItem';
+        item.className = 'menu-item';
+        item.innerHTML = '🤖 AI Assistant';
+        item.onclick = () => { toggleAIChat(); closeMenu(); };
+        const adminSettingsItem = document.getElementById('adminSettingsItem');
+        if (adminSettingsItem) {
+          document.getElementById('sideMenu').insertBefore(item, adminSettingsItem);
+        } else {
+          document.getElementById('sideMenu').appendChild(item);
+        }
+      }
+
       if (!document.getElementById('adminSettingsItem')) {
         const item = document.createElement('div');
         item.id = 'adminSettingsItem';
@@ -3114,21 +3445,15 @@ function attachRealtimeListeners() {
 
 // ─── INIT ───
 async function init() {
-  // Load all Firebase-based settings and data
   await loadBackgroundImage();
   await loadTableHeaderImage();
   await loadSlideshow();
   await loadTeamIcons();
   await loadNavbarLogo();
   await loadTableHeaderBgImage();
-  // CHANGE 2: Load watch match videos (replaces old loadWatchMatchEmbed)
   await loadWatchMatchEmbed();
   await loadCalendarEvents();
-  // FEATURE 3: Load team name mappings
   await loadTeamNameMappings();
-  // FEATURE 4: Load team logo mappings
-  await loadTeamLogoMappings();
-  // FEATURE 7: Load manager history
   await loadManagerHistory();
 
   await loadSeasonsMetadata();
@@ -3136,9 +3461,12 @@ async function init() {
   await loadTopAssistantData();
   attachRealtimeListeners();
   renderCurrentTab();
+
+  // Init chat with welcome message if needed
 }
 
 init();
 </script>
 </body>
 </html>
+```
