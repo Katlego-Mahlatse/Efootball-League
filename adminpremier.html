@@ -524,14 +524,33 @@ window.addEventListener('unhandledrejection', function(e) {
   addDebugLog('error', `Unhandled Promise Rejection: ${msg}`, stack);
 });
 
-// ─── CHANGE 1: EFOOTBALL_TEAM_MAP starts empty ───
-// Hardcoded mappings removed entirely. Firebase is the only source.
-const EFOOTBALL_TEAM_MAP = {};
+// ─── eFootball → Real team name mapping ───
+const EFOOTBALL_TEAM_MAP = {
+  'manchester b': 'Man City',
+  'manchester united': 'Man United',
+  'inter milan': 'Inter Milan',
+  'arsenal fc': 'Arsenal FC',
+  'fc barcelona': 'Barcelona',
+  'paris saint-germain': 'PSG',
+  'piemonte bn': 'Juventus',
+  'madrid chamartin b': 'Real Madrid',
+  'tottenham wb': 'Tottenham',
+  'chelsea b': 'Chelsea',
+  'liverpool r': 'Liverpool',
+  'ac milan': 'AC Milan',
+  'al nassr': 'Al Nassr',
+  'newcastle wb': 'Newcastle',
+  'aston rb': 'Aston Villa',
+  'madrid ross rb': 'Atletico',
+  'galatasaray': 'Galatasaray',
+  'borussia dortmund': 'Dortmund',
+  'marseille': 'Marseille',
+  'napoli': 'SSC Napoli'
+};
 
 function mapTeamName(raw) {
   if (!raw) return raw;
   const lower = raw.trim().toLowerCase();
-  // Lookup in the map (keys are already stored lowercase)
   return EFOOTBALL_TEAM_MAP[lower] || raw.trim();
 }
 
@@ -583,14 +602,13 @@ let bgPosition = 'center';
 // ─── Multi-scan state ───
 let multiScanMatches = [];
 let multiScanIdCounter = 0;
-// ─── CHANGE 2: store the batch matchday ───
-let batchMatchday = 0;
 
 // ─── FEATURE 2: Background saving ───
 let pendingSaves = 0;
 let pendingRenderTab = null;
 
-// ─── FEATURE 4: Team Logo Mappings - REMOVED per CHANGE 6 ───
+// ─── FEATURE 4: Team Logo Mappings ───
+let teamLogoMappings = {}; // { "Man City": { imageUrl: "...", efootballName: "manchester b" } }
 
 // ─── FEATURE 7: Manager History ───
 let managerHistory = {}; // { "Man City": [ { key, name, status, matchdayJoined, matchdayLeft } ] }
@@ -764,13 +782,9 @@ function renderMultiScanModal() {
   const totalImages = multiScanMatches.reduce((sum, m) => sum + m.images.length, 0);
   const canScan = totalImages > 0;
 
-  // ─── CHANGE 2: removed matchday field from modal ───
   showModal(`
     <h3>📸 Scan Match Images</h3>
     <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;font-size:1.1rem;">Add images for each match. You can add multiple images per match — AI reads them all together.</p>
-    <div style="background:rgba(0,206,209,0.1);border:1px solid var(--turquoise);border-radius:20px;padding:16px;margin-bottom:20px;">
-      <p style="color:var(--turquoise);font-size:1.2rem;font-weight:600;">Matchday: ${batchMatchday}</p>
-    </div>
     <div id="multiScanBlocks">${blocksHtml}</div>
     <button class="add-match-block-btn" id="addMatchBlockBtn">+ Add Another Match</button>
     <button class="scan-all-btn" id="scanAllBtn" ${canScan ? '' : 'disabled'}>🔍 SCAN ALL MATCHES</button>
@@ -840,8 +854,6 @@ async function scanAllMatches() {
   openMultiScanPreviewModal(results);
 }
 
-// ─── CHANGE 4: Updated prompt for logo-based team name reading ───
-// ─── CHANGE 3 & 4: Team name resolution using Firebase mappings only ───
 async function scanMatchImages(images) {
   const contentParts = [
     {
@@ -852,17 +864,13 @@ async function scanMatchImages(images) {
   "awayTeam": "team name as shown in image",
   "homeScore": 0,
   "awayScore": 0,
-  "homeScorers": [{"player": "name", "goals": 1, "teamLogoText": "team name from logo"}],
-  "awayScorers": [{"player": "name", "goals": 1, "teamLogoText": "team name from logo"}],
-  "homeAssists": [{"player": "name", "assists": 1, "teamLogoText": "team name from logo"}],
-  "awayAssists": [{"player": "name", "assists": 1, "teamLogoText": "team name from logo"}]
+  "homeScorers": [{"player": "name", "goals": 1}],
+  "awayScorers": [{"player": "name", "goals": 1}],
+  "homeAssists": [{"player": "name", "assists": 1}],
+  "awayAssists": [{"player": "name", "assists": 1}],
+  "matchday": null
 }
-
-IMPORTANT INSTRUCTIONS:
-1. For the homeTeam and awayTeam, use the team names EXACTLY as shown in the image (e.g., the scoreboard).
-2. For each goal scorer and each assist, look at the small team logo or badge shown next to the player's name on the goal/assist display. Read the team name text written on or associated with that logo/badge.
-3. For each scorer and assist, include the field "teamLogoText" with the team name you read from the logo/badge.
-4. Return ONLY the JSON object. No explanation.`
+Use team names EXACTLY as shown in the image. If you cannot find scorers or assists, return empty arrays. Return ONLY the JSON object.`
     }
   ];
 
@@ -875,7 +883,14 @@ IMPORTANT INSTRUCTIONS:
     });
   }
 
-  // ─── CHANGE 6: Removed reference logos ───
+  // FEATURE 4: Append team logo references
+  if (Object.keys(teamLogoMappings).length > 0) {
+    contentParts.push({ type: 'text', text: 'These are reference team logos to help you identify teams:' });
+    for (const [teamName, mapping] of Object.entries(teamLogoMappings)) {
+      contentParts.push({ type: 'text', text: `This logo = "${teamName}" (also known as "${mapping.efootballName}" in eFootball)` });
+      contentParts.push({ type: 'image_url', image_url: { url: mapping.imageUrl } });
+    }
+  }
 
   const response = await fetch(GROQ_API_URL, {
     method: 'POST',
@@ -898,108 +913,10 @@ IMPORTANT INSTRUCTIONS:
   const clean = text.replace(/```json|```/g, '').trim();
   const parsed = JSON.parse(clean);
 
-  // ─── CHANGE 3: Map home and away team names using Firebase mappings only ───
   parsed.homeTeam = mapTeamName(parsed.homeTeam);
   parsed.awayTeam = mapTeamName(parsed.awayTeam);
 
-  // ─── CHANGE 4: For scorers and assists, map the teamLogoText using Firebase mappings ───
-  // Also determine if the player belongs to home or away based on the resolved team name.
-  const homeResolved = parsed.homeTeam || '';
-  const awayResolved = parsed.awayTeam || '';
-
-  function mapScorerTeam(teamLogoText) {
-    if (!teamLogoText) return null;
-    return mapTeamName(teamLogoText);
-  }
-
-  // Filter scorers: if the mapped team matches home, keep in homeScorers; else if matches away, keep in awayScorers.
-  // If a player's mapped team doesn't match either, we keep it in the side it was originally assigned by the AI.
-  // The AI already placed them in homeScorers or awayScorers based on visual position. We'll respect that but also
-  // add the resolved team name for verification.
-  function processScorers(scorers, defaultSide) {
-    const result = [];
-    for (const s of scorers || []) {
-      const mappedTeam = mapScorerTeam(s.teamLogoText);
-      // Determine which side this player belongs to based on the mapped team
-      let side = defaultSide; // fallback to AI's placement
-      if (mappedTeam) {
-        const homeLower = homeResolved.toLowerCase();
-        const awayLower = awayResolved.toLowerCase();
-        const mappedLower = mappedTeam.toLowerCase();
-        if (mappedLower === homeLower) side = 'home';
-        else if (mappedLower === awayLower) side = 'away';
-        // else keep defaultSide
-      }
-      result.push({
-        player: s.player || '',
-        goals: s.goals || 0,
-        side: side,
-        resolvedTeam: mappedTeam || s.teamLogoText || ''
-      });
-    }
-    return result;
-  }
-
-  function processAssists(assists, defaultSide) {
-    const result = [];
-    for (const a of assists || []) {
-      const mappedTeam = mapScorerTeam(a.teamLogoText);
-      let side = defaultSide;
-      if (mappedTeam) {
-        const homeLower = homeResolved.toLowerCase();
-        const awayLower = awayResolved.toLowerCase();
-        const mappedLower = mappedTeam.toLowerCase();
-        if (mappedLower === homeLower) side = 'home';
-        else if (mappedLower === awayLower) side = 'away';
-      }
-      result.push({
-        player: a.player || '',
-        assists: a.assists || 0,
-        side: side,
-        resolvedTeam: mappedTeam || a.teamLogoText || ''
-      });
-    }
-    return result;
-  }
-
-  const homeScorersProcessed = processScorers(parsed.homeScorers, 'home');
-  const awayScorersProcessed = processScorers(parsed.awayScorers, 'away');
-  const homeAssistsProcessed = processAssists(parsed.homeAssists, 'home');
-  const awayAssistsProcessed = processAssists(parsed.awayAssists, 'away');
-
-  // Now rebuild the final homeScorers and awayScorers arrays with just name and goals
-  const finalHomeScorers = [];
-  const finalAwayScorers = [];
-  const allScorers = [...homeScorersProcessed, ...awayScorersProcessed];
-  for (const s of allScorers) {
-    if (s.side === 'home') {
-      finalHomeScorers.push({ player: s.player, goals: s.goals });
-    } else {
-      finalAwayScorers.push({ player: s.player, goals: s.goals });
-    }
-  }
-
-  const finalHomeAssists = [];
-  const finalAwayAssists = [];
-  const allAssists = [...homeAssistsProcessed, ...awayAssistsProcessed];
-  for (const a of allAssists) {
-    if (a.side === 'home') {
-      finalHomeAssists.push({ player: a.player, assists: a.assists });
-    } else {
-      finalAwayAssists.push({ player: a.player, assists: a.assists });
-    }
-  }
-
-  return {
-    homeTeam: homeResolved,
-    awayTeam: awayResolved,
-    homeScore: parsed.homeScore ?? 0,
-    awayScore: parsed.awayScore ?? 0,
-    homeScorers: finalHomeScorers,
-    awayScorers: finalAwayScorers,
-    homeAssists: finalHomeAssists,
-    awayAssists: finalAwayAssists
-  };
+  return parsed;
 }
 
 let previewMatches = [];
@@ -1013,8 +930,7 @@ function openMultiScanPreviewModal(results) {
         homeTeam: '', awayTeam: '',
         homeScore: 0, awayScore: 0,
         forfeitType: 'none',
-        // ─── CHANGE 2: matchday is taken from batchMatchday ───
-        matchday: batchMatchday,
+        matchday: '',
         date: '', venue: '', matchType: '', aggregate: '',
         homeScorers: [], awayScorers: [],
         homeAssists: [], awayAssists: []
@@ -1029,7 +945,7 @@ function openMultiScanPreviewModal(results) {
       homeScore: s.homeScore ?? 0,
       awayScore: s.awayScore ?? 0,
       forfeitType: 'none',
-      matchday: batchMatchday,
+      matchday: s.matchday || '',
       date: '', venue: '', matchType: '', aggregate: '',
       homeScorers: s.homeScorers || [],
       awayScorers: s.awayScorers || [],
@@ -1041,7 +957,6 @@ function openMultiScanPreviewModal(results) {
   renderPreviewModal();
 }
 
-// ─── CHANGE 2: Removed matchday field from preview edit fields ───
 function renderPreviewModal() {
   const teamNames = teamsData.map(t => t.name).sort();
 
@@ -1068,9 +983,6 @@ function renderPreviewModal() {
   showModal(`
     <h3>✅ Review & Confirm All Matches</h3>
     <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;font-size:1.1rem;">Review each match before saving. Edit anything the AI got wrong.</p>
-    <div style="background:rgba(0,206,209,0.1);border:1px solid var(--turquoise);border-radius:20px;padding:16px;margin-bottom:20px;">
-      <p style="color:var(--turquoise);font-size:1.2rem;font-weight:600;">📅 Matchday: ${batchMatchday}</p>
-    </div>
     <div id="previewMatchesContainer">${matchesHtml}</div>
     <div style="margin-top:24px;padding:16px;background:rgba(0,206,209,0.1);border:1px solid var(--turquoise);border-radius:20px;">
       <p style="color:var(--turquoise);font-size:1.1rem;font-weight:600;">⚠️ Confirming will save all matches to: Results, Table, Top Scorers & Top Assistants</p>
@@ -1094,7 +1006,6 @@ function renderPreviewModal() {
   setTimeout(attachPreviewModalListeners, 50);
 }
 
-// ─── CHANGE 2: Removed matchday field from buildMatchEditFields ───
 function buildMatchEditFields(m, idx, teamNames) {
   const makeOpts = (selected) => teamNames.map(t => `<option value="${t}" ${t === selected ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('');
 
@@ -1140,30 +1051,36 @@ function buildMatchEditFields(m, idx, teamNames) {
         <input type="number" data-field="awayScore" data-idx="${idx}" value="${m.awayScore}">
       </div>
       <div>
-        <label>Forfeit</label>
-        <select data-field="forfeitType" data-idx="${idx}">
-          <option value="none" ${m.forfeitType === 'none' ? 'selected' : ''}>Normal</option>
-          <option value="no_contest" ${m.forfeitType === 'no_contest' ? 'selected' : ''}>No Contest</option>
-          <option value="forfeit_no_reply" ${m.forfeitType === 'forfeit_no_reply' ? 'selected' : ''}>Forfeit – No Reply</option>
-          <option value="forfeit_agreement" ${m.forfeitType === 'forfeit_agreement' ? 'selected' : ''}>Forfeit on Agreement</option>
-        </select>
+        <label>MD</label>
+        <input type="number" data-field="matchday" data-idx="${idx}" value="${m.matchday || ''}">
       </div>
     </div>
     <div class="preview-field-row">
+      <div>
+        <label>Forfeit Type</label>
+        <select data-field="forfeitType" data-idx="${idx}">
+          <option value="none" ${m.forfeitType === 'none' ? 'selected' : ''}>Normal Result</option>
+          <option value="no_contest" ${m.forfeitType === 'no_contest' ? 'selected' : ''}>No Contest (F-F)</option>
+          <option value="forfeit_no_reply" ${m.forfeitType === 'forfeit_no_reply' ? 'selected' : ''}>Forfeited – No Reply</option>
+          <option value="forfeit_agreement" ${m.forfeitType === 'forfeit_agreement' ? 'selected' : ''}>Forfeited on Agreement</option>
+        </select>
+      </div>
       <div>
         <label>Date (optional)</label>
         <input type="text" data-field="date" data-idx="${idx}" value="${escapeHtml(m.date || '')}" placeholder="e.g. 15 May 2025">
       </div>
+    </div>
+    <div class="preview-field-row">
       <div>
         <label>Venue (optional)</label>
         <input type="text" data-field="venue" data-idx="${idx}" value="${escapeHtml(m.venue || '')}" placeholder="Venue">
       </div>
-    </div>
-    <div class="preview-field-row">
       <div>
         <label>Match Type (optional)</label>
         <input type="text" data-field="matchType" data-idx="${idx}" value="${escapeHtml(m.matchType || '')}" placeholder="e.g. Matchday 5">
       </div>
+    </div>
+    <div class="preview-field-row">
       <div>
         <label>Aggregate (optional)</label>
         <input type="text" data-field="aggregate" data-idx="${idx}" value="${escapeHtml(m.aggregate || '')}" placeholder="e.g. 4-2">
@@ -1215,14 +1132,14 @@ function attachPreviewModalListeners() {
       const idx = parseInt(el.dataset.idx);
       const field = el.dataset.field;
       let val = el.value;
-      if (field === 'homeScore' || field === 'awayScore') val = parseInt(val) || 0;
+      if (field === 'homeScore' || field === 'awayScore' || field === 'matchday') val = parseInt(val) || 0;
       previewMatches[idx][field] = val;
     });
     el.addEventListener('input', () => {
       const idx = parseInt(el.dataset.idx);
       const field = el.dataset.field;
       let val = el.value;
-      if (field === 'homeScore' || field === 'awayScore') val = parseInt(val) || 0;
+      if (field === 'homeScore' || field === 'awayScore' || field === 'matchday') val = parseInt(val) || 0;
       previewMatches[idx][field] = val;
     });
   });
@@ -1277,7 +1194,7 @@ async function confirmAndSaveAll() {
     const field = el.dataset.field;
     if (idx >= previewMatches.length) return;
     let val = el.value;
-    if (field === 'homeScore' || field === 'awayScore') val = parseInt(val) || 0;
+    if (field === 'homeScore' || field === 'awayScore' || field === 'matchday') val = parseInt(val) || 0;
     previewMatches[idx][field] = val;
   });
 
@@ -1333,13 +1250,13 @@ async function confirmAndSaveAll() {
   }
 }
 
-// ─── FEATURE 6: Smart Player Merging (case-insensitive) ───
+// ─── FEATURE 6: Smart Player Merging (applies to both scorers and assists) ───
 async function applyScorersFromScan(scorers, team) {
   if (!scorers || !scorers.length) return;
   const path = getSeasonPath(currentSeasonId, 'topScorers/list');
   for (const s of scorers) {
     if (!s.player) continue;
-    // ─── CHANGE 5: Case-insensitive comparison ───
+    // Search case-insensitive
     const existing = topScorerList.find(p =>
       p.name.toLowerCase() === s.player.toLowerCase() && p.team.toLowerCase() === team.toLowerCase()
     );
@@ -1354,6 +1271,7 @@ async function applyScorersFromScan(scorers, team) {
       decrementPending();
     }
   }
+  // Reload local list after batch
   await loadTopScorerData();
 }
 
@@ -1362,7 +1280,6 @@ async function applyAssistsFromScan(assists, team) {
   const path = getSeasonPath(currentSeasonId, 'topAssistants/list');
   for (const a of assists) {
     if (!a.player) continue;
-    // ─── CHANGE 5: Case-insensitive comparison ───
     const existing = topAssistantList.find(p =>
       p.name.toLowerCase() === a.player.toLowerCase() && p.team.toLowerCase() === team.toLowerCase()
     );
@@ -1380,17 +1297,7 @@ async function applyAssistsFromScan(assists, team) {
   await loadTopAssistantData();
 }
 
-// ─── CHANGE 2: Prompt for matchday before opening multi-scan modal ───
 function openMultiScanModal() {
-  const input = prompt("Enter matchday number for this batch of scans:");
-  if (input === null) return; // cancelled
-  const md = parseInt(input.trim());
-  if (isNaN(md) || md < 0) {
-    alert("Please enter a valid matchday number.");
-    return;
-  }
-  batchMatchday = md;
-
   multiScanMatches = [];
   multiScanIdCounter = 1;
   multiScanMatches.push(createScanMatchBlock(multiScanIdCounter));
@@ -1398,8 +1305,10 @@ function openMultiScanModal() {
 }
 
 // ─── FEATURE 5: Multiple Images for Scorer/Assist Scan ───
+// Modified: openScanScorerModal now allows multiple files and previews
 async function openScanScorerModal(type) {
   const isScorer = type === 'scorer';
+  // We'll generate modal with multi-file input and preview grid
   showModal(`
     <h3>📸 Scan ${isScorer ? 'Top Scorers' : 'Top Assistants'} Image</h3>
     <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;font-size:1.2rem;">Upload one or more screenshots. AI will extract data from all of them combined.</p>
@@ -1418,6 +1327,7 @@ async function openScanScorerModal(type) {
   const fileInput = document.getElementById('scanStatFiles');
   const previewDiv = document.getElementById('scanStatPreview');
 
+  // Show previews
   fileInput.onchange = function() {
     previewDiv.innerHTML = '';
     for (const file of this.files) {
@@ -1426,16 +1336,20 @@ async function openScanScorerModal(type) {
       thumb.className = 'preview-thumb';
       thumb.innerHTML = `<img src="${url}"><span class="thumb-del" data-file="${file.name}" style="cursor:pointer;">✕</span>`;
       previewDiv.appendChild(thumb);
+      // For removal we need to track files; we'll handle by re-building list.
     }
+    // Add remove handlers
     previewDiv.querySelectorAll('.thumb-del').forEach(el => {
       el.onclick = function(e) {
         e.stopPropagation();
+        // Find the file by name and remove from input
         const name = this.dataset.file;
         const dt = new DataTransfer();
         for (const f of fileInput.files) {
           if (f.name !== name) dt.items.add(f);
         }
         fileInput.files = dt.files;
+        // Re-trigger change to update preview
         fileInput.dispatchEvent(new Event('change'));
       };
     });
@@ -1462,6 +1376,7 @@ async function openScanScorerModal(type) {
   };
 }
 
+// Modified scanStatImage to accept array of files
 async function scanStatImage(files, scanType) {
   const contentParts = [];
   let prompt = '';
@@ -1512,6 +1427,7 @@ Extract ALL players visible. Return ONLY the JSON object.`;
   return parsed;
 }
 
+// ─── FEATURE 6: Merge logic in openScannedStatForm save ───
 function openScannedStatForm(type, scanned) {
   const isScorer = type === 'scorer';
   const players = scanned.players || [];
@@ -1579,8 +1495,8 @@ function openScannedStatForm(type, scanned) {
       const cnt = parseInt(countEl.value) || 0;
       if (!name || !team) continue;
 
+      // Merge: check existing
       const list = isScorer ? topScorerList : topAssistantList;
-      // ─── CHANGE 5: Case-insensitive comparison ───
       const existing = list.find(p => p.name.toLowerCase() === name.toLowerCase() && p.team.toLowerCase() === team.toLowerCase());
       if (existing && existing.key) {
         const newCount = (existing.count || 0) + cnt;
@@ -1596,29 +1512,54 @@ function openScannedStatForm(type, scanned) {
       saved++;
     }
 
+    // Refresh local lists
     if (isScorer) await loadTopScorerData();
     else await loadTopAssistantData();
 
     btn.innerHTML = `✓ Saved ${saved} player${saved !== 1 ? 's' : ''}!`;
-    setTimeout(() => { closeModal(); renderCurrentTab(); }, 900);
+    setTimeout(() => { closeModal(); }, 900);
   };
 }
 
-// ─── CHANGE 1: loadTeamNameMappings with no hardcoded fallbacks ───
+// ─── FEATURE 3: Load Team Name Mappings from Firebase ───
 async function loadTeamNameMappings() {
   const snap = await database.ref('teamNameMappings').once('value');
   const data = snap.val() || {};
-  // Clear the map first (it's already empty)
-  for (const key in EFOOTBALL_TEAM_MAP) delete EFOOTBALL_TEAM_MAP[key];
-  // ─── CHANGE 7: Store keys in lowercase for case-insensitive lookup ───
+  // Merge with hardcoded, Firebase takes priority
+  // We'll clear and re-populate EFOOTBALL_TEAM_MAP with hardcoded first, then overwrite
+  // But we don't want to lose hardcoded; we'll copy into a temp and assign.
+  const hardcoded = {
+    'manchester b': 'Man City',
+    'manchester united': 'Man United',
+    'inter milan': 'Inter Milan',
+    'arsenal fc': 'Arsenal FC',
+    'fc barcelona': 'Barcelona',
+    'paris saint-germain': 'PSG',
+    'piemonte bn': 'Juventus',
+    'madrid chamartin b': 'Real Madrid',
+    'tottenham wb': 'Tottenham',
+    'chelsea b': 'Chelsea',
+    'liverpool r': 'Liverpool',
+    'ac milan': 'AC Milan',
+    'al nassr': 'Al Nassr',
+    'newcastle wb': 'Newcastle',
+    'aston rb': 'Aston Villa',
+    'madrid ross rb': 'Atletico',
+    'galatasaray': 'Galatasaray',
+    'borussia dortmund': 'Dortmund',
+    'marseille': 'Marseille',
+    'napoli': 'SSC Napoli'
+  };
+  // Start with hardcoded
+  Object.assign(EFOOTBALL_TEAM_MAP, hardcoded);
+  // Overwrite with Firebase data
   for (const key in data) {
     const entry = data[key];
     if (entry.efootballName && entry.realName) {
-      const lowerKey = entry.efootballName.toLowerCase();
-      EFOOTBALL_TEAM_MAP[lowerKey] = entry.realName;
+      EFOOTBALL_TEAM_MAP[entry.efootballName.toLowerCase()] = entry.realName;
     }
   }
-  console.log('[loadTeamNameMappings] Mappings loaded, count:', Object.keys(EFOOTBALL_TEAM_MAP).length);
+  console.log('[loadTeamNameMappings] Mappings loaded, current map:', EFOOTBALL_TEAM_MAP);
 }
 
 // ─── Admin UI: Manage Team Name Mappings ───
@@ -1661,6 +1602,7 @@ function openManageTeamNameMappingsModal() {
 
     document.getElementById('closeMappingBtn').onclick = closeModal;
 
+    // Add mapping
     document.getElementById('addMappingBtn').onclick = async () => {
       const efootballName = document.getElementById('newEfootballName').value.trim();
       const realName = document.getElementById('newRealName').value.trim();
@@ -1684,6 +1626,7 @@ function openManageTeamNameMappingsModal() {
       }
     };
 
+    // Delete buttons
     document.querySelectorAll('[data-key]').forEach(el => {
       el.onclick = async () => {
         if (!confirm('Delete this mapping?')) return;
@@ -1703,16 +1646,110 @@ function openManageTeamNameMappingsModal() {
   render();
 }
 
-// ─── FEATURE 4: Team Logo Mappings - REMOVED per CHANGE 6 ───
-// ─── The function openManageTeamLogoMappingsModal is removed ───
+// ─── FEATURE 4: Load Team Logo Mappings ───
+async function loadTeamLogoMappings() {
+  const snap = await database.ref('teamLogoMappings').once('value');
+  teamLogoMappings = snap.val() || {};
+  console.log('[loadTeamLogoMappings] Loaded:', Object.keys(teamLogoMappings).length, 'logos');
+}
+
+// ─── Admin UI: Manage Team Logo Mappings ───
+function openManageTeamLogoMappingsModal() {
+  const render = async () => {
+    const snap = await database.ref('teamLogoMappings').once('value');
+    const data = snap.val() || {};
+    let listHtml = '';
+    for (const teamName in data) {
+      const entry = data[teamName];
+      listHtml += `
+        <div style="display:flex;align-items:center;gap:16px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <img src="${escapeHtml(entry.imageUrl)}" style="width:40px;height:40px;object-fit:contain;border-radius:6px;background:#fff;">
+          <span style="flex:1;font-weight:600;color:var(--white);">${escapeHtml(teamName)}</span>
+          <span style="flex:1;color:rgba(255,255,255,0.7);">eFootball: ${escapeHtml(entry.efootballName || '')}</span>
+          <button class="btn-sm btn-delete" data-team="${escapeHtml(teamName)}" style="padding:6px 16px;font-size:1rem;">Delete</button>
+        </div>
+      `;
+    }
+    if (!listHtml) listHtml = '<div style="color:rgba(255,255,255,0.4);padding:20px 0;">No logo mappings yet.</div>';
+
+    showModal(`
+      <h3>🏷️ Manage Team Logo Mappings</h3>
+      <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;">These logos are sent to AI to help identify teams during scanning.</p>
+      <div style="max-height:300px;overflow-y:auto;margin-bottom:20px;">
+        ${listHtml}
+      </div>
+      <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:20px;">
+        <h4 style="color:var(--turquoise);font-size:1.4rem;margin-bottom:12px;">Add New Logo Mapping</h4>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+          <input type="text" id="newLogoTeamName" placeholder="Team name (e.g. Man City)" style="flex:1;min-width:140px;">
+          <input type="text" id="newLogoEfootballName" placeholder="eFootball name (optional)" style="flex:1;min-width:140px;">
+          <input type="file" id="newLogoFile" accept="image/*" style="flex:1;min-width:140px;">
+        </div>
+        <div id="logoStatus"></div>
+        <button class="modal-btn-primary" id="addLogoBtn" style="margin-top:12px;padding:12px 28px;">Add Logo</button>
+      </div>
+      <div class="modal-btns">
+        <button class="modal-btn-cancel" id="closeLogoBtn">Close</button>
+      </div>
+    `);
+
+    document.getElementById('closeLogoBtn').onclick = closeModal;
+
+    document.getElementById('addLogoBtn').onclick = async () => {
+      const teamName = document.getElementById('newLogoTeamName').value.trim();
+      const efootballName = document.getElementById('newLogoEfootballName').value.trim();
+      const file = document.getElementById('newLogoFile').files[0];
+      const status = document.getElementById('logoStatus');
+      if (!teamName || !file) {
+        status.innerHTML = '<div class="status-msg status-error">Team name and image required.</div>';
+        return;
+      }
+      const btn = document.getElementById('addLogoBtn');
+      btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Uploading...';
+      try {
+        const url = await uploadToImgBB(file);
+        incrementPending();
+        await database.ref(`teamLogoMappings/${teamName}`).set({ imageUrl: url, efootballName });
+        decrementPending();
+        await loadTeamLogoMappings();
+        status.innerHTML = '<div class="status-msg status-success">Logo added! Refreshing...</div>';
+        setTimeout(() => { render(); }, 1000);
+      } catch(e) {
+        status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+        btn.disabled = false; btn.innerHTML = 'Add Logo';
+      }
+    };
+
+    // Delete buttons
+    document.querySelectorAll('[data-team]').forEach(el => {
+      el.onclick = async () => {
+        const team = el.dataset.team;
+        if (!confirm(`Delete logo for "${team}"?`)) return;
+        try {
+          incrementPending();
+          await database.ref(`teamLogoMappings/${team}`).remove();
+          decrementPending();
+          await loadTeamLogoMappings();
+          render();
+        } catch(e) {
+          alert('Delete failed: ' + e.message);
+        }
+      };
+    });
+  };
+  render();
+}
 
 // ─── FEATURE 7: Manager History ───
 async function loadManagerHistory() {
   const snap = await database.ref(getSeasonPath(currentSeasonId, 'managerHistory')).once('value');
   managerHistory = snap.val() || {};
+  // Ensure each team has an array
   for (const team in managerHistory) {
+    // convert object to array if needed (it's stored as pushKey -> entry)
     const entries = managerHistory[team];
     if (!Array.isArray(entries)) {
+      // Convert object to array
       const arr = [];
       for (const key in entries) {
         arr.push({ key, ...entries[key] });
@@ -1730,14 +1767,18 @@ function getActiveManagerName(teamName) {
   return active ? active.name : null;
 }
 
+// ─── Admin UI: Manager History Modal (replaces old showEditManagersModal) ───
 function openManagerHistoryModal() {
   const render = async () => {
+    // Load fresh data
     await loadManagerHistory();
+    // Build HTML for each team
     const teamNames = teamsData.map(t => t.name).sort();
     let html = `<h3>📋 Manager History</h3>
       <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;">Manage manager appointments, sackings, and retirements per team.</p>`;
     for (const team of teamNames) {
       const history = managerHistory[team] || [];
+      // Sort by matchdayJoined (ascending)
       const sorted = [...history].sort((a, b) => (a.matchdayJoined || 0) - (b.matchdayJoined || 0));
       let entriesHtml = '';
       for (const entry of sorted) {
@@ -1764,6 +1805,7 @@ function openManagerHistoryModal() {
           <div style="margin-top:8px;">
             <button class="add-mgr-btn" data-team="${escapeHtml(team)}" style="background:rgba(150,60,255,0.2);border:1px solid var(--razzmatazz);color:var(--white);padding:6px 18px;border-radius:20px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:1rem;">+ Add Manager</button>
           </div>
+          <!-- Inline form placeholder -->
           <div id="mgrForm_${escapeHtml(team)}" style="display:none;margin-top:12px;"></div>
         </div>
       `;
@@ -1773,6 +1815,7 @@ function openManagerHistoryModal() {
 
     document.getElementById('closeMgrModal').onclick = closeModal;
 
+    // Attach event listeners for add, edit, delete
     document.querySelectorAll('.add-mgr-btn').forEach(btn => {
       btn.onclick = () => {
         const team = btn.dataset.team;
@@ -1784,6 +1827,7 @@ function openManagerHistoryModal() {
       btn.onclick = () => {
         const team = btn.dataset.team;
         const key = btn.dataset.key;
+        // Find entry
         const history = managerHistory[team] || [];
         const entry = history.find(e => e.key === key);
         if (entry) showManagerForm(team, entry);
@@ -1799,6 +1843,7 @@ function openManagerHistoryModal() {
           incrementPending();
           await database.ref(getSeasonPath(currentSeasonId, `managerHistory/${team}/${key}`)).remove();
           decrementPending();
+          // Reload and re-render
           await loadManagerHistory();
           render();
         } catch(e) { alert('Error: ' + e.message); }
@@ -1806,9 +1851,11 @@ function openManagerHistoryModal() {
     });
   };
 
+  // Helper to show inline form for a team
   function showManagerForm(team, entry) {
     const container = document.getElementById(`mgrForm_${team}`);
     if (!container) return;
+    // Hide any other open forms
     document.querySelectorAll('.manager-inline-form').forEach(f => f.style.display = 'none');
     container.style.display = 'block';
     const isEdit = !!entry;
@@ -1845,6 +1892,7 @@ function openManagerHistoryModal() {
       </div>
     `;
 
+    // Save button
     container.querySelector('.save-mgr-btn').onclick = async () => {
       const nameInput = container.querySelector('.mgr-name-input');
       const statusSelect = container.querySelector('.mgr-status-select');
@@ -1858,6 +1906,7 @@ function openManagerHistoryModal() {
       const key = container.querySelector('.save-mgr-btn').dataset.key;
       const teamName = team;
 
+      // If status is 'active', set all other managers of this team to 'sacked'
       const updates = {};
       const currentHistory = managerHistory[teamName] || [];
       if (status === 'active') {
@@ -1868,22 +1917,28 @@ function openManagerHistoryModal() {
         }
       }
 
+      // Prepare entry data
       const entryData = { name, status, matchdayJoined, matchdayLeft };
       const path = getSeasonPath(currentSeasonId, `managerHistory/${teamName}`);
       try {
         incrementPending();
         if (key) {
+          // Update existing
           await database.ref(`${path}/${key}`).update(entryData);
+          // Also apply status updates
           for (const updatePath in updates) {
             await database.ref(updatePath).set(updates[updatePath]);
           }
         } else {
+          // New
           const newRef = await database.ref(path).push(entryData);
+          // Apply status updates (if any)
           for (const updatePath in updates) {
             await database.ref(updatePath).set(updates[updatePath]);
           }
         }
         decrementPending();
+        // Reload and re-render
         await loadManagerHistory();
         render();
       } catch(e) { alert('Error: ' + e.message); }
@@ -1922,17 +1977,22 @@ async function setTableHeaderImage(url) {
   await loadTableHeaderImage();
 }
 
+// ─── CHANGE 2: Load Watch Match videos ───
 async function loadWatchMatchEmbed() {
+  // First, try to load the old single embedCode for backward compatibility
   const oldSnap = await database.ref('premier_league/watchMatch/embedCode').once('value');
   const oldEmbedCode = oldSnap.val() || '';
   if (oldEmbedCode) {
+    // If old embed exists, add it as a video with default title
     watchMatchVideos = [{ id: 'legacy', title: 'Match Video', embedCode: oldEmbedCode }];
   } else {
     watchMatchVideos = [];
   }
 
+  // Now load the new videos array
   const videosSnap = await database.ref('premier_league/watchMatch/videos').once('value');
   const videosData = videosSnap.val() || {};
+  // Convert object to array
   const newVideos = [];
   for (const key in videosData) {
     const video = videosData[key];
@@ -1941,8 +2001,12 @@ async function loadWatchMatchEmbed() {
     }
   }
 
+  // If there are new videos, replace the legacy one (or add to it?)
+  // If legacy exists and there are new videos, we keep legacy as the first item
   if (newVideos.length > 0) {
+    // If we have a legacy video (from old embedCode), keep it and add new ones
     if (watchMatchVideos.length > 0 && watchMatchVideos[0].id === 'legacy') {
+      // Keep legacy as first, then add new videos (avoid duplicates by id)
       const existingIds = new Set(watchMatchVideos.map(v => v.id));
       for (const v of newVideos) {
         if (!existingIds.has(v.id)) {
@@ -1950,14 +2014,20 @@ async function loadWatchMatchEmbed() {
         }
       }
     } else {
+      // No legacy, just use new videos
       watchMatchVideos = newVideos;
     }
   }
 
+  // If legacy was the only one and there are no new videos, keep it
+  // If there are new videos and no legacy, we already set it above
+
   console.log('[loadWatchMatchEmbed] Loaded', watchMatchVideos.length, 'videos');
 }
 
+// ─── CHANGE 2: Add a new watch video ───
 async function addWatchMatchVideo(title, embedCode) {
+  // Convert YouTube URLs to embed iframes
   let finalEmbed = embedCode.trim();
   if (finalEmbed.includes("youtube.com/watch?v=") || finalEmbed.includes("youtu.be/")) {
     let videoId = '';
@@ -1968,21 +2038,27 @@ async function addWatchMatchVideo(title, embedCode) {
 
   const videoData = { title: title.trim() || 'Match Video', embedCode: finalEmbed };
   const newRef = await database.ref('premier_league/watchMatch/videos').push(videoData);
+  // Add to local array
   watchMatchVideos.push({ id: newRef.key, title: videoData.title, embedCode: videoData.embedCode });
+  // Re-render if on watch tab
   if (document.querySelector('.tab-btn.active')?.dataset.tab === 'watch') renderWatchMatch();
 }
 
+// ─── CHANGE 2: Delete a watch video ───
 async function deleteWatchMatchVideo(videoId) {
   if (videoId === 'legacy') {
+    // If it's the legacy video, delete the old embedCode from Firebase
     await database.ref('premier_league/watchMatch/embedCode').remove();
     watchMatchVideos = watchMatchVideos.filter(v => v.id !== 'legacy');
   } else {
     await database.ref(`premier_league/watchMatch/videos/${videoId}`).remove();
     watchMatchVideos = watchMatchVideos.filter(v => v.id !== videoId);
   }
+  // Re-render if on watch tab
   if (document.querySelector('.tab-btn.active')?.dataset.tab === 'watch') renderWatchMatch();
 }
 
+// ─── CHANGE 2: Open Add Video Modal ───
 function openAddVideoModal() {
   showModal(`
     <h3>🎬 Add Match Video</h3>
@@ -2022,6 +2098,7 @@ function openAddVideoModal() {
   };
 }
 
+// ─── CHANGE 2: Updated renderWatchMatch ───
 function renderWatchMatch() {
   let html = '';
 
@@ -2049,6 +2126,7 @@ function renderWatchMatch() {
 
   document.getElementById('contentCard').innerHTML = html;
 
+  // Attach delete handlers
   document.querySelectorAll('.watch-video-delete-btn').forEach(btn => {
     btn.onclick = async () => {
       const id = btn.dataset.id;
@@ -2062,6 +2140,7 @@ function renderWatchMatch() {
 }
 
 async function updateWatchMatchEmbed() {
+  // This function is kept for backward compatibility but now opens the add video modal
   openAddVideoModal();
 }
 
@@ -2210,7 +2289,7 @@ async function switchSeason(delta) {
   currentSeasonId = availableSeasons[nIdx];
   updateSeasonUI(); await loadCurrentSeasonData(); await loadManagerNamesForSeason();
   await loadTopScorerData(); await loadTopAssistantData();
-  await loadManagerHistory();
+  await loadManagerHistory(); // FEATURE 7
   renderCurrentTab();
 }
 
@@ -2321,6 +2400,7 @@ function updateSlide() {
   });
 }
 
+// ─── Modified renderTable to use getActiveManagerName ───
 function renderTable() {
   const sorted = [...teamsData].sort((a, b) => (b.pts || 0) - (a.pts || 0) || (b.gd || 0) - (a.gd || 0));
   let headerHtml = tableHeaderImageUrl ? `<img src="${tableHeaderImageUrl}" class="table-header-img" alt="Table Header">` : `🏆 League Table`;
@@ -2355,6 +2435,7 @@ function renderTable() {
     row.appendChild(posCell);
     let arrowHtml = '';
     if (showFormArrows) { const a = getLatestArrow(team.name); if (a === '↑') arrowHtml = '<span class="arrow-up">↑</span> '; else if (a === '↓') arrowHtml = '<span class="arrow-down">↓</span> '; else if (a === '→') arrowHtml = '<span class="arrow-side">→</span> '; else arrowHtml = '<span class="arrow-side" style="opacity:0.3;">—</span> '; }
+    // FEATURE 7: Use active manager name if view is 'player'
     const displayName = (currentView === 'player') ? (getActiveManagerName(team.name) || team.name) : team.name;
     const iconHtml = getTeamIconHtml(team.name, 'team-icon-sm');
     const clubCell = document.createElement('td');
@@ -2587,12 +2668,17 @@ function renderTopAssistants() {
 
 function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
 
+// ─── CHANGE 2: renderWatchMatch is now defined above ───
+
+// ─── Modified renderCurrentTab with background save awareness ───
 function renderCurrentTab(tabOverride) {
   const tab = tabOverride || document.querySelector('.tab-btn.active')?.dataset.tab || 'table';
+  // If there are pending saves, queue the render and don't wipe content
   if (pendingSaves > 0) {
     pendingRenderTab = tab;
     return;
   }
+  // Clear pendingRenderTab if any
   pendingRenderTab = null;
   document.getElementById('contentCard').innerHTML = '<div class="loading-spinner"><div class="spinner"></div><span>Loading…</span></div>';
   if (tab === 'table') renderTable();
@@ -2617,6 +2703,7 @@ function openTeamForm(key, data) {
   document.getElementById('teamPts').value = data?.pts ?? '';
   document.getElementById('teamForm').classList.add('active');
 }
+// ─── FEATURE 1: Save button UX for team form ───
 document.getElementById('saveTeamBtn').onclick = async () => {
   const name = document.getElementById('teamNameInput').value.trim();
   if (!name) { alert("Team name required"); return; }
@@ -2626,6 +2713,7 @@ document.getElementById('saveTeamBtn').onclick = async () => {
   btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
   const statusDiv = document.createElement('div');
   statusDiv.className = 'status-msg';
+  // Insert after the button row
   const btnsContainer = document.querySelector('.modal-btns');
   btnsContainer.parentNode.insertBefore(statusDiv, btnsContainer.nextSibling);
   try {
@@ -2634,7 +2722,7 @@ document.getElementById('saveTeamBtn').onclick = async () => {
     else await database.ref(getSeasonPath(currentSeasonId, 'table')).push(data);
     decrementPending();
     btn.innerHTML = '✓ Saved!';
-    btn.style.color = '#166534';
+    btn.style.color = '#166534'; // green feel
     statusDiv.className = 'status-msg status-success';
     statusDiv.textContent = 'Team saved successfully!';
     setTimeout(() => {
@@ -2669,6 +2757,7 @@ function renderScorerList(side) {
   container.querySelectorAll('.remove-scorer').forEach(btn => { btn.onclick = () => { const idx = parseInt(btn.dataset.idx); if (btn.dataset.side === 'home') tempScorersHome.splice(idx, 1); else tempScorersAway.splice(idx, 1); renderScorerList(btn.dataset.side); }; });
 }
 
+// ─── FEATURE 1: Save button UX for result form ───
 async function openResultForm(r) {
   editingResultKey = r?.key || null;
   tempScorersHome = r?.goalScorers?.home ? [...r.goalScorers.home] : [];
@@ -2747,6 +2836,7 @@ async function openResultForm(r) {
   };
 }
 
+// ─── FEATURE 1: Save button UX for stat modal ───
 async function openStatModal(type, entry = null) {
   const isScorer = type === 'scorer' || type === 'topscorer';
   const currentImageUrl = entry?.imageUrl || '';
@@ -2806,6 +2896,7 @@ async function openStatModal(type, entry = null) {
   };
 }
 
+// ─── Modified three-dot handler to open new manager history modal ───
 function attachThreeDotHandler() {
   const btn = document.getElementById('threeDotBtn');
   if (!btn) return;
@@ -2823,6 +2914,7 @@ function attachThreeDotHandler() {
       { label: showLast5 ? 'Hide Last 5' : 'Show Last 5', fn: () => { showLast5 = !showLast5; renderTable(); } },
     ];
     if (isAdminMode) {
+      // Replace old "Edit Manager Names" with new modal
       opts.unshift({ label: 'Edit Manager History', fn: () => { if (popupEl) { popupEl.remove(); popupEl = null; } openManagerHistoryModal(); } });
     }
     opts.forEach(o => { const d = document.createElement('div'); d.textContent = o.label; d.onclick = () => { if (popupEl) { popupEl.remove(); popupEl = null; } o.fn(); }; popupEl.appendChild(d); });
@@ -2831,7 +2923,10 @@ function attachThreeDotHandler() {
   document.addEventListener('click', e => { if (popupEl && !popupEl.contains(e.target) && e.target !== btn) { popupEl.remove(); popupEl = null; } });
 }
 
+// ─── FEATURE 7: The old showEditManagersModal is kept but not used; we keep it for safety. ───
 function showEditManagersModal() {
+  // This is kept for compatibility, but replaced by openManagerHistoryModal in menu.
+  // It can remain.
   const teams = teamsData.map(t => t.name).sort();
   let inputs = teams.map(t => `<div style="margin:10px 0;"><label>${t}</label><input type="text" id="mgr_${t.replace(/\s/g, '_')}" value="${(playerMap[t] || '').replace(/"/g, '&quot;')}" placeholder="Manager name"></div>`).join('');
   showModal(`<h3>Edit Manager Names</h3><div style="max-height:400px;overflow-y:auto;margin:10px 0;">${inputs}</div><div class="modal-btns"><button class="modal-btn-primary" id="saveMgrsBtn">Save</button><button class="modal-btn-cancel" id="cancelMgrsBtn">Cancel</button></div>`);
@@ -2844,6 +2939,7 @@ function showEditManagersModal() {
   };
 }
 
+// ─── Modified openAdminSettings ───
 function openAdminSettings() {
   showModal(`<h3>⚙️ Admin Settings</h3><div class="settings-grid">
     <button class="settings-btn" id="setLogoBtn">🖼️ Upload Navbar Logo</button>
@@ -2853,7 +2949,9 @@ function openAdminSettings() {
     <button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button>
     <button class="settings-btn" id="manageHeaderBgBtn">🖼️ Table Header Background (legacy)</button>
     <button class="settings-btn" id="manageWatchVideosBtn">🎥 Manage Watch Videos</button>
+    <!-- FEATURE 3 & 4: New buttons -->
     <button class="settings-btn" id="manageTeamNameMappingsBtn">🔁 Manage Team Name Mappings</button>
+    <button class="settings-btn" id="manageTeamLogoMappingsBtn">🏷️ Manage Team Logo Mappings</button>
   </div><div class="modal-btns"><button class="modal-btn-cancel" id="closeAdminBtn" style="width:100%;">Close</button></div>`);
   document.getElementById('closeAdminBtn').onclick = closeModal;
   document.getElementById('setLogoBtn').onclick = uploadNavbarLogo;
@@ -2864,6 +2962,7 @@ function openAdminSettings() {
   document.getElementById('manageHeaderBgBtn').onclick = uploadHeaderBgImage;
   document.getElementById('manageWatchVideosBtn').onclick = () => { closeModal(); openAddVideoModal(); };
   document.getElementById('manageTeamNameMappingsBtn').onclick = () => { closeModal(); openManageTeamNameMappingsModal(); };
+  document.getElementById('manageTeamLogoMappingsBtn').onclick = () => { closeModal(); openManageTeamLogoMappingsModal(); };
 }
 
 async function uploadTableHeaderImage() {
@@ -2937,10 +3036,12 @@ document.getElementById('closeMenuBtn').onclick = closeMenu;
 document.getElementById('overlay').onclick = closeMenu;
 document.getElementById('homeBtn').onclick = () => window.location.href = 'feed.html';
 
+// ─── CHANGE 1: Admin Key Verification via API ───
 document.getElementById('adminModeBtn').onclick = async () => {
   const key = prompt("Enter admin key:");
-  if (key === null) return;
+  if (key === null) return; // User cancelled
 
+  // Show loading modal
   const loadingModal = document.createElement('div');
   loadingModal.className = 'modal-overlay active';
   loadingModal.style.display = 'flex';
@@ -2963,6 +3064,7 @@ document.getElementById('adminModeBtn').onclick = async () => {
     });
     const data = await response.json();
 
+    // Remove loading modal
     loadingModal.remove();
 
     if (data.success === true) {
@@ -3011,17 +3113,23 @@ function attachRealtimeListeners() {
   database.ref('calendarEvents').on('value', snap => { calendarEventsData = snap.val() || {}; if (document.querySelector('.tab-btn.active')?.dataset.tab === 'fixtures') renderFixtures(); });
 }
 
+// ─── INIT ───
 async function init() {
+  // Load all Firebase-based settings and data
   await loadBackgroundImage();
   await loadTableHeaderImage();
   await loadSlideshow();
   await loadTeamIcons();
   await loadNavbarLogo();
   await loadTableHeaderBgImage();
+  // CHANGE 2: Load watch match videos (replaces old loadWatchMatchEmbed)
   await loadWatchMatchEmbed();
   await loadCalendarEvents();
+  // FEATURE 3: Load team name mappings
   await loadTeamNameMappings();
-  // ─── CHANGE 6: team logo mappings removed ───
+  // FEATURE 4: Load team logo mappings
+  await loadTeamLogoMappings();
+  // FEATURE 7: Load manager history
   await loadManagerHistory();
 
   await loadSeasonsMetadata();
@@ -3035,4 +3143,3 @@ init();
 </script>
 </body>
 </html>
-```
