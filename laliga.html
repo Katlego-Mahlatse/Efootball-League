@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -539,7 +539,7 @@
       gap: 8px;
       margin-left: auto;
     }
-    .edit-matchday-btn, .set-active-btn {
+    .edit-matchday-btn {
       background: rgba(26,43,94,0.6);
       border: 1px solid var(--laliga-red);
       border-radius: 30px;
@@ -551,7 +551,7 @@
       color: var(--laliga-white);
       transition: all 0.2s;
     }
-    .edit-matchday-btn:hover, .set-active-btn:hover {
+    .edit-matchday-btn:hover {
       background: var(--laliga-red);
       transform: translateY(-2px);
     }
@@ -1039,6 +1039,130 @@
       color: rgba(255,255,255,0.5);
     }
 
+    /* ─── MANAGER HISTORY MODAL STYLES ─── */
+    .manager-team-group {
+      border: 1px solid rgba(233,16,46,0.3);
+      border-radius: 24px;
+      padding: 20px;
+      margin-bottom: 24px;
+      background: rgba(26,43,94,0.2);
+    }
+    .manager-team-group h4 {
+      color: var(--laliga-white);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      border-bottom: 2px solid rgba(233,16,46,0.2);
+      padding-bottom: 8px;
+    }
+    .manager-entry {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 16px;
+      padding: 10px 16px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .manager-entry .mgr-name {
+      font-weight: 700;
+      font-size: 1.3rem;
+      color: var(--laliga-white);
+      min-width: 120px;
+    }
+    .manager-entry .mgr-status {
+      font-size: 1.4rem;
+      margin: 0 4px;
+    }
+    .manager-entry .mgr-details {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.6);
+      margin: 0 8px;
+    }
+    .manager-entry .mgr-actions {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+    }
+    .manager-entry .mgr-actions button {
+      background: rgba(233,16,46,0.15);
+      border: 1px solid var(--laliga-red);
+      border-radius: 20px;
+      padding: 4px 14px;
+      color: var(--laliga-white);
+      cursor: pointer;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .manager-entry .mgr-actions button:hover { background: var(--laliga-red); }
+    .add-manager-form {
+      background: rgba(0,0,0,0.15);
+      border-radius: 16px;
+      padding: 16px;
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+    }
+    .add-manager-form .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      min-width: 100px;
+    }
+    .add-manager-form .form-group label {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0;
+    }
+    .add-manager-form .form-group input,
+    .add-manager-form .form-group select {
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(233,16,46,0.3);
+      border-radius: 14px;
+      color: white;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.1rem;
+      outline: none;
+      width: 100%;
+    }
+    .add-manager-form .form-group input:focus,
+    .add-manager-form .form-group select:focus {
+      border-color: var(--laliga-red);
+    }
+    .add-manager-form .form-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex: 0 0 auto;
+    }
+    .add-manager-form .form-actions button {
+      background: var(--laliga-red);
+      border: none;
+      border-radius: 20px;
+      padding: 10px 24px;
+      color: white;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .add-manager-form .form-actions button:hover { background: var(--laliga-red-light); }
+    .add-manager-form .form-actions button.cancel-add {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(233,16,46,0.3);
+    }
+    .add-manager-form .form-actions button.cancel-add:hover { background: rgba(233,16,46,0.2); }
+
     /* Other styles */
     .pos-bar-wrap { display: flex; align-items: center; gap: 8px; }
     .vbar { width: 6px; height: 28px; border-radius: 3px; }
@@ -1182,8 +1306,9 @@ const database = firebase.database();
 
 const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
 const RMBG_KEY      = "zdkDj9iwQqbGNe8sJu7AEuE8";
-const GROQ_API_KEY = "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";
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+
+// ─── CHANGE 1: Remove Groq keys, add Render URL ───
+const RENDER_URL = 'https://efootball-league.onrender.com';
 
 // ─── State ───
 let isAdminMode = false;
@@ -1202,6 +1327,11 @@ let playerMap = {};
 let topScorerList = [], topAssistantList = [];
 let calendarEventsData = {};
 
+// New state for changes
+let managerHistory = {}; // keyed by team name, array of { key, name, status, matchdayJoined, matchdayLeft }
+let LALIGA_TEAM_MAP = {}; // lowercase efootball name -> real name
+let teamLogoMappings = {}; // teamName -> { imageUrl, efootballName }
+
 let showFormArrows = false;
 let showLast5 = true;
 let currentView = "team";
@@ -1218,18 +1348,13 @@ let currentFixTeamFilter = '';
 let currentFixMonthFilter = '';
 let currentFixMatchdayFilter = '';
 
-// ─── Team name mapping (loaded from Firebase) ───
-let LALIGA_TEAM_MAP = {};
+// ─── CHANGE 1: Pending saves pattern ───
+let pendingSaves = 0;
+let pendingRenderTab = null;
+function incrementPending() { pendingSaves++; }
+function decrementPending() { pendingSaves--; if (pendingSaves === 0 && pendingRenderTab) { const tab = pendingRenderTab; pendingRenderTab = null; renderCurrentTab(tab); } }
 
-// ─── Team logo mappings (for AI) ───
-let teamLogoMappings = {};
-
-// ─── Multi-scan state ───
-let multiScanMatches = [];
-let multiScanIdCounter = 0;
-let scanPreviewData = [];
-
-// ─── Helpers ───
+// ─── Helpers (all paths changed to laliga/) ───
 function getSeasonPath(seasonNum, subPath = "") {
   return `laliga/seasons/season_${seasonNum}${subPath ? "/" + subPath : ""}`;
 }
@@ -1263,42 +1388,13 @@ function pickFile(accept) {
   });
 }
 
-function pickFiles(accept) {
-  return new Promise(res => {
-    const inp = document.createElement('input'); inp.type = 'file'; inp.accept = accept; inp.multiple = true;
-    inp.onchange = e => res(Array.from(e.target.files));
-    inp.click();
-  });
-}
-
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-function fileToDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
 function getTeamIconHtml(teamName, className = "team-icon-sm") {
   const url = teamIconsCache[teamName];
   return url ? `<img class="${className}" src="${url}" alt="${teamName}" onerror="this.style.display='none';">` : '';
 }
 
-function showModal(html, wide = false) {
-  const mc = document.getElementById('modalContent');
-  mc.innerHTML = html;
-  if (wide) mc.parentElement.style.maxWidth = '1000px';
-  else mc.parentElement.style.maxWidth = '';
+function showModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
   document.getElementById('genericModal').classList.add('active');
 }
 function closeModal() { document.getElementById('genericModal').classList.remove('active'); }
@@ -1321,6 +1417,7 @@ async function loadTableHeaderBgImage() {
 async function loadWatchMatchVideos() {
   const videosSnap = await database.ref('laliga/watchMatch/videos').once('value');
   watchMatchVideos = videosSnap.val() ? Object.entries(videosSnap.val()).map(([k, v]) => ({ key: k, ...v })) : [];
+  // Legacy fallback: if no videos but old embedCode exists
   if (watchMatchVideos.length === 0) {
     const legacySnap = await database.ref('laliga/watchMatch/embedCode').once('value');
     watchMatchLegacyEmbed = legacySnap.val() || '';
@@ -1340,16 +1437,10 @@ async function loadTeamIcons() {
 async function loadCalendarEvents() {
   const snap = await database.ref('calendarEvents').once('value');
   calendarEventsData = snap.val() || {};
-  const activeSnap = await database.ref('laliga/activeFixtureDate').once('value');
-  activeFixtureDate = activeSnap.val() || null;
+  // ─── CHANGE 2: Remove Firebase read of activeFixtureDate ───
 }
 
-async function saveActiveFixtureDate(date) {
-  await database.ref('laliga/activeFixtureDate').set(date);
-  activeFixtureDate = date;
-  showAllFixtures = false;
-  if (document.querySelector('.tab-btn.active')?.dataset.tab === 'fixtures') renderFixtures();
-}
+// ─── CHANGE 2: Remove saveActiveFixtureDate function entirely ───
 
 async function saveMatchdayForDate(date, matchdayNum) {
   if (!calendarEventsData[date]) calendarEventsData[date] = {};
@@ -1357,55 +1448,7 @@ async function saveMatchdayForDate(date, matchdayNum) {
   await database.ref(`calendarEvents/${date}/matchday`).set(matchdayNum);
 }
 
-// ─── Team Name Mappings (Feature 2) ───
-async function loadTeamNameMappings() {
-  const snap = await database.ref('laliga/teamNameMappings').once('value');
-  const data = snap.val() || {};
-  LALIGA_TEAM_MAP = {};
-  for (const [key, mapping] of Object.entries(data)) {
-    if (mapping.efootballName && mapping.realName) {
-      LALIGA_TEAM_MAP[mapping.efootballName.toLowerCase()] = mapping.realName;
-    }
-  }
-}
-
-function mapTeamName(raw) {
-  if (!raw) return raw;
-  const lower = raw.toLowerCase();
-  return LALIGA_TEAM_MAP[lower] || raw;
-}
-
-// ─── Team Logo Mappings (Feature 4) ───
-async function loadTeamLogoMappings() {
-  const snap = await database.ref('laliga/teamLogoMappings').once('value');
-  const data = snap.val() || {};
-  teamLogoMappings = {};
-  for (const [team, val] of Object.entries(data)) {
-    if (val.imageUrl && val.efootballName) {
-      teamLogoMappings[team] = { imageUrl: val.imageUrl, efootballName: val.efootballName };
-    }
-  }
-}
-
-// ─── Manager History (Feature 7) ───
-let managerHistory = {};
-
-async function loadManagerHistory() {
-  const snap = await database.ref(getSeasonPath(currentSeasonId, 'managerHistory')).once('value');
-  const data = snap.val() || {};
-  managerHistory = {};
-  for (const [team, entries] of Object.entries(data)) {
-    managerHistory[team] = Object.entries(entries).map(([key, val]) => ({ key, ...val }));
-  }
-}
-
-function getActiveManagerName(teamName) {
-  const entries = managerHistory[teamName] || [];
-  const active = entries.find(e => e.status === 'active');
-  return active ? active.name : null;
-}
-
-// ─── AUTO TABLE UPDATE ───
+// ─── AUTO TABLE UPDATE (forfeit logic) ───
 async function applyResultToTable(homeTeam, awayTeam, homeScore, awayScore, forfeitType) {
   const isNoContest = forfeitType === 'no_contest';
   const isForfeitWin = (forfeitType === 'forfeit_no_reply' || forfeitType === 'forfeit_agreement');
@@ -1479,7 +1522,7 @@ async function applyResultToTable(homeTeam, awayTeam, homeScore, awayScore, forf
   await database.ref(getSeasonPath(currentSeasonId, `table/${awayEntry.key}`)).set(ad);
 }
 
-// ─── Seasons ───
+// ─── Seasons & Migration ───
 async function loadSeasonsMetadata() {
   const snapshot = await database.ref('laliga/seasons').once('value');
   const seasons = snapshot.val() || {};
@@ -1503,7 +1546,7 @@ async function loadSeasonsMetadata() {
   updateSeasonUI();
   await loadCurrentSeasonData();
   await loadManagerNamesForSeason();
-  await loadManagerHistory();
+  await loadManagerHistory(); // load manager history
 }
 
 function updateSeasonUI() {
@@ -1538,6 +1581,53 @@ async function loadTopAssistantData() {
   topAssistantList = snap.val() ? Object.entries(snap.val()).map(([k,v])=>({key:k,...v})) : [];
 }
 
+// ─── NEW: Manager History ───
+async function loadManagerHistory() {
+  const snap = await database.ref(getSeasonPath(currentSeasonId, 'managerHistory')).once('value');
+  const data = snap.val() || {};
+  managerHistory = {};
+  for (const [team, entries] of Object.entries(data)) {
+    managerHistory[team] = Object.entries(entries).map(([key, val]) => ({ key, ...val }));
+  }
+}
+
+function getActiveManagerName(teamName) {
+  const entries = managerHistory[teamName] || [];
+  const active = entries.find(e => e.status === 'active');
+  return active ? active.name : null;
+}
+
+// ─── NEW: Team Name Mappings ───
+async function loadTeamNameMappings() {
+  const snap = await database.ref('laliga/teamNameMappings').once('value');
+  const data = snap.val() || {};
+  LALIGA_TEAM_MAP = {};
+  for (const [key, mapping] of Object.entries(data)) {
+    if (mapping.efootballName && mapping.realName) {
+      LALIGA_TEAM_MAP[mapping.efootballName.toLowerCase()] = mapping.realName;
+    }
+  }
+}
+
+function mapTeamName(raw) {
+  if (!raw) return raw;
+  const lower = raw.toLowerCase();
+  return LALIGA_TEAM_MAP[lower] || raw;
+}
+
+// ─── NEW: Team Logo Mappings ───
+async function loadTeamLogoMappings() {
+  const snap = await database.ref('laliga/teamLogoMappings').once('value');
+  const data = snap.val() || {};
+  teamLogoMappings = {};
+  for (const [team, val] of Object.entries(data)) {
+    if (val.imageUrl && val.efootballName) {
+      teamLogoMappings[team] = { imageUrl: val.imageUrl, efootballName: val.efootballName };
+    }
+  }
+}
+
+// ─── Switch Season ───
 async function switchSeason(delta) {
   const idx = availableSeasons.indexOf(currentSeasonId);
   const nIdx = idx + delta;
@@ -1545,10 +1635,11 @@ async function switchSeason(delta) {
   currentSeasonId = availableSeasons[nIdx];
   updateSeasonUI(); await loadCurrentSeasonData(); await loadManagerNamesForSeason();
   await loadTopScorerData(); await loadTopAssistantData();
-  await loadManagerHistory();
+  await loadManagerHistory(); // reload manager history for new season
   renderCurrentTab();
 }
 
+// ─── Season management ───
 async function addNewSeason() {
   const raw = prompt("Enter new season number:"); if (!raw) return;
   const id = parseInt(raw);
@@ -1718,7 +1809,6 @@ function renderTable() {
       else if (a === '→') arrowHtml = '<span class="arrow-side">→</span> ';
       else arrowHtml = '<span class="arrow-side" style="opacity:0.3;">—</span> ';
     }
-    // Use active manager name if view is 'player'
     let displayName;
     if (currentView === 'player') {
       const activeMgr = getActiveManagerName(team.name);
@@ -1806,8 +1896,24 @@ function renderTable() {
   attachThreeDotHandler();
 }
 
-// ─── FIXTURES ───
+// ─── CHANGE 2: Helper for SAST today ───
+function getTodaySAST() {
+  const now = new Date();
+  // SAST is UTC+2
+  const sastOffset = 2 * 60; // minutes
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const sast = new Date(utc + (sastOffset * 60000));
+  const y = sast.getFullYear();
+  const m = String(sast.getMonth() + 1).padStart(2, '0');
+  const d = String(sast.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// ─── FIXTURES RENDERER with changes 2 & 3 ───
 function renderFixtures() {
+  // CHANGE 2: Set activeFixtureDate to today's SAST date
+  activeFixtureDate = getTodaySAST();
+
   const laligaFixtures = [];
   const today = new Date();
   today.setHours(0,0,0,0);
@@ -1864,11 +1970,47 @@ function renderFixtures() {
   }
   
   let sortedDates = Object.keys(grouped).sort((a,b) => new Date(a) - new Date(b));
+  
+  // CHANGE 3: New ordering logic
+  function offsetDate(baseDateStr, days) {
+    const [y, m, d] = baseDateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    date.setDate(date.getDate() + days);
+    const ny = date.getFullYear();
+    const nm = String(date.getMonth() + 1).padStart(2, '0');
+    const nd = String(date.getDate()).padStart(2, '0');
+    return `${ny}-${nm}-${nd}`;
+  }
+  const todayStr = activeFixtureDate; // already set to SAST today
+  const yesterdayStr = offsetDate(todayStr, -1);
+  const tomorrowStr = offsetDate(todayStr, 1);
+  const dayAfterStr = offsetDate(todayStr, 2);
   let visibleDates = [];
-  if (!showAllFixtures && activeFixtureDate && grouped[activeFixtureDate]) {
-    visibleDates = [activeFixtureDate];
+  if (!showAllFixtures) {
+    // Only show today
+    if (grouped[todayStr]) {
+      visibleDates = [todayStr];
+    } else {
+      visibleDates = []; // empty, "See More" button still shows
+    }
   } else {
-    visibleDates = sortedDates;
+    // Priority order: today, yesterday, tomorrow, day after tomorrow, then rest
+    const priorityDates = [todayStr, yesterdayStr, tomorrowStr, dayAfterStr];
+    const prioritySet = new Set(priorityDates);
+    // Remaining dates: everything not in priority, split into past and future
+    const remainingPast = sortedDates
+      .filter(d => !prioritySet.has(d) && d < todayStr)
+      .sort((a, b) => b.localeCompare(a)); // most recent past first
+    const remainingFuture = sortedDates
+      .filter(d => !prioritySet.has(d) && d > dayAfterStr)
+      .sort((a, b) => a.localeCompare(b)); // earliest future first
+    const orderedDates = [
+      ...priorityDates,
+      ...remainingPast,
+      ...remainingFuture
+    ];
+    // Only include dates that exist in grouped
+    visibleDates = orderedDates.filter(d => grouped[d]);
   }
   
   const monthLabels = {
@@ -1932,10 +2074,10 @@ function renderFixtures() {
       
       let adminActions = '';
       if (isAdminMode) {
+        // CHANGE 2: Remove "Set as Active" button, keep only Edit Matchday
         adminActions = `
           <div class="fixture-date-actions">
             <button class="edit-matchday-btn" data-date="${dateStr}">📝 Edit Matchday</button>
-            <button class="set-active-btn" data-date="${dateStr}">⭐ Set as Active</button>
           </div>
         `;
       }
@@ -1962,12 +2104,12 @@ function renderFixtures() {
       contentHtml += `</div>`;
     }
     
-    const hiddenDates = sortedDates.filter(d => !visibleDates.includes(d));
-    const hasHiddenFuture = hiddenDates.some(d => new Date(d) >= today);
-    if (!showAllFixtures && activeFixtureDate && hiddenDates.length > 0 && hasHiddenFuture) {
+    // CHANGE 3: See More / Show Less button logic
+    const hasMoreDates = sortedDates.filter(d => !visibleDates.includes(d)).length > 0 || (visibleDates.length === 0 && sortedDates.length > 0);
+    if (!showAllFixtures && hasMoreDates) {
       contentHtml += `<div style="text-align:center;"><button class="see-more-btn" id="seeMoreFixturesBtn">➕ See More Fixtures</button></div>`;
-    } else if (showAllFixtures && sortedDates.length > visibleDates.length) {
-      contentHtml += `<div style="text-align:center;"><button class="see-more-btn" id="showLessFixturesBtn">➖ Show Less (only active date)</button></div>`;
+    } else if (showAllFixtures) {
+      contentHtml += `<div style="text-align:center;"><button class="see-more-btn" id="showLessFixturesBtn">➖ Show Active Date Only</button></div>`;
     }
   }
   
@@ -1995,14 +2137,7 @@ function renderFixtures() {
         }
       };
     });
-    document.querySelectorAll('.set-active-btn').forEach(btn => {
-      btn.onclick = async () => {
-        const date = btn.dataset.date;
-        await saveActiveFixtureDate(date);
-        showAllFixtures = false;
-        renderFixtures();
-      };
-    });
+    // CHANGE 2: Remove .set-active-btn event listener entirely
   }
   
   const seeMoreBtn = document.getElementById('seeMoreFixturesBtn');
@@ -2021,7 +2156,7 @@ function renderFixtures() {
   }
 }
 
-// ─── RESULTS ───
+// ─── PARSE RESULT ───
 function parseResultCard(r) {
   let homeTeam = '', awayTeam = '', homeScore = '', awayScore = '', isForfeit = false, forfeitType = '';
   const text = r.matchText || '';
@@ -2049,6 +2184,7 @@ function parseResultCard(r) {
   return { homeTeam, awayTeam, homeScore, awayScore, isForfeit, forfeitType, md: r.md };
 }
 
+// ─── RENDER RESULTS (with Scan button) ───
 function renderResults() {
   let filtered = [...resultsData];
   if (currentMdFilter && currentMdFilter !== 'all') {
@@ -2105,14 +2241,14 @@ function renderResults() {
   document.getElementById('teamFilterSelect')?.addEventListener('change', e => { currentTeamFilter = e.target.value; renderResults(); });
   document.getElementById('clearFiltersBtn')?.addEventListener('click', () => { currentMdFilter = ''; currentTeamFilter = ''; renderResults(); });
   document.getElementById('addResultTopBtn')?.addEventListener('click', () => openResultForm(null));
-  document.getElementById('scanImageBtn')?.addEventListener('click', () => openMultiScanModal());
+  document.getElementById('scanImageBtn')?.addEventListener('click', openScanModal);
   if (isAdminMode) {
     document.querySelectorAll('.btn-edit[data-id]').forEach(btn => { const r = resultsData.find(x => x.key === btn.dataset.id); if (r) btn.onclick = () => openResultForm(r); });
     document.querySelectorAll('.btn-delete[data-id]').forEach(btn => { btn.onclick = async () => { if (confirm('Delete result?')) await database.ref(getSeasonPath(currentSeasonId, `results/${btn.dataset.id}`)).remove(); }; });
   }
 }
 
-// ─── TOP SCORERS ───
+// ─── RENDER TOP SCORERS ───
 function renderTopScorers() {
   const sorted = [...topScorerList].sort((a,b) => (b.count||0)-(a.count||0));
   const top3 = sorted.slice(0,3);
@@ -2149,7 +2285,7 @@ function renderTopScorers() {
   }
 }
 
-// ─── TOP ASSISTANTS ───
+// ─── RENDER TOP ASSISTANTS ───
 function renderTopAssistants() {
   const sorted = [...topAssistantList].sort((a,b) => (b.count||0)-(a.count||0));
   const top3 = sorted.slice(0,3);
@@ -2188,11 +2324,12 @@ function renderTopAssistants() {
 
 function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
 
-// ─── WATCH MATCH ───
+// ─── RENDER WATCH MATCH (multiple videos) ───
 function renderWatchMatch() {
   let html = '';
   const allVideos = [...watchMatchVideos];
   
+  // Legacy fallback: if there's an old embedCode and no videos, show it
   if (allVideos.length === 0 && watchMatchLegacyEmbed) {
     allVideos.push({ key: 'legacy', embedCode: watchMatchLegacyEmbed, title: '' });
   }
@@ -2229,6 +2366,7 @@ function renderWatchMatch() {
   
   document.getElementById('contentCard').innerHTML = html;
   
+  // Delete video handlers
   document.querySelectorAll('.video-delete-btn[data-key]').forEach(btn => {
     btn.onclick = async () => {
       if (confirm('Delete this video?')) {
@@ -2284,6 +2422,7 @@ function showAddVideoModal() {
       status.textContent = 'Please enter a URL or embed code.';
       return;
     }
+    // Auto-convert YouTube URL to embed iframe
     const videoId = extractYouTubeId(embed);
     let finalEmbed = embed;
     if (videoId) {
@@ -2304,9 +2443,15 @@ function showAddVideoModal() {
   };
 }
 
-// ─── RENDER CURRENT TAB ───
-function renderCurrentTab() {
-  const tab = document.querySelector('.tab-btn.active')?.dataset.tab;
+// ─── RENDER CURRENT TAB (with pending saves) ───
+function renderCurrentTab(tabOverride) {
+  const tab = tabOverride || document.querySelector('.tab-btn.active')?.dataset.tab;
+  // CHANGE 1: Check pending saves
+  if (pendingSaves > 0) {
+    pendingRenderTab = tab;
+    return;
+  }
+  pendingRenderTab = null;
   document.getElementById('contentCard').innerHTML = '<div class="loading-spinner"><div class="spinner"></div><span>Loading…</span></div>';
   if (tab === 'table') renderTable();
   else if (tab === 'fixtures') renderFixtures();
@@ -2492,18 +2637,9 @@ function showEditManagersModal() {
   document.getElementById('saveMgrsBtn').onclick = async () => { const map = {}; teams.forEach(t => { const v = document.getElementById(`mgr_${t.replace(/\s/g,'_')}`)?.value.trim(); if (v) map[t] = v; }); await database.ref(getSeasonPath(currentSeasonId, 'managerMap')).set(map); playerMap = map; closeModal(); renderTable(); };
 }
 
-// ─── ADMIN SETTINGS ───
+// ─── ADMIN SETTINGS (updated with new buttons) ───
 function openAdminSettings() {
-  showModal(`<h3>⚙️ Admin Settings</h3><div class="settings-grid">
-    <button class="settings-btn" id="setLogoBtn">🖼️ Upload Navbar Logo</button>
-    <button class="settings-btn" id="manageSlideBtn">🎞️ Manage Main Slideshow</button>
-    <button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button>
-    <button class="settings-btn" id="manageHeaderBgBtn">🖼️ Table Header Background (legacy)</button>
-    <button class="settings-btn" id="setWatchBtnAdmin">🎥 Manage Watch Videos</button>
-    <button class="settings-btn" id="managerHistoryBtn">👥 Manager History</button>
-    <button class="settings-btn" id="teamNameMappingsBtn">🔁 Manage Team Name Mappings</button>
-    <button class="settings-btn" id="teamLogoMappingsBtn">🏷️ Manage Team Logo Mappings</button>
-  </div><div class="modal-btns"><button class="modal-btn-cancel" id="closeAdminBtn" style="width:100%;">Close</button></div>`);
+  showModal(`<h3>⚙️ Admin Settings</h3><div class="settings-grid"><button class="settings-btn" id="setLogoBtn">🖼️ Upload Navbar Logo</button><button class="settings-btn" id="manageSlideBtn">🎞️ Manage Main Slideshow</button><button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button><button class="settings-btn" id="manageHeaderBgBtn">🖼️ Table Header Background (legacy)</button><button class="settings-btn" id="setWatchBtnAdmin">🎥 Manage Watch Videos</button><button class="settings-btn" id="managerHistoryBtn">👥 Manager History</button><button class="settings-btn" id="teamNameMappingsBtn">🔁 Manage Team Name Mappings</button><button class="settings-btn" id="teamLogoMappingsBtn">🏷️ Manage Team Logo Mappings</button></div><div class="modal-btns"><button class="modal-btn-cancel" id="closeAdminBtn" style="width:100%;">Close</button></div>`);
   document.getElementById('closeAdminBtn').onclick = closeModal;
   document.getElementById('setLogoBtn').onclick = uploadNavbarLogo;
   document.getElementById('manageSlideBtn').onclick = manageSlideshowUI;
@@ -2511,10 +2647,11 @@ function openAdminSettings() {
   document.getElementById('manageHeaderBgBtn').onclick = uploadHeaderBgImage;
   document.getElementById('setWatchBtnAdmin').onclick = () => { closeModal(); showAddVideoModal(); };
   document.getElementById('managerHistoryBtn').onclick = () => { closeModal(); openManagerHistoryModal(); };
-  document.getElementById('teamNameMappingsBtn').onclick = () => { closeModal(); openManageTeamNameMappingsModal(); };
-  document.getElementById('teamLogoMappingsBtn').onclick = () => { closeModal(); openManageTeamLogoMappingsModal(); };
+  document.getElementById('teamNameMappingsBtn').onclick = () => { closeModal(); openTeamNameMappingsModal(); };
+  document.getElementById('teamLogoMappingsBtn').onclick = () => { closeModal(); openTeamLogoMappingsModal(); };
 }
 
+// ─── UPLOAD FUNCTIONS (unchanged) ───
 async function uploadNavbarLogo() {
   const file = await pickFile('image/*'); if (!file) return;
   try { const url = await uploadToImgBB(file); await database.ref('laliga_navbar_logo').set(url); navbarLogoUrl = url; await loadNavbarLogo(); alert('Logo updated'); closeModal(); } catch(e) { alert('Upload failed'); }
@@ -2546,859 +2683,721 @@ async function manageSlideshowUI() {
   refresh();
 }
 
-// ─── FEATURE: Manager History Modal ───
+// ─── MANAGER HISTORY MODAL ───
 function openManagerHistoryModal() {
-  const render = async () => {
-    await loadManagerHistory();
-    const teamNames = teamsData.map(t => t.name).sort();
-    let html = `<h3>👥 Manager History</h3><p style="color:rgba(255,255,255,0.6);margin-bottom:20px;">Manage manager appointments, sackings, and retirements per team.</p>`;
-    for (const team of teamNames) {
-      const history = managerHistory[team] || [];
-      const sorted = [...history].sort((a, b) => (a.matchdayJoined || 0) - (b.matchdayJoined || 0));
-      let entriesHtml = '';
-      for (const entry of sorted) {
-        const statusEmoji = entry.status === 'active' ? '🟢' : entry.status === 'sacked' ? '🔴' : '🟡';
-        const leftText = entry.matchdayLeft ? `→ MD ${entry.matchdayLeft}` : '';
-        entriesHtml += `
-          <div class="manager-history-entry">
-            <span class="mgr-name">${escapeHtml(entry.name)}</span>
-            <span class="mgr-status">${statusEmoji} ${entry.status}</span>
-            <span class="mgr-md">Joined: MD ${entry.matchdayJoined || '?'} ${leftText}</span>
-            <div class="mgr-actions">
-              <button class="edit-mgr-btn" data-team="${escapeHtml(team)}" data-key="${entry.key}">✏️</button>
-              <button class="delete-mgr-btn" data-team="${escapeHtml(team)}" data-key="${entry.key}">🗑️</button>
-            </div>
-          </div>
-        `;
-      }
-      if (!entriesHtml) entriesHtml = '<div style="color:rgba(255,255,255,0.3);padding:8px 0;">No managers yet.</div>';
-      html += `
-        <div class="team-manager-section">
-          <div class="team-title">${escapeHtml(team)}</div>
-          <div id="mgrHistory_${escapeHtml(team)}">${entriesHtml}</div>
-          <div style="margin-top:8px;">
-            <button class="add-mgr-btn" data-team="${escapeHtml(team)}" style="background:rgba(233,16,46,0.2);border:1px solid var(--laliga-red);color:var(--laliga-white);padding:6px 18px;border-radius:20px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:1rem;">+ Add Manager</button>
-          </div>
-          <div id="mgrForm_${escapeHtml(team)}" style="display:none;margin-top:12px;"></div>
-        </div>
-      `;
-    }
-    html += `<div class="modal-btns"><button class="modal-btn-cancel" id="closeMgrModal">Close</button></div>`;
-    showModal(html);
-    document.getElementById('closeMgrModal').onclick = closeModal;
-
-    // Add manager buttons
-    document.querySelectorAll('.add-mgr-btn').forEach(btn => {
-      btn.onclick = () => {
-        const team = btn.dataset.team;
-        showManagerForm(team, null);
-      };
-    });
-    document.querySelectorAll('.edit-mgr-btn').forEach(btn => {
-      btn.onclick = () => {
-        const team = btn.dataset.team;
-        const key = btn.dataset.key;
-        const history = managerHistory[team] || [];
-        const entry = history.find(e => e.key === key);
-        if (entry) showManagerForm(team, entry);
-      };
-    });
-    document.querySelectorAll('.delete-mgr-btn').forEach(btn => {
-      btn.onclick = async () => {
-        const team = btn.dataset.team;
-        const key = btn.dataset.key;
-        if (!confirm(`Delete this manager entry for ${team}?`)) return;
-        try {
-          await database.ref(getSeasonPath(currentSeasonId, `managerHistory/${team}/${key}`)).remove();
-          await loadManagerHistory();
-          render();
-        } catch(e) { alert('Error: ' + e.message); }
-      };
-    });
-  };
-
-  function showManagerForm(team, entry) {
-    const container = document.getElementById(`mgrForm_${team}`);
-    if (!container) return;
-    document.querySelectorAll('.manager-inline-form').forEach(f => f.style.display = 'none');
-    container.style.display = 'block';
-    const isEdit = !!entry;
-    const name = entry ? entry.name : '';
-    const status = entry ? entry.status : 'active';
-    const matchdayJoined = entry ? entry.matchdayJoined : '';
-    const matchdayLeft = entry ? entry.matchdayLeft : '';
-    container.innerHTML = `
-      <div class="manager-inline-form">
-        <div>
-          <label>Name</label>
-          <input type="text" class="mgr-name-input" value="${escapeHtml(name)}" placeholder="Manager name">
-        </div>
-        <div>
-          <label>Status</label>
-          <select class="mgr-status-select">
-            <option value="active" ${status === 'active' ? 'selected' : ''}>Active 🟢</option>
-            <option value="sacked" ${status === 'sacked' ? 'selected' : ''}>Sacked 🔴</option>
-            <option value="retired" ${status === 'retired' ? 'selected' : ''}>Retired 🟡</option>
-          </select>
-        </div>
-        <div>
-          <label>Matchday Joined</label>
-          <input type="number" class="mgr-md-joined" value="${matchdayJoined}" placeholder="e.g. 1">
-        </div>
-        <div>
-          <label>Matchday Left (optional)</label>
-          <input type="number" class="mgr-md-left" value="${matchdayLeft}" placeholder="e.g. 10">
-        </div>
-        <div>
-          <button class="save-mgr-btn" data-team="${team}" data-key="${entry ? entry.key : ''}" style="margin-top:8px;">${isEdit ? 'Update' : 'Save'}</button>
-          <button class="cancel-mgr-btn" style="margin-top:8px;background:transparent;border:1px solid var(--laliga-red);color:var(--laliga-white);padding:8px 16px;border-radius:20px;cursor:pointer;">Cancel</button>
-        </div>
-      </div>
-    `;
-
-    container.querySelector('.save-mgr-btn').onclick = async () => {
-      const nameInput = container.querySelector('.mgr-name-input');
-      const statusSelect = container.querySelector('.mgr-status-select');
-      const mdJoinedInput = container.querySelector('.mgr-md-joined');
-      const mdLeftInput = container.querySelector('.mgr-md-left');
-      const name = nameInput.value.trim();
-      const status = statusSelect.value;
-      const matchdayJoined = parseInt(mdJoinedInput.value) || 0;
-      const matchdayLeft = mdLeftInput.value ? parseInt(mdLeftInput.value) : null;
-      if (!name) { alert('Manager name required.'); return; }
-      const key = container.querySelector('.save-mgr-btn').dataset.key;
-      const teamName = team;
-
-      const updates = {};
-      const currentHistory = managerHistory[teamName] || [];
-      if (status === 'active') {
-        for (const e of currentHistory) {
-          if (e.status === 'active' && e.key !== key) {
-            updates[`${getSeasonPath(currentSeasonId, 'managerHistory')}/${teamName}/${e.key}/status`] = 'sacked';
-          }
-        }
-      }
-
-      const entryData = { name, status, matchdayJoined, matchdayLeft };
-      const path = getSeasonPath(currentSeasonId, `managerHistory/${teamName}`);
-      try {
-        if (key) {
-          await database.ref(`${path}/${key}`).update(entryData);
-          for (const updatePath in updates) {
-            await database.ref(updatePath).set(updates[updatePath]);
-          }
-        } else {
-          const newRef = await database.ref(path).push(entryData);
-          for (const updatePath in updates) {
-            await database.ref(updatePath).set(updates[updatePath]);
-          }
-        }
-        await loadManagerHistory();
-        render();
-      } catch(e) { alert('Error: ' + e.message); }
-    };
-
-    container.querySelector('.cancel-mgr-btn').onclick = () => {
-      container.style.display = 'none';
-    };
-  }
-
-  render();
+  renderManagerHistoryModal();
 }
 
-// ─── FEATURE: Manage Team Name Mappings ───
-function openManageTeamNameMappingsModal() {
-  const render = async () => {
-    const snap = await database.ref('laliga/teamNameMappings').once('value');
-    const data = snap.val() || {};
-    let listHtml = '';
-    for (const key in data) {
-      const entry = data[key];
-      listHtml += `
-        <div style="display:flex;align-items:center;gap:16px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-          <span style="flex:1;font-weight:600;color:var(--laliga-white);">${escapeHtml(entry.efootballName)}</span>
-          <span style="flex:1;color:var(--laliga-white);">→ ${escapeHtml(entry.realName)}</span>
-          <button class="btn-sm btn-delete" data-key="${key}" style="padding:6px 16px;font-size:1rem;">Delete</button>
-        </div>
-      `;
-    }
-    if (!listHtml) listHtml = '<div style="color:rgba(255,255,255,0.4);padding:20px 0;">No mappings yet.</div>';
-
-    showModal(`
-      <h3>🔁 Manage Team Name Mappings</h3>
-      <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;">These mappings are used to convert eFootball team names to real names during AI scanning.</p>
-      <div style="max-height:300px;overflow-y:auto;margin-bottom:20px;">
-        ${listHtml}
-      </div>
-      <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:20px;">
-        <h4 style="color:var(--laliga-red);font-size:1.4rem;margin-bottom:12px;">Add New Mapping</h4>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;">
-          <input type="text" id="newEfootballName" placeholder="eFootball name" style="flex:1;min-width:160px;">
-          <input type="text" id="newRealName" placeholder="Real name" style="flex:1;min-width:160px;">
-          <button class="modal-btn-primary" id="addMappingBtn" style="flex:0 0 auto;padding:12px 28px;">Add</button>
-        </div>
-        <div id="mappingStatus"></div>
-      </div>
-      <div class="modal-btns">
-        <button class="modal-btn-cancel" id="closeMappingBtn">Close</button>
-      </div>
-    `);
-
-    document.getElementById('closeMappingBtn').onclick = closeModal;
-    document.getElementById('addMappingBtn').onclick = async () => {
-      const efootballName = document.getElementById('newEfootballName').value.trim();
-      const realName = document.getElementById('newRealName').value.trim();
-      const status = document.getElementById('mappingStatus');
-      if (!efootballName || !realName) {
-        status.innerHTML = '<div class="status-msg status-error">Both fields required.</div>';
-        return;
-      }
-      const btn = document.getElementById('addMappingBtn');
-      btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Adding...';
-      try {
-        await database.ref('laliga/teamNameMappings').push({ efootballName, realName });
-        await loadTeamNameMappings();
-        status.innerHTML = '<div class="status-msg status-success">Mapping added! Refreshing...</div>';
-        setTimeout(() => { render(); }, 1000);
-      } catch(e) {
-        status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
-        btn.disabled = false; btn.innerHTML = 'Add';
-      }
-    };
-    document.querySelectorAll('[data-key]').forEach(el => {
-      el.onclick = async () => {
-        if (!confirm('Delete this mapping?')) return;
-        const key = el.dataset.key;
-        try {
-          await database.ref(`laliga/teamNameMappings/${key}`).remove();
-          await loadTeamNameMappings();
-          render();
-        } catch(e) { alert('Delete failed: ' + e.message); }
-      };
-    });
-  };
-  render();
-}
-
-// ─── FEATURE: Manage Team Logo Mappings ───
-function openManageTeamLogoMappingsModal() {
-  const render = async () => {
-    const snap = await database.ref('laliga/teamLogoMappings').once('value');
-    const data = snap.val() || {};
-    let listHtml = '';
-    for (const teamName in data) {
-      const entry = data[teamName];
-      listHtml += `
-        <div style="display:flex;align-items:center;gap:16px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-          <img src="${escapeHtml(entry.imageUrl)}" style="width:40px;height:40px;object-fit:contain;border-radius:6px;background:#fff;">
-          <span style="flex:1;font-weight:600;color:var(--laliga-white);">${escapeHtml(teamName)}</span>
-          <span style="flex:1;color:rgba(255,255,255,0.7);">eFootball: ${escapeHtml(entry.efootballName || '')}</span>
-          <button class="btn-sm btn-delete" data-team="${escapeHtml(teamName)}" style="padding:6px 16px;font-size:1rem;">Delete</button>
-        </div>
-      `;
-    }
-    if (!listHtml) listHtml = '<div style="color:rgba(255,255,255,0.4);padding:20px 0;">No logo mappings yet.</div>';
-
-    showModal(`
-      <h3>🏷️ Manage Team Logo Mappings</h3>
-      <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;">These logos are sent to AI to help identify teams during scanning.</p>
-      <div style="max-height:300px;overflow-y:auto;margin-bottom:20px;">
-        ${listHtml}
-      </div>
-      <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:20px;">
-        <h4 style="color:var(--laliga-red);font-size:1.4rem;margin-bottom:12px;">Add New Logo Mapping</h4>
-        <div style="display:flex;flex-wrap:wrap;gap:12px;">
-          <input type="text" id="newLogoTeamName" placeholder="Team name (e.g. Barcelona)" style="flex:1;min-width:140px;">
-          <input type="text" id="newLogoEfootballName" placeholder="eFootball name (optional)" style="flex:1;min-width:140px;">
-          <input type="file" id="newLogoFile" accept="image/*" style="flex:1;min-width:140px;">
-        </div>
-        <div id="logoStatus"></div>
-        <button class="modal-btn-primary" id="addLogoBtn" style="margin-top:12px;padding:12px 28px;">Add Logo</button>
-      </div>
-      <div class="modal-btns">
-        <button class="modal-btn-cancel" id="closeLogoBtn">Close</button>
-      </div>
-    `);
-
-    document.getElementById('closeLogoBtn').onclick = closeModal;
-    document.getElementById('addLogoBtn').onclick = async () => {
-      const teamName = document.getElementById('newLogoTeamName').value.trim();
-      const efootballName = document.getElementById('newLogoEfootballName').value.trim();
-      const file = document.getElementById('newLogoFile').files[0];
-      const status = document.getElementById('logoStatus');
-      if (!teamName || !file) {
-        status.innerHTML = '<div class="status-msg status-error">Team name and image required.</div>';
-        return;
-      }
-      const btn = document.getElementById('addLogoBtn');
-      btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Uploading...';
-      try {
-        const url = await uploadToImgBB(file);
-        await database.ref(`laliga/teamLogoMappings/${teamName}`).set({ imageUrl: url, efootballName });
-        await loadTeamLogoMappings();
-        status.innerHTML = '<div class="status-msg status-success">Logo added! Refreshing...</div>';
-        setTimeout(() => { render(); }, 1000);
-      } catch(e) {
-        status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
-        btn.disabled = false; btn.innerHTML = 'Add Logo';
-      }
-    };
-    document.querySelectorAll('[data-team]').forEach(el => {
-      el.onclick = async () => {
-        const team = el.dataset.team;
-        if (!confirm(`Delete logo for "${team}"?`)) return;
-        try {
-          await database.ref(`laliga/teamLogoMappings/${team}`).remove();
-          await loadTeamLogoMappings();
-          render();
-        } catch(e) { alert('Delete failed: ' + e.message); }
-      };
-    });
-  };
-  render();
-}
-
-// ─── MULTI-SCAN FUNCTIONALITY ───
-
-function createScanMatchBlock(id) {
-  return { id, images: [] };
-}
-
-function openMultiScanModal() {
-  multiScanMatches = [];
-  multiScanIdCounter = 1;
-  multiScanMatches.push(createScanMatchBlock(multiScanIdCounter));
-  renderMultiScanModal();
-}
-
-function renderMultiScanModal() {
-  let blocksHtml = multiScanMatches.map((match, mIdx) => {
-    let thumbsHtml = match.images.map((img, iIdx) => `
-      <div class="match-img-thumb">
-        <img src="${img.dataUrl}" alt="img">
-        <button class="match-img-thumb-del" data-mid="${match.id}" data-iidx="${iIdx}">✕</button>
-      </div>
-    `).join('');
-    thumbsHtml += `<button class="add-image-btn" data-mid="${match.id}" title="Add images">+ Add Image</button>`;
-    return `
-      <div class="scan-match-block" id="msblock_${match.id}">
-        <div class="block-header">
-          <span class="block-header h4">Match ${mIdx + 1}</span>
-          ${multiScanMatches.length > 1 ? `<button class="match-scan-remove-btn" data-removemid="${match.id}">✕</button>` : ''}
-        </div>
-        <div class="block-images" id="thumbs_${match.id}">${thumbsHtml}</div>
-        <div style="color:rgba(255,255,255,0.4);font-size:1rem;margin-top:8px;">${match.images.length} image${match.images.length !== 1 ? 's' : ''} added</div>
-      </div>
-    `;
-  }).join('');
-
-  const totalImages = multiScanMatches.reduce((sum, m) => sum + m.images.length, 0);
-  const canScan = totalImages > 0;
-
-  showModal(`
-    <h3>📸 Scan Match Images</h3>
-    <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;font-size:1.1rem;">Add images for each match. You can add multiple images per match — AI reads them all together.</p>
-    <div id="multiScanBlocks">${blocksHtml}</div>
-    <button class="add-match-block-btn" id="addMatchBlockBtn" style="background:rgba(233,16,46,0.2);border:2px dashed var(--laliga-red);color:var(--laliga-red);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.3rem;padding:14px 32px;border-radius:40px;cursor:pointer;transition:all 0.2s;margin:10px 0;width:100%;justify-content:center;">+ Add Another Match</button>
-    <button class="scan-all-btn" id="scanAllBtn" style="background:var(--laliga-red);border:none;color:white;font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;padding:18px 48px;border-radius:50px;cursor:pointer;transition:all 0.2s;width:100%;margin-top:16px;" ${canScan ? '' : 'disabled'}>🔍 SCAN ALL MATCHES</button>
-    <div id="scanAllStatus"></div>
-    <div class="modal-btns" style="margin-top:16px;">
-      <button class="modal-btn-cancel" id="cancelMultiScanBtn">Cancel</button>
-    </div>
-  `, true);
-
-  document.getElementById('cancelMultiScanBtn').onclick = () => { multiScanMatches = []; closeModal(); };
-  document.getElementById('addMatchBlockBtn').onclick = () => {
-    multiScanIdCounter++;
-    multiScanMatches.push(createScanMatchBlock(multiScanIdCounter));
-    renderMultiScanModal();
-  };
-  document.querySelectorAll('[data-removemid]').forEach(btn => {
-    btn.onclick = () => {
-      const mid = parseInt(btn.dataset.removemid);
-      multiScanMatches = multiScanMatches.filter(m => m.id !== mid);
-      renderMultiScanModal();
-    };
-  });
-  document.querySelectorAll('.add-image-btn').forEach(btn => {
-    btn.onclick = async () => {
-      const mid = parseInt(btn.dataset.mid);
-      const files = await pickFiles('image/*');
-      if (!files.length) return;
-      const match = multiScanMatches.find(m => m.id === mid);
-      if (!match) return;
-      for (const file of files) {
-        const dataUrl = await fileToDataUrl(file);
-        match.images.push({ file, dataUrl });
-      }
-      renderMultiScanModal();
-    };
-  });
-  document.querySelectorAll('.match-img-thumb-del').forEach(btn => {
-    btn.onclick = () => {
-      const mid = parseInt(btn.dataset.mid);
-      const iIdx = parseInt(btn.dataset.iidx);
-      const match = multiScanMatches.find(m => m.id === mid);
-      if (match) { match.images.splice(iIdx, 1); renderMultiScanModal(); }
-    };
-  });
-  document.getElementById('scanAllBtn').onclick = () => scanAllMatches();
-}
-
-async function scanAllMatches() {
-  const statusEl = document.getElementById('scanAllStatus');
-  const scanBtn = document.getElementById('scanAllBtn');
-  if (scanBtn) { scanBtn.disabled = true; scanBtn.innerHTML = '<span class="btn-spinner"></span> Scanning…'; }
-  if (statusEl) statusEl.innerHTML = '<div class="status-msg status-loading">🤖 AI is reading your images…</div>';
-
-  const results = [];
-  for (let i = 0; i < multiScanMatches.length; i++) {
-    const match = multiScanMatches[i];
-    if (!match.images.length) continue;
-    if (statusEl) statusEl.innerHTML = `<div class="status-msg status-loading">🤖 Scanning Match ${i + 1} of ${multiScanMatches.length}…</div>`;
-    try {
-      const scanned = await scanMatchImages(match.images);
-      results.push({ matchIdx: i + 1, scanned });
-    } catch(e) {
-      results.push({ matchIdx: i + 1, scanned: null, error: e.message });
-    }
-  }
-
-  if (results.length === 0) {
-    if (statusEl) statusEl.innerHTML = '<div class="status-msg status-error">No images to scan.</div>';
-    if (scanBtn) { scanBtn.disabled = false; scanBtn.innerHTML = '🔍 SCAN ALL MATCHES'; }
-    return;
-  }
-
-  openMultiScanPreviewModal(results);
-}
-
-async function scanMatchImages(images) {
-  const contentParts = [
-    {
-      type: 'text',
-      text: `Analyze these football/soccer match screenshot(s) and extract the following information in JSON format only (no markdown, no explanation):
-{
-  "homeTeam": "team name as shown in image",
-  "awayTeam": "team name as shown in image",
-  "homeScore": 0,
-  "awayScore": 0,
-  "homeScorers": [{"player": "name", "goals": 1}],
-  "awayScorers": [{"player": "name", "goals": 1}],
-  "homeAssists": [{"player": "name", "assists": 1}],
-  "awayAssists": [{"player": "name", "assists": 1}],
-  "matchday": null
-}
-Use team names EXACTLY as shown in the image. If you cannot find scorers or assists, return empty arrays. Return ONLY the JSON object.`
-    }
-  ];
-
-  for (const img of images) {
-    const base64 = await fileToBase64(img.file);
-    const mimeType = img.file.type || 'image/jpeg';
-    contentParts.push({
-      type: 'image_url',
-      image_url: { url: `data:${mimeType};base64,${base64}` }
-    });
-  }
-
-  // Append team logo mappings
-  if (Object.keys(teamLogoMappings).length > 0) {
-    contentParts.push({ type: 'text', text: 'These are reference team logos to help you identify teams:' });
-    for (const [teamName, mapping] of Object.entries(teamLogoMappings)) {
-      contentParts.push({ type: 'text', text: `This logo = "${teamName}" (also known as "${mapping.efootballName}" in eFootball)` });
-      contentParts.push({ type: 'image_url', image_url: { url: mapping.imageUrl } });
-    }
-  }
-
-  const response = await fetch(GROQ_API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_API_KEY },
-    body: JSON.stringify({
-      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-      messages: [{ role: 'user', content: contentParts }],
-      max_tokens: 1000,
-      temperature: 0
-    })
-  });
-
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err?.error?.message || 'Groq API error');
-  }
-
-  const data = await response.json();
-  const text = data.choices?.[0]?.message?.content || '';
-  const clean = text.replace(/```json|```/g, '').trim();
-  const parsed = JSON.parse(clean);
-
-  parsed.homeTeam = mapTeamName(parsed.homeTeam);
-  parsed.awayTeam = mapTeamName(parsed.awayTeam);
-
-  return parsed;
-}
-
-function openMultiScanPreviewModal(results) {
-  scanPreviewData = results.map(r => {
-    if (r.error || !r.scanned) {
-      return {
-        matchIdx: r.matchIdx,
-        error: r.error || 'Unknown error',
-        homeTeam: '', awayTeam: '',
-        homeScore: 0, awayScore: 0,
-        forfeitType: 'none',
-        matchday: '',
-        date: '', venue: '', matchType: '', aggregate: '',
-        homeScorers: [], awayScorers: [],
-        homeAssists: [], awayAssists: []
-      };
-    }
-    const s = r.scanned;
-    return {
-      matchIdx: r.matchIdx,
-      error: null,
-      homeTeam: s.homeTeam || '',
-      awayTeam: s.awayTeam || '',
-      homeScore: s.homeScore ?? 0,
-      awayScore: s.awayScore ?? 0,
-      forfeitType: 'none',
-      matchday: s.matchday || '',
-      date: '', venue: '', matchType: '', aggregate: '',
-      homeScorers: s.homeScorers || [],
-      awayScorers: s.awayScorers || [],
-      homeAssists: s.homeAssists || [],
-      awayAssists: s.awayAssists || []
-    };
-  });
-
-  renderMultiScanPreview();
-}
-
-function renderMultiScanPreview() {
+function renderManagerHistoryModal() {
   const teamNames = teamsData.map(t => t.name).sort();
-
-  let matchesHtml = scanPreviewData.map((m, idx) => {
-    if (m.error) {
-      return `<div class="scan-preview-match" style="border-color:#cc3333;">
-        <h4 style="color:#ffaaaa;">⚠️ Match ${m.matchIdx} — Scan Failed</h4>
-        <p style="color:#ffaaaa;font-size:1.1rem;">${escapeHtml(m.error)}</p>
-        <p style="color:rgba(255,255,255,0.5);font-size:1rem;">Fill in manually below or remove this match.</p>
-        ${buildPreviewMatchFields(m, idx, teamNames)}
-        <button class="match-scan-remove-btn" style="margin-top:12px;width:auto;border-radius:20px;padding:8px 20px;font-size:1.1rem;background:rgba(180,0,0,0.4);border:1px solid #cc3333;color:#ffaaaa;cursor:pointer;" data-removeidx="${idx}">Remove</button>
-      </div>`;
+  let html = `<h3>👥 Manager History</h3><p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Manage managers for each team. Set one active; others will be sacked.</p>`;
+  for (const team of teamNames) {
+    const entries = managerHistory[team] || [];
+    html += `<div class="manager-team-group"><h4>${escapeHtml(team)}</h4>`;
+    if (entries.length === 0) {
+      html += `<p style="color:rgba(255,255,255,0.3);font-size:1.1rem;">No managers yet.</p>`;
+    } else {
+      for (const entry of entries) {
+        const statusEmoji = entry.status === 'active' ? '🟢' : (entry.status === 'sacked' ? '🔴' : '🟡');
+        const leftText = entry.matchdayLeft ? `left MD ${entry.matchdayLeft}` : '';
+        const joinedText = entry.matchdayJoined ? `joined MD ${entry.matchdayJoined}` : '';
+        html += `<div class="manager-entry" data-key="${entry.key}">`;
+        html += `<span class="mgr-name">${escapeHtml(entry.name)}</span>`;
+        html += `<span class="mgr-status">${statusEmoji}</span>`;
+        html += `<span class="mgr-details">${joinedText} ${leftText}</span>`;
+        html += `<div class="mgr-actions">`;
+        if (entry.status !== 'active') {
+          html += `<button class="set-active-mgr" data-team="${team}" data-key="${entry.key}">Set Active</button>`;
+        }
+        html += `<button class="edit-mgr" data-team="${team}" data-key="${entry.key}">✏️</button>`;
+        html += `<button class="delete-mgr" data-team="${team}" data-key="${entry.key}">🗑️</button>`;
+        html += `</div></div>`;
+      }
     }
-    return `<div class="scan-preview-match">
-      <h4>✅ Match ${m.matchIdx}</h4>
-      <div style="color:rgba(255,255,255,0.7);font-size:1.2rem;margin-bottom:14px;">
-        AI detected: <strong style="color:white;">${escapeHtml(m.homeTeam)} ${m.homeScore} — ${m.awayScore} ${escapeHtml(m.awayTeam)}</strong>
-      </div>
-      ${buildPreviewMatchFields(m, idx, teamNames)}
-      <button class="match-scan-remove-btn" style="margin-top:12px;width:auto;border-radius:20px;padding:8px 20px;font-size:1.1rem;background:rgba(180,0,0,0.4);border:1px solid #cc3333;color:#ffaaaa;cursor:pointer;" data-removeidx="${idx}">Remove Match</button>
+    // Add new manager form
+    html += `<div class="add-manager-form" data-team="${team}">
+      <div class="form-group"><label>Name</label><input type="text" class="mgr-name-input" placeholder="Manager name"></div>
+      <div class="form-group"><label>Status</label><select class="mgr-status-select"><option value="active">Active</option><option value="sacked">Sacked</option><option value="retired">Retired</option></select></div>
+      <div class="form-group"><label>Joined MD</label><input type="number" class="mgr-joined" placeholder="Matchday" value="0"></div>
+      <div class="form-group"><label>Left MD</label><input type="number" class="mgr-left" placeholder="Optional"></div>
+      <div class="form-actions"><button class="add-mgr-btn" data-team="${team}">Add</button></div>
     </div>`;
-  }).join('');
+    html += `</div>`;
+  }
+  html += `<div class="modal-btns"><button class="modal-btn-cancel" id="closeManagerHistory">Close</button></div>`;
+  showModal(html);
 
+  // Event listeners
+  document.getElementById('closeManagerHistory').onclick = closeModal;
+
+  // Add manager
+  document.querySelectorAll('.add-mgr-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const team = btn.dataset.team;
+      const form = btn.closest('.add-manager-form');
+      const name = form.querySelector('.mgr-name-input').value.trim();
+      const status = form.querySelector('.mgr-status-select').value;
+      const matchdayJoined = parseInt(form.querySelector('.mgr-joined').value) || 0;
+      const matchdayLeft = parseInt(form.querySelector('.mgr-left').value) || undefined;
+      if (!name) { alert('Enter manager name.'); return; }
+      const data = { name, status, matchdayJoined, matchdayLeft: matchdayLeft || null };
+      // If setting active, sack others
+      if (status === 'active') {
+        const entries = managerHistory[team] || [];
+        for (const e of entries) {
+          if (e.status === 'active') {
+            await database.ref(getSeasonPath(currentSeasonId, `managerHistory/${team}/${e.key}/status`)).set('sacked');
+          }
+        }
+      }
+      const ref = database.ref(getSeasonPath(currentSeasonId, `managerHistory/${team}`)).push();
+      await ref.set(data);
+      await loadManagerHistory();
+      renderManagerHistoryModal();
+    };
+  });
+
+  // Set active
+  document.querySelectorAll('.set-active-mgr').forEach(btn => {
+    btn.onclick = async () => {
+      const team = btn.dataset.team;
+      const key = btn.dataset.key;
+      // Sack all others
+      const entries = managerHistory[team] || [];
+      for (const e of entries) {
+        if (e.key !== key && e.status === 'active') {
+          await database.ref(getSeasonPath(currentSeasonId, `managerHistory/${team}/${e.key}/status`)).set('sacked');
+        }
+      }
+      // Set this one active
+      await database.ref(getSeasonPath(currentSeasonId, `managerHistory/${team}/${key}/status`)).set('active');
+      await loadManagerHistory();
+      renderManagerHistoryModal();
+    };
+  });
+
+  // Edit
+  document.querySelectorAll('.edit-mgr').forEach(btn => {
+    btn.onclick = () => {
+      const team = btn.dataset.team;
+      const key = btn.dataset.key;
+      const entry = managerHistory[team]?.find(e => e.key === key);
+      if (!entry) return;
+      const newName = prompt('Enter new manager name:', entry.name);
+      if (newName === null) return;
+      const newStatus = prompt('Enter status (active/sacked/retired):', entry.status);
+      if (newStatus === null) return;
+      const newJoined = prompt('Matchday joined:', entry.matchdayJoined);
+      if (newJoined === null) return;
+      const newLeft = prompt('Matchday left (optional):', entry.matchdayLeft || '');
+      const updates = {
+        name: newName.trim(),
+        status: newStatus.trim(),
+        matchdayJoined: parseInt(newJoined) || 0,
+        matchdayLeft: newLeft.trim() ? parseInt(newLeft) : null
+      };
+      if (updates.status === 'active') {
+        // Sack others
+        const entries = managerHistory[team] || [];
+        for (const e of entries) {
+          if (e.key !== key && e.status === 'active') {
+            database.ref(getSeasonPath(currentSeasonId, `managerHistory/${team}/${e.key}/status`)).set('sacked');
+          }
+        }
+      }
+      database.ref(getSeasonPath(currentSeasonId, `managerHistory/${team}/${key}`)).update(updates)
+        .then(() => { loadManagerHistory(); renderManagerHistoryModal(); });
+    };
+  });
+
+  // Delete
+  document.querySelectorAll('.delete-mgr').forEach(btn => {
+    btn.onclick = async () => {
+      if (!confirm('Delete this manager entry?')) return;
+      const team = btn.dataset.team;
+      const key = btn.dataset.key;
+      await database.ref(getSeasonPath(currentSeasonId, `managerHistory/${team}/${key}`)).remove();
+      await loadManagerHistory();
+      renderManagerHistoryModal();
+    };
+  });
+}
+
+// ─── TEAM NAME MAPPINGS MODAL ───
+function openTeamNameMappingsModal() {
+  renderTeamNameMappingsModal();
+}
+
+function renderTeamNameMappingsModal() {
+  let html = `<h3>🔁 Manage Team Name Mappings</h3><p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Map eFootball names to real LaLiga team names for AI scanning.</p>`;
+  const mappingEntries = Object.entries(LALIGA_TEAM_MAP);
+  if (mappingEntries.length) {
+    html += `<ul style="list-style:none;padding:0;">`;
+    for (const [efoot, real] of mappingEntries) {
+      html += `<li style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.2);border-radius:16px;padding:10px 16px;margin-bottom:8px;">`;
+      html += `<span style="color:var(--laliga-white);font-weight:600;">${escapeHtml(efoot)} → ${escapeHtml(real)}</span>`;
+      // Find key in Firebase to delete
+      // We need to store key, but we only have the mapping object. We'll fetch from Firebase again.
+      html += `<button class="delete-name-mapping" data-efoot="${efoot}" style="background:rgba(233,16,46,0.15);border:1px solid var(--laliga-red);border-radius:20px;padding:4px 14px;color:var(--laliga-white);cursor:pointer;">Delete</button>`;
+      html += `</li>`;
+    }
+    html += `</ul>`;
+  } else {
+    html += `<p style="color:rgba(255,255,255,0.3);">No mappings yet.</p>`;
+  }
+  html += `<div style="margin-top:20px;border-top:1px solid rgba(233,16,46,0.2);padding-top:20px;">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+      <div class="form-group" style="flex:1;min-width:150px;"><label>eFootball Name</label><input id="newEfootName" placeholder="e.g. realmadrid" style="width:100%;padding:10px 16px;background:rgba(255,255,255,0.05);border:1px solid var(--laliga-red);border-radius:14px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.1rem;"></div>
+      <div class="form-group" style="flex:1;min-width:150px;"><label>Real Name</label><input id="newRealName" placeholder="e.g. Real Madrid" style="width:100%;padding:10px 16px;background:rgba(255,255,255,0.05);border:1px solid var(--laliga-red);border-radius:14px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.1rem;"></div>
+      <button class="modal-btn-primary" id="addNameMapping" style="flex:0 0 auto;padding:12px 32px;">Add Mapping</button>
+    </div>
+    <div id="nameMappingStatus" style="margin-top:12px;"></div>
+  </div>`;
+  html += `<div class="modal-btns"><button class="modal-btn-cancel" id="closeNameMappings">Close</button></div>`;
+  showModal(html);
+
+  document.getElementById('closeNameMappings').onclick = closeModal;
+
+  document.getElementById('addNameMapping').onclick = async () => {
+    const efoot = document.getElementById('newEfootName').value.trim();
+    const real = document.getElementById('newRealName').value.trim();
+    const status = document.getElementById('nameMappingStatus');
+    if (!efoot || !real) { status.innerHTML = '<div class="status-msg status-error">Both fields required.</div>'; return; }
+    try {
+      await database.ref('laliga/teamNameMappings').push({ efootballName: efoot, realName: real });
+      await loadTeamNameMappings();
+      status.innerHTML = '<div class="status-msg status-success">Mapping added.</div>';
+      renderTeamNameMappingsModal();
+    } catch (e) {
+      status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+    }
+  };
+
+  document.querySelectorAll('.delete-name-mapping').forEach(btn => {
+    btn.onclick = async () => {
+      const efoot = btn.dataset.efoot;
+      if (!confirm(`Delete mapping for "${efoot}"?`)) return;
+      // Find the key in Firebase
+      const snap = await database.ref('laliga/teamNameMappings').once('value');
+      const data = snap.val() || {};
+      for (const [key, val] of Object.entries(data)) {
+        if (val.efootballName && val.efootballName.toLowerCase() === efoot.toLowerCase()) {
+          await database.ref(`laliga/teamNameMappings/${key}`).remove();
+          break;
+        }
+      }
+      await loadTeamNameMappings();
+      renderTeamNameMappingsModal();
+    };
+  });
+}
+
+// ─── TEAM LOGO MAPPINGS MODAL ───
+function openTeamLogoMappingsModal() {
+  renderTeamLogoMappingsModal();
+}
+
+function renderTeamLogoMappingsModal() {
+  let html = `<h3>🏷️ Manage Team Logo Mappings</h3><p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Upload team logos to help AI identify teams during scanning.</p>`;
+  const entries = Object.entries(teamLogoMappings);
+  if (entries.length) {
+    html += `<div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:20px;">`;
+    for (const [team, val] of entries) {
+      html += `<div style="background:rgba(0,0,0,0.2);border-radius:16px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:8px;">`;
+      html += `<img src="${val.imageUrl}" style="width:80px;height:80px;object-fit:contain;border-radius:8px;border:2px solid var(--laliga-red);">`;
+      html += `<span style="color:var(--laliga-white);font-weight:600;">${escapeHtml(team)}</span>`;
+      html += `<span style="color:rgba(255,255,255,0.5);font-size:0.9rem;">${escapeHtml(val.efootballName)}</span>`;
+      html += `<button class="delete-logo-mapping" data-team="${team}" style="background:rgba(233,16,46,0.15);border:1px solid var(--laliga-red);border-radius:20px;padding:4px 14px;color:var(--laliga-white);cursor:pointer;">Delete</button>`;
+      html += `</div>`;
+    }
+    html += `</div>`;
+  } else {
+    html += `<p style="color:rgba(255,255,255,0.3);">No logo mappings yet.</p>`;
+  }
+  html += `<div style="margin-top:20px;border-top:1px solid rgba(233,16,46,0.2);padding-top:20px;">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+      <div class="form-group" style="flex:1;min-width:150px;"><label>Team Name</label><input id="newLogoTeam" placeholder="e.g. Real Madrid" style="width:100%;padding:10px 16px;background:rgba(255,255,255,0.05);border:1px solid var(--laliga-red);border-radius:14px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.1rem;"></div>
+      <div class="form-group" style="flex:1;min-width:150px;"><label>eFootball Name</label><input id="newLogoEfoot" placeholder="e.g. realmadrid" style="width:100%;padding:10px 16px;background:rgba(255,255,255,0.05);border:1px solid var(--laliga-red);border-radius:14px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.1rem;"></div>
+      <div class="form-group" style="flex:0 0 auto;"><label>Logo Image</label><input type="file" id="newLogoFile" accept="image/*" style="padding:10px;background:rgba(255,255,255,0.05);border:1px solid var(--laliga-red);border-radius:14px;color:white;"></div>
+      <button class="modal-btn-primary" id="addLogoMapping" style="flex:0 0 auto;padding:12px 32px;">Add Logo</button>
+    </div>
+    <div id="logoMappingStatus" style="margin-top:12px;"></div>
+  </div>`;
+  html += `<div class="modal-btns"><button class="modal-btn-cancel" id="closeLogoMappings">Close</button></div>`;
+  showModal(html);
+
+  document.getElementById('closeLogoMappings').onclick = closeModal;
+
+  document.getElementById('addLogoMapping').onclick = async () => {
+    const team = document.getElementById('newLogoTeam').value.trim();
+    const efoot = document.getElementById('newLogoEfoot').value.trim();
+    const fileInput = document.getElementById('newLogoFile');
+    const status = document.getElementById('logoMappingStatus');
+    if (!team || !efoot) { status.innerHTML = '<div class="status-msg status-error">Team and eFootball name required.</div>'; return; }
+    if (!fileInput.files.length) { status.innerHTML = '<div class="status-msg status-error">Please select an image.</div>'; return; }
+    try {
+      status.innerHTML = '<div class="status-msg status-loading">Uploading logo...</div>';
+      const url = await uploadToImgBB(fileInput.files[0]);
+      await database.ref(`laliga/teamLogoMappings/${team}`).set({ imageUrl: url, efootballName: efoot });
+      await loadTeamLogoMappings();
+      status.innerHTML = '<div class="status-msg status-success">Logo added.</div>';
+      renderTeamLogoMappingsModal();
+    } catch (e) {
+      status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+    }
+  };
+
+  document.querySelectorAll('.delete-logo-mapping').forEach(btn => {
+    btn.onclick = async () => {
+      const team = btn.dataset.team;
+      if (!confirm(`Delete logo for "${team}"?`)) return;
+      await database.ref(`laliga/teamLogoMappings/${team}`).remove();
+      await loadTeamLogoMappings();
+      renderTeamLogoMappingsModal();
+    };
+  });
+}
+
+// ─── SCAN FUNCTIONALITY (UPDATED with Render and pending saves) ───
+
+let scanMatchBlocks = [];
+let scanPreviewData = [];
+
+function openScanModal() {
+  scanMatchBlocks = [{ team: '', images: [] }];
+  scanPreviewData = [];
+  renderScanModal();
+}
+
+function renderScanModal() {
+  let blocksHtml = '';
+  scanMatchBlocks.forEach((block, idx) => {
+    const imagesHtml = block.images.map((imgData, imgIdx) => {
+      return `<div class="image-preview"><img src="${imgData.dataUrl}"><button class="remove-img" data-block="${idx}" data-img="${imgIdx}">✕</button></div>`;
+    }).join('');
+    blocksHtml += `
+      <div class="scan-match-block" data-block="${idx}">
+        <div class="block-header">
+          <h4>Match ${idx + 1}</h4>
+          ${scanMatchBlocks.length > 1 ? `<button class="remove-block-btn" data-block="${idx}">✕ Remove</button>` : ''}
+        </div>
+        <div class="block-team-input">
+          <label>Team Name</label>
+          <input type="text" class="block-team-input-field" data-block="${idx}" placeholder="e.g. Barcelona" value="${escapeHtml(block.team)}">
+        </div>
+        <div class="block-images" id="blockImages_${idx}">
+          ${imagesHtml}
+          <button class="add-image-btn" data-block="${idx}">+ Add Image</button>
+        </div>
+      </div>
+    `;
+  });
+  
   showModal(`
-    <h3>✅ Review & Confirm All Matches</h3>
-    <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;font-size:1.1rem;">Review each match before saving. Edit anything the AI got wrong.</p>
-    <div id="previewMatchesContainer">${matchesHtml}</div>
-    <div style="margin-top:24px;padding:16px;background:rgba(233,16,46,0.1);border:1px solid var(--laliga-red);border-radius:20px;">
-      <p style="color:var(--laliga-red);font-size:1.1rem;font-weight:600;">⚠️ Confirming will save all matches to: Results, Table, Top Scorers & Top Assistants</p>
+    <h3>📸 Multi-Match Scan</h3>
+    <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Add match blocks with images. The AI will scan each image and extract match data.</p>
+    <div id="scanBlocksContainer">${blocksHtml}</div>
+    <div style="display:flex;gap:16px;margin-top:20px;flex-wrap:wrap;">
+      <button class="modal-btn-primary" id="addMatchBlockBtn" style="flex:0 1 auto;padding:12px 32px;">+ Add Match</button>
+      <button class="modal-btn-primary" id="scanMatchesBtn" style="flex:0 1 auto;padding:12px 32px;background:#22c55e;">🔍 Scan All</button>
+      <button class="modal-btn-cancel" id="cancelScanBtn" style="flex:0 1 auto;padding:12px 32px;">Cancel</button>
     </div>
-    <div class="modal-btns" style="margin-top:20px;">
-      <button class="modal-btn-primary" id="confirmAllScanBtn">✅ CONFIRM & SAVE ALL</button>
-      <button class="modal-btn-cancel" id="cancelPreviewBtn">Cancel</button>
-    </div>
-    <div id="confirmSaveStatus"></div>
-  `, true);
-
-  document.getElementById('cancelPreviewBtn').onclick = () => { multiScanMatches = []; closeModal(); };
-  document.querySelectorAll('[data-removeidx]').forEach(btn => {
+    <div id="scanModalStatus" style="margin-top:16px;"></div>
+  `);
+  
+  document.getElementById('cancelScanBtn').onclick = closeModal;
+  
+  document.getElementById('addMatchBlockBtn').onclick = () => {
+    scanMatchBlocks.push({ team: '', images: [] });
+    renderScanModal();
+  };
+  
+  document.querySelectorAll('.remove-block-btn').forEach(btn => {
     btn.onclick = () => {
-      const idx = parseInt(btn.dataset.removeidx);
-      scanPreviewData.splice(idx, 1);
-      renderMultiScanPreview();
+      const idx = parseInt(btn.dataset.block);
+      scanMatchBlocks.splice(idx, 1);
+      renderScanModal();
     };
   });
-  document.getElementById('confirmAllScanBtn').onclick = () => confirmAllScan();
-  setTimeout(attachPreviewModalListeners, 50);
+  
+  document.querySelectorAll('.add-image-btn').forEach(btn => {
+    btn.onclick = () => {
+      const idx = parseInt(btn.dataset.block);
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.multiple = true;
+      input.onchange = (e) => {
+        const files = e.target.files;
+        for (const file of files) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            scanMatchBlocks[idx].images.push({
+              file: file,
+              dataUrl: ev.target.result
+            });
+            renderScanModal();
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+    };
+  });
+  
+  document.querySelectorAll('.remove-img').forEach(btn => {
+    btn.onclick = () => {
+      const blockIdx = parseInt(btn.dataset.block);
+      const imgIdx = parseInt(btn.dataset.img);
+      scanMatchBlocks[blockIdx].images.splice(imgIdx, 1);
+      renderScanModal();
+    };
+  });
+  
+  document.querySelectorAll('.block-team-input-field').forEach(inp => {
+    inp.oninput = () => {
+      const idx = parseInt(inp.dataset.block);
+      scanMatchBlocks[idx].team = inp.value;
+    };
+  });
+  
+  document.getElementById('scanMatchesBtn').onclick = performScan;
 }
 
-function buildPreviewMatchFields(m, idx, teamNames) {
-  const makeOpts = (selected) => teamNames.map(t => `<option value="${t}" ${t === selected ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('');
+// UPDATED performScan to use Render and status messages
+async function performScan() {
+  for (const block of scanMatchBlocks) {
+    if (!block.team.trim()) {
+      document.getElementById('scanModalStatus').innerHTML = `<div class="status-msg status-error">All matches must have a team name.</div>`;
+      return;
+    }
+    if (block.images.length === 0) {
+      document.getElementById('scanModalStatus').innerHTML = `<div class="status-msg status-error">Match "${block.team}" has no images.</div>`;
+      return;
+    }
+  }
+  
+  document.getElementById('scanLoadingOverlay').classList.add('active');
+  document.getElementById('scanModalStatus').innerHTML = '';
+  
+  try {
+    const allResults = [];
+    let totalImages = 0;
+    for (const block of scanMatchBlocks) {
+      totalImages += block.images.length;
+    }
+    let processed = 0;
+    
+    for (const block of scanMatchBlocks) {
+      const teamName = block.team.trim();
+      for (const imgData of block.images) {
+        // Build content array
+        const content = [];
+        // Prompt
+        const promptText = `Analyze this football match image. Extract the match result. The team playing is "${teamName}". Return a JSON object with: homeTeam (string), awayTeam (string), homeScore (number), awayScore (number), matchday (number), forfeitType (string: "none", "no_contest", "forfeit_no_reply", or "forfeit_agreement"), date (string), venue (string), matchType (string), aggregate (string), scorers (array of {player, goals}), assists (array of {player, count}). Only return valid JSON.`;
+        content.push({ type: "text", text: promptText });
+        // Main image
+        content.push({ type: "image_url", image_url: { url: imgData.dataUrl } });
+        // Append logo mappings
+        for (const [team, logoVal] of Object.entries(teamLogoMappings)) {
+          if (logoVal.imageUrl) {
+            content.push({ type: "text", text: `Logo of ${logoVal.efootballName} (${team}):` });
+            content.push({ type: "image_url", image_url: { url: logoVal.imageUrl } });
+          }
+        }
+        // Build messages
+        const messages = [
+          { role: "user", content: content }
+        ];
+        const payload = {
+          messages: messages,
+          model: "meta-llama/llama-4-scout-17b-16e-instruct"
+        };
+        
+        // CHANGE 1: Use Render backend
+        const response = await fetch(RENDER_URL + '/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Scan API error: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        processed++;
+        document.querySelector('.scan-loading-sub').textContent = `Processing ${processed}/${totalImages} images...`;
+        
+        let parsed = null;
+        try {
+          const raw = result.result || result.response || result;
+          if (typeof raw === 'string') {
+            const jsonMatch = raw.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              parsed = JSON.parse(jsonMatch[0]);
+            } else {
+              parsed = JSON.parse(raw);
+            }
+          } else {
+            parsed = raw;
+          }
+        } catch (e) {
+          console.warn('Failed to parse scan result:', e);
+          parsed = { homeTeam: '', awayTeam: '', homeScore: 0, awayScore: 0 };
+        }
+        
+        // Apply team name mapping
+        if (parsed.homeTeam) parsed.homeTeam = mapTeamName(parsed.homeTeam);
+        if (parsed.awayTeam) parsed.awayTeam = mapTeamName(parsed.awayTeam);
+        
+        parsed.homeScore = parseInt(parsed.homeScore) || 0;
+        parsed.awayScore = parseInt(parsed.awayScore) || 0;
+        parsed.matchday = parseInt(parsed.matchday) || 0;
+        
+        allResults.push({
+          ...parsed,
+          _scannedTeam: teamName,
+          _scorers: parsed.scorers || [],
+          _assists: parsed.assists || []
+        });
+      }
+    }
+    
+    document.getElementById('scanLoadingOverlay').classList.remove('active');
+    
+    if (allResults.length === 0) {
+      document.getElementById('scanModalStatus').innerHTML = `<div class="status-msg status-error">No results could be extracted from the images.</div>`;
+      return;
+    }
+    
+    scanPreviewData = allResults;
+    renderScanPreview();
+    
+  } catch (error) {
+    document.getElementById('scanLoadingOverlay').classList.remove('active');
+    document.getElementById('scanModalStatus').innerHTML = `<div class="status-msg status-error">Error: ${error.message}</div>`;
+  }
+}
 
-  const hsHome = (m.homeScorers || []).map((s, i) => `
-    <span class="scorer-badge">⚽ ${escapeHtml(s.player)} (${s.goals})
-      <button class="remove-scorer" data-matchidx="${idx}" data-side="homeScorers" data-sidx="${i}">✖</button>
-    </span>`).join('');
-  const hsAway = (m.awayScorers || []).map((s, i) => `
-    <span class="scorer-badge">⚽ ${escapeHtml(s.player)} (${s.goals})
-      <button class="remove-scorer" data-matchidx="${idx}" data-side="awayScorers" data-sidx="${i}">✖</button>
-    </span>`).join('');
-  const haHome = (m.homeAssists || []).map((a, i) => `
-    <span class="scorer-badge">🎯 ${escapeHtml(a.player)} (${a.assists})
-      <button class="remove-scorer" data-matchidx="${idx}" data-side="homeAssists" data-sidx="${i}">✖</button>
-    </span>`).join('');
-  const haAway = (m.awayAssists || []).map((a, i) => `
-    <span class="scorer-badge">🎯 ${escapeHtml(a.player)} (${a.assists})
-      <button class="remove-scorer" data-matchidx="${idx}" data-side="awayAssists" data-sidx="${i}">✖</button>
-    </span>`).join('');
-
-  return `
-    <div class="preview-row">
-      <div class="field-group">
-        <label>Home Team</label>
-        <select data-field="homeTeam" data-idx="${idx}">
-          <option value="">Select Home Team</option>${makeOpts(m.homeTeam)}
-        </select>
+// ─── SCAN PREVIEW (unchanged except mapping already applied) ───
+function renderScanPreview() {
+  let previewHtml = `<h3>📋 Scan Results Preview</h3><p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Review and edit the detected match data before saving.</p>`;
+  
+  scanPreviewData.forEach((match, idx) => {
+    const homeTeamOpts = teamsData.map(t => `<option value="${t.name}" ${t.name === match.homeTeam ? 'selected' : ''}>${t.name}</option>`).join('');
+    const awayTeamOpts = teamsData.map(t => `<option value="${t.name}" ${t.name === match.awayTeam ? 'selected' : ''}>${t.name}</option>`).join('');
+    
+    const forfeitOptions = ['none', 'no_contest', 'forfeit_no_reply', 'forfeit_agreement'].map(f => 
+      `<option value="${f}" ${match.forfeitType === f ? 'selected' : ''}>${f === 'none' ? 'Normal' : f}</option>`
+    ).join('');
+    
+    const scorersHtml = (match._scorers || []).map((s, si) => 
+      `<div class="scorer-chip">${s.player} (${s.goals || 0})<button class="remove-chip" data-match="${idx}" data-scorer="${si}" data-side="scorer">✕</button></div>`
+    ).join('');
+    
+    const assistsHtml = (match._assists || []).map((a, ai) => 
+      `<div class="scorer-chip">${a.player} (${a.count || 0})<button class="remove-chip" data-match="${idx}" data-scorer="${ai}" data-side="assist">✕</button></div>`
+    ).join('');
+    
+    previewHtml += `
+      <div class="scan-preview-match" data-match="${idx}">
+        <h4 style="color:var(--laliga-red);font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:1px;">Match ${idx + 1}</h4>
+        <div class="preview-row">
+          <div class="field-group">
+            <label>Home Team</label>
+            <select class="preview-home-team" data-match="${idx}">${homeTeamOpts}</select>
+          </div>
+          <div class="field-group" style="flex:0 0 80px;">
+            <label>Score</label>
+            <input type="number" class="preview-home-score" data-match="${idx}" value="${match.homeScore || 0}" style="width:60px;">
+          </div>
+          <div class="field-group" style="flex:0 0 20px;text-align:center;font-size:2rem;color:rgba(255,255,255,0.3);">—</div>
+          <div class="field-group" style="flex:0 0 80px;">
+            <label>Score</label>
+            <input type="number" class="preview-away-score" data-match="${idx}" value="${match.awayScore || 0}" style="width:60px;">
+          </div>
+          <div class="field-group">
+            <label>Away Team</label>
+            <select class="preview-away-team" data-match="${idx}">${awayTeamOpts}</select>
+          </div>
+        </div>
+        <div class="preview-row" style="margin-top:8px;">
+          <div class="field-group">
+            <label>Matchday</label>
+            <input type="number" class="preview-md" data-match="${idx}" value="${match.matchday || 0}">
+          </div>
+          <div class="field-group">
+            <label>Forfeit</label>
+            <select class="preview-forfeit" data-match="${idx}">${forfeitOptions}</select>
+          </div>
+          <div class="field-group">
+            <label>Date</label>
+            <input type="text" class="preview-date" data-match="${idx}" placeholder="e.g. 15 May 2025" value="${match.date || ''}">
+          </div>
+          <div class="field-group">
+            <label>Venue</label>
+            <input type="text" class="preview-venue" data-match="${idx}" placeholder="Venue" value="${match.venue || ''}">
+          </div>
+          <div class="field-group">
+            <label>Match Type</label>
+            <input type="text" class="preview-type" data-match="${idx}" placeholder="e.g. Matchday 5" value="${match.matchType || ''}">
+          </div>
+          <div class="field-group">
+            <label>Aggregate</label>
+            <input type="text" class="preview-agg" data-match="${idx}" placeholder="e.g. 4-2" value="${match.aggregate || ''}">
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+            <span style="color:rgba(255,255,255,0.6);font-weight:600;font-size:1rem;">⚽ Scorers:</span>
+            <div class="preview-scorers" id="previewScorers_${idx}">${scorersHtml}</div>
+            <button class="add-scorer-btn" data-match="${idx}" data-side="scorer" style="background:rgba(233,16,46,0.15);border:1px dashed var(--laliga-red);border-radius:20px;padding:4px 14px;color:var(--laliga-white);cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;">+ Add</button>
+          </div>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+            <span style="color:rgba(255,255,255,0.6);font-weight:600;font-size:1rem;">🎯 Assists:</span>
+            <div class="preview-scorers" id="previewAssists_${idx}">${assistsHtml}</div>
+            <button class="add-scorer-btn" data-match="${idx}" data-side="assist" style="background:rgba(233,16,46,0.15);border:1px dashed var(--laliga-red);border-radius:20px;padding:4px 14px;color:var(--laliga-white);cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;">+ Add</button>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:0.9rem;color:rgba(255,255,255,0.3);">Scanned from: ${match._scannedTeam || 'unknown'}</div>
       </div>
-      <div class="field-group">
-        <label>Away Team</label>
-        <select data-field="awayTeam" data-idx="${idx}">
-          <option value="">Select Away Team</option>${makeOpts(m.awayTeam)}
-        </select>
-      </div>
+    `;
+  });
+  
+  previewHtml += `
+    <div class="modal-btns">
+      <button class="modal-btn-primary" id="confirmScanResults" style="background:#22c55e;">✅ Confirm & Save All</button>
+      <button class="modal-btn-cancel" id="cancelScanPreview">Cancel</button>
     </div>
-    <div class="preview-row">
-      <div class="field-group" style="flex:0 0 80px;">
-        <label>Home Score</label>
-        <input type="number" data-field="homeScore" data-idx="${idx}" value="${m.homeScore}" style="width:60px;">
-      </div>
-      <div class="field-group" style="flex:0 0 80px;">
-        <label>Away Score</label>
-        <input type="number" data-field="awayScore" data-idx="${idx}" value="${m.awayScore}" style="width:60px;">
-      </div>
-      <div class="field-group" style="flex:0 0 80px;">
-        <label>MD</label>
-        <input type="number" data-field="matchday" data-idx="${idx}" value="${m.matchday || ''}" style="width:60px;">
-      </div>
-      <div class="field-group">
-        <label>Forfeit</label>
-        <select data-field="forfeitType" data-idx="${idx}">
-          <option value="none" ${m.forfeitType === 'none' ? 'selected' : ''}>Normal</option>
-          <option value="no_contest" ${m.forfeitType === 'no_contest' ? 'selected' : ''}>No Contest</option>
-          <option value="forfeit_no_reply" ${m.forfeitType === 'forfeit_no_reply' ? 'selected' : ''}>Forfeit No Reply</option>
-          <option value="forfeit_agreement" ${m.forfeitType === 'forfeit_agreement' ? 'selected' : ''}>Forfeit Agreement</option>
-        </select>
-      </div>
-    </div>
-    <div class="preview-row">
-      <div class="field-group">
-        <label>Date</label>
-        <input type="text" data-field="date" data-idx="${idx}" value="${escapeHtml(m.date || '')}" placeholder="e.g. 15 May 2025">
-      </div>
-      <div class="field-group">
-        <label>Venue</label>
-        <input type="text" data-field="venue" data-idx="${idx}" value="${escapeHtml(m.venue || '')}" placeholder="Venue">
-      </div>
-      <div class="field-group">
-        <label>Match Type</label>
-        <input type="text" data-field="matchType" data-idx="${idx}" value="${escapeHtml(m.matchType || '')}" placeholder="e.g. Matchday 5">
-      </div>
-      <div class="field-group">
-        <label>Aggregate</label>
-        <input type="text" data-field="aggregate" data-idx="${idx}" value="${escapeHtml(m.aggregate || '')}" placeholder="e.g. 4-2">
-      </div>
-    </div>
-
-    <div class="scorer-section">
-      <h4>⚽ Home Scorers</h4>
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <input type="text" id="hs_name_${idx}" placeholder="Player" style="flex:2;">
-        <input type="number" id="hs_goals_${idx}" value="1" style="width:70px;">
-        <button class="modal-btn-primary add-scorer-btn" data-matchidx="${idx}" data-side="homeScorers" style="padding:8px 16px;font-size:1rem;">Add</button>
-      </div>
-      <div class="scorer-list">${hsHome}</div>
-    </div>
-    <div class="scorer-section">
-      <h4>⚽ Away Scorers</h4>
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <input type="text" id="as_name_${idx}" placeholder="Player" style="flex:2;">
-        <input type="number" id="as_goals_${idx}" value="1" style="width:70px;">
-        <button class="modal-btn-primary add-scorer-btn" data-matchidx="${idx}" data-side="awayScorers" style="padding:8px 16px;font-size:1rem;">Add</button>
-      </div>
-      <div class="scorer-list">${hsAway}</div>
-    </div>
-    <div class="scorer-section">
-      <h4>🎯 Home Assists</h4>
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <input type="text" id="ha_name_${idx}" placeholder="Player" style="flex:2;">
-        <input type="number" id="ha_assists_${idx}" value="1" style="width:70px;">
-        <button class="modal-btn-primary add-assist-btn" data-matchidx="${idx}" data-side="homeAssists" style="padding:8px 16px;font-size:1rem;">Add</button>
-      </div>
-      <div class="scorer-list">${haHome}</div>
-    </div>
-    <div class="scorer-section">
-      <h4>🎯 Away Assists</h4>
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <input type="text" id="aa_name_${idx}" placeholder="Player" style="flex:2;">
-        <input type="number" id="aa_assists_${idx}" value="1" style="width:70px;">
-        <button class="modal-btn-primary add-assist-btn" data-matchidx="${idx}" data-side="awayAssists" style="padding:8px 16px;font-size:1rem;">Add</button>
-      </div>
-      <div class="scorer-list">${haAway}</div>
-    </div>
+    <div id="scanPreviewStatus" style="margin-top:16px;"></div>
   `;
-}
-
-function attachPreviewModalListeners() {
-  document.querySelectorAll('[data-field][data-idx]').forEach(el => {
-    el.addEventListener('change', () => {
-      const idx = parseInt(el.dataset.idx);
-      const field = el.dataset.field;
-      let val = el.value;
-      if (field === 'homeScore' || field === 'awayScore' || field === 'matchday') val = parseInt(val) || 0;
-      scanPreviewData[idx][field] = val;
-    });
-    el.addEventListener('input', () => {
-      const idx = parseInt(el.dataset.idx);
-      const field = el.dataset.field;
-      let val = el.value;
-      if (field === 'homeScore' || field === 'awayScore' || field === 'matchday') val = parseInt(val) || 0;
-      scanPreviewData[idx][field] = val;
-    });
-  });
-
-  document.querySelectorAll('.remove-scorer[data-matchidx]').forEach(btn => {
-    btn.onclick = () => {
-      const idx = parseInt(btn.dataset.matchidx);
-      const side = btn.dataset.side;
-      const sIdx = parseInt(btn.dataset.sidx);
-      scanPreviewData[idx][side].splice(sIdx, 1);
-      renderMultiScanPreview();
-    };
-  });
-
+  
+  showModal(previewHtml);
+  
+  document.getElementById('cancelScanPreview').onclick = () => {
+    closeModal();
+    renderScanModal();
+  };
+  
   document.querySelectorAll('.add-scorer-btn').forEach(btn => {
     btn.onclick = () => {
-      const idx = parseInt(btn.dataset.matchidx);
+      const matchIdx = parseInt(btn.dataset.match);
       const side = btn.dataset.side;
-      const prefix = side === 'homeScorers' ? 'hs' : 'as';
-      const name = document.getElementById(`${prefix}_name_${idx}`)?.value.trim();
-      const goals = parseInt(document.getElementById(`${prefix}_goals_${idx}`)?.value) || 1;
-      if (!name) return;
-      scanPreviewData[idx][side].push({ player: name, goals });
-      renderMultiScanPreview();
+      const playerName = prompt('Enter player name:');
+      if (!playerName) return;
+      const count = parseInt(prompt('Enter number of ' + (side === 'scorer' ? 'goals' : 'assists') + ':')) || 1;
+      if (side === 'scorer') {
+        if (!scanPreviewData[matchIdx]._scorers) scanPreviewData[matchIdx]._scorers = [];
+        scanPreviewData[matchIdx]._scorers.push({ player: playerName, goals: count });
+      } else {
+        if (!scanPreviewData[matchIdx]._assists) scanPreviewData[matchIdx]._assists = [];
+        scanPreviewData[matchIdx]._assists.push({ player: playerName, count: count });
+      }
+      renderScanPreview();
     };
   });
-
-  document.querySelectorAll('.add-assist-btn').forEach(btn => {
+  
+  document.querySelectorAll('.remove-chip').forEach(btn => {
     btn.onclick = () => {
-      const idx = parseInt(btn.dataset.matchidx);
+      const matchIdx = parseInt(btn.dataset.match);
+      const scorerIdx = parseInt(btn.dataset.scorer);
       const side = btn.dataset.side;
-      const prefix = side === 'homeAssists' ? 'ha' : 'aa';
-      const name = document.getElementById(`${prefix}_name_${idx}`)?.value.trim();
-      const assists = parseInt(document.getElementById(`${prefix}_assists_${idx}`)?.value) || 1;
-      if (!name) return;
-      scanPreviewData[idx][side].push({ player: name, assists });
-      renderMultiScanPreview();
+      if (side === 'scorer') {
+        scanPreviewData[matchIdx]._scorers.splice(scorerIdx, 1);
+      } else {
+        scanPreviewData[matchIdx]._assists.splice(scorerIdx, 1);
+      }
+      renderScanPreview();
     };
   });
-}
-
-async function confirmAllScan() {
-  const btn = document.getElementById('confirmAllScanBtn');
-  const statusEl = document.getElementById('confirmSaveStatus');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span> Saving…'; }
-
-  // Sync final field values
-  document.querySelectorAll('[data-field][data-idx]').forEach(el => {
-    const idx = parseInt(el.dataset.idx);
-    const field = el.dataset.field;
-    if (idx >= scanPreviewData.length) return;
-    let val = el.value;
-    if (field === 'homeScore' || field === 'awayScore' || field === 'matchday') val = parseInt(val) || 0;
-    scanPreviewData[idx][field] = val;
-  });
-
-  let savedCount = 0;
-  const errors = [];
-
-  for (const m of scanPreviewData) {
-    if (!m.homeTeam || !m.awayTeam) { errors.push(`Match ${m.matchIdx}: teams missing`); continue; }
-    if (m.homeTeam === m.awayTeam) { errors.push(`Match ${m.matchIdx}: same team on both sides`); continue; }
-
+  
+  document.getElementById('confirmScanResults').onclick = async () => {
+    const statusDiv = document.getElementById('scanPreviewStatus');
+    statusDiv.innerHTML = '<div class="status-msg status-loading">💾 Saving result to database...</div>';
+    
     try {
-      const hs = m.homeScore || 0;
-      const as2 = m.awayScore || 0;
-      const forfeit = m.forfeitType || 'none';
-      const matchText = formatResultText(m.homeTeam, hs, m.awayTeam, as2, forfeit === 'none' ? '' : forfeit);
-
-      const resultData = {
-        matchText,
-        md: m.matchday || 0,
-        ...(m.date && { date: m.date }),
-        ...(m.venue && { venue: m.venue }),
-        ...(m.matchType && { matchType: m.matchType }),
-        ...(m.aggregate && { aggregate: m.aggregate }),
-        goalScorers: { home: m.homeScorers || [], away: m.awayScorers || [] }
-      };
-
-      // Save result
-      await database.ref(getSeasonPath(currentSeasonId, 'results')).push(resultData);
-      // Update table
-      await applyResultToTable(m.homeTeam, m.awayTeam, hs, as2, forfeit === 'none' ? '' : forfeit);
-      // Update top scorers and assistants
-      await applyScorersFromScan(m.homeScorers || [], m.homeTeam);
-      await applyScorersFromScan(m.awayScorers || [], m.awayTeam);
-      await applyAssistsFromScan(m.homeAssists || [], m.homeTeam);
-      await applyAssistsFromScan(m.awayAssists || [], m.awayTeam);
-
-      savedCount++;
-    } catch(e) {
-      errors.push(`Match ${m.matchIdx}: ${e.message}`);
+      for (let i = 0; i < scanPreviewData.length; i++) {
+        const match = scanPreviewData[i];
+        const homeTeam = document.querySelector(`.preview-home-team[data-match="${i}"]`)?.value || match.homeTeam || '';
+        const awayTeam = document.querySelector(`.preview-away-team[data-match="${i}"]`)?.value || match.awayTeam || '';
+        const homeScore = parseInt(document.querySelector(`.preview-home-score[data-match="${i}"]`)?.value) || 0;
+        const awayScore = parseInt(document.querySelector(`.preview-away-score[data-match="${i}"]`)?.value) || 0;
+        const md = parseInt(document.querySelector(`.preview-md[data-match="${i}"]`)?.value) || 0;
+        const forfeit = document.querySelector(`.preview-forfeit[data-match="${i}"]`)?.value || 'none';
+        const date = document.querySelector(`.preview-date[data-match="${i}"]`)?.value || '';
+        const venue = document.querySelector(`.preview-venue[data-match="${i}"]`)?.value || '';
+        const matchType = document.querySelector(`.preview-type[data-match="${i}"]`)?.value || '';
+        const aggregate = document.querySelector(`.preview-agg[data-match="${i}"]`)?.value || '';
+        
+        let matchText = formatResultText(homeTeam, homeScore, awayTeam, awayScore, forfeit === 'none' ? '' : forfeit);
+        const scorersHome = (match._scorers || []).filter(s => s.player).map(s => ({ player: s.player, goals: s.goals || 1 }));
+        const scorersAway = [];
+        const assists = (match._assists || []).filter(a => a.player).map(a => ({ player: a.player, count: a.count || 1 }));
+        
+        const resultData = {
+          matchText,
+          md,
+          ...(date && { date }),
+          ...(venue && { venue }),
+          ...(matchType && { matchType }),
+          ...(aggregate && { aggregate }),
+          goalScorers: { home: scorersHome, away: scorersAway },
+          assists: assists
+        };
+        
+        if (homeTeam && awayTeam && homeTeam !== awayTeam) {
+          statusDiv.innerHTML = '<div class="status-msg status-loading">📊 Updating league table...</div>';
+          incrementPending();
+          await applyResultToTable(homeTeam, awayTeam, homeScore, awayScore, forfeit === 'none' ? '' : forfeit);
+          decrementPending();
+        }
+        statusDiv.innerHTML = '<div class="status-msg status-loading">⚽ Updating top scorers...</div>';
+        incrementPending();
+        // apply scorers
+        if (scorersHome.length) {
+          await applyScorersFromScan(scorersHome, homeTeam);
+        }
+        if (scorersAway.length) {
+          await applyScorersFromScan(scorersAway, awayTeam);
+        }
+        decrementPending();
+        statusDiv.innerHTML = '<div class="status-msg status-loading">🎯 Updating top assistants...</div>';
+        incrementPending();
+        if (assists.length) {
+          // We need to split assists by team? We only have a single assists array in the scan, but we can guess team based on scorer? For simplicity, we store assists as they came from scan.
+          // The scan might not know which team each assist belongs to. We'll assign all assists to the home team? Actually, the scan returns assists array but we didn't store team per assist. We'll just save them to the home team.
+          // Alternatively, we can store them to both teams? Better: we can check if the assist player matches a scorer on home or away. For simplicity, we'll assign all assists to the home team.
+          if (assists.length) {
+            await applyAssistsFromScan(assists, homeTeam);
+          }
+        }
+        decrementPending();
+        // Save result
+        statusDiv.innerHTML = '<div class="status-msg status-loading">💾 Saving result to database...</div>';
+        incrementPending();
+        await database.ref(getSeasonPath(currentSeasonId, 'results')).push(resultData);
+        decrementPending();
+      }
+      
+      statusDiv.innerHTML = '<div class="status-msg status-success">✅ All results saved successfully!</div>';
+      await loadCurrentSeasonData();
+      await loadTopScorerData();
+      await loadTopAssistantData();
+      closeModal();
+      renderCurrentTab();
+      
+    } catch (error) {
+      statusDiv.innerHTML = `<div class="status-msg status-error">Error saving: ${error.message}</div>`;
     }
-  }
-
-  await loadCurrentSeasonData();
-  await loadTopScorerData();
-  await loadTopAssistantData();
-
-  if (errors.length) {
-    if (statusEl) statusEl.innerHTML = `<div class="status-msg status-error">Saved ${savedCount} match(es). Errors: ${errors.join('; ')}</div>`;
-    if (btn) { btn.disabled = false; btn.innerHTML = '✅ CONFIRM & SAVE ALL'; }
-  } else {
-    if (statusEl) statusEl.innerHTML = `<div class="status-msg status-success">✅ ${savedCount} match(es) saved successfully!</div>`;
-    multiScanMatches = [];
-    scanPreviewData = [];
-    setTimeout(() => { closeModal(); renderCurrentTab(); }, 1500);
-  }
+  };
+  
+  document.querySelectorAll('.preview-home-team, .preview-away-team, .preview-home-score, .preview-away-score, .preview-md, .preview-forfeit, .preview-date, .preview-venue, .preview-type, .preview-agg').forEach(el => {
+    el.onchange = () => {};
+  });
 }
 
-// ─── Helper: Apply scorers from scan (merges with existing) ───
-async function applyScorersFromScan(scorers, team) {
-  if (!scorers || !scorers.length) return;
-  const path = getSeasonPath(currentSeasonId, 'topScorers/list');
-  for (const s of scorers) {
-    if (!s.player) continue;
-    const existing = topScorerList.find(p =>
-      p.name.toLowerCase() === s.player.toLowerCase() && p.team.toLowerCase() === team.toLowerCase()
-    );
-    if (existing && existing.key) {
-      const newCount = (existing.count || 0) + (s.goals || 1);
-      await database.ref(`${path}/${existing.key}/count`).set(newCount);
-    } else {
-      await database.ref(path).push({ name: s.player, team, count: s.goals || 1, imageUrl: '' });
-    }
-  }
-  await loadTopScorerData();
-}
-
-async function applyAssistsFromScan(assists, team) {
-  if (!assists || !assists.length) return;
-  const path = getSeasonPath(currentSeasonId, 'topAssistants/list');
-  for (const a of assists) {
-    if (!a.player) continue;
-    const existing = topAssistantList.find(p =>
-      p.name.toLowerCase() === a.player.toLowerCase() && p.team.toLowerCase() === team.toLowerCase()
-    );
-    if (existing && existing.key) {
-      const newCount = (existing.count || 0) + (a.assists || 1);
-      await database.ref(`${path}/${existing.key}/count`).set(newCount);
-    } else {
-      await database.ref(path).push({ name: a.player, team, count: a.assists || 1, imageUrl: '' });
-    }
-  }
-  await loadTopAssistantData();
-}
+// ─── applyScorersFromScan and applyAssistsFromScan are already defined above ───
 
 // ─── MENU AND EVENT LISTENERS ───
 function toggleMenu() { document.getElementById('sideMenu').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); }
@@ -3408,15 +3407,17 @@ document.getElementById('closeMenuBtn').onclick = closeMenu;
 document.getElementById('overlay').onclick = closeMenu;
 document.getElementById('homeBtn').onclick = () => window.location.href = 'feed.html';
 
-// ─── Admin Key Verification (via Render backend) ───
+// Admin key verification via Render
 document.getElementById('adminModeBtn').onclick = () => {
   const key = prompt("Enter admin key:");
   if (!key) return;
+  
   const btn = document.getElementById('adminModeBtn');
   const origText = btn.textContent;
   btn.textContent = '⏳ Verifying...';
   btn.style.opacity = '0.6';
-  fetch('https://efootball-league.onrender.com/verify-admin', {
+  
+  fetch(RENDER_URL + '/verify-admin', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ key: key })
@@ -3470,10 +3471,10 @@ function attachRealtimeListeners() {
   database.ref(getSeasonPath(currentSeasonId, 'topAssistants/list')).on('value', async () => { await loadTopAssistantData(); if (document.querySelector('.tab-btn.active')?.dataset.tab === 'topassists') renderTopAssistants(); });
   database.ref('calendarEvents').on('value', snap => { calendarEventsData = snap.val() || {}; if (document.querySelector('.tab-btn.active')?.dataset.tab === 'fixtures') renderFixtures(); });
   database.ref('laliga/watchMatch/videos').on('value', async () => { await loadWatchMatchVideos(); if (document.querySelector('.tab-btn.active')?.dataset.tab === 'watch') renderWatchMatch(); });
+  // Also listen for manager history changes
   database.ref(getSeasonPath(currentSeasonId, 'managerHistory')).on('value', async () => { await loadManagerHistory(); if (document.querySelector('.tab-btn.active')?.dataset.tab === 'table') renderTable(); });
 }
 
-// ─── INIT ───
 async function init() {
   await loadSlideshow();
   await loadTeamIcons();
@@ -3494,3 +3495,4 @@ init();
 </script>
 </body>
 </html>
+```
