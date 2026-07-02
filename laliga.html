@@ -1,4 +1,4 @@
-
+`tm
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1089,8 +1089,8 @@
             padding: 5px 14px;
             border-radius: 30px;
             margin: 3px;
-            font-size: 1.2rem;
-            color: var(--laliga-navy);
+            font-size: 1.4rem;
+            color: #000000;
         }
         .match-meta {
             display: flex;
@@ -1905,6 +1905,100 @@
             font-size: 1.1rem;
             border-top: 1px solid rgba(233, 16, 46, 0.3);
             margin-top: 24px;
+        }
+
+        /* ─── DESKTOP UI SIZE INCREASE (Change 3) ─── */
+        @media (min-width: 768px) {
+            .menu-item {
+                padding: 40px 56px;
+                font-size: 3rem;
+                border-radius: 40px;
+                margin: 24px 0;
+            }
+            .tab-btn {
+                font-size: 2.6rem;
+                padding: 20px 56px;
+                border-radius: 80px;
+            }
+            .season-controls {
+                gap: 40px;
+                padding: 24px 64px;
+                border-radius: 120px;
+            }
+            .season-number {
+                font-size: 4.4rem;
+                min-width: 360px;
+            }
+            .season-admin-btn {
+                padding: 16px 40px;
+                font-size: 2.2rem;
+                border-radius: 80px;
+            }
+            .add-btn {
+                font-size: 2.4rem;
+                padding: 20px 48px;
+                border-radius: 80px;
+            }
+            .three-dot-btn {
+                font-size: 4.4rem;
+                width: 104px;
+                height: 104px;
+                border-radius: 50%;
+            }
+            .settings-btn {
+                padding: 36px 52px;
+                font-size: 3rem;
+                border-radius: 56px;
+            }
+            .btn-sm {
+                font-size: 3rem;
+                padding: 24px 64px;
+                border-radius: 80px;
+            }
+            .add-btn-main {
+                font-size: 4rem;
+                padding: 40px 112px;
+                border-radius: 120px;
+            }
+            .add-result-top-btn {
+                font-size: 2.4rem;
+                padding: 24px 56px;
+                border-radius: 80px;
+            }
+            .filter-group select,
+            .filter-group button {
+                padding: 24px 40px;
+                font-size: 2.4rem;
+                border-radius: 80px;
+            }
+            .view-calendar-btn {
+                font-size: 2.4rem;
+                padding: 24px 56px;
+                border-radius: 80px;
+            }
+            .close-menu {
+                font-size: 5.6rem;
+                margin-bottom: 80px;
+            }
+            .menu-btn {
+                width: 140px;
+                height: 140px;
+                border-radius: 40px;
+                gap: 16px;
+            }
+            .menu-btn span {
+                width: 64px;
+                height: 8px;
+                border-radius: 8px;
+            }
+            .side-menu {
+                width: 720px;
+                padding: 80px 56px;
+                right: -720px;
+            }
+            .side-menu.active {
+                right: 0;
+            }
         }
     </style>
 </head>
@@ -3481,6 +3575,7 @@
             };
         }
 
+        // ─── openStatModal (Change 1: remove background removal) ───
         async function openStatModal(type, entry = null) {
             const isScorer = type === 'scorer' || type === 'topscorer';
             const currentImageUrl = entry?.imageUrl || '';
@@ -3489,7 +3584,7 @@
             <label>Player Name</label><input id="statName" placeholder="Player Name" value="${escapeHtml(entry?.name || '')}">
             <label>Team</label><input id="statTeam" placeholder="Team" value="${escapeHtml(entry?.team || '')}">
             <label>${isScorer ? 'Goals' : 'Assists'}</label><input id="statCount" type="number" value="${entry?.count || 0}">
-            <label>Player Photo (upload will remove background automatically)</label><input type="file" id="statPhoto" accept="image/*">
+            <label>Player Photo (upload)</label><input type="file" id="statPhoto" accept="image/*">
             <div id="photoPreview" style="margin-top:10px;">${currentImageUrl ? `<img src="${currentImageUrl}" style="max-width:120px; border-radius:12px;">` : 'No photo'}</div>
             <div class="modal-btns"><button class="modal-btn-primary" id="saveStatBtn">Save</button><button class="modal-btn-cancel" id="cancelStatBtn">Cancel</button></div>
           `);
@@ -3499,17 +3594,15 @@
             fileInput.onchange = async () => {
                 const file = fileInput.files[0];
                 if (!file) return;
-                previewDiv.innerHTML =
-                '<div class="status-msg status-loading">Processing image (remove.bg)...</div>';
+                previewDiv.innerHTML = '<div class="status-msg status-loading">Uploading image...</div>';
                 try {
-                    let processedBlob;
-                    try { processedBlob = await removeBackground(file); } catch (e) { processedBlob = file; }
-                    const url = await uploadToImgBB(processedBlob);
+                    const url = await uploadToImgBB(file);
                     previewDiv.innerHTML =
-                        `<img src="${url}" style="max-width:120px; border-radius:12px;"><div class="status-msg status-success">Photo ready</div>`;
+                        `<img src="${url}" style="max-width:120px; border-radius:12px;"><div class="status-msg status-success">Photo uploaded</div>`;
                     fileInput.dataset.uploadedUrl = url;
-                } catch (e) { previewDiv.innerHTML =
-                    `<div class="status-msg status-error">Error: ${e.message}</div>`; }
+                } catch (e) {
+                    previewDiv.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                }
             };
             document.getElementById('saveStatBtn').onclick = async () => {
                 const name = document.getElementById('statName').value.trim();
@@ -3878,7 +3971,7 @@
                 const real = document.getElementById('newRealName').value.trim();
                 const status = document.getElementById('nameMappingStatus');
                 if (!efoot || !real) { status.innerHTML =
-                    '<div class="status-msg status-error">Both fields required.</div>'; return; }
+                        '<div class="status-msg status-error">Both fields required.</div>'; return; }
                 try {
                     await database.ref('laliga/teamNameMappings').push({ efootballName: efoot, realName: real });
                     await loadTeamNameMappings();
@@ -5537,44 +5630,202 @@
             });
         }
 
-        // ─── SET CURRENT MATCHDAY MODAL ───
+        // ─── NEW SET CURRENT MATCHDAY MODAL (Change 2) ───
         function openSetCurrentMatchdayModal() {
-            showModal(`
+            // Gather all dates with LaLiga fixtures for current season
+            const fixtureDates = [];
+            const todayStr = getSASTToday();
+
+            for (const [date, eventData] of Object.entries(calendarEventsData)) {
+                const eventSeason = eventData.season;
+                if (eventSeason !== undefined && eventSeason !== null && eventSeason !== currentSeasonId) {
+                    continue;
+                }
+                if (eventData.tournaments && Array.isArray(eventData.tournaments)) {
+                    for (const tournament of eventData.tournaments) {
+                        let isLaLiga = false;
+                        if (tournament.name) {
+                            const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
+                            if (normalized === 'laliga') isLaLiga = true;
+                        }
+                        if (isLaLiga && tournament.fixtures && Array.isArray(tournament.fixtures) && tournament.fixtures
+                            .length > 0) {
+                            if (!fixtureDates.includes(date)) {
+                                fixtureDates.push(date);
+                            }
+                        }
+                    }
+                }
+            }
+
+            fixtureDates.sort((a, b) => a.localeCompare(b));
+
+            // Filter to today and forward, but also include past unassigned dates
+            let filteredDates = fixtureDates.filter(d => d >= todayStr);
+            // If no future dates, include the latest past date
+            if (filteredDates.length === 0 && fixtureDates.length > 0) {
+                filteredDates = [fixtureDates[fixtureDates.length - 1]];
+            }
+
+            // Build list with current matchday assignments
+            const dateItems = filteredDates.map((date, idx) => {
+                const currentMd = calendarEventsData[date]?.matchday || '';
+                return { date, currentMd: currentMd, predicted: currentMd || '' };
+            });
+
+            // If no dates at all, show empty state
+            if (dateItems.length === 0) {
+                showModal(`
               <h3>📊 Set Current Matchday</h3>
-              <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;">This matchday auto-fills in all user result forms.</p>
-              <label>Current Matchday Number</label>
-              <input type="number" id="matchdayInput" value="${currentMatchday || 1}" min="1" step="1">
-              <div id="matchdayStatus"></div>
-              <div class="modal-btns">
-                <button class="modal-btn-primary" id="saveMatchdayBtn">Save</button>
-                <button class="modal-btn-cancel" id="cancelMatchdayBtn">Cancel</button>
-              </div>
+              <div class="empty-state"><div class="empty-icon">📅</div><p>No fixture dates found for this season.</p></div>
+              <div class="modal-btns"><button class="modal-btn-cancel" id="closeMatchdayEmpty">Close</button></div>
             `);
-            document.getElementById('cancelMatchdayBtn').onclick = closeModal;
-            document.getElementById('saveMatchdayBtn').onclick = async () => {
-                const btn = document.getElementById('saveMatchdayBtn');
-                const status = document.getElementById('matchdayStatus');
-                const val = parseInt(document.getElementById('matchdayInput').value);
-                if (isNaN(val) || val < 1) {
-                    status.innerHTML =
-                        '<div class="status-msg status-error">Please enter a valid matchday number.</div>';
-                    return;
-                }
-                btn.disabled = true;
-                btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
-                try {
-                    await saveCurrentMatchday(val);
-                    status.innerHTML = `<div class="status-msg status-success">✅ Matchday set to ${val}!</div>`;
-                    btn.innerHTML = '✓ Saved';
-                    setTimeout(() => {
-                        closeModal();
-                    }, 1000);
-                } catch (e) {
-                    status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
-                    btn.disabled = false;
-                    btn.innerHTML = 'Save';
-                }
+                document.getElementById('closeMatchdayEmpty').onclick = closeModal;
+                return;
+            }
+
+            const renderMatchdayModal = () => {
+                let listHtml = dateItems.map((item, idx) => {
+                    const dateObj = new Date(item.date);
+                    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                    const dayName = dayNames[dateObj.getDay()];
+                    const [y, mo, d] = item.date.split('-');
+                    const monthLabels = { '01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr', '05': 'May',
+                        '06': 'Jun', '07': 'Jul', '08': 'Aug', '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dec' };
+                    const label = `${dayName} ${parseInt(d)} ${monthLabels[mo] || mo} ${y}`;
+                    const isToday = item.date === todayStr;
+                    return `
+                  <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;background:${isToday ? 'rgba(233,16,46,0.15)' : 'rgba(0,0,0,0.2)'};border-radius:16px;margin-bottom:10px;border-left:4px solid ${isToday ? 'var(--laliga-red)' : 'rgba(233,16,46,0.3)'};">
+                    <span style="font-weight:600;color:var(--laliga-white);min-width:180px;">${label}${isToday ? ' ⭐' : ''}</span>
+                    <span style="color:rgba(255,255,255,0.4);font-size:0.9rem;">MD</span>
+                    <input type="number" class="matchday-prediction-input" data-date="${item.date}" value="${item.predicted || ''}" min="1" style="width:80px;padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid var(--laliga-red);border-radius:14px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.2rem;outline:none;text-align:center;">
+                    <span style="color:rgba(255,255,255,0.3);font-size:0.85rem;margin-left:auto;">${item.currentMd ? `(prev: ${item.currentMd})` : '(unassigned)'}</span>
+                  </div>
+                `;
+                }).join('');
+
+                showModal(`
+                <h3>📊 Matchday Scheduling</h3>
+                <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Set matchday numbers for each fixture date. Predicted values will auto-increment from the "Set Today's MD" input.</p>
+                <div style="display:flex;gap:12px;align-items:center;padding:16px 20px;background:rgba(0,0,0,0.25);border-radius:20px;margin-bottom:20px;">
+                  <span style="color:rgba(255,255,255,0.6);font-weight:600;">Set Today's MD:</span>
+                  <input type="number" id="todayMatchdayInput" value="${currentMatchday || 1}" min="1" style="width:100px;padding:10px 16px;background:rgba(255,255,255,0.06);border:1px solid var(--laliga-red);border-radius:14px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.4rem;outline:none;text-align:center;">
+                  <button class="modal-btn-primary" id="predictMatchdaysBtn" style="padding:10px 28px;font-size:1.2rem;">🔮 Predict</button>
+                </div>
+                <div style="max-height:350px;overflow-y:auto;margin:12px 0;">
+                  ${listHtml}
+                </div>
+                <div style="margin-top:20px;padding:16px;background:rgba(233,16,46,0.08);border:1px solid var(--laliga-red);border-radius:16px;">
+                  <p style="color:rgba(255,255,255,0.5);font-size:1rem;">📌 Predict will auto-fill from the current date forward, incrementing by 1 for each fixture date. Dates with no fixtures are skipped.</p>
+                </div>
+                <div class="modal-btns" style="margin-top:20px;">
+                  <button class="modal-btn-primary" id="confirmMatchdayPredictions">✅ Confirm All Predictions</button>
+                  <button class="modal-btn-cancel" id="cancelMatchdayModal">Cancel</button>
+                </div>
+                <div id="matchdayPredictionStatus"></div>
+              `);
+
+                document.getElementById('cancelMatchdayModal').onclick = closeModal;
+
+                // Predict button
+                document.getElementById('predictMatchdaysBtn').onclick = () => {
+                    const todayMd = parseInt(document.getElementById('todayMatchdayInput').value);
+                    if (isNaN(todayMd) || todayMd < 1) {
+                        document.getElementById('matchdayPredictionStatus').innerHTML =
+                            '<div class="status-msg status-error">Enter a valid matchday number.</div>';
+                        return;
+                    }
+                    // Find the index of today's date (or the earliest date if today not in list)
+                    let startIdx = dateItems.findIndex(d => d.date === todayStr);
+                    if (startIdx === -1) startIdx = 0;
+
+                    let currentMd = todayMd;
+                    for (let i = startIdx; i < dateItems.length; i++) {
+                        dateItems[i].predicted = currentMd;
+                        currentMd++;
+                    }
+                    // Also fill dates before today if any (optional: leave as is or fill backward?)
+                    // We'll fill backward if today is in the list
+                    if (startIdx > 0) {
+                        let backwardMd = todayMd - 1;
+                        for (let i = startIdx - 1; i >= 0; i--) {
+                            dateItems[i].predicted = backwardMd;
+                            backwardMd--;
+                        }
+                    }
+                    renderMatchdayModal();
+                };
+
+                // Confirm All
+                document.getElementById('confirmMatchdayPredictions').onclick = async () => {
+                    const statusEl = document.getElementById('matchdayPredictionStatus');
+                    const btn = document.getElementById('confirmMatchdayPredictions');
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+                    statusEl.innerHTML = '<div class="status-msg status-loading">Saving matchday assignments...</div>';
+
+                    // Read all inputs
+                    const inputs = document.querySelectorAll('.matchday-prediction-input');
+                    const updates = [];
+                    let todayMd = null;
+                    for (const inp of inputs) {
+                        const date = inp.dataset.date;
+                        const val = parseInt(inp.value);
+                        if (!isNaN(val) && val > 0) {
+                            updates.push({ date, md: val });
+                            if (date === todayStr) todayMd = val;
+                        }
+                    }
+
+                    if (updates.length === 0) {
+                        statusEl.innerHTML = '<div class="status-msg status-error">No valid matchday numbers entered.</div>';
+                        btn.disabled = false;
+                        btn.innerHTML = '✅ Confirm All Predictions';
+                        return;
+                    }
+
+                    try {
+                        for (const u of updates) {
+                            await saveMatchdayForDate(u.date, u.md);
+                        }
+                        // Also set currentMatchday for the user submission form
+                        if (todayMd !== null) {
+                            await saveCurrentMatchday(todayMd);
+                        } else if (updates.length > 0) {
+                            // Use the earliest date's matchday as fallback
+                            const earliest = updates.reduce((a, b) => a.date < b.date ? a : b);
+                            await saveCurrentMatchday(earliest.md);
+                        }
+                        await loadCalendarEvents();
+                        await loadCurrentMatchday();
+                        statusEl.innerHTML =
+                            `<div class="status-msg status-success">✅ ${updates.length} matchday(s) saved!</div>`;
+                        btn.innerHTML = '✓ Done';
+                        setTimeout(() => {
+                            closeModal();
+                            renderCurrentTab();
+                        }, 1000);
+                    } catch (e) {
+                        statusEl.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                        btn.disabled = false;
+                        btn.innerHTML = '✅ Confirm All Predictions';
+                    }
+                };
+
+                // Live input changes: update the dateItems array
+                document.querySelectorAll('.matchday-prediction-input').forEach(inp => {
+                    inp.addEventListener('change', function() {
+                        const date = this.dataset.date;
+                        const val = parseInt(this.value);
+                        if (!isNaN(val) && val > 0) {
+                            const item = dateItems.find(d => d.date === date);
+                            if (item) item.predicted = val;
+                        }
+                    });
+                });
             };
+
+            renderMatchdayModal();
         }
 
         // ─── MENU AND EVENT LISTENERS ───
