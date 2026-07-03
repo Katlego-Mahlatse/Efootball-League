@@ -940,6 +940,21 @@
             letter-spacing: 1px;
             margin-bottom: 16px;
             font-family: 'Rajdhani', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .fixture-md-badge {
+            background: rgba(0, 206, 209, 0.2);
+            border: 1px solid var(--turquoise);
+            border-radius: 30px;
+            padding: 2px 16px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--turquoise);
+            letter-spacing: 1px;
+            font-family: 'Bebas Neue', sans-serif;
         }
         .fixture-match-row {
             display: flex;
@@ -4343,911 +4358,779 @@
             currentMatchday = matchdayNumber;
         }
 
-        function openSetCurrentMatchdayModal() {
-            showModal(`
-            <h3>📊 Set Current Matchday</h3>
-            <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;">This matchday will auto-fill in all user result forms.</p>
-            <label>Current Matchday Number</label>
-            <input type="number" id="matchdayInput" value="${currentMatchday || 1}" min="1" step="1">
-            <div id="matchdayStatus"></div>
-            <div class="modal-btns">
-              <button class="modal-btn-primary" id="saveMatchdayBtn">Save</button>
-              <button class="modal-btn-cancel" id="cancelMatchdayBtn">Cancel</button>
-            </div>
-          `);
+        // ─── NEW: Matchday Scheduling System ───
+        async function openMatchdaySchedulerModal() {
+            // Reload calendar data
+            await loadCalendarEvents();
 
-            document.getElementById('cancelMatchdayBtn').onclick = closeModal;
-
-            document.getElementById('saveMatchdayBtn').onclick = async () => {
-                const btn = document.getElementById('saveMatchdayBtn');
-                const status = document.getElementById('matchdayStatus');
-                const val = parseInt(document.getElementById('matchdayInput').value);
-                if (isNaN(val) || val < 1) {
-                    status.innerHTML = '<div class="status-msg status-error">Please enter a valid matchday number (1 or higher).</div>';
-                    return;
-                }
-                btn.disabled = true;
-                btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
-                try {
-                    incrementPending();
-                    await saveCurrentMatchday(currentSeasonId, val);
-                    decrementPending();
-                    status.innerHTML = `<div class="status-msg status-success">✅ Matchday set to ${val} for Season ${currentSeasonId}!</div>`;
-                    btn.innerHTML = '✓ Saved';
-                    setTimeout(() => { closeModal(); }, 1000);
-                } catch (e) {
-                    status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
-                    btn.disabled = false;
-                    btn.innerHTML = 'Save';
-                }
-            };
-        }
-
-        async function switchSeason(delta) {
-            const idx = availableSeasons.indexOf(currentSeasonId);
-            const nIdx = idx + delta;
-            if (nIdx < 0 || nIdx >= availableSeasons.length) return;
-            currentSeasonId = availableSeasons[nIdx];
-            updateSeasonUI();
-            await loadCurrentSeasonData();
-            await loadManagerNamesForSeason();
-            await loadTopScorerData();
-            await loadTopAssistantData();
-            await loadManagerHistory();
-            await loadCurrentMatchday();
-            renderCurrentTab();
-        }
-
-        async function addNewSeason() {
-            const raw = prompt("Enter new season number:");
-            if (!raw) return;
-            const id = parseInt(raw);
-            if (isNaN(id)) { alert("Invalid number"); return; }
-            if (availableSeasons.includes(id)) { alert("Season already exists"); return; }
-            await database.ref(`seasons/season_${id}/table`).set({});
-            await database.ref(`seasons/season_${id}/results`).set({});
-            await database.ref(`seasons/season_${id}/managerMap`).set({});
-            await database.ref(`seasons/season_${id}/topScorers/list`).set({});
-            await database.ref(`seasons/season_${id}/topAssistants/list`).set({});
-            availableSeasons.push(id);
-            availableSeasons.sort((a, b) => a - b);
-            currentSeasonId = id;
-            updateSeasonUI();
-            await loadCurrentSeasonData();
-            await loadManagerNamesForSeason();
-            await loadTopScorerData();
-            await loadTopAssistantData();
-            await loadManagerHistory();
-            await loadCurrentMatchday();
-            renderCurrentTab();
-        }
-
-        async function renameSeason() {
-            const raw = prompt(`New number for Season ${currentSeasonId}:`);
-            if (!raw) return;
-            const id = parseInt(raw);
-            if (isNaN(id)) return;
-            if (availableSeasons.includes(id) && id !== currentSeasonId) { alert("Number taken"); return; }
-            const [t, r, m, ts, ta] = await Promise.all([
-                database.ref(getSeasonPath(currentSeasonId, 'table')).once('value'),
-                database.ref(getSeasonPath(currentSeasonId, 'results')).once('value'),
-                database.ref(getSeasonPath(currentSeasonId, 'managerMap')).once('value'),
-                database.ref(getSeasonPath(currentSeasonId, 'topScorers')).once('value'),
-                database.ref(getSeasonPath(currentSeasonId, 'topAssistants')).once('value'),
-            ]);
-            const wasActive = activeSeasonId === currentSeasonId;
-            await database.ref(getSeasonPath(id, 'table')).set(t.val() || {});
-            await database.ref(getSeasonPath(id, 'results')).set(r.val() || {});
-            await database.ref(getSeasonPath(id, 'managerMap')).set(m.val() || {});
-            await database.ref(getSeasonPath(id, 'topScorers')).set(ts.val() || {});
-            await database.ref(getSeasonPath(id, 'topAssistants')).set(ta.val() || {});
-            if (wasActive) await database.ref(`seasons/season_${id}/active`).set(true);
-            await database.ref(getSeasonPath(currentSeasonId)).remove();
-            availableSeasons = availableSeasons.filter(s => s !== currentSeasonId);
-            availableSeasons.push(id);
-            availableSeasons.sort((a, b) => a - b);
-            if (activeSeasonId === currentSeasonId) activeSeasonId = id;
-            currentSeasonId = id;
-            updateSeasonUI();
-            await loadCurrentSeasonData();
-            await loadManagerNamesForSeason();
-            await loadTopScorerData();
-            await loadTopAssistantData();
-            await loadManagerHistory();
-            await loadCurrentMatchday();
-            renderCurrentTab();
-        }
-
-        async function setActiveSeason() {
-            const updates = {};
-            availableSeasons.forEach(s => { updates[`seasons/season_${s}/active`] = (s === currentSeasonId); });
-            await database.ref().update(updates);
-            activeSeasonId = currentSeasonId;
-            alert(`Season ${currentSeasonId} set as active.`);
-        }
-
-        function getResultStatusForTeam(team, matchText) {
-            const lower = matchText.toLowerCase();
-            if (lower.includes("no contest") || lower.includes("f - f")) return "F";
-            const isForfeit = lower.includes("forfeit") || lower.includes("forfeited");
-            const parts = matchText.match(/([A-Za-z\s]+?)\s+(\d+)\s*[-–]\s*(\d+)\s+([A-Za-z\s]+)/);
-            if (parts) {
-                let home = parts[1].trim(),
-                    hs = parseInt(parts[2]),
-                    as2 = parseInt(parts[3]),
-                    away = parts[4].trim();
-                if (home === team && hs > as2) return isForfeit ? "WF" : "W";
-                if (home === team && hs < as2) return isForfeit ? "LF" : "L";
-                if (away === team && as2 > hs) return isForfeit ? "WF" : "W";
-                if (away === team && as2 < hs) return isForfeit ? "LF" : "L";
-                if ((home === team || away === team) && hs === as2) return "D";
-            }
-            return null;
-        }
-
-        function getTeamLast5(team) {
-            const sorted = resultsData.filter(r => r.matchText && r.matchText.includes(team)).sort((a, b) => (b.md || 0) - (a
-            .md || 0));
-            const last5 = sorted.slice(0, 5).map(r => getResultStatusForTeam(team, r.matchText)).filter(Boolean);
-            while (last5.length < 5) last5.push(null);
-            return last5.reverse();
-        }
-
-        function getLatestArrow(team) {
-            const sorted = resultsData.filter(r => r.matchText && r.matchText.includes(team)).sort((a, b) => (b.md || 0) - (a
-            .md || 0));
-            if (!sorted.length) return null;
-            const s = getResultStatusForTeam(team, sorted[0].matchText);
-            if (s === "W" || s === "WF") return "↑";
-            if (s === "L" || s === "LF") return "↓";
-            if (s === "D") return "→";
-            return "⚪";
-        }
-
-        async function loadSlideshow() {
-            const [imgSnap, durSnap] = await Promise.all([
-                database.ref('slideshow/images').once('value'),
-                database.ref('slideshow/duration').once('value'),
-            ]);
-            slideshowImages = imgSnap.val() || [];
-            slideshowDuration = durSnap.val() || 3000;
-            if (slideInterval) clearInterval(slideInterval);
-            const imgEl = document.getElementById('slideshowImg');
-            if (slideshowImages.length) {
-                imgEl.style.display = 'block';
-                currentSlideIdx = 0;
-                updateSlide();
-                slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx + 1) % slideshowImages.length;
-                    updateSlide(); }, slideshowDuration);
-            } else { imgEl.style.display = 'none'; }
-        }
-
-        function updateSlide() {
-            const img = document.getElementById('slideshowImg');
-            img.src = slideshowImages[currentSlideIdx];
-            const dots = document.getElementById('dotsContainer');
-            dots.innerHTML = '';
-            slideshowImages.forEach((_, i) => {
-                const d = document.createElement('span');
-                d.className = 'dot' + (i === currentSlideIdx ? ' active' : '');
-                d.onclick = () => { currentSlideIdx = i;
-                    updateSlide(); if (slideInterval) { clearInterval(slideInterval);
-                        slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx + 1) % slideshowImages
-                                .length;
-                            updateSlide(); }, slideshowDuration); } };
-                dots.appendChild(d);
-            });
-        }
-
-        function renderTable() {
-            const sorted = [...teamsData].sort((a, b) => (b.pts || 0) - (a.pts || 0) || (b.gd || 0) - (a.gd || 0));
-            let headerHtml = tableHeaderImageUrl ? `<img src="${tableHeaderImageUrl}" class="table-header-img" alt="Table Header">` :
-                `🏆 League Table`;
-            let html = `
-            <div class="table-actions">
-              <span class="table-actions-title">${headerHtml}</span>
-              ${isAdminMode ? `<button class="add-btn" id="addTeamBtnInner">+ Add Team</button>` : ''}
-              <button class="three-dot-btn" id="threeDotBtn">⋮</button>
-            </div>
-            <div class="table-scroll-wrap">
-              <table class="stats-table">
-                <thead><tr><th style="min-width:64px;">Pos</th><th style="min-width:260px;">Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GS</th><th>GC</th><th>GD</th><th>Pts</th><th>Last 5</th>${isAdminMode ? '<th>Actions</th>' : ''}</tr></thead>
-                <tbody id="tableBody"></tbody>
-              </table>
-            </div>
-            <div class="legend-row" id="legendContainer"></div>
-          `;
-            document.getElementById('contentCard').innerHTML = html;
-            const tbody = document.getElementById('tableBody');
-            sorted.forEach((team, idx) => {
-                const pos = idx + 1;
-                let barClass = '',
-                    rowClass = '';
-                if (currentSeasonId === 1) { if (pos <= 4) barClass = 'vbar-blue'; } else if (currentSeasonId === 2) { if (
-                        pos <= 4) barClass = 'vbar-blue'; else if (pos <= 8) barClass = 'vbar-orange'; else if (pos <=
-                        12) barClass = 'vbar-green'; if (pos === 8) rowClass = 'dashed-sep'; } else { if (pos <= 4)
-                        barClass = 'vbar-blue'; else if (pos <= 8) barClass = 'vbar-orange'; else if (pos <= 12)
-                        barClass = 'vbar-green'; else if (pos >= 18) barClass = 'vbar-red'; if (pos === 8) rowClass =
-                        'dashed-sep'; if (pos === 17) rowClass = 'dashed-sep-red'; }
-                const row = document.createElement('tr');
-                if (rowClass) row.className = rowClass;
-                const posCell = document.createElement('td');
-                posCell.className = 'rank-cell stat-number';
-                if (barClass) posCell.innerHTML = `<div class="pos-bar-wrap"><span class="vbar ${barClass}"></span>${pos}</div>`;
-                else posCell.textContent = pos;
-                row.appendChild(posCell);
-                let arrowHtml = '';
-                if (showFormArrows) { const a = getLatestArrow(team.name); if (a === '↑') arrowHtml =
-                        '<span class="arrow-up">↑</span> '; else if (a === '↓') arrowHtml =
-                        '<span class="arrow-down">↓</span> '; else if (a === '→') arrowHtml =
-                        '<span class="arrow-side">→</span> '; else arrowHtml = '<span class="arrow-side" style="opacity:0.3;">—</span> '; }
-                const displayName = (currentView === 'player') ? (getActiveManagerName(team.name) || team.name) : team.name;
-                const iconHtml = getTeamIconHtml(team.name, 'team-icon-sm');
-                const clubCell = document.createElement('td');
-                clubCell.innerHTML =
-                    `<div class="team-cell-inner">${arrowHtml}${iconHtml}<span class="team-name-text">${displayName}</span></div>`;
-                row.appendChild(clubCell);
-
-                function mkNumCell(val) { const td = document.createElement('td');
-                    td.textContent = val;
-                    td.className = 'stat-number'; return td; }
-                row.appendChild(mkNumCell(team.p || 0));
-                const w = currentSeasonId === 2 ? '🤷‍♂️' : (team.w || 0);
-                const d = currentSeasonId === 2 ? '🤷‍♂️' : (team.d || 0);
-                const l = currentSeasonId === 2 ? '🤷‍♂️' : (team.l || 0);
-                row.appendChild(mkNumCell(w));
-                row.appendChild(mkNumCell(d));
-                row.appendChild(mkNumCell(l));
-                const gs = (currentSeasonId === 1 || currentSeasonId === 2) ? '🤷‍♂️' : (team.gs || 0);
-                const gc = (currentSeasonId === 1 || currentSeasonId === 2) ? '🤷‍♂️' : (team.gc || 0);
-                row.appendChild(mkNumCell(gs));
-                row.appendChild(mkNumCell(gc));
-                const gd = team.gd || 0;
-                row.appendChild(mkNumCell(gd > 0 ? `+${gd}` : `${gd}`));
-                const ptsCell = document.createElement('td');
-                ptsCell.className = 'pts-cell stat-number';
-                ptsCell.textContent = team.pts || 0;
-                row.appendChild(ptsCell);
-                const last5Cell = document.createElement('td');
-                if (showLast5) { const last5 = getTeamLast5(team.name); const wrap = document.createElement('div');
-                    wrap.className = 'form-circles';
-                    last5.forEach(res => { const span = document.createElement('span');
-                        span.className = 'circle-result'; if (res === 'W') { span.classList.add('cW');
-                            span.textContent = '✓'; } else if (res === 'L') { span.classList.add('cL');
-                            span.textContent = '✗'; } else if (res === 'D') { span.classList.add('cD');
-                            span.textContent = '–'; } else if (res === 'F') { span.classList.add('cF');
-                            span.textContent = 'F'; } else if (res === 'WF') { span.classList.add('cWF');
-                            span.textContent = 'F'; } else if (res === 'LF') { span.classList.add('cLF');
-                            span.textContent = 'F'; } else { span.classList.add('cBlank'); }
-                        wrap.appendChild(span); });
-                    last5Cell.appendChild(wrap); }
-                row.appendChild(last5Cell);
-                if (isAdminMode) { const actCell = document.createElement('td');
-                    actCell.innerHTML =
-                        `<button class="btn-sm btn-edit" data-key="${team.key}">✏️</button> <button class="btn-sm btn-delete" data-key="${team.key}">🗑️</button>`;
-                    row.appendChild(actCell); }
-                tbody.appendChild(row);
-            });
-            const legend = document.getElementById('legendContainer');
-            let legendHtml = '';
-            if (currentSeasonId === 1) {
-                legendHtml = '<span class="legend-item"><span class="vbar vbar-blue" style="display:inline-block;"></span> UEFA Champions League</span>';
-            } else {
-                legendHtml =
-                    `<span class="legend-item"><span class="vbar vbar-blue" style="display:inline-block;"></span> UEFA Champions League</span><span class="legend-item"><span class="vbar vbar-orange" style="display:inline-block;"></span> Europa League</span><span class="legend-item"><span class="legend-dashed"></span> FIFA Club World Cup</span><span class="legend-item"><span class="vbar vbar-green" style="display:inline-block;"></span> UEFA Conference League</span>`;
-                if (currentSeasonId >= 3) legendHtml +=
-                    '<span class="legend-item"><span class="vbar vbar-red" style="display:inline-block;"></span> Relegation</span>';
-            }
-            legend.innerHTML = legendHtml;
-            if (isAdminMode) {
-                document.getElementById('addTeamBtnInner')?.addEventListener('click', () => openTeamForm(null));
-                document.querySelectorAll('.btn-edit[data-key]').forEach(btn => { const t = teamsData.find(x => x.key === btn
-                        .dataset.key); if (t) btn.onclick = () => openTeamForm(t.key, t); });
-                document.querySelectorAll('.btn-delete[data-key]').forEach(btn => { btn.onclick = async () => { if (
-                            confirm('Delete this team?')) await database.ref(getSeasonPath(currentSeasonId,
-                            `table/${btn.dataset.key}`)).remove(); }; });
-            }
-            attachThreeDotHandler();
-        }
-
-        function renderFixtures() {
-            const premierFixtures = [];
+            // Gather all fixture dates with Premier League fixtures
             const today = new Date();
             today.setHours(0, 0, 0, 0);
+
+            const fixtureDates = [];
+
             for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
                 if (!eventData || !eventData.tournaments) continue;
                 for (const tournament of eventData.tournaments) {
                     let isPremier = false;
-                    if (tournament.name) { const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
-                        if (normalized === 'premierleague') isPremier = true; }
-                    if (isPremier && tournament.fixtures && Array.isArray(tournament.fixtures)) {
-                        for (const fix of tournament.fixtures) { premierFixtures.push({ date: dateStr, tournament: tournament
-                                    .name || 'Premier League', home: fix.home || '', away: fix.away || '' }); }
+                    if (tournament.name) {
+                        const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
+                        if (normalized === 'premierleague') isPremier = true;
+                    }
+                    if (isPremier && tournament.fixtures && Array.isArray(tournament.fixtures) && tournament.fixtures.length >
+                        0) {
+                        // Check if any fixture has a matchday assigned (stored in the fixture object)
+                        const hasAnyMd = tournament.fixtures.some(f => f.matchday !== undefined && f.matchday !== null);
+                        fixtureDates.push({
+                            date: dateStr,
+                            dateObj: new Date(dateStr),
+                            tournaments: eventData.tournaments,
+                            tournamentIndex: eventData.tournaments.indexOf(tournament),
+                            fixtures: tournament.fixtures,
+                            hasAssignedMd: hasAnyMd
+                        });
+                        break; // Only add once per date
                     }
                 }
             }
-            premierFixtures.sort((a, b) => { const da = new Date(a.date),
-                    db = new Date(b.date); const aFuture = da >= today,
-                    bFuture = db >= today; if (aFuture && bFuture) return da - db; if (!aFuture && !bFuture) return da -
-                    db; return aFuture ? -1 : 1; });
-            const allTeams = [...new Set(premierFixtures.flatMap(f => [f.home, f.away]).filter(Boolean))].sort();
-            const allMonths = [...new Set(premierFixtures.map(f => f.date.substring(0, 7)))].sort();
-            let filtered = [...premierFixtures];
-            if (currentFixTeamFilter && currentFixTeamFilter !== 'all') filtered = filtered.filter(f => f.home ===
-                currentFixTeamFilter || f.away === currentFixTeamFilter);
-            if (currentFixMonthFilter && currentFixMonthFilter !== 'all') filtered = filtered.filter(f => f.date.startsWith(
-                currentFixMonthFilter));
-            const grouped = {};
-            for (const fix of filtered) { if (!grouped[fix.date]) grouped[fix.date] = [];
-                grouped[fix.date].push(fix); }
-            const sortedDates = Object.keys(grouped).sort((a, b) => { const da = new Date(a),
-                    db = new Date(b); const aFuture = da >= today,
-                    bFuture = db >= today; if (aFuture && bFuture) return da - db; if (!aFuture && !bFuture) return da -
-                    db; return aFuture ? -1 : 1; });
-            const monthLabels = { '01': 'January', '02': 'February', '03': 'March', '04': 'April', '05': 'May',
-                '06': 'June', '07': 'July', '08': 'August', '09': 'September', '10': 'October', '11': 'November',
-                '12': 'December' };
-            let filtersHtml =
-                `<div class="filters-bar"><div class="filter-group"><label>Team</label><select id="fixTeamFilter"><option value="all">All Teams</option>${allTeams.map(t => `<option value="${t}" ${currentFixTeamFilter === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div><div class="filter-group"><label>Month</label><select id="fixMonthFilter"><option value="all">All Months</option>${allMonths.map(m => { const [y, mo] = m.split('-'); return `<option value="${m}" ${currentFixMonthFilter === m ? 'selected' : ''}>${monthLabels[mo] || mo} ${y}</option>`; }).join('')}</select></div><div class="filter-group"><button id="clearFixFiltersBtn" class="clear-filters">Clear Filters</button></div><div class="filter-stats">${filtered.length} fixture${filtered.length !== 1 ? 's' : ''} found</div><a href="manager-calendar.html" class="view-calendar-btn">📅 View Calendar</a></div>`;
-            let contentHtml = '';
-            if (sortedDates.length === 0) {
-                contentHtml = '<div class="empty-state"><div class="empty-icon">📅</div><p>No Premier League fixtures found</p></div>';
-            } else {
-                for (const dateStr of sortedDates) {
-                    const dateObj = new Date(dateStr);
-                    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                    const dayName = dayNames[dateObj.getDay()];
-                    const day = dateObj.getDate();
-                    const [y, mo] = dateStr.split('-');
-                    const monthName = monthLabels[mo] || mo;
-                    const isPast = dateObj < today;
-                    const dateLabel =
-                        `${dayName}, ${day} ${monthName} ${y}${isPast ? ' · Played' : ''}`;
-                    contentHtml += `<div class="fixture-date-group"><div class="fixture-date-label">📅 ${dateLabel}</div>`;
-                    for (const fix of grouped[dateStr]) {
-                        const homeIconHtml = getTeamIconHtml(fix.home, 'team-icon-lg');
-                        const awayIconHtml = getTeamIconHtml(fix.away, 'team-icon-lg');
-                        contentHtml +=
-                            `<div class="fixture-card"><div class="fixture-tournament-label">🏆 ${escapeHtml(fix.tournament)}</div><div class="fixture-match-row"><div class="fixture-team-side">${homeIconHtml}<span class="fixture-team-name">${escapeHtml(fix.home)}</span></div><div class="fixture-vs">VS</div><div class="fixture-team-side">${awayIconHtml}<span class="fixture-team-name">${escapeHtml(fix.away)}</span></div></div></div>`;
-                    }
-                    contentHtml += `</div>`;
-                }
-            }
-            document.getElementById('contentCard').innerHTML = filtersHtml + contentHtml;
-            document.getElementById('fixTeamFilter')?.addEventListener('change', e => { currentFixTeamFilter = e.target.value;
-                renderFixtures(); });
-            document.getElementById('fixMonthFilter')?.addEventListener('change', e => { currentFixMonthFilter = e.target
-                    .value;
-                renderFixtures(); });
-            document.getElementById('clearFixFiltersBtn')?.addEventListener('click', () => { currentFixTeamFilter = '';
-                currentFixMonthFilter = '';
-                renderFixtures(); });
-        }
 
-        function parseResultCard(r) {
-            let homeTeam = '',
-                awayTeam = '',
-                homeScore = '',
-                awayScore = '',
-                isForfeit = false,
-                forfeitType = '';
-            const text = r.matchText || '';
-            const lower = text.toLowerCase();
-            if (lower.includes('no contest') || lower.includes('f - f')) isForfeit = true;
-            else if (lower.includes('forfeit')) isForfeit = true;
-            if (isForfeit && text.includes('F - F')) {
-                const parts = text.split(/\s*F\s*-\s*F\s*/i);
-                if (parts.length >= 2) { homeTeam = parts[0].trim().replace(/\(.*\)/g, '').trim();
-                    awayTeam = parts[1].trim().replace(/\(.*\)/g, '').trim();
-                    homeScore = 'F';
-                    awayScore = 'F'; }
-                if (text.includes('No Contest')) forfeitType = 'No Contest';
-                else if (text.includes('Forfeited - No Reply')) forfeitType = 'Forfeited - No Reply';
-                else if (text.includes('Forfeited on Agreement')) forfeitType = 'Forfeited on Agreement';
-                else forfeitType = 'Forfeit';
-            } else {
-                const match = text.match(/(\d+)\s*-\s*(\d+)/);
-                if (match) {
-                    homeScore = match[1];
-                    awayScore = match[2];
-                    const parts = text.split(/\s+\d+\s*-\s*\d+\s+/);
-                    if (parts.length >= 2) { homeTeam = parts[0].trim();
-                        awayTeam = parts[1].trim().replace(/\(.*\)/g, '').trim(); }
-                    if (lower.includes('forfeited - no reply')) forfeitType = 'Forfeited - No Reply';
-                    else if (lower.includes('forfeited on agreement')) forfeitType = 'Forfeited on Agreement';
-                    else if (lower.includes('forfeit')) forfeitType = 'Forfeit';
-                }
-            }
-            return { homeTeam, awayTeam, homeScore, awayScore, isForfeit, forfeitType, md: r.md };
-        }
+            // Sort: today and future first (chronological), then past dates
+            fixtureDates.sort((a, b) => {
+                const aFuture = a.dateObj >= today;
+                const bFuture = b.dateObj >= today;
+                if (aFuture && bFuture) return a.dateObj - b.dateObj;
+                if (!aFuture && !bFuture) return a.dateObj - b.dateObj;
+                return aFuture ? -1 : 1;
+            });
 
-        function renderResults() {
-            let filtered = [...resultsData];
-            if (currentMdFilter && currentMdFilter !== 'all') { const mdNum = parseInt(currentMdFilter);
-                filtered = filtered.filter(r => r.md === mdNum); }
-            if (currentTeamFilter && currentTeamFilter !== 'all') { filtered = filtered.filter(r => { const { homeTeam,
-                        awayTeam } = parseResultCard(r); return homeTeam === currentTeamFilter || awayTeam ===
-                        currentTeamFilter; }); }
-            const sorted = filtered.sort((a, b) => (b.md || 0) - (a.md || 0));
-            const allMatchdays = [...new Set(resultsData.map(r => r.md).filter(md => md !== undefined && md !== null))].sort(
-            (a, b) => a - b);
-            const allTeams = [...new Set(resultsData.map(r => { const { homeTeam, awayTeam } = parseResultCard(r); return [
-                        homeTeam, awayTeam
-                    ]; }).flat().filter(Boolean))].sort();
-            let filtersHtml =
-                `<div class="filters-bar"><div class="filter-group"><label>Matchday</label><select id="mdFilterSelect"><option value="all" ${!currentMdFilter || currentMdFilter === 'all' ? 'selected' : ''}>All Matchdays</option>${allMatchdays.map(md => `<option value="${md}" ${currentMdFilter == md ? 'selected' : ''}>Matchday ${md}</option>`).join('')}</select></div><div class="filter-group"><label>Team</label><select id="teamFilterSelect"><option value="all" ${!currentTeamFilter || currentTeamFilter === 'all' ? 'selected' : ''}>All Teams</option>${allTeams.map(team => `<option value="${team}" ${currentTeamFilter === team ? 'selected' : ''}>${team}</option>`).join('')}</select></div><div class="filter-group"><button id="clearFiltersBtn" class="clear-filters">Clear Filters</button></div><div class="filter-stats">${filtered.length} match${filtered.length !== 1 ? 'es' : ''} found</div>${isAdminMode ? `<button class="scan-img-btn" id="scanResultTopBtn">📸 Scan Image</button><button class="add-result-top-btn" id="addResultTopBtn">⚽ + Add Result</button>` : ''}</div>`;
-            let matchesHtml = '';
-            if (!sorted.length) {
-                matchesHtml = '<div class="empty-state"><div class="empty-icon">🏆</div><p>No results match the filters</p></div>';
-            } else {
-                matchesHtml = '<div class="matches-list">';
-                sorted.forEach((r, i) => {
-                    const { homeTeam, awayTeam, homeScore, awayScore, isForfeit, forfeitType } = parseResultCard(r);
-                    const homeIcon = getTeamIconHtml(homeTeam, 'team-icon-lg');
-                    const awayIcon = getTeamIconHtml(awayTeam, 'team-icon-lg');
-                    let scoreHtml = '';
-                    if (isForfeit && homeScore === 'F') scoreHtml =
-                        `<div class="forfeit-display">F — F</div><div class="aggregate-text">${forfeitType}</div>`;
-                    else if (forfeitType) scoreHtml =
-                        `<div class="score-display">${homeScore} — ${awayScore}</div><div class="aggregate-text">${forfeitType}</div>`;
-                    else scoreHtml = `<div class="score-display">${homeScore} — ${awayScore}</div>`;
-                    const homeScorers = r.goalScorers?.home || [];
-                    const awayScorers = r.goalScorers?.away || [];
-                    const homeScorersHtml = homeScorers.map(s =>
-                        `<span class="goal-scorer-item">⚽ ${s.player}${s.goals > 1 ? ` (${s.goals})` : ''}</span>`
-                        ).join('');
-                    const awayScorersHtml = awayScorers.map(s =>
-                        `<span class="goal-scorer-item">⚽ ${s.player}${s.goals > 1 ? ` (${s.goals})` : ''}</span>`
-                        ).join('');
-                    const aggHtml = r.aggregate ? `<div class="aggregate-text">Agg: ${r.aggregate}</div>` : '';
-
-                    matchesHtml += `<div class="match-card" style="animation-delay:${i * 0.05}s">
-                <div class="match-row">
-                  <div class="team-side">
-                    ${homeIcon}
-                    <span class="team-name-big">${homeTeam}</span>
-                    ${homeScorersHtml ? `<div class="goal-scorers">${homeScorersHtml}</div>` : ''}
-                  </div>
-                  <div class="match-center">
-                    ${scoreHtml}${aggHtml}
-                  </div>
-                  <div class="team-side">
-                    ${awayIcon}
-                    <span class="team-name-big">${awayTeam}</span>
-                    ${awayScorersHtml ? `<div class="goal-scorers">${awayScorersHtml}</div>` : ''}
-                  </div>
-                </div>
-                <div class="match-meta">
-                  ${r.venue ? `<span class="meta-tag">📍 ${r.venue}</span>` : ''}
-                  ${r.md ? `<span class="meta-tag">MD ${r.md}</span>` : ''}
-                </div>
-                ${isAdminMode ? `<div class="admin-row"><button class="btn-sm btn-edit" data-id="${r.key}">✏️ Edit</button><button class="btn-sm btn-delete" data-id="${r.key}">🗑️ Delete</button></div>` : ''}
-              </div>`;
-                });
-                matchesHtml += '</div>';
-            }
-            document.getElementById('contentCard').innerHTML = filtersHtml + matchesHtml;
-            document.getElementById('mdFilterSelect')?.addEventListener('change', e => { currentMdFilter = e.target.value;
-                renderResults(); });
-            document.getElementById('teamFilterSelect')?.addEventListener('change', e => { currentTeamFilter = e.target.value;
-                renderResults(); });
-            document.getElementById('clearFiltersBtn')?.addEventListener('click', () => { currentMdFilter = '';
-                currentTeamFilter = '';
-                renderResults(); });
-            document.getElementById('addResultTopBtn')?.addEventListener('click', () => openResultForm(null));
-            document.getElementById('scanResultTopBtn')?.addEventListener('click', () => openMultiScanModal());
-            if (isAdminMode) {
-                document.querySelectorAll('.btn-edit[data-id]').forEach(btn => { const r = resultsData.find(x => x.key === btn
-                        .dataset.id); if (r) btn.onclick = () => openResultForm(r); });
-                document.querySelectorAll('.btn-delete[data-id]').forEach(btn => { btn.onclick = async () => { if (
-                            confirm('Delete result?')) await database.ref(getSeasonPath(currentSeasonId,
-                            `results/${btn.dataset.id}`)).remove(); }; });
-            }
-        }
-
-        function renderTopScorers() {
-            const sorted = [...topScorerList].sort((a, b) => (b.count || 0) - (a.count || 0));
-            const top3 = sorted.slice(0, 3);
-            const rest = sorted.slice(3);
-            let top3Html = '';
-            if (top3.length) {
-                top3Html = '<div class="top3-container">';
-                top3.forEach((player, idx) => {
-                    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
-                    const teamIconUrl = teamIconsCache[player.team] || '';
-                    const playerImageUrl = player.imageUrl || '';
-                    top3Html +=
-                        `<div class="top3-block">${isAdminMode ? `<div class="edit-block-btn" data-key="${player.key}" data-type="scorer">✏️</div>` : ''}<div class="player-image-wrapper"><div class="medal-badge">${medal}</div><img class="player-img" src="${playerImageUrl || 'https://via.placeholder.com/320x320?text=No+Image'}" alt="${player.name}" onerror="this.src='https://via.placeholder.com/320x320?text=No+Image'"><div class="player-name-overlay">${escapeHtml(player.name || '')}</div>${teamIconUrl ? `<div class="team-icon-overlay"><img src="${teamIconUrl}" alt="${player.team}"></div>` : ''}</div><div class="top3-count">⚽ ${player.count || 0}</div></div>`;
-                });
-                top3Html += '</div>';
-            }
-            let restHtml = '';
-            if (rest.length) {
-                restHtml =
-                    `<div class="rest-table-wrapper"><div class="table-scroll-wrap"><table class="stats-list"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>Goals</th>${isAdminMode ? '<th>Actions</th>' : ''}</tr></thead><tbody>`;
-                rest.forEach((p, i) => {
-                    const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
-                    restHtml +=
-                        `<tr><td>${i + 4}</td><td style="font-size:1.5rem;">${escapeHtml(p.name || '')}</td><td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${escapeHtml(p.team || '')}</span></div></td><td><span class="count-badge">${p.count || 0}</span></td>${isAdminMode ? `<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>` : ''}</tr>`;
-                });
-                restHtml += `</tbody></table></div></div>`;
-            }
-            let html = top3Html + restHtml;
-            if (!sorted.length) html = '<div class="empty-state"><div class="empty-icon">⚽</div><p>No scorers yet</p></div>';
-            if (isAdminMode) html +=
-                `<div style="display:flex;gap:16px;flex-wrap:wrap;"><button class="scan-img-btn" id="scanScorerBtn">📸 Scan Image</button><button class="add-btn-main" id="addScorerBtn">+ Add Scorer</button></div>`;
-            document.getElementById('contentCard').innerHTML = html;
-            document.querySelectorAll('.edit-block-btn').forEach(btn => { btn.addEventListener('click', e => { e
-                        .stopPropagation(); const player = topScorerList.find(p => p.key === btn.dataset.key); if (
-                        player) openStatModal('scorer', player); }); });
-            if (isAdminMode) {
-                document.getElementById('scanScorerBtn')?.addEventListener('click', () => openScanScorerModal('scorer'));
-                document.getElementById('addScorerBtn')?.addEventListener('click', () => openStatModal('scorer'));
-                document.querySelectorAll('.btn-edit[data-id]').forEach(btn => { const e = topScorerList.find(x => x.key ===
-                        btn.dataset.id); if (e) btn.onclick = () => openStatModal('scorer', e); });
-                document.querySelectorAll('.btn-delete[data-id]').forEach(btn => { btn.onclick = async () => { if (
-                            confirm('Delete?')) { await database.ref(getSeasonPath(currentSeasonId,
-                                `topScorers/list/${btn.dataset.id}`)).remove(); await loadTopScorerData();
-                            renderTopScorers(); } }; });
-            }
-        }
-
-        function renderTopAssistants() {
-            const sorted = [...topAssistantList].sort((a, b) => (b.count || 0) - (a.count || 0));
-            const top3 = sorted.slice(0, 3);
-            const rest = sorted.slice(3);
-            let top3Html = '';
-            if (top3.length) {
-                top3Html = '<div class="top3-container">';
-                top3.forEach((player, idx) => {
-                    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
-                    const teamIconUrl = teamIconsCache[player.team] || '';
-                    const playerImageUrl = player.imageUrl || '';
-                    top3Html +=
-                        `<div class="top3-block">${isAdminMode ? `<div class="edit-block-btn" data-key="${player.key}" data-type="assistant">✏️</div>` : ''}<div class="player-image-wrapper"><div class="medal-badge">${medal}</div><img class="player-img" src="${playerImageUrl || 'https://via.placeholder.com/320x320?text=No+Image'}" alt="${player.name}" onerror="this.src='https://via.placeholder.com/320x320?text=No+Image'"><div class="player-name-overlay">${escapeHtml(player.name || '')}</div>${teamIconUrl ? `<div class="team-icon-overlay"><img src="${teamIconUrl}" alt="${player.team}"></div>` : ''}</div><div class="top3-count">🎯 ${player.count || 0}</div></div>`;
-                });
-                top3Html += '</div>';
-            }
-            let restHtml = '';
-            if (rest.length) {
-                restHtml =
-                    `<div class="rest-table-wrapper"><div class="table-scroll-wrap"><table class="stats-list"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>Assists</th>${isAdminMode ? '<th>Actions</th>' : ''}</tr></thead><tbody>`;
-                rest.forEach((p, i) => {
-                    const iconHtml = getTeamIconHtml(p.team, 'team-icon-sm');
-                    restHtml +=
-                        `<tr><td>${i + 4}</td><td style="font-size:1.5rem;">${escapeHtml(p.name || '')}</td><td><div class="stat-team-cell">${iconHtml}<span style="font-size:1.5rem;">${escapeHtml(p.team || '')}</span></div></td><td><span class="count-badge">${p.count || 0}</span></td>${isAdminMode ? `<td><button class="btn-sm btn-edit" data-id="${p.key}">✏️</button> <button class="btn-sm btn-delete" data-id="${p.key}">🗑️</button></td>` : ''}</tr>`;
-                });
-                restHtml += `</tbody></table></div></div>`;
-            }
-            let html = top3Html + restHtml;
-            if (!sorted.length) html =
-                '<div class="empty-state"><div class="empty-icon">🎯</div><p>No assistants yet</p></div>';
-            if (isAdminMode) html +=
-                `<div style="display:flex;gap:16px;flex-wrap:wrap;"><button class="scan-img-btn" id="scanAssistBtn">📸 Scan Image</button><button class="add-btn-main" id="addAssistBtn">+ Add Assistant</button></div>`;
-            document.getElementById('contentCard').innerHTML = html;
-            document.querySelectorAll('.edit-block-btn').forEach(btn => { btn.addEventListener('click', e => { e
-                        .stopPropagation(); const player = topAssistantList.find(p => p.key === btn.dataset.key); if (
-                        player) openStatModal('assistant', player); }); });
-            if (isAdminMode) {
-                document.getElementById('scanAssistBtn')?.addEventListener('click', () => openScanScorerModal('assistant'));
-                document.getElementById('addAssistBtn')?.addEventListener('click', () => openStatModal('assistant'));
-                document.querySelectorAll('.btn-edit[data-id]').forEach(btn => { const e = topAssistantList.find(x => x
-                        .key === btn.dataset.id); if (e) btn.onclick = () => openStatModal('assistant', e); });
-                document.querySelectorAll('.btn-delete[data-id]').forEach(btn => { btn.onclick = async () => { if (
-                            confirm('Delete?')) { await database.ref(getSeasonPath(currentSeasonId,
-                                `topAssistants/list/${btn.dataset.id}`)).remove(); await loadTopAssistantData();
-                            renderTopAssistants(); } }; });
-            }
-        }
-
-        function renderCurrentTab(tabOverride) {
-            const tab = tabOverride || document.querySelector('.tab-btn.active')?.dataset.tab || 'table';
-            if (pendingSaves > 0) {
-                pendingRenderTab = tab;
+            if (fixtureDates.length === 0) {
+                showModal(`
+              <h3>📅 Matchday Scheduler</h3>
+              <div class="empty-state"><div class="empty-icon">📅</div><p>No Premier League fixtures found in the calendar.</p></div>
+              <div class="modal-btns"><button class="modal-btn-cancel" id="closeSchedulerEmpty">Close</button></div>
+            `);
+                document.getElementById('closeSchedulerEmpty').onclick = closeModal;
                 return;
             }
-            pendingRenderTab = null;
-            document.getElementById('contentCard').innerHTML =
-                '<div class="loading-spinner"><div class="spinner"></div><span>Loading…</span></div>';
-            if (tab === 'table') renderTable();
-            else if (tab === 'fixtures') renderFixtures();
-            else if (tab === 'results') renderResults();
-            else if (tab === 'topscorers') renderTopScorers();
-            else if (tab === 'topassists') renderTopAssistants();
-            else if (tab === 'watch') renderWatchMatch();
+
+            // Build the UI
+            let dateRowsHtml = '';
+            let firstMd = 1;
+
+            for (let i = 0; i < fixtureDates.length; i++) {
+                const fd = fixtureDates[i];
+                const dateObj = fd.dateObj;
+                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                const dayName = dayNames[dateObj.getDay()];
+                const day = dateObj.getDate();
+                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
+                    'October', 'November', 'December'
+                ];
+                const monthName = monthNames[dateObj.getMonth()];
+                const year = dateObj.getFullYear();
+                const dateLabel = `${dayName}, ${day} ${monthName} ${year}`;
+
+                // Find existing matchday from first fixture
+                let existingMd = null;
+                if (fd.fixtures && fd.fixtures.length > 0 && fd.fixtures[0].matchday) {
+                    existingMd = fd.fixtures[0].matchday;
+                }
+
+                // Determine if this is the earliest date (today or nearest future) for auto-populate
+                const isEarliest = (i === 0);
+
+                const teamsHtml = fd.fixtures.map(f =>
+                    `<span style="display:inline-block;background:rgba(150,60,255,0.15);border-radius:20px;padding:4px 14px;margin:2px;font-size:1.2rem;">${escapeHtml(f.home)} vs ${escapeHtml(f.away)}</span>`
+                ).join('');
+
+                dateRowsHtml += `
+              <div style="display:grid;grid-template-columns:1fr 2fr 80px;gap:16px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+                <div style="font-size:1.4rem;font-weight:600;color:var(--white);">${dateLabel}</div>
+                <div style="font-size:1.2rem;color:rgba(255,255,255,0.7);display:flex;flex-wrap:wrap;gap:6px;">${teamsHtml}</div>
+                <div>
+                  <input type="number" class="matchday-input" data-date="${fd.date}" data-tidx="${fd.tournamentIndex}" min="1" value="${existingMd || ''}" placeholder="MD" style="width:80px;padding:10px 8px;font-size:1.4rem;background:rgba(255,255,255,0.06);border:1px solid var(--razzmatazz);border-radius:16px;color:white;text-align:center;">
+                </div>
+              </div>
+            `;
+            }
+
+            const todayStr = getSASTToday();
+            const earliestDate = fixtureDates.length > 0 ? fixtureDates[0].date : todayStr;
+
+            showModal(`
+            <h3>📅 Matchday Scheduler</h3>
+            <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;font-size:1.2rem;">Assign matchday numbers to each fixture date. <strong>Set Today's/Next Matchday</strong> below to auto-predict the rest.</p>
+
+            <div style="background:rgba(0,206,209,0.08);border:1px solid var(--turquoise);border-radius:20px;padding:20px;margin-bottom:24px;">
+              <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                <label style="margin:0;font-size:1.2rem;color:rgba(255,255,255,0.7);">Set Today's/Next Matchday:</label>
+                <input type="number" id="autoStartMd" value="${currentMatchday || 1}" min="1" style="width:100px;padding:12px 16px;font-size:1.4rem;background:rgba(255,255,255,0.06);border:1px solid var(--razzmatazz);border-radius:16px;color:white;text-align:center;">
+                <button class="modal-btn-primary" id="autoPredictBtn" style="flex:0 0 auto;padding:12px 32px;font-size:1.4rem;">🔮 Predict All</button>
+              </div>
+              <div style="font-size:1rem;color:rgba(255,255,255,0.4);margin-top:10px;">This will set the earliest fixture date to this matchday and increment by 1 for each subsequent fixture date.</div>
+            </div>
+
+            <div style="max-height:400px;overflow-y:auto;margin:12px 0;border-radius:20px;background:rgba(0,0,0,0.2);padding:4px 20px;">
+              ${dateRowsHtml}
+            </div>
+
+            <div id="schedulerStatus"></div>
+
+            <div class="modal-btns" style="margin-top:20px;">
+              <button class="modal-btn-primary" id="confirmMatchdayBtn">✅ Confirm All Matchdays</button>
+              <button class="modal-btn-cancel" id="cancelSchedulerBtn">Cancel</button>
+            </div>
+          `, true);
+
+            document.getElementById('cancelSchedulerBtn').onclick = closeModal;
+
+            // Auto-predict
+            document.getElementById('autoPredictBtn').onclick = function() {
+                const startMd = parseInt(document.getElementById('autoStartMd').value) || 1;
+                const inputs = document.querySelectorAll('.matchday-input');
+                let currentMd = startMd;
+                for (let i = 0; i < inputs.length; i++) {
+                    inputs[i].value = currentMd;
+                    currentMd += 1;
+                }
+                document.getElementById('schedulerStatus').innerHTML =
+                    `<div class="status-msg status-success">✅ Predicted matchdays from MD ${startMd} onward!</div>`;
+            };
+
+            // Confirm all
+            document.getElementById('confirmMatchdayBtn').onclick = async function() {
+                const btn = this;
+                const statusEl = document.getElementById('schedulerStatus');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+                statusEl.innerHTML = '<div class="status-msg status-loading">Saving matchdays...</div>';
+
+                const inputs = document.querySelectorAll('.matchday-input');
+                const updates = {};
+
+                for (const input of inputs) {
+                    const date = input.dataset.date;
+                    const tidx = parseInt(input.dataset.tidx);
+                    const mdVal = parseInt(input.value);
+                    if (!mdVal || isNaN(mdVal)) continue;
+
+                    // Save to calendarEventsData[date].tournaments[tidx].fixtures[].matchday
+                    const eventData = calendarEventsData[date];
+                    if (!eventData || !eventData.tournaments || tidx >= eventData.tournaments.length) continue;
+                    const tournament = eventData.tournaments[tidx];
+                    if (!tournament || !tournament.fixtures) continue;
+
+                    for (let fIdx = 0; fIdx < tournament.fixtures.length; fIdx++) {
+                        const path = `calendarEvents/${date}/tournaments/${tidx}/fixtures/${fIdx}/matchday`;
+                        updates[path] = mdVal;
+                    }
+                }
+
+                if (Object.keys(updates).length === 0) {
+                    statusEl.innerHTML = '<div class="status-msg status-error">No matchdays to save. Please assign matchday numbers first.</div>';
+                    btn.disabled = false;
+                    btn.innerHTML = '✅ Confirm All Matchdays';
+                    return;
+                }
+
+                try {
+                    incrementPending();
+                    await database.ref().update(updates);
+                    decrementPending();
+
+                    // Also update the season's currentMatchday using the earliest date's matchday
+                    const firstInput = document.querySelector('.matchday-input');
+                    if (firstInput) {
+                        const firstMdVal = parseInt(firstInput.value);
+                        if (firstMdVal && !isNaN(firstMdVal)) {
+                            await saveCurrentMatchday(currentSeasonId, firstMdVal);
+                        }
+                    }
+
+                    await loadCalendarEvents();
+                    statusEl.innerHTML =
+                    `<div class="status-msg status-success">✅ Matchdays saved successfully! (${Object.keys(updates).length} fixtures updated)</div>`;
+                    btn.innerHTML = '✓ Done';
+                    setTimeout(() => {
+                        closeModal();
+                        renderCurrentTab();
+                    }, 1000);
+                } catch (e) {
+                    statusEl.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                    btn.disabled = false;
+                    btn.innerHTML = '✅ Confirm All Matchdays';
+                }
+            };
         }
 
-        let editingTeamKey = null;
-
-        function openTeamForm(key, data) {
-            const saveBtn = document.getElementById('saveTeamBtn');
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = 'Save';
-            saveBtn.style.color = '';
-            const oldStatus = document.querySelector('#teamForm .status-msg');
-            if (oldStatus) oldStatus.remove();
-
-            editingTeamKey = key;
-            document.getElementById('teamNameInput').value = data?.name || '';
-            document.getElementById('teamP').value = data?.p ?? '';
-            document.getElementById('teamW').value = data?.w ?? '';
-            document.getElementById('teamD').value = data?.d ?? '';
-            document.getElementById('teamL').value = data?.l ?? '';
-            document.getElementById('teamGS').value = data?.gs ?? '';
-            document.getElementById('teamGC').value = data?.gc ?? '';
-            document.getElementById('teamGD').value = data?.gd ?? '';
-            document.getElementById('teamPts').value = data?.pts ?? '';
-            document.getElementById('teamForm').classList.add('active');
+        // ─── Helper to save a single fixture's matchday ───
+        async function saveFixtureMatchday(date, tournamentIndex, fixtureIndex, matchdayNum) {
+            const path =
+                `calendarEvents/${date}/tournaments/${tournamentIndex}/fixtures/${fixtureIndex}/matchday`;
+            incrementPending();
+            await database.ref(path).set(matchdayNum);
+            decrementPending();
+            await loadCalendarEvents();
         }
 
-        document.getElementById('saveTeamBtn').onclick = async () => {
-            const name = document.getElementById('teamNameInput').value.trim();
-            if (!name) { alert("Team name required"); return; }
-            const data = { name, p: parseInt(document.getElementById('teamP').value) || 0, w: parseInt(document
-                    .getElementById('teamW').value) || 0, d: parseInt(document.getElementById('teamD').value) || 0,
-                l: parseInt(document.getElementById('teamL').value) || 0, gs: parseInt(document.getElementById(
-                    'teamGS').value) || 0, gc: parseInt(document.getElementById('teamGC').value) || 0, gd: parseInt(
-                    document.getElementById('teamGD').value) || 0, pts: parseInt(document.getElementById('teamPts')
-                    .value) || 0 };
-            const btn = document.getElementById('saveTeamBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
-            const statusDiv = document.createElement('div');
-            statusDiv.className = 'status-msg';
-            const btnsContainer = document.querySelector('.modal-btns');
-            btnsContainer.parentNode.insertBefore(statusDiv, btnsContainer.nextSibling);
+        // ─── Update renderFixtures to display MD badge ───
+        // (renderFixtures is already using .fixture-tournament-label with .fixture-md-badge — see below)
+        // The renderFixtures function is updated to show matchday numbers from fixtures.
+
+        // ─── PENDING RESULTS SYSTEM ───
+        async function openPendingResultsModal() {
+            const snap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
+            const data = snap.val() || {};
+            const pendingArray = Object.entries(data).map(([key, val]) => ({ id: key, ...val }));
+
+            if (pendingArray.length === 0) {
+                showModal(`
+              <h3>⏳ Pending Results</h3>
+              <div class="empty-state"><div class="empty-icon">✅</div><p>No pending results to review.</p></div>
+              <div class="modal-btns"><button class="modal-btn-cancel" id="closePendingEmptyBtn">Close</button></div>
+            `);
+                document.getElementById('closePendingEmptyBtn').onclick = closeModal;
+                return;
+            }
+
+            // Group duplicates: same two teams (regardless of home/away order) + same matchday
+            const grouped = [];
+            const used = new Set();
+            for (let i = 0; i < pendingArray.length; i++) {
+                if (used.has(i)) continue;
+                const a = pendingArray[i];
+                const group = [a];
+                used.add(i);
+                for (let j = i + 1; j < pendingArray.length; j++) {
+                    if (used.has(j)) continue;
+                    const b = pendingArray[j];
+                    const sameTeams = (
+                        (a.homeTeam === b.homeTeam && a.awayTeam === b.awayTeam) ||
+                        (a.homeTeam === b.awayTeam && a.awayTeam === b.homeTeam)
+                    );
+                    const sameMd = a.md && b.md && a.md === b.md;
+                    if (sameTeams && sameMd) {
+                        group.push(b);
+                        used.add(j);
+                    }
+                }
+                grouped.push(group);
+            }
+
+            let listHtml = '';
+            for (const group of grouped) {
+                const isDuplicate = group.length > 1;
+                if (isDuplicate) {
+                    listHtml += `
+                <div style="border:2px solid #f97316;border-radius:24px;padding:20px;margin-bottom:20px;background:rgba(249,115,22,0.08);">
+                  <div style="color:#f97316;font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;margin-bottom:12px;">
+                    ⚠️ DUPLICATE SUBMISSIONS — Same Match, Same Matchday (approve ONE only)
+                  </div>
+                `;
+                }
+                for (const p of group) {
+                    const isForfeit = p.matchType === 'forfeit' || (p.matchText && p.matchText.toLowerCase().includes('forfeit'));
+                    const homeIcon = getTeamIconHtml(p.homeTeam || '');
+                    const awayIcon = getTeamIconHtml(p.awayTeam || '');
+                    const scoreDisplay = isForfeit ? 'F — F' : `${p.homeScore || 0} — ${p.awayScore || 0}`;
+
+                    listHtml += `
+                <div class="pending-item" style="${isDuplicate ? 'border-color:rgba(249,115,22,0.4);margin-bottom:10px;' : ''}">
+                  <div class="pi-teams">
+                    ${homeIcon}
+                    <span>${escapeHtml(p.homeTeam || '?')}</span>
+                    <span style="color:var(--turquoise);font-weight:400;">vs</span>
+                    ${awayIcon}
+                    <span>${escapeHtml(p.awayTeam || '?')}</span>
+                  </div>
+                  <div class="pi-score">${scoreDisplay}</div>
+                  <div class="pi-md">MD ${p.md || '?'}</div>
+                  ${isForfeit ? '<span class="pi-badge">🚫 Forfeit</span>' : ''}
+                  <div class="pi-actions">
+                    <button class="btn-sm btn-edit pending-preview-btn" data-id="${p.id}" style="padding:8px 20px;font-size:1.1rem;">👁️</button>
+                    <button class="btn-sm btn-confirm pending-approve-btn" data-id="${p.id}" style="padding:8px 20px;font-size:1.1rem;">✅</button>
+                    <button class="btn-sm btn-delete pending-reject-btn" data-id="${p.id}" style="padding:8px 20px;font-size:1.1rem;">🗑️</button>
+                  </div>
+                </div>
+              `;
+                }
+                if (isDuplicate) {
+                    listHtml += `</div>`;
+                }
+            }
+
+            showModal(`
+            <h3>⏳ Pending Results <span style="font-size:1.2rem;color:rgba(255,255,255,0.4);">(${pendingArray.length})</span></h3>
+            <div style="max-height:500px;overflow-y:auto;margin:12px 0;">
+              ${listHtml}
+            </div>
+            <div class="modal-btns"><button class="modal-btn-cancel" id="closePendingBtn">Close</button></div>
+          `, true);
+
+            document.getElementById('closePendingBtn').onclick = closeModal;
+
+            document.querySelectorAll('.pending-preview-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const id = btn.dataset.id;
+                    const result = pendingArray.find(p => p.id === id);
+                    if (result) openPendingResultPreview(id, result);
+                };
+            });
+
+            document.querySelectorAll('.pending-approve-btn').forEach(btn => {
+                btn.onclick = async () => {
+                    const id = btn.dataset.id;
+                    const result = pendingArray.find(p => p.id === id);
+                    if (!result) return;
+                    if (confirm(`Approve this result for ${result.homeTeam} vs ${result.awayTeam}?`)) {
+                        await approvePendingResult(id, result);
+                        openPendingResultsModal();
+                        renderCurrentTab();
+                    }
+                };
+            });
+
+            document.querySelectorAll('.pending-reject-btn').forEach(btn => {
+                btn.onclick = async () => {
+                    const id = btn.dataset.id;
+                    const result = pendingArray.find(p => p.id === id);
+                    if (!result) return;
+                    if (confirm(`Reject this result for ${result.homeTeam} vs ${result.awayTeam}?`)) {
+                        await rejectPendingResult(id);
+                        openPendingResultsModal();
+                    }
+                };
+            });
+        }
+
+        function openPendingResultPreview(pendingResultId, resultData) {
+            const isForfeit = resultData.matchType === 'forfeit' || (resultData.matchText && resultData.matchText.toLowerCase()
+                .includes('forfeit'));
+            const images = resultData.images || [];
+            const submittedAt = resultData.submittedAt ? new Date(resultData.submittedAt).toLocaleString() : 'Unknown';
+
+            const homeScorersHtml = (resultData.goalScorers?.home || []).map(s =>
+                `<span class="scorer-badge" style="font-size:1.4rem;">⚽ ${escapeHtml(s.player)} (${s.goals})</span>`
+            ).join('');
+            const awayScorersHtml = (resultData.goalScorers?.away || []).map(s =>
+                `<span class="scorer-badge" style="font-size:1.4rem;">⚽ ${escapeHtml(s.player)} (${s.goals})</span>`
+            ).join('');
+
+            let imagesHtml = '';
+            if (images.length) {
+                imagesHtml = `<div class="image-grid-preview" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">`;
+                for (const url of images) {
+                    imagesHtml += `<img src="${url}" alt="Match image" onclick="window.open('${url}','_blank')" style="aspect-ratio:4/3;object-fit:contain;width:100%;">`;
+                }
+                imagesHtml += `</div>`;
+            } else {
+                imagesHtml = '<div style="color:rgba(255,255,255,0.3);padding:12px 0;font-size:1.2rem;">No images attached.</div>';
+            }
+
+            const scoreDisplay = isForfeit ? 'F — F' : `${resultData.homeScore || 0} — ${resultData.awayScore || 0}`;
+
+            showModal(`
+            <h3 style="font-size:3.6rem;">👁️ Pending Result Preview</h3>
+            <div style="background:rgba(150,60,255,0.12);border-radius:20px;padding:28px;margin-bottom:20px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:2.8rem;">
+                <span style="font-size:2.8rem;">${escapeHtml(resultData.homeTeam || '?')}</span>
+                <span style="font-weight:bold;color:var(--turquoise);font-size:4rem;">${scoreDisplay}</span>
+                <span style="font-size:2.8rem;">${escapeHtml(resultData.awayTeam || '?')}</span>
+              </div>
+              ${isForfeit ? '<div style="text-align:center;color:#ffaaaa;font-size:1.6rem;">🚫 Forfeit Request</div>' : ''}
+              <div style="margin-top:12px;text-align:center;color:rgba(255,255,255,0.5);font-size:1.5rem;">MD ${resultData.md || '?'} · ${escapeHtml(resultData.date || '')}</div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;font-size:1.5rem;">
+              <div><span style="color:rgba(255,255,255,0.5);">Submitted by:</span> <strong style="color:var(--turquoise);">${escapeHtml(resultData.submittedBy || '?')}</strong></div>
+              <div><span style="color:rgba(255,255,255,0.5);">Submitted at:</span> <strong>${escapeHtml(submittedAt)}</strong></div>
+            </div>
+
+            ${homeScorersHtml || awayScorersHtml ? `<div style="margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;font-size:1.4rem;">${homeScorersHtml} ${awayScorersHtml}</div>` : ''}
+
+            ${resultData.matchNotes ? `<div style="background:rgba(0,206,209,0.1);border:1px solid var(--turquoise);border-radius:16px;padding:18px;margin:16px 0;"><span style="color:var(--turquoise);font-weight:700;font-size:1.6rem;">📝 Admin Notes:</span><div style="color:white;font-size:1.6rem;margin-top:8px;">${escapeHtml(resultData.matchNotes)}</div></div>` : ''}
+
+            <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:20px;margin-bottom:16px;">
+              <h4 style="color:var(--turquoise);font-size:1.6rem;margin-bottom:12px;">📸 Images</h4>
+              ${imagesHtml}
+            </div>
+
+            <div class="modal-btns">
+              <button class="modal-btn-primary btn-confirm" id="approveFromPreviewBtn" style="font-size:2.4rem;padding:20px;">✅ Approve</button>
+              <button class="modal-btn-primary btn-danger" id="rejectFromPreviewBtn" style="font-size:2.4rem;padding:20px;">🗑️ Reject</button>
+              <button class="modal-btn-cancel" id="closePreviewBtn" style="font-size:2.4rem;padding:20px;">Back</button>
+            </div>
+            <div id="previewStatus"></div>
+          `, true);
+
+            document.getElementById('closePreviewBtn').onclick = closeModal;
+
+            document.getElementById('approveFromPreviewBtn').onclick = async () => {
+                const status = document.getElementById('previewStatus');
+                const btn = document.getElementById('approveFromPreviewBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="btn-spinner"></span> Approving...';
+                try {
+                    await approvePendingResult(pendingResultId, resultData);
+                    status.innerHTML = '<div class="status-msg status-success">✅ Approved! Refreshing...</div>';
+                    setTimeout(() => { closeModal();
+                        openPendingResultsModal();
+                        renderCurrentTab(); }, 800);
+                } catch (e) {
+                    status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                    btn.disabled = false;
+                    btn.innerHTML = '✅ Approve';
+                }
+            };
+
+            document.getElementById('rejectFromPreviewBtn').onclick = async () => {
+                const status = document.getElementById('previewStatus');
+                const btn = document.getElementById('rejectFromPreviewBtn');
+                if (!confirm('Reject this pending result?')) return;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="btn-spinner"></span> Rejecting...';
+                try {
+                    await rejectPendingResult(pendingResultId);
+                    status.innerHTML = '<div class="status-msg status-success">🗑️ Rejected.</div>';
+                    setTimeout(() => { closeModal();
+                        openPendingResultsModal(); }, 800);
+                } catch (e) {
+                    status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                    btn.disabled = false;
+                    btn.innerHTML = '🗑️ Reject';
+                }
+            };
+        }
+
+        async function approvePendingResult(pendingResultId, resultData) {
+            const isForfeit = resultData.matchType === 'forfeit' || (resultData.matchText && resultData.matchText.toLowerCase()
+                .includes('forfeit'));
+
+            // Determine the correct forfeit type
+            let forfeitType = resultData.forfeitType || (isForfeit ? 'forfeit_win' : '');
+
+            // If forfeitType is 'forfeit_win', treat as 'forfeit_no_reply' for table logic
+            const tableForfeitType = forfeitType === 'forfeit_win' ? 'forfeit_no_reply' : forfeitType;
+
+            // Build the result object for the results table
+            const matchText = resultData.matchText || formatResultText(
+                resultData.homeTeam || '',
+                resultData.homeScore || 0,
+                resultData.awayTeam || '',
+                resultData.awayScore || 0,
+                tableForfeitType
+            );
+
+            const resultEntry = {
+                matchText: matchText,
+                md: resultData.md || 0,
+                date: resultData.date || '',
+                venue: resultData.venue || '',
+                matchType: resultData.matchType || '',
+                aggregate: resultData.aggregate || '',
+                matchNotes: resultData.matchNotes || '',
+                goalScorers: resultData.goalScorers || { home: [], away: [] },
+                userAssists: resultData.userAssists || { home: [], away: [] },
+                userSubmitted: true,
+                submittedBy: resultData.submittedBy || 'admin-approved',
+                submittedAt: resultData.submittedAt || Date.now(),
+                flagged: false,
+                approvedAt: Date.now(),
+                approvedBy: 'admin'
+            };
+
+            // Save to results
+            incrementPending();
+            await database.ref(getSeasonPath(currentSeasonId, 'results')).push(resultEntry);
+
+            // Update table stats
+            const homeScore = resultData.homeScore || 0;
+            const awayScore = resultData.awayScore || 0;
+            const homeTeam = resultData.homeTeam || '';
+            const awayTeam = resultData.awayTeam || '';
+
+            if (homeTeam && awayTeam) {
+                await applyResultToTable(homeTeam, awayTeam, homeScore, awayScore, tableForfeitType);
+            }
+
+            // Reload top scorer and assistant data BEFORE applying changes
+            await loadTopScorerData();
+            await loadTopAssistantData();
+
+            // Update scorers
+            const scorersHome = resultData.goalScorers?.home || [];
+            const scorersAway = resultData.goalScorers?.away || [];
+            if (scorersHome.length) await applyScorersFromScan(scorersHome, homeTeam);
+            if (scorersAway.length) await applyScorersFromScan(scorersAway, awayTeam);
+
+            // Update assists
+            const assistsHome = resultData.userAssists?.home || [];
+            const assistsAway = resultData.userAssists?.away || [];
+            if (assistsHome.length) await applyAssistsFromScan(assistsHome, homeTeam);
+            if (assistsAway.length) await applyAssistsFromScan(assistsAway, awayTeam);
+
+            // Delete from pending
+            await database.ref(getSeasonPath(currentSeasonId, `pending_results/${pendingResultId}`)).remove();
+            decrementPending();
+
+            // Reload data
+            await loadCurrentSeasonData();
+            await loadTopScorerData();
+            await loadTopAssistantData();
+        }
+
+        async function rejectPendingResult(pendingResultId) {
+            incrementPending();
+            await database.ref(getSeasonPath(currentSeasonId, `pending_results/${pendingResultId}`)).remove();
+            decrementPending();
+        }
+
+        // ─── UPLOAD FUNCTIONS ───
+        async function uploadTableHeaderImage() {
+            const file = await pickFile('image/*');
+            if (!file) return;
             try {
-                incrementPending();
-                if (editingTeamKey) await database.ref(getSeasonPath(currentSeasonId, `table/${editingTeamKey}`)).set(data);
-                else await database.ref(getSeasonPath(currentSeasonId, 'table')).push(data);
-                decrementPending();
-                btn.innerHTML = '✓ Saved!';
-                btn.style.color = '#166534';
+                const statusDiv = document.createElement('div');
+                statusDiv.className = 'status-msg status-loading';
+                statusDiv.textContent = 'Uploading…';
+                document.getElementById('modalContent').appendChild(statusDiv);
+                const url = await uploadToImgBB(file);
+                await setTableHeaderImage(url);
                 statusDiv.className = 'status-msg status-success';
-                statusDiv.textContent = 'Team saved successfully!';
-                closeModal();
+                statusDiv.textContent = 'Table Header Image updated!';
+                setTimeout(closeModal, 1500);
+            } catch (e) { alert('Upload failed: ' + e.message); }
+        }
+
+        async function openBgCropTool() {
+            const file = await pickFile('image/*');
+            if (!file) return;
+            const objectUrl = URL.createObjectURL(file);
+            showModal(
+                `<h3>🌄 Set Background Image</h3><div class="crop-container" id="cropContainer"><img class="crop-img" id="cropImg" src="${objectUrl}" draggable="false"></div><div class="crop-controls"><label>Zoom</label><input class="crop-slider" id="zoomSlider" type="range" min="0.5" max="2" step="0.01" value="1"><label>Horizontal Position</label><input class="crop-slider" id="posXSlider" type="range" min="0" max="100" step="1" value="50"><label>Vertical Position</label><input class="crop-slider" id="posYSlider" type="range" min="0" max="100" step="1" value="50"></div><div class="modal-btns"><button class="modal-btn-primary" id="applyCropBtn">Apply Background</button><button class="modal-btn-cancel" id="cancelCropBtn">Cancel</button></div>`
+                );
+            const img = document.getElementById('cropImg');
+            const zoomSlider = document.getElementById('zoomSlider');
+            const posXSlider = document.getElementById('posXSlider');
+            const posYSlider = document.getElementById('posYSlider');
+            let zoom = 1,
+                posX = 50,
+                posY = 50;
+
+            function updatePreview() { const scale = zoom; const px = (posX / 100) * (1 - 1 / scale) * 100; const py = (posY /
+                    100) * (1 - 1 / scale) * 100;
+                img.style.transform = `scale(${scale}) translate(${px}%, ${py}%)`; }
+            zoomSlider.oninput = () => { zoom = parseFloat(zoomSlider.value);
+                updatePreview(); };
+            posXSlider.oninput = () => { posX = parseFloat(posXSlider.value);
+                updatePreview(); };
+            posYSlider.oninput = () => { posY = parseFloat(posYSlider.value);
+                updatePreview(); };
+            img.onload = () => { updatePreview(); };
+            document.getElementById('cancelCropBtn').onclick = () => { URL.revokeObjectURL(objectUrl);
+                closeModal(); };
+            document.getElementById('applyCropBtn').onclick = async () => {
+                const btn = document.getElementById('applyCropBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="btn-spinner"></span> Uploading...';
+                try { const url = await uploadToImgBB(file);
+                    await setBackgroundImage(url, 'cover', `${posX}% ${posY}%`);
+                    btn.innerHTML = '✓ Applied!';
+                    setTimeout(() => { closeModal();
+                        URL.revokeObjectURL(objectUrl); }, 1000); } catch (e) { alert('Failed: ' + e.message);
+                    btn.disabled = false;
+                    btn.innerHTML = 'Apply Background'; }
+            };
+        }
+
+        async function uploadNavbarLogo() {
+            const file = await pickFile('image/*');
+            if (!file) return;
+            try { const statusDiv = document.createElement('div');
+                statusDiv.className = 'status-msg status-loading';
+                statusDiv.textContent = 'Uploading…';
+                document.getElementById('modalContent').appendChild(statusDiv);
+                const url = await uploadToImgBB(file);
+                await database.ref('premier_league_navbar_logo').set(url);
+                navbarLogoUrl = url;
+                await loadNavbarLogo();
+                statusDiv.className = 'status-msg status-success';
+                statusDiv.textContent = 'Logo updated!';
+                setTimeout(closeModal, 1500); } catch (e) { alert('Upload failed: ' + e.message); }
+        }
+
+        async function uploadTeamIcon() {
+            const teamName = prompt("Enter team name exactly as it appears:");
+            if (!teamName) return;
+            const file = await pickFile('image/*');
+            if (!file) return;
+            showModal(
+                `<h3>Processing Icon</h3><div class="loading-spinner"><div class="spinner"></div><span>Removing background…</span></div>`
+                );
+            try { let transparentBlob;
+                try { transparentBlob = await removeBackground(file); } catch (e) { transparentBlob = file; }
+                const url = await uploadToImgBB(transparentBlob);
+                await database.ref(`teamIcons/${teamName}`).set({ imageUrl: url, updatedAt: Date.now() });
+                teamIconsCache[teamName] = url;
                 renderCurrentTab();
+                closeModal();
+                alert(`Icon saved for "${teamName}"!`); } catch (e) { alert('Failed: ' + e.message);
+                closeModal(); }
+        }
+
+        async function uploadHeaderBgImage() {
+            const file = await pickFile('image/*');
+            if (!file) return;
+            try { const url = await uploadToImgBB(file);
+                await database.ref('premier_league_table_header_bg').set(url);
+                tableHeaderBgImageUrl = url;
+                closeModal();
+                alert('Header background updated (legacy feature)'); } catch (e) { alert('Upload failed: ' + e.message); }
+        }
+
+        async function manageSlideshowUI() {
+            const refresh = () => {
+                let preview = '<div class="img-preview-grid">';
+                slideshowImages.forEach((url, idx) => { preview +=
+                        `<div class="preview-thumb"><img src="${url}"><span class="thumb-del" data-idx="${idx}" style="cursor:pointer;position:absolute;top:-10px;right:-10px;background:#ef4444;color:white;border:none;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:bold;">✕</span></div>`; });
+                preview += '</div>';
+                showModal(
+                    `<h3>Manage Slideshow</h3>${preview}<label>Add New Slide</label><input type="file" id="newSlideFile" accept="image/*"><button class="add-btn-main" id="uploadSlideBtn" style="margin-top:12px;">+ Add Slide</button><label style="margin-top:20px;">Duration (seconds)</label><input type="number" id="slideDur" value="${slideshowDuration / 1000}" step="0.5" min="1" max="10"><div class="modal-btns"><button class="modal-btn-primary" id="saveDurBtn">Save Duration</button><button class="modal-btn-cancel" id="closeSlideBtn">Close</button></div><div id="slideStatus"></div>`
+                    );
+                document.querySelectorAll('.thumb-del').forEach(btn => { btn.onclick = async () => { const idx =
+                            parseInt(btn.dataset.idx);
+                        slideshowImages.splice(idx, 1);
+                        await database.ref('slideshow/images').set(slideshowImages);
+                        await loadSlideshow();
+                        refresh(); }; });
+                document.getElementById('uploadSlideBtn').onclick = async () => { const file = document
+                        .getElementById('newSlideFile').files[0]; const statusDiv = document.getElementById(
+                        'slideStatus'); if (!file) { statusDiv.innerHTML =
+                            '<div class="status-msg status-error">Select a file first</div>'; return; } try {
+                        statusDiv.innerHTML = '<div class="status-msg status-loading">Uploading…</div>';
+                        const url = await uploadToImgBB(file);
+                        slideshowImages.push(url);
+                        await database.ref('slideshow/images').set(slideshowImages);
+                        await loadSlideshow();
+                        refresh(); } catch (e) { statusDiv.innerHTML =
+                            `<div class="status-msg status-error">Error: ${e.message}</div>`; } };
+                document.getElementById('saveDurBtn').onclick = async () => { let sec = parseFloat(document
+                        .getElementById('slideDur').value); if (isNaN(sec)) sec = 3;
+                    sec = Math.min(10, Math.max(1, sec));
+                    await database.ref('slideshow/duration').set(sec * 1000);
+                    slideshowDuration = sec * 1000;
+                    await loadSlideshow();
+                    document.getElementById('slideStatus').innerHTML =
+                        '<div class="status-msg status-success">Duration saved!</div>';
+                    setTimeout(closeModal, 1000); };
+                document.getElementById('closeSlideBtn').onclick = closeModal;
+            };
+            refresh();
+        }
+
+        function toggleMenu() { document.getElementById('sideMenu').classList.toggle('active');
+            document.getElementById('overlay').classList.toggle('active'); }
+
+        function closeMenu() { document.getElementById('sideMenu').classList.remove('active');
+            document.getElementById('overlay').classList.remove('active'); }
+        document.getElementById('menuBtn').onclick = toggleMenu;
+        document.getElementById('closeMenuBtn').onclick = closeMenu;
+        document.getElementById('overlay').onclick = closeMenu;
+        document.getElementById('homeBtn').onclick = () => window.location.href = 'feed.html';
+
+        document.getElementById('addResultsMenuBtn').onclick = () => {
+            closeMenu();
+            openAddResultsKeyModal();
+        };
+
+        document.getElementById('adminModeBtn').onclick = async () => {
+            const key = prompt("Enter admin key:");
+            if (key === null) return;
+
+            const loadingModal = document.createElement('div');
+            loadingModal.className = 'modal-overlay active';
+            loadingModal.style.display = 'flex';
+            loadingModal.innerHTML = `
+            <div class="modal-card" style="max-width:400px;text-align:center;">
+              <h3>⏳ Verifying...</h3>
+              <div class="loading-spinner" style="padding:20px;">
+                <div class="spinner"></div>
+                <span>Checking credentials...</span>
+              </div>
+            </div>
+          `;
+            document.body.appendChild(loadingModal);
+
+            try {
+                const response = await fetch(RENDER_URL + '/verify-admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: key })
+                });
+                const data = await response.json();
+                loadingModal.remove();
+
+                if (data.success === true) {
+                    isAdminMode = true;
+                    alert("Admin mode activated ✅");
+                    document.getElementById('seasonAdminPanel').style.display = 'flex';
+                    renderCurrentTab();
+
+                    const existingAI = document.getElementById('aiAssistantMenuItem');
+                    if (existingAI) existingAI.remove();
+
+                    if (!document.getElementById('adminSettingsItem')) {
+                        const item = document.createElement('div');
+                        item.id = 'adminSettingsItem';
+                        item.className = 'menu-item';
+                        item.innerHTML = '⚙️ Admin Settings';
+                        item.onclick = () => { openAdminSettings();
+                            closeMenu(); };
+                        document.getElementById('sideMenu').appendChild(item);
+                    }
+                } else {
+                    alert("Incorrect key");
+                }
             } catch (e) {
-                decrementPending();
-                statusDiv.className = 'status-msg status-error';
-                statusDiv.textContent = 'Error: ' + e.message;
-                btn.disabled = false;
-                btn.innerHTML = 'Save';
-                btn.style.color = '';
+                loadingModal.remove();
+                alert("Error verifying admin key: " + e.message);
             }
         };
-        document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamForm').classList.remove('active');
 
-        function formatResultText(homeTeam, homeScore, awayTeam, awayScore, forfeitType) {
-            if (forfeitType === "no_contest") return `${homeTeam} F - F ${awayTeam} (No Contest)`;
-            if (forfeitType === "forfeit_no_reply") return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam} (Forfeited - No Reply)`;
-            if (forfeitType === "forfeit_agreement") return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam} (Forfeited on Agreement)`;
-            return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam}`;
-        }
+        document.getElementById('debugInfoBtn').onclick = () => { openDebugInfoModal();
+            closeMenu(); };
 
-        let editingResultKey = null;
+        document.getElementById('prevSeasonBtn').onclick = () => switchSeason(-1);
+        document.getElementById('nextSeasonBtn').onclick = () => switchSeason(1);
+        document.getElementById('addSeasonBtn').onclick = () => isAdminMode && addNewSeason();
+        document.getElementById('renameSeasonBtn').onclick = () => isAdminMode && renameSeason();
+        document.getElementById('setActiveSeasonBtn').onclick = () => isAdminMode && setActiveSeason();
 
-        function renderScorerList(side) {
-            const list = side === 'home' ? tempScorersHome : tempScorersAway;
-            const container = document.getElementById(`${side}ScorerList`);
-            if (!container) return;
-            container.innerHTML = list.map((s, idx) =>
-                `<div class="scorer-badge">⚽ ${s.player} (${s.goals})<button class="remove-scorer" data-side="${side}" data-idx="${idx}">✖</button></div>`
-                ).join('');
-            container.querySelectorAll('.remove-scorer').forEach(btn => { btn.onclick = () => { const idx = parseInt(btn
-                        .dataset.idx); if (btn.dataset.side === 'home') tempScorersHome.splice(idx, 1); else
-                        tempScorersAway.splice(idx, 1);
-                    renderScorerList(btn.dataset.side); }; });
-        }
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderCurrentTab();
+            });
+        });
 
-        async function openResultForm(r) {
-            editingResultKey = r?.key || null;
-            tempScorersHome = r?.goalScorers?.home ? [...r.goalScorers.home] : [];
-            tempScorersAway = r?.goalScorers?.away ? [...r.goalScorers.away] : [];
-            const teamNames = teamsData.map(t => t.name).sort();
-            const homeOpts = teamNames.map(t => `<option value="${t}" ${r?.homeTeam === t ? 'selected' : ''}>${t}</option>`)
-                .join('');
-            const awayOpts = teamNames.map(t => `<option value="${t}" ${r?.awayTeam === t ? 'selected' : ''}>${t}</option>`)
-                .join('');
-            let existingForfeit = 'none',
-                existingHS = 0,
-                existingAS = 0;
-            if (r) {
-                const text = r.matchText || '';
-                const lower = text.toLowerCase();
-                if (lower.includes('no contest')) existingForfeit = 'no_contest';
-                else if (lower.includes('forfeited - no reply')) existingForfeit = 'forfeit_no_reply';
-                else if (lower.includes('forfeited on agreement')) existingForfeit = 'forfeit_agreement';
-                const match = text.match(/(\d+)\s*-\s*(\d+)/);
-                if (match) { existingHS = parseInt(match[1]);
-                    existingAS = parseInt(match[2]); }
-            }
-            showModal(`
-            <h3>${r ? 'Edit Result' : 'Add Result'}</h3>
-            <label>Home Team</label><select id="rHome"><option value="">Select Home Team</option>${homeOpts}</select>
-            <label>Away Team</label><select id="rAway"><option value="">Select Away Team</option>${awayOpts}</select>
-            <label>Home Score</label><input id="rHS" type="number" value="${existingHS}">
-            <label>Away Score</label><input id="rAS" type="number" value="${existingAS}">
-            <label>Forfeit Type</label><select id="rForfeit"><option value="none" ${existingForfeit === 'none' ? 'selected' : ''}>Normal Result</option><option value="no_contest" ${existingForfeit === 'no_contest' ? 'selected' : ''}>No Contest (F-F)</option><option value="forfeit_no_reply" ${existingForfeit === 'forfeit_no_reply' ? 'selected' : ''}>Forfeited – No Reply</option><option value="forfeit_agreement" ${existingForfeit === 'forfeit_agreement' ? 'selected' : ''}>Forfeited on Agreement</option></select>
-            <label>Matchday</label><input id="rMd" type="number" value="${r?.md || ''}">
-            <label>Date (optional)</label><input id="rDate" placeholder="e.g. 15 May 2025" value="${r?.date || ''}">
-            <label>Venue (optional)</label><input id="rVenue" placeholder="Venue" value="${r?.venue || ''}">
-            <label>Match Type (optional)</label><input id="rType" placeholder="e.g. Matchday 5" value="${r?.matchType || ''}">
-            <label>Aggregate Score (optional)</label><input id="rAgg" placeholder="e.g. 4-2" value="${r?.aggregate || ''}">
-            <div class="scorer-section"><h4>⚽ Home Team Scorers</h4><div style="display:flex;gap:10px;margin-bottom:10px;"><input type="text" id="homeScorerName" placeholder="Player name" style="flex:2;"><input type="number" id="homeScorerGoals" placeholder="Goals" value="1" style="width:90px;"><button id="addHomeScorer" class="modal-btn-primary" style="padding:10px 20px;">Add</button></div><div id="homeScorerList" class="scorer-list"></div></div>
-            <div class="scorer-section"><h4>⚽ Away Team Scorers</h4><div style="display:flex;gap:10px;margin-bottom:10px;"><input type="text" id="awayScorerName" placeholder="Player name" style="flex:2;"><input type="number" id="awayScorerGoals" placeholder="Goals" value="1" style="width:90px;"><button id="addAwayScorer" class="modal-btn-primary" style="padding:10px 20px;">Add</button></div><div id="awayScorerList" class="scorer-list"></div></div>
-            <div class="modal-btns"><button class="modal-btn-primary" id="saveResultBtn">Save</button><button class="modal-btn-cancel" id="cancelResultBtn">Cancel</button></div>
-            <div id="resultStatus"></div>
-          `);
-            renderScorerList('home');
-            renderScorerList('away');
-            document.getElementById('cancelResultBtn').onclick = closeModal;
-            document.getElementById('addHomeScorer').onclick = () => { const name = document.getElementById('homeScorerName')
-                    .value.trim(); const goals = parseInt(document.getElementById('homeScorerGoals').value) || 1; if (!name)
-                    return;
-                tempScorersHome.push({ player: name, goals });
-                renderScorerList('home');
-                document.getElementById('homeScorerName').value = '';
-                document.getElementById('homeScorerGoals').value = '1'; };
-            document.getElementById('addAwayScorer').onclick = () => { const name = document.getElementById('awayScorerName')
-                    .value.trim(); const goals = parseInt(document.getElementById('awayScorerGoals').value) || 1; if (!name)
-                    return;
-                tempScorersAway.push({ player: name, goals });
-                renderScorerList('away');
-                document.getElementById('awayScorerName').value = '';
-                document.getElementById('awayScorerGoals').value = '1'; };
-            document.getElementById('saveResultBtn').onclick = async () => {
-                const homeTeam = document.getElementById('rHome').value;
-                const awayTeam = document.getElementById('rAway').value;
-                let hs = parseInt(document.getElementById('rHS').value) || 0;
-                let as2 = parseInt(document.getElementById('rAS').value) || 0;
-                const forfeit = document.getElementById('rForfeit').value;
-                const md = parseInt(document.getElementById('rMd').value) || 0;
-                const date = document.getElementById('rDate').value.trim();
-                const venue = document.getElementById('rVenue').value.trim();
-                const matchType = document.getElementById('rType').value.trim();
-                const aggregate = document.getElementById('rAgg').value.trim();
-                if (!homeTeam || !awayTeam) { alert("Both teams required"); return; }
-                if (homeTeam === awayTeam) { alert("Teams cannot be the same"); return; }
-                const matchText = formatResultText(homeTeam, hs, awayTeam, as2, forfeit === 'none' ? '' : forfeit);
-                const resultData = { matchText, md, ...(date && { date }), ...(venue && { venue }), ...(matchType && {
-                        matchType }), ...(aggregate && { aggregate }), goalScorers: { home: tempScorersHome, away: tempScorersAway } };
-                const path = getSeasonPath(currentSeasonId, 'results');
-                const btn = document.getElementById('saveResultBtn');
-                btn.disabled = true;
-                btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
-                const statusDiv = document.getElementById('resultStatus');
-                statusDiv.innerHTML = '';
-                try {
-                    incrementPending();
-                    if (!editingResultKey) await applyResultToTable(homeTeam, awayTeam, hs, as2, forfeit === 'none' ? '' :
-                        forfeit);
-                    if (editingResultKey) await database.ref(`${path}/${editingResultKey}`).set(resultData);
-                    else await database.ref(path).push(resultData);
-                    decrementPending();
-                    btn.innerHTML = '✓ Saved!';
-                    btn.style.color = '#166534';
-                    statusDiv.className = 'status-msg status-success';
-                    statusDiv.textContent = 'Result saved!';
-                    closeModal();
-                    renderCurrentTab();
-                } catch (e) {
-                    decrementPending();
-                    statusDiv.className = 'status-msg status-error';
-                    statusDiv.textContent = 'Error: ' + e.message;
-                    btn.disabled = false;
-                    btn.innerHTML = 'Save';
-                    btn.style.color = '';
-                }
-            };
-        }
-
-        async function openStatModal(type, entry = null) {
-            const isScorer = type === 'scorer' || type === 'topscorer';
-            const currentImageUrl = entry?.imageUrl || '';
-            showModal(`
-            <h3>${entry ? 'Edit' : 'Add'} ${isScorer ? 'Top Scorer' : 'Top Assistant'}</h3>
-            <label>Player Name</label><input id="statName" placeholder="Player Name" value="${escapeHtml(entry?.name || '')}">
-            <label>Team</label><input id="statTeam" placeholder="Team" value="${escapeHtml(entry?.team || '')}">
-            <label>${isScorer ? 'Goals' : 'Assists'}</label><input id="statCount" type="number" value="${entry?.count || 0}">
-            <label>Player Photo (upload will remove background automatically)</label><input type="file" id="statPhoto" accept="image/*">
-            <div id="photoPreview" style="margin-top:10px;">${currentImageUrl ? `<img src="${currentImageUrl}" style="max-width:120px; border-radius:12px;">` : 'No photo'}</div>
-            <div class="modal-btns"><button class="modal-btn-primary" id="saveStatBtn">Save</button><button class="modal-btn-cancel" id="cancelStatBtn">Cancel</button></div>
-            <div id="statStatus"></div>
-          `);
-            document.getElementById('cancelStatBtn').onclick = closeModal;
-            const fileInput = document.getElementById('statPhoto');
-            const previewDiv = document.getElementById('photoPreview');
-            fileInput.onchange = async () => {
-                const file = fileInput.files[0];
-                if (!file) return;
-                previewDiv.innerHTML = '<div class="status-msg status-loading">Processing image (remove.bg)...</div>';
-                try {
-                    let processedBlob;
-                    try { processedBlob = await removeBackground(file); } catch (e) { processedBlob = file; }
-                    const url = await uploadToImgBB(processedBlob);
-                    previewDiv.innerHTML =
-                        `<img src="${url}" style="max-width:120px; border-radius:12px;"><div class="status-msg status-success">Photo ready</div>`;
-                    fileInput.dataset.uploadedUrl = url;
-                } catch (e) { previewDiv.innerHTML =
-                    `<div class="status-msg status-error">Error: ${e.message}</div>`; }
-            };
-            document.getElementById('saveStatBtn').onclick = async () => {
-                const name = document.getElementById('statName').value.trim();
-                const team = document.getElementById('statTeam').value.trim();
-                const count = parseInt(document.getElementById('statCount').value) || 0;
-                if (!name || !team) { alert("Fill all fields"); return; }
-                let imageUrl = currentImageUrl;
-                if (fileInput.files.length && fileInput.dataset.uploadedUrl) imageUrl = fileInput.dataset.uploadedUrl;
-                const data = { name, team, count, imageUrl };
-                const path = isScorer ? getSeasonPath(currentSeasonId, 'topScorers/list') : getSeasonPath(
-                currentSeasonId, 'topAssistants/list');
-                const btn = document.getElementById('saveStatBtn');
-                btn.disabled = true;
-                btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
-                const statusDiv = document.getElementById('statStatus');
-                statusDiv.innerHTML = '';
-                try {
-                    incrementPending();
-                    if (entry?.key) await database.ref(`${path}/${entry.key}`).set(data);
-                    else await database.ref(path).push(data);
-                    decrementPending();
-                    btn.innerHTML = '✓ Saved!';
-                    btn.style.color = '#166534';
-                    statusDiv.className = 'status-msg status-success';
-                    statusDiv.textContent = 'Saved!';
-                    closeModal();
-                    renderCurrentTab();
-                } catch (e) {
-                    decrementPending();
-                    statusDiv.className = 'status-msg status-error';
-                    statusDiv.textContent = 'Error: ' + e.message;
-                    btn.disabled = false;
-                    btn.innerHTML = 'Save';
-                    btn.style.color = '';
-                }
-            };
-        }
-
-        function attachThreeDotHandler() {
-            const btn = document.getElementById('threeDotBtn');
-            if (!btn) return;
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                if (popupEl) { popupEl.remove();
-                    popupEl = null; return; }
-                const rect = btn.getBoundingClientRect();
-                popupEl = document.createElement('div');
-                popupEl.className = 'popup-menu';
-                popupEl.style.position = 'absolute';
-                popupEl.style.top = (rect.bottom + window.scrollY + 6) + 'px';
-                popupEl.style.left = (rect.left + window.scrollX - 80) + 'px';
-                const opts = [
-                    { label: currentView === 'team' ? 'Show Manager Names' : 'Show Team Names', fn: () => { currentView =
-                                currentView === 'team' ? 'player' : 'team';
-                            renderTable(); } },
-                    { label: showFormArrows ? 'Hide Form Arrows' : 'Show Form Arrows', fn: () => { showFormArrows = !
-                            showFormArrows;
-                            renderTable(); } },
-                    { label: showLast5 ? 'Hide Last 5' : 'Show Last 5', fn: () => { showLast5 = !showLast5;
-                            renderTable(); } },
-                ];
-                if (isAdminMode) {
-                    opts.unshift({ label: 'Edit Manager History', fn: () => { if (popupEl) { popupEl.remove();
-                                popupEl = null; }
-                            openManagerHistoryModal(); } });
-                }
-                opts.forEach(o => { const d = document.createElement('div');
-                    d.textContent = o.label;
-                    d.onclick = () => { if (popupEl) { popupEl.remove();
-                            popupEl = null; }
-                        o.fn(); };
-                    popupEl.appendChild(d); });
-                document.body.appendChild(popupEl);
-            };
-            document.addEventListener('click', e => { if (popupEl && !popupEl.contains(e.target) && e.target !== btn) { popupEl
-                        .remove();
-                    popupEl = null; } });
+        function attachRealtimeListeners() {
+            database.ref(getSeasonPath(currentSeasonId, 'table')).on('value', snap => { teamsData = snap.val() ? Object
+                    .entries(snap.val()).map(([k, v]) => ({ key: k, ...v })) : []; if (document.querySelector(
+                        '.tab-btn.active')?.dataset.tab === 'table') renderTable(); });
+            database.ref(getSeasonPath(currentSeasonId, 'results')).on('value', snap => { resultsData = snap.val() ? Object
+                    .entries(snap.val()).map(([k, v]) => ({ key: k, ...v })) : []; const activeTab = document
+                    .querySelector('.tab-btn.active')?.dataset.tab; if (activeTab === 'results') renderResults(); if (
+                    activeTab === 'table') renderTable(); });
+            database.ref(getSeasonPath(currentSeasonId, 'topScorers/list')).on('value', async () => { await loadTopScorerData(); if (
+                    document.querySelector('.tab-btn.active')?.dataset.tab === 'topscorers') renderTopScorers(); });
+            database.ref(getSeasonPath(currentSeasonId, 'topAssistants/list')).on('value', async () => { await loadTopAssistantData(); if (
+                    document.querySelector('.tab-btn.active')?.dataset.tab === 'topassists') renderTopAssistants(); });
+            database.ref('calendarEvents').on('value', snap => { calendarEventsData = snap.val() || {}; if (document
+                    .querySelector('.tab-btn.active')?.dataset.tab === 'fixtures') renderFixtures(); });
+            database.ref(getSeasonPath(currentSeasonId, 'currentMatchday')).on('value', snap => {
+                currentMatchday = snap.val() || 1;
+            });
         }
 
         // ─── ADMIN SETTINGS ───
@@ -5274,7 +5157,7 @@
             <button class="settings-btn" id="manageWatchVideosBtn">🎥 Manage Watch Videos</button>
             <button class="settings-btn" id="manageTeamNameMappingsBtn">🔁 Manage Team Name Mappings</button>
             <button class="settings-btn" id="manageManagerKeysBtn">🔑 Manage Manager Keys</button>
-            <button class="settings-btn" id="setMatchdayBtn">📊 Set Current Matchday</button>
+            <button class="settings-btn" id="setMatchdayBtn">📊 Set Matchdays</button>
             <button class="settings-btn" id="pendingResultsBtn">⏳ Pending Results <span class="pending-badge-count" id="pendingBadge">${pendingCount || 0}</span></button>
           </div><div class="modal-btns"><button class="modal-btn-cancel" id="closeAdminBtn" style="width:100%;">Close</button></div>`);
             document.getElementById('closeAdminBtn').onclick = closeModal;
@@ -5291,7 +5174,7 @@
             document.getElementById('manageManagerKeysBtn').onclick = () => { closeModal();
                 openManagerKeysModal(); };
             document.getElementById('setMatchdayBtn').onclick = () => { closeModal();
-                openSetCurrentMatchdayModal(); };
+                openMatchdaySchedulerModal(); };
             document.getElementById('pendingResultsBtn').onclick = () => { closeModal();
                 openPendingResultsModal(); };
         }
@@ -6410,559 +6293,120 @@
             renderForm();
         }
 
-        // ─── PENDING RESULTS SYSTEM ───
-        async function openPendingResultsModal() {
-            const snap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
-            const data = snap.val() || {};
-            const pendingArray = Object.entries(data).map(([key, val]) => ({ id: key, ...val }));
+        // ─── FIXTURES RENDER (updated to show MD badge) ───
+        function renderFixtures() {
+            const premierFixtures = [];
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
 
-            if (pendingArray.length === 0) {
-                showModal(`
-              <h3>⏳ Pending Results</h3>
-              <div class="empty-state"><div class="empty-icon">✅</div><p>No pending results to review.</p></div>
-              <div class="modal-btns"><button class="modal-btn-cancel" id="closePendingEmptyBtn">Close</button></div>
-            `);
-                document.getElementById('closePendingEmptyBtn').onclick = closeModal;
-                return;
-            }
-
-            // Group duplicates: same two teams (regardless of home/away order) + same matchday
-            const grouped = [];
-            const used = new Set();
-            for (let i = 0; i < pendingArray.length; i++) {
-                if (used.has(i)) continue;
-                const a = pendingArray[i];
-                const group = [a];
-                used.add(i);
-                for (let j = i + 1; j < pendingArray.length; j++) {
-                    if (used.has(j)) continue;
-                    const b = pendingArray[j];
-                    const sameTeams = (
-                        (a.homeTeam === b.homeTeam && a.awayTeam === b.awayTeam) ||
-                        (a.homeTeam === b.awayTeam && a.awayTeam === b.homeTeam)
-                    );
-                    const sameMd = a.md && b.md && a.md === b.md;
-                    if (sameTeams && sameMd) {
-                        group.push(b);
-                        used.add(j);
+            for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
+                if (!eventData || !eventData.tournaments) continue;
+                for (const tournament of eventData.tournaments) {
+                    let isPremier = false;
+                    if (tournament.name) {
+                        const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
+                        if (normalized === 'premierleague') isPremier = true;
                     }
-                }
-                grouped.push(group);
-            }
-
-            let listHtml = '';
-            for (const group of grouped) {
-                const isDuplicate = group.length > 1;
-                if (isDuplicate) {
-                    listHtml += `
-                <div style="border:2px solid #f97316;border-radius:24px;padding:20px;margin-bottom:20px;background:rgba(249,115,22,0.08);">
-                  <div style="color:#f97316;font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;margin-bottom:12px;">
-                    ⚠️ DUPLICATE SUBMISSIONS — Same Match, Same Matchday (approve ONE only)
-                  </div>
-                `;
-                }
-                for (const p of group) {
-                    const isForfeit = p.matchType === 'forfeit' || (p.matchText && p.matchText.toLowerCase().includes('forfeit'));
-                    const homeIcon = getTeamIconHtml(p.homeTeam || '');
-                    const awayIcon = getTeamIconHtml(p.awayTeam || '');
-                    const scoreDisplay = isForfeit ? 'F — F' : `${p.homeScore || 0} — ${p.awayScore || 0}`;
-
-                    listHtml += `
-                <div class="pending-item" style="${isDuplicate ? 'border-color:rgba(249,115,22,0.4);margin-bottom:10px;' : ''}">
-                  <div class="pi-teams">
-                    ${homeIcon}
-                    <span>${escapeHtml(p.homeTeam || '?')}</span>
-                    <span style="color:var(--turquoise);font-weight:400;">vs</span>
-                    ${awayIcon}
-                    <span>${escapeHtml(p.awayTeam || '?')}</span>
-                  </div>
-                  <div class="pi-score">${scoreDisplay}</div>
-                  <div class="pi-md">MD ${p.md || '?'}</div>
-                  ${isForfeit ? '<span class="pi-badge">🚫 Forfeit</span>' : ''}
-                  <div class="pi-actions">
-                    <button class="btn-sm btn-edit pending-preview-btn" data-id="${p.id}" style="padding:8px 20px;font-size:1.1rem;">👁️</button>
-                    <button class="btn-sm btn-confirm pending-approve-btn" data-id="${p.id}" style="padding:8px 20px;font-size:1.1rem;">✅</button>
-                    <button class="btn-sm btn-delete pending-reject-btn" data-id="${p.id}" style="padding:8px 20px;font-size:1.1rem;">🗑️</button>
-                  </div>
-                </div>
-              `;
-                }
-                if (isDuplicate) {
-                    listHtml += `</div>`;
+                    if (isPremier && tournament.fixtures && Array.isArray(tournament.fixtures)) {
+                        for (const fix of tournament.fixtures) {
+                            const md = fix.matchday || null;
+                            premierFixtures.push({
+                                date: dateStr,
+                                tournament: tournament.name || 'Premier League',
+                                home: fix.home || '',
+                                away: fix.away || '',
+                                matchday: md
+                            });
+                        }
+                    }
                 }
             }
 
-            showModal(`
-            <h3>⏳ Pending Results <span style="font-size:1.2rem;color:rgba(255,255,255,0.4);">(${pendingArray.length})</span></h3>
-            <div style="max-height:500px;overflow-y:auto;margin:12px 0;">
-              ${listHtml}
-            </div>
-            <div class="modal-btns"><button class="modal-btn-cancel" id="closePendingBtn">Close</button></div>
-          `, true);
-
-            document.getElementById('closePendingBtn').onclick = closeModal;
-
-            document.querySelectorAll('.pending-preview-btn').forEach(btn => {
-                btn.onclick = () => {
-                    const id = btn.dataset.id;
-                    const result = pendingArray.find(p => p.id === id);
-                    if (result) openPendingResultPreview(id, result);
-                };
+            premierFixtures.sort((a, b) => {
+                const da = new Date(a.date),
+                    db = new Date(b.date);
+                const aFuture = da >= today,
+                    bFuture = db >= today;
+                if (aFuture && bFuture) return da - db;
+                if (!aFuture && !bFuture) return da - db;
+                return aFuture ? -1 : 1;
             });
 
-            document.querySelectorAll('.pending-approve-btn').forEach(btn => {
-                btn.onclick = async () => {
-                    const id = btn.dataset.id;
-                    const result = pendingArray.find(p => p.id === id);
-                    if (!result) return;
-                    if (confirm(`Approve this result for ${result.homeTeam} vs ${result.awayTeam}?`)) {
-                        await approvePendingResult(id, result);
-                        openPendingResultsModal();
-                        renderCurrentTab();
-                    }
-                };
+            const allTeams = [...new Set(premierFixtures.flatMap(f => [f.home, f.away]).filter(Boolean))].sort();
+            const allMonths = [...new Set(premierFixtures.map(f => f.date.substring(0, 7)))].sort();
+
+            let filtered = [...premierFixtures];
+            if (currentFixTeamFilter && currentFixTeamFilter !== 'all') filtered = filtered.filter(f => f.home ===
+                currentFixTeamFilter || f.away === currentFixTeamFilter);
+            if (currentFixMonthFilter && currentFixMonthFilter !== 'all') filtered = filtered.filter(f => f.date.startsWith(
+                currentFixMonthFilter));
+
+            const grouped = {};
+            for (const fix of filtered) {
+                if (!grouped[fix.date]) grouped[fix.date] = [];
+                grouped[fix.date].push(fix);
+            }
+
+            const sortedDates = Object.keys(grouped).sort((a, b) => {
+                const da = new Date(a),
+                    db = new Date(b);
+                const aFuture = da >= today,
+                    bFuture = db >= today;
+                if (aFuture && bFuture) return da - db;
+                if (!aFuture && !bFuture) return da - db;
+                return aFuture ? -1 : 1;
             });
 
-            document.querySelectorAll('.pending-reject-btn').forEach(btn => {
-                btn.onclick = async () => {
-                    const id = btn.dataset.id;
-                    const result = pendingArray.find(p => p.id === id);
-                    if (!result) return;
-                    if (confirm(`Reject this result for ${result.homeTeam} vs ${result.awayTeam}?`)) {
-                        await rejectPendingResult(id);
-                        openPendingResultsModal();
-                    }
-                };
-            });
-        }
+            const monthLabels = { '01': 'January', '02': 'February', '03': 'March', '04': 'April', '05': 'May',
+                '06': 'June', '07': 'July', '08': 'August', '09': 'September', '10': 'October', '11': 'November',
+                '12': 'December'
+            };
 
-        function openPendingResultPreview(pendingResultId, resultData) {
-            const isForfeit = resultData.matchType === 'forfeit' || (resultData.matchText && resultData.matchText.toLowerCase()
-                .includes('forfeit'));
-            const images = resultData.images || [];
-            const submittedAt = resultData.submittedAt ? new Date(resultData.submittedAt).toLocaleString() : 'Unknown';
+            let filtersHtml =
+                `<div class="filters-bar"><div class="filter-group"><label>Team</label><select id="fixTeamFilter"><option value="all">All Teams</option>${allTeams.map(t => `<option value="${t}" ${currentFixTeamFilter === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div><div class="filter-group"><label>Month</label><select id="fixMonthFilter"><option value="all">All Months</option>${allMonths.map(m => { const [y, mo] = m.split('-'); return `<option value="${m}" ${currentFixMonthFilter === m ? 'selected' : ''}>${monthLabels[mo] || mo} ${y}</option>`; }).join('')}</select></div><div class="filter-group"><button id="clearFixFiltersBtn" class="clear-filters">Clear Filters</button></div><div class="filter-stats">${filtered.length} fixture${filtered.length !== 1 ? 's' : ''} found</div><a href="manager-calendar.html" class="view-calendar-btn">📅 View Calendar</a></div>`;
 
-            const homeScorersHtml = (resultData.goalScorers?.home || []).map(s =>
-                `<span class="scorer-badge" style="font-size:1.4rem;">⚽ ${escapeHtml(s.player)} (${s.goals})</span>`
-            ).join('');
-            const awayScorersHtml = (resultData.goalScorers?.away || []).map(s =>
-                `<span class="scorer-badge" style="font-size:1.4rem;">⚽ ${escapeHtml(s.player)} (${s.goals})</span>`
-            ).join('');
-
-            let imagesHtml = '';
-            if (images.length) {
-                imagesHtml = `<div class="image-grid-preview" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">`;
-                for (const url of images) {
-                    imagesHtml += `<img src="${url}" alt="Match image" onclick="window.open('${url}','_blank')" style="aspect-ratio:4/3;object-fit:contain;width:100%;">`;
-                }
-                imagesHtml += `</div>`;
+            let contentHtml = '';
+            if (sortedDates.length === 0) {
+                contentHtml = '<div class="empty-state"><div class="empty-icon">📅</div><p>No Premier League fixtures found</p></div>';
             } else {
-                imagesHtml = '<div style="color:rgba(255,255,255,0.3);padding:12px 0;font-size:1.2rem;">No images attached.</div>';
-            }
-
-            const scoreDisplay = isForfeit ? 'F — F' : `${resultData.homeScore || 0} — ${resultData.awayScore || 0}`;
-
-            showModal(`
-            <h3 style="font-size:3.6rem;">👁️ Pending Result Preview</h3>
-            <div style="background:rgba(150,60,255,0.12);border-radius:20px;padding:28px;margin-bottom:20px;">
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:2.8rem;">
-                <span style="font-size:2.8rem;">${escapeHtml(resultData.homeTeam || '?')}</span>
-                <span style="font-weight:bold;color:var(--turquoise);font-size:4rem;">${scoreDisplay}</span>
-                <span style="font-size:2.8rem;">${escapeHtml(resultData.awayTeam || '?')}</span>
-              </div>
-              ${isForfeit ? '<div style="text-align:center;color:#ffaaaa;font-size:1.6rem;">🚫 Forfeit Request</div>' : ''}
-              <div style="margin-top:12px;text-align:center;color:rgba(255,255,255,0.5);font-size:1.5rem;">MD ${resultData.md || '?'} · ${escapeHtml(resultData.date || '')}</div>
-            </div>
-
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;font-size:1.5rem;">
-              <div><span style="color:rgba(255,255,255,0.5);">Submitted by:</span> <strong style="color:var(--turquoise);">${escapeHtml(resultData.submittedBy || '?')}</strong></div>
-              <div><span style="color:rgba(255,255,255,0.5);">Submitted at:</span> <strong>${escapeHtml(submittedAt)}</strong></div>
-            </div>
-
-            ${homeScorersHtml || awayScorersHtml ? `<div style="margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;font-size:1.4rem;">${homeScorersHtml} ${awayScorersHtml}</div>` : ''}
-
-            ${resultData.matchNotes ? `<div style="background:rgba(0,206,209,0.1);border:1px solid var(--turquoise);border-radius:16px;padding:18px;margin:16px 0;"><span style="color:var(--turquoise);font-weight:700;font-size:1.6rem;">📝 Admin Notes:</span><div style="color:white;font-size:1.6rem;margin-top:8px;">${escapeHtml(resultData.matchNotes)}</div></div>` : ''}
-
-            <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:20px;margin-bottom:16px;">
-              <h4 style="color:var(--turquoise);font-size:1.6rem;margin-bottom:12px;">📸 Images</h4>
-              ${imagesHtml}
-            </div>
-
-            <div class="modal-btns">
-              <button class="modal-btn-primary btn-confirm" id="approveFromPreviewBtn" style="font-size:2.4rem;padding:20px;">✅ Approve</button>
-              <button class="modal-btn-primary btn-danger" id="rejectFromPreviewBtn" style="font-size:2.4rem;padding:20px;">🗑️ Reject</button>
-              <button class="modal-btn-cancel" id="closePreviewBtn" style="font-size:2.4rem;padding:20px;">Back</button>
-            </div>
-            <div id="previewStatus"></div>
-          `, true);
-
-            document.getElementById('closePreviewBtn').onclick = closeModal;
-
-            document.getElementById('approveFromPreviewBtn').onclick = async () => {
-                const status = document.getElementById('previewStatus');
-                const btn = document.getElementById('approveFromPreviewBtn');
-                btn.disabled = true;
-                btn.innerHTML = '<span class="btn-spinner"></span> Approving...';
-                try {
-                    await approvePendingResult(pendingResultId, resultData);
-                    status.innerHTML = '<div class="status-msg status-success">✅ Approved! Refreshing...</div>';
-                    setTimeout(() => { closeModal();
-                        openPendingResultsModal();
-                        renderCurrentTab(); }, 800);
-                } catch (e) {
-                    status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
-                    btn.disabled = false;
-                    btn.innerHTML = '✅ Approve';
-                }
-            };
-
-            document.getElementById('rejectFromPreviewBtn').onclick = async () => {
-                const status = document.getElementById('previewStatus');
-                const btn = document.getElementById('rejectFromPreviewBtn');
-                if (!confirm('Reject this pending result?')) return;
-                btn.disabled = true;
-                btn.innerHTML = '<span class="btn-spinner"></span> Rejecting...';
-                try {
-                    await rejectPendingResult(pendingResultId);
-                    status.innerHTML = '<div class="status-msg status-success">🗑️ Rejected.</div>';
-                    setTimeout(() => { closeModal();
-                        openPendingResultsModal(); }, 800);
-                } catch (e) {
-                    status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
-                    btn.disabled = false;
-                    btn.innerHTML = '🗑️ Reject';
-                }
-            };
-        }
-
-        async function approvePendingResult(pendingResultId, resultData) {
-            const isForfeit = resultData.matchType === 'forfeit' || (resultData.matchText && resultData.matchText.toLowerCase()
-                .includes('forfeit'));
-
-            // Determine the correct forfeit type
-            let forfeitType = resultData.forfeitType || (isForfeit ? 'forfeit_win' : '');
-
-            // If forfeitType is 'forfeit_win', treat as 'forfeit_no_reply' for table logic
-            const tableForfeitType = forfeitType === 'forfeit_win' ? 'forfeit_no_reply' : forfeitType;
-
-            // Build the result object for the results table
-            const matchText = resultData.matchText || formatResultText(
-                resultData.homeTeam || '',
-                resultData.homeScore || 0,
-                resultData.awayTeam || '',
-                resultData.awayScore || 0,
-                tableForfeitType
-            );
-
-            const resultEntry = {
-                matchText: matchText,
-                md: resultData.md || 0,
-                date: resultData.date || '',
-                venue: resultData.venue || '',
-                matchType: resultData.matchType || '',
-                aggregate: resultData.aggregate || '',
-                matchNotes: resultData.matchNotes || '',
-                goalScorers: resultData.goalScorers || { home: [], away: [] },
-                userAssists: resultData.userAssists || { home: [], away: [] },
-                userSubmitted: true,
-                submittedBy: resultData.submittedBy || 'admin-approved',
-                submittedAt: resultData.submittedAt || Date.now(),
-                flagged: false,
-                approvedAt: Date.now(),
-                approvedBy: 'admin'
-            };
-
-            // Save to results
-            incrementPending();
-            await database.ref(getSeasonPath(currentSeasonId, 'results')).push(resultEntry);
-
-            // Update table stats
-            const homeScore = resultData.homeScore || 0;
-            const awayScore = resultData.awayScore || 0;
-            const homeTeam = resultData.homeTeam || '';
-            const awayTeam = resultData.awayTeam || '';
-
-            if (homeTeam && awayTeam) {
-                await applyResultToTable(homeTeam, awayTeam, homeScore, awayScore, tableForfeitType);
-            }
-
-            // Reload top scorer and assistant data BEFORE applying changes
-            await loadTopScorerData();
-            await loadTopAssistantData();
-
-            // Update scorers
-            const scorersHome = resultData.goalScorers?.home || [];
-            const scorersAway = resultData.goalScorers?.away || [];
-            if (scorersHome.length) await applyScorersFromScan(scorersHome, homeTeam);
-            if (scorersAway.length) await applyScorersFromScan(scorersAway, awayTeam);
-
-            // Update assists
-            const assistsHome = resultData.userAssists?.home || [];
-            const assistsAway = resultData.userAssists?.away || [];
-            if (assistsHome.length) await applyAssistsFromScan(assistsHome, homeTeam);
-            if (assistsAway.length) await applyAssistsFromScan(assistsAway, awayTeam);
-
-            // Delete from pending
-            await database.ref(getSeasonPath(currentSeasonId, `pending_results/${pendingResultId}`)).remove();
-            decrementPending();
-
-            // Reload data
-            await loadCurrentSeasonData();
-            await loadTopScorerData();
-            await loadTopAssistantData();
-        }
-
-        async function rejectPendingResult(pendingResultId) {
-            incrementPending();
-            await database.ref(getSeasonPath(currentSeasonId, `pending_results/${pendingResultId}`)).remove();
-            decrementPending();
-        }
-
-        // ─── UPLOAD FUNCTIONS ───
-        async function uploadTableHeaderImage() {
-            const file = await pickFile('image/*');
-            if (!file) return;
-            try {
-                const statusDiv = document.createElement('div');
-                statusDiv.className = 'status-msg status-loading';
-                statusDiv.textContent = 'Uploading…';
-                document.getElementById('modalContent').appendChild(statusDiv);
-                const url = await uploadToImgBB(file);
-                await setTableHeaderImage(url);
-                statusDiv.className = 'status-msg status-success';
-                statusDiv.textContent = 'Table Header Image updated!';
-                setTimeout(closeModal, 1500);
-            } catch (e) { alert('Upload failed: ' + e.message); }
-        }
-
-        async function openBgCropTool() {
-            const file = await pickFile('image/*');
-            if (!file) return;
-            const objectUrl = URL.createObjectURL(file);
-            showModal(
-                `<h3>🌄 Set Background Image</h3><div class="crop-container" id="cropContainer"><img class="crop-img" id="cropImg" src="${objectUrl}" draggable="false"></div><div class="crop-controls"><label>Zoom</label><input class="crop-slider" id="zoomSlider" type="range" min="0.5" max="2" step="0.01" value="1"><label>Horizontal Position</label><input class="crop-slider" id="posXSlider" type="range" min="0" max="100" step="1" value="50"><label>Vertical Position</label><input class="crop-slider" id="posYSlider" type="range" min="0" max="100" step="1" value="50"></div><div class="modal-btns"><button class="modal-btn-primary" id="applyCropBtn">Apply Background</button><button class="modal-btn-cancel" id="cancelCropBtn">Cancel</button></div>`
-                );
-            const img = document.getElementById('cropImg');
-            const zoomSlider = document.getElementById('zoomSlider');
-            const posXSlider = document.getElementById('posXSlider');
-            const posYSlider = document.getElementById('posYSlider');
-            let zoom = 1,
-                posX = 50,
-                posY = 50;
-
-            function updatePreview() { const scale = zoom; const px = (posX / 100) * (1 - 1 / scale) * 100; const py = (posY /
-                    100) * (1 - 1 / scale) * 100;
-                img.style.transform = `scale(${scale}) translate(${px}%, ${py}%)`; }
-            zoomSlider.oninput = () => { zoom = parseFloat(zoomSlider.value);
-                updatePreview(); };
-            posXSlider.oninput = () => { posX = parseFloat(posXSlider.value);
-                updatePreview(); };
-            posYSlider.oninput = () => { posY = parseFloat(posYSlider.value);
-                updatePreview(); };
-            img.onload = () => { updatePreview(); };
-            document.getElementById('cancelCropBtn').onclick = () => { URL.revokeObjectURL(objectUrl);
-                closeModal(); };
-            document.getElementById('applyCropBtn').onclick = async () => {
-                const btn = document.getElementById('applyCropBtn');
-                btn.disabled = true;
-                btn.innerHTML = '<span class="btn-spinner"></span> Uploading...';
-                try { const url = await uploadToImgBB(file);
-                    await setBackgroundImage(url, 'cover', `${posX}% ${posY}%`);
-                    btn.innerHTML = '✓ Applied!';
-                    setTimeout(() => { closeModal();
-                        URL.revokeObjectURL(objectUrl); }, 1000); } catch (e) { alert('Failed: ' + e.message);
-                    btn.disabled = false;
-                    btn.innerHTML = 'Apply Background'; }
-            };
-        }
-
-        async function uploadNavbarLogo() {
-            const file = await pickFile('image/*');
-            if (!file) return;
-            try { const statusDiv = document.createElement('div');
-                statusDiv.className = 'status-msg status-loading';
-                statusDiv.textContent = 'Uploading…';
-                document.getElementById('modalContent').appendChild(statusDiv);
-                const url = await uploadToImgBB(file);
-                await database.ref('premier_league_navbar_logo').set(url);
-                navbarLogoUrl = url;
-                await loadNavbarLogo();
-                statusDiv.className = 'status-msg status-success';
-                statusDiv.textContent = 'Logo updated!';
-                setTimeout(closeModal, 1500); } catch (e) { alert('Upload failed: ' + e.message); }
-        }
-
-        async function uploadTeamIcon() {
-            const teamName = prompt("Enter team name exactly as it appears:");
-            if (!teamName) return;
-            const file = await pickFile('image/*');
-            if (!file) return;
-            showModal(
-                `<h3>Processing Icon</h3><div class="loading-spinner"><div class="spinner"></div><span>Removing background…</span></div>`
-                );
-            try { let transparentBlob;
-                try { transparentBlob = await removeBackground(file); } catch (e) { transparentBlob = file; }
-                const url = await uploadToImgBB(transparentBlob);
-                await database.ref(`teamIcons/${teamName}`).set({ imageUrl: url, updatedAt: Date.now() });
-                teamIconsCache[teamName] = url;
-                renderCurrentTab();
-                closeModal();
-                alert(`Icon saved for "${teamName}"!`); } catch (e) { alert('Failed: ' + e.message);
-                closeModal(); }
-        }
-
-        async function uploadHeaderBgImage() {
-            const file = await pickFile('image/*');
-            if (!file) return;
-            try { const url = await uploadToImgBB(file);
-                await database.ref('premier_league_table_header_bg').set(url);
-                tableHeaderBgImageUrl = url;
-                closeModal();
-                alert('Header background updated (legacy feature)'); } catch (e) { alert('Upload failed: ' + e.message); }
-        }
-
-        async function manageSlideshowUI() {
-            const refresh = () => {
-                let preview = '<div class="img-preview-grid">';
-                slideshowImages.forEach((url, idx) => { preview +=
-                        `<div class="preview-thumb"><img src="${url}"><span class="thumb-del" data-idx="${idx}" style="cursor:pointer;position:absolute;top:-10px;right:-10px;background:#ef4444;color:white;border:none;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:bold;">✕</span></div>`; });
-                preview += '</div>';
-                showModal(
-                    `<h3>Manage Slideshow</h3>${preview}<label>Add New Slide</label><input type="file" id="newSlideFile" accept="image/*"><button class="add-btn-main" id="uploadSlideBtn" style="margin-top:12px;">+ Add Slide</button><label style="margin-top:20px;">Duration (seconds)</label><input type="number" id="slideDur" value="${slideshowDuration / 1000}" step="0.5" min="1" max="10"><div class="modal-btns"><button class="modal-btn-primary" id="saveDurBtn">Save Duration</button><button class="modal-btn-cancel" id="closeSlideBtn">Close</button></div><div id="slideStatus"></div>`
-                    );
-                document.querySelectorAll('.thumb-del').forEach(btn => { btn.onclick = async () => { const idx =
-                            parseInt(btn.dataset.idx);
-                        slideshowImages.splice(idx, 1);
-                        await database.ref('slideshow/images').set(slideshowImages);
-                        await loadSlideshow();
-                        refresh(); }; });
-                document.getElementById('uploadSlideBtn').onclick = async () => { const file = document
-                        .getElementById('newSlideFile').files[0]; const statusDiv = document.getElementById(
-                        'slideStatus'); if (!file) { statusDiv.innerHTML =
-                            '<div class="status-msg status-error">Select a file first</div>'; return; } try {
-                        statusDiv.innerHTML = '<div class="status-msg status-loading">Uploading…</div>';
-                        const url = await uploadToImgBB(file);
-                        slideshowImages.push(url);
-                        await database.ref('slideshow/images').set(slideshowImages);
-                        await loadSlideshow();
-                        refresh(); } catch (e) { statusDiv.innerHTML =
-                            `<div class="status-msg status-error">Error: ${e.message}</div>`; } };
-                document.getElementById('saveDurBtn').onclick = async () => { let sec = parseFloat(document
-                        .getElementById('slideDur').value); if (isNaN(sec)) sec = 3;
-                    sec = Math.min(10, Math.max(1, sec));
-                    await database.ref('slideshow/duration').set(sec * 1000);
-                    slideshowDuration = sec * 1000;
-                    await loadSlideshow();
-                    document.getElementById('slideStatus').innerHTML =
-                        '<div class="status-msg status-success">Duration saved!</div>';
-                    setTimeout(closeModal, 1000); };
-                document.getElementById('closeSlideBtn').onclick = closeModal;
-            };
-            refresh();
-        }
-
-        function toggleMenu() { document.getElementById('sideMenu').classList.toggle('active');
-            document.getElementById('overlay').classList.toggle('active'); }
-
-        function closeMenu() { document.getElementById('sideMenu').classList.remove('active');
-            document.getElementById('overlay').classList.remove('active'); }
-        document.getElementById('menuBtn').onclick = toggleMenu;
-        document.getElementById('closeMenuBtn').onclick = closeMenu;
-        document.getElementById('overlay').onclick = closeMenu;
-        document.getElementById('homeBtn').onclick = () => window.location.href = 'feed.html';
-
-        document.getElementById('addResultsMenuBtn').onclick = () => {
-            closeMenu();
-            openAddResultsKeyModal();
-        };
-
-        document.getElementById('adminModeBtn').onclick = async () => {
-            const key = prompt("Enter admin key:");
-            if (key === null) return;
-
-            const loadingModal = document.createElement('div');
-            loadingModal.className = 'modal-overlay active';
-            loadingModal.style.display = 'flex';
-            loadingModal.innerHTML = `
-            <div class="modal-card" style="max-width:400px;text-align:center;">
-              <h3>⏳ Verifying...</h3>
-              <div class="loading-spinner" style="padding:20px;">
-                <div class="spinner"></div>
-                <span>Checking credentials...</span>
-              </div>
-            </div>
-          `;
-            document.body.appendChild(loadingModal);
-
-            try {
-                const response = await fetch(RENDER_URL + '/verify-admin', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ key: key })
-                });
-                const data = await response.json();
-                loadingModal.remove();
-
-                if (data.success === true) {
-                    isAdminMode = true;
-                    alert("Admin mode activated ✅");
-                    document.getElementById('seasonAdminPanel').style.display = 'flex';
-                    renderCurrentTab();
-
-                    const existingAI = document.getElementById('aiAssistantMenuItem');
-                    if (existingAI) existingAI.remove();
-
-                    if (!document.getElementById('adminSettingsItem')) {
-                        const item = document.createElement('div');
-                        item.id = 'adminSettingsItem';
-                        item.className = 'menu-item';
-                        item.innerHTML = '⚙️ Admin Settings';
-                        item.onclick = () => { openAdminSettings();
-                            closeMenu(); };
-                        document.getElementById('sideMenu').appendChild(item);
+                for (const dateStr of sortedDates) {
+                    const dateObj = new Date(dateStr);
+                    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                    const dayName = dayNames[dateObj.getDay()];
+                    const day = dateObj.getDate();
+                    const [y, mo] = dateStr.split('-');
+                    const monthName = monthLabels[mo] || mo;
+                    const isPast = dateObj < today;
+                    const dateLabel =
+                        `${dayName}, ${day} ${monthName} ${y}${isPast ? ' · Played' : ''}`;
+                    contentHtml += `<div class="fixture-date-group"><div class="fixture-date-label">📅 ${dateLabel}</div>`;
+                    for (const fix of grouped[dateStr]) {
+                        const homeIconHtml = getTeamIconHtml(fix.home, 'team-icon-lg');
+                        const awayIconHtml = getTeamIconHtml(fix.away, 'team-icon-lg');
+                        const mdBadge = fix.matchday ?
+                            `<span class="fixture-md-badge">MD ${fix.matchday}</span>` :
+                            '';
+                        contentHtml +=
+                            `<div class="fixture-card"><div class="fixture-tournament-label">🏆 ${escapeHtml(fix.tournament)} ${mdBadge}</div><div class="fixture-match-row"><div class="fixture-team-side">${homeIconHtml}<span class="fixture-team-name">${escapeHtml(fix.home)}</span></div><div class="fixture-vs">VS</div><div class="fixture-team-side">${awayIconHtml}<span class="fixture-team-name">${escapeHtml(fix.away)}</span></div></div></div>`;
                     }
-                } else {
-                    alert("Incorrect key");
+                    contentHtml += `</div>`;
                 }
-            } catch (e) {
-                loadingModal.remove();
-                alert("Error verifying admin key: " + e.message);
             }
-        };
 
-        document.getElementById('debugInfoBtn').onclick = () => { openDebugInfoModal();
-            closeMenu(); };
+            document.getElementById('contentCard').innerHTML = filtersHtml + contentHtml;
 
-        document.getElementById('prevSeasonBtn').onclick = () => switchSeason(-1);
-        document.getElementById('nextSeasonBtn').onclick = () => switchSeason(1);
-        document.getElementById('addSeasonBtn').onclick = () => isAdminMode && addNewSeason();
-        document.getElementById('renameSeasonBtn').onclick = () => isAdminMode && renameSeason();
-        document.getElementById('setActiveSeasonBtn').onclick = () => isAdminMode && setActiveSeason();
-
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                renderCurrentTab();
+            document.getElementById('fixTeamFilter')?.addEventListener('change', e => {
+                currentFixTeamFilter = e.target.value;
+                renderFixtures();
             });
-        });
-
-        function attachRealtimeListeners() {
-            database.ref(getSeasonPath(currentSeasonId, 'table')).on('value', snap => { teamsData = snap.val() ? Object
-                    .entries(snap.val()).map(([k, v]) => ({ key: k, ...v })) : []; if (document.querySelector(
-                        '.tab-btn.active')?.dataset.tab === 'table') renderTable(); });
-            database.ref(getSeasonPath(currentSeasonId, 'results')).on('value', snap => { resultsData = snap.val() ? Object
-                    .entries(snap.val()).map(([k, v]) => ({ key: k, ...v })) : []; const activeTab = document
-                    .querySelector('.tab-btn.active')?.dataset.tab; if (activeTab === 'results') renderResults(); if (
-                    activeTab === 'table') renderTable(); });
-            database.ref(getSeasonPath(currentSeasonId, 'topScorers/list')).on('value', async () => { await loadTopScorerData(); if (
-                    document.querySelector('.tab-btn.active')?.dataset.tab === 'topscorers') renderTopScorers(); });
-            database.ref(getSeasonPath(currentSeasonId, 'topAssistants/list')).on('value', async () => { await loadTopAssistantData(); if (
-                    document.querySelector('.tab-btn.active')?.dataset.tab === 'topassists') renderTopAssistants(); });
-            database.ref('calendarEvents').on('value', snap => { calendarEventsData = snap.val() || {}; if (document
-                    .querySelector('.tab-btn.active')?.dataset.tab === 'fixtures') renderFixtures(); });
-            database.ref(getSeasonPath(currentSeasonId, 'currentMatchday')).on('value', snap => {
-                currentMatchday = snap.val() || 1;
+            document.getElementById('fixMonthFilter')?.addEventListener('change', e => {
+                currentFixMonthFilter = e.target.value;
+                renderFixtures();
+            });
+            document.getElementById('clearFixFiltersBtn')?.addEventListener('click', () => {
+                currentFixTeamFilter = '';
+                currentFixMonthFilter = '';
+                renderFixtures();
             });
         }
 
@@ -6985,6 +6429,72 @@
             await loadCurrentMatchday();
             attachRealtimeListeners();
             renderCurrentTab();
+        }
+
+        // ─── openStatModal (modified: no remove.bg) ───
+        async function openStatModal(type, entry = null) {
+            const isScorer = type === 'scorer' || type === 'topscorer';
+            const currentImageUrl = entry?.imageUrl || '';
+            showModal(`
+            <h3>${entry ? 'Edit' : 'Add'} ${isScorer ? 'Top Scorer' : 'Top Assistant'}</h3>
+            <label>Player Name</label><input id="statName" placeholder="Player Name" value="${escapeHtml(entry?.name || '')}">
+            <label>Team</label><input id="statTeam" placeholder="Team" value="${escapeHtml(entry?.team || '')}">
+            <label>${isScorer ? 'Goals' : 'Assists'}</label><input id="statCount" type="number" value="${entry?.count || 0}">
+            <label>Player Photo (upload directly — no background removal)</label><input type="file" id="statPhoto" accept="image/*">
+            <div id="photoPreview" style="margin-top:10px;">${currentImageUrl ? `<img src="${currentImageUrl}" style="max-width:120px; border-radius:12px;">` : 'No photo'}</div>
+            <div class="modal-btns"><button class="modal-btn-primary" id="saveStatBtn">Save</button><button class="modal-btn-cancel" id="cancelStatBtn">Cancel</button></div>
+            <div id="statStatus"></div>
+          `);
+            document.getElementById('cancelStatBtn').onclick = closeModal;
+            const fileInput = document.getElementById('statPhoto');
+            const previewDiv = document.getElementById('photoPreview');
+            fileInput.onchange = async () => {
+                const file = fileInput.files[0];
+                if (!file) return;
+                previewDiv.innerHTML = '<div class="status-msg status-loading">Uploading image...</div>';
+                try {
+                    const url = await uploadToImgBB(file);
+                    previewDiv.innerHTML =
+                        `<img src="${url}" style="max-width:120px; border-radius:12px;"><div class="status-msg status-success">Photo ready</div>`;
+                    fileInput.dataset.uploadedUrl = url;
+                } catch (e) { previewDiv.innerHTML =
+                    `<div class="status-msg status-error">Error: ${e.message}</div>`; }
+            };
+            document.getElementById('saveStatBtn').onclick = async () => {
+                const name = document.getElementById('statName').value.trim();
+                const team = document.getElementById('statTeam').value.trim();
+                const count = parseInt(document.getElementById('statCount').value) || 0;
+                if (!name || !team) { alert("Fill all fields"); return; }
+                let imageUrl = currentImageUrl;
+                if (fileInput.files.length && fileInput.dataset.uploadedUrl) imageUrl = fileInput.dataset.uploadedUrl;
+                const data = { name, team, count, imageUrl };
+                const path = isScorer ? getSeasonPath(currentSeasonId, 'topScorers/list') : getSeasonPath(
+                currentSeasonId, 'topAssistants/list');
+                const btn = document.getElementById('saveStatBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+                const statusDiv = document.getElementById('statStatus');
+                statusDiv.innerHTML = '';
+                try {
+                    incrementPending();
+                    if (entry?.key) await database.ref(`${path}/${entry.key}`).set(data);
+                    else await database.ref(path).push(data);
+                    decrementPending();
+                    btn.innerHTML = '✓ Saved!';
+                    btn.style.color = '#166534';
+                    statusDiv.className = 'status-msg status-success';
+                    statusDiv.textContent = 'Saved!';
+                    closeModal();
+                    renderCurrentTab();
+                } catch (e) {
+                    decrementPending();
+                    statusDiv.className = 'status-msg status-error';
+                    statusDiv.textContent = 'Error: ' + e.message;
+                    btn.disabled = false;
+                    btn.innerHTML = 'Save';
+                    btn.style.color = '';
+                }
+            };
         }
 
         init();
