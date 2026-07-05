@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -259,14 +259,6 @@
         .story-item-new.side .story-image-wrapper-new { width: 64px; height: 64px; }
         .story-item-new.side .story-caption-new { font-size: 11px; opacity: 0.8; }
 
-        /* ===== COUNTDOWN ===== */
-        .deadline-countdown { background: #0a0a0a; padding: 15px 10px; text-align: center; border-bottom: 1px solid #FFD70030; }
-        .countdown-title { font-size: 14px; color: #FFD700; letter-spacing: 1px; margin-bottom: 8px; }
-        .countdown-boxes { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
-        .cd-box { background: #1a1a1a; border-radius: 12px; padding: 8px 12px; min-width: 65px; text-align: center; border: 1px solid #FFD700; box-shadow: 0 0 8px rgba(255,215,0,0.3); }
-        .cd-number { font-size: 28px; font-weight: bold; font-family: monospace; color: #FFD700; }
-        .cd-label { font-size: 10px; color: #aaa; text-transform: uppercase; }
-
         /* ===== GALLERY ===== */
         .gallery-img { width: 100%; height: auto !important; object-fit: contain; background: #000; }
         .gallery-video { width: 100%; height: auto; aspect-ratio: 16/9; border: none; }
@@ -442,7 +434,7 @@
             <div class="menu-item" onclick="window.location.href='ranks.html'">Manager Ranks</div>
             <div class="menu-item" onclick="window.location.href='selection.html'">Team Selections</div>
             <div class="menu-item" onclick="window.location.href='awards.html'">eAwards</div>
-            <div class="menu-item" id="editLeagueIconsMenuItem" style="display: none;" onclick="openEditLeagueIconsModal()">Edit League Icons</div>
+            <div class="menu-item" id="editLeagueIconsMenuItem" style="display: none;" onclick="openEditLeagueIconsModal()">Edit League Backgrounds</div>
         </div>
     </div>
 
@@ -474,26 +466,6 @@
     <div class="story-carousel-new" id="storyCarouselNew">
         <div class="story-carousel-wrapper">
             <div class="story-track-new" id="storyTrackNew"></div>
-        </div>
-    </div>
-
-    <div class="deadline-countdown">
-        <div class="countdown-title">MATCHDAY DEADLINE (12:00 AM)</div>
-        <div class="countdown-boxes">
-            <div class="cd-box"><div class="cd-number" id="hours">00</div><div class="cd-label">Hours</div></div>
-            <div class="cd-box"><div class="cd-number" id="minutes">00</div><div class="cd-label">Minutes</div></div>
-            <div class="cd-box"><div class="cd-number" id="seconds">00</div><div class="cd-label">Seconds</div></div>
-            <div class="cd-box"><div class="cd-number" id="milliseconds">000</div><div class="cd-label">MS</div></div>
-        </div>
-    </div>
-
-    <div class="deadline-countdown">
-        <div class="countdown-title">POSTPONED MATCH DEADLINE (5:00 PM)</div>
-        <div class="countdown-boxes">
-            <div class="cd-box"><div class="cd-number" id="hours2">00</div><div class="cd-label">Hours</div></div>
-            <div class="cd-box"><div class="cd-number" id="minutes2">00</div><div class="cd-label">Minutes</div></div>
-            <div class="cd-box"><div class="cd-number" id="seconds2">00</div><div class="cd-label">Seconds</div></div>
-            <div class="cd-box"><div class="cd-number" id="milliseconds2">000</div><div class="cd-label">MS</div></div>
         </div>
     </div>
 
@@ -654,7 +626,7 @@
     <div class="modal" id="editLeagueIconsModal">
         <div class="modal-content">
             <span class="modal-close" onclick="closeEditLeagueIconsModal()">✕</span>
-            <h2>Edit League Icons</h2>
+            <h2>Edit League Backgrounds</h2>
             <div id="leagueIconsList"></div>
         </div>
     </div>
@@ -750,44 +722,7 @@
             loadStories();
             loadPosts();
             loadLeagues();
-            startCountdown();
         };
-
-        // ===== COUNTDOWN =====
-        function startCountdown() {
-            setInterval(updateCountdown, 30);
-            setInterval(updateCountdown2, 30);
-            updateCountdown();
-            updateCountdown2();
-        }
-        function updateCountdown() {
-            const now = new Date();
-            const sastOffset = 2 * 60;
-            const localOffset = now.getTimezoneOffset();
-            const sastNow = new Date(now.getTime() + (localOffset + sastOffset) * 60000);
-            let deadline = new Date(sastNow);
-            deadline.setHours(24, 0, 0, 0);
-            const diff = deadline - sastNow;
-            if (diff <= 0) { document.getElementById('hours').innerText = '00'; document.getElementById('minutes').innerText = '00'; document.getElementById('seconds').innerText = '00'; document.getElementById('milliseconds').innerText = '000'; return; }
-            document.getElementById('hours').innerText = String(Math.floor(diff / 3600000)).padStart(2, '0');
-            document.getElementById('minutes').innerText = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
-            document.getElementById('seconds').innerText = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
-            document.getElementById('milliseconds').innerText = String(diff % 1000).padStart(3, '0');
-        }
-        function updateCountdown2() {
-            const now = new Date();
-            const sastOffset = 2 * 60;
-            const localOffset = now.getTimezoneOffset();
-            const sastNow = new Date(now.getTime() + (localOffset + sastOffset) * 60000);
-            let deadline = new Date(sastNow);
-            deadline.setHours(17, 0, 0, 0);
-            const diff = deadline - sastNow;
-            if (diff <= 0) { document.getElementById('hours2').innerText = '00'; document.getElementById('minutes2').innerText = '00'; document.getElementById('seconds2').innerText = '00'; document.getElementById('milliseconds2').innerText = '000'; return; }
-            document.getElementById('hours2').innerText = String(Math.floor(diff / 3600000)).padStart(2, '0');
-            document.getElementById('minutes2').innerText = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
-            document.getElementById('seconds2').innerText = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
-            document.getElementById('milliseconds2').innerText = String(diff % 1000).padStart(3, '0');
-        }
 
         // ===== FORMAT LIKES =====
         function formatLikes(n) {
@@ -969,14 +904,22 @@
             container.innerHTML = defaultLeagues.map(league => `
                 <div style="margin-bottom:20px; padding:15px; background:rgba(255,215,0,0.1); border-radius:10px; border:1px solid #FFD700;">
                     <div style="font-weight:700; color:#FFD700; margin-bottom:10px; font-size:15px;">${league.name}</div>
-                    <label style="color:#FFD700; font-size:13px;">Tournament Icon</label>
-                    <input type="file" id="league-icon-${league.id}" accept="image/*" onchange="uploadLeagueIcon('${league.id}')">
-                    <label for="league-icon-${league.id}" class="file-upload-label" style="margin-bottom:8px;">📷 Upload Icon</label>
-                    <button onclick="removeLeagueIcon('${league.id}')" style="width:100%;background:#ff4444;color:#fff;border:none;padding:8px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:bold;margin-bottom:4px;">🗑️ Remove Icon</button>
-                    <div id="league-icon-status-${league.id}" class="upload-status"></div>
                     <label style="color:#FFD700; font-size:13px; margin-top:10px; display:block;">Block Background Image</label>
-                    <input type="file" id="league-bg-${league.id}" accept="image/*" onchange="uploadLeagueBg('${league.id}')">
+                    <input type="file" id="league-bg-${league.id}" accept="image/*" onchange="previewLeagueBg('${league.id}')">
                     <label for="league-bg-${league.id}" class="file-upload-label">🖼️ Upload Background</label>
+                    <div id="league-bg-preview-${league.id}" style="display:none; margin:12px 0;">
+                        <div style="color:#FFD700; font-size:12px; margin-bottom:6px;">Preview (how it will look in View League):</div>
+                        <div style="width:100%; max-width:200px; min-height:130px; border-radius:14px; border:1px solid #FFD700; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;" id="league-bg-preview-box-${league.id}">
+                            <span style="color:#888; font-size:12px;">Preview</span>
+                        </div>
+                        <div style="margin-top:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <label style="color:#FFD700; font-size:12px;">Position X:</label>
+                            <input type="range" min="0" max="100" value="50" id="league-bg-pos-x-${league.id}" oninput="adjustLeagueBgPosition('${league.id}')" style="width:100px;">
+                            <label style="color:#FFD700; font-size:12px;">Position Y:</label>
+                            <input type="range" min="0" max="100" value="50" id="league-bg-pos-y-${league.id}" oninput="adjustLeagueBgPosition('${league.id}')" style="width:100px;">
+                        </div>
+                        <button onclick="confirmLeagueBgUpload('${league.id}')" style="width:100%;background:#FFD700;color:#000;border:none;padding:10px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:bold;margin-top:8px;">✅ Confirm & Upload</button>
+                    </div>
                     <button onclick="removeLeagueBg('${league.id}')" style="width:100%;background:#ff4444;color:#fff;border:none;padding:8px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:bold;margin-top:4px;">🗑️ Remove Background</button>
                     <div id="league-bg-status-${league.id}" class="upload-status"></div>
                 </div>
@@ -985,8 +928,38 @@
         }
         function closeEditLeagueIconsModal() { document.getElementById('editLeagueIconsModal').classList.remove('active'); }
 
-        async function uploadLeagueBg(leagueId) {
+        // Store pending bg files per league for confirm-upload flow
+        const pendingLeagueBgFiles = {};
+
+        function previewLeagueBg(leagueId) {
             const file = document.getElementById(`league-bg-${leagueId}`).files[0];
+            if (!file) return;
+            pendingLeagueBgFiles[leagueId] = file;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewBox = document.getElementById(`league-bg-preview-box-${leagueId}`);
+                const previewContainer = document.getElementById(`league-bg-preview-${leagueId}`);
+                const posX = document.getElementById(`league-bg-pos-x-${leagueId}`).value;
+                const posY = document.getElementById(`league-bg-pos-y-${leagueId}`).value;
+                previewBox.style.backgroundImage = `url('${e.target.result}')`;
+                previewBox.style.backgroundSize = 'cover';
+                previewBox.style.backgroundPosition = `${posX}% ${posY}%`;
+                previewBox.innerHTML = '';
+                previewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function adjustLeagueBgPosition(leagueId) {
+            const previewBox = document.getElementById(`league-bg-preview-box-${leagueId}`);
+            if (!previewBox) return;
+            const posX = document.getElementById(`league-bg-pos-x-${leagueId}`).value;
+            const posY = document.getElementById(`league-bg-pos-y-${leagueId}`).value;
+            previewBox.style.backgroundPosition = `${posX}% ${posY}%`;
+        }
+
+        async function confirmLeagueBgUpload(leagueId) {
+            const file = pendingLeagueBgFiles[leagueId];
             if (!file) return;
             const statusDiv = document.getElementById(`league-bg-status-${leagueId}`);
             statusDiv.innerHTML = 'Uploading... <span class="loading-spinner"></span>';
@@ -994,31 +967,12 @@
                 const url = await uploadToImgBB(file);
                 await fetch(`${FIREBASE_CONFIG.databaseURL}/leagues/${leagueId}.json`, { method: 'PATCH', body: JSON.stringify({ bgImage: url }) });
                 statusDiv.innerHTML = '✅ Background updated!';
+                delete pendingLeagueBgFiles[leagueId];
+                document.getElementById(`league-bg-preview-${leagueId}`).style.display = 'none';
                 loadLeagues();
-            } catch(e) { statusDiv.innerHTML = '❌ Upload failed'; }
-        }
-
-        async function uploadLeagueIcon(leagueId) {
-            const file = document.getElementById(`league-icon-${leagueId}`).files[0];
-            if (!file) return;
-            const statusDiv = document.getElementById(`league-icon-status-${leagueId}`);
-            statusDiv.innerHTML = 'Uploading... <span class="loading-spinner"></span>';
-            try {
-                const url = await uploadToImgBB(file);
-                await fetch(`${FIREBASE_CONFIG.databaseURL}/leagues/${leagueId}.json`, { method: 'PATCH', body: JSON.stringify({ icon: url }) });
-                statusDiv.innerHTML = '✅ Icon updated!';
-                loadLeagues();
-            } catch(e) { statusDiv.innerHTML = '❌ Upload failed'; }
-        }
-
-        async function removeLeagueIcon(leagueId) {
-            if (!confirm('Remove icon for this league?')) return;
-            try {
-                await fetch(`${FIREBASE_CONFIG.databaseURL}/leagues/${leagueId}/icon.json`, { method: 'DELETE' });
-                const statusDiv = document.getElementById(`league-icon-status-${leagueId}`);
-                if (statusDiv) statusDiv.innerHTML = '✅ Icon removed!';
-                loadLeagues();
-            } catch(e) { console.error(e); }
+            } catch(e) {
+                statusDiv.innerHTML = '❌ Upload failed';
+            }
         }
 
         async function removeLeagueBg(leagueId) {
