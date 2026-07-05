@@ -1,4 +1,4 @@
-```html
+``
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1288,7 +1288,10 @@ function manageSlideshowUI() {
 // ─── Admin functions ───
 async function uploadBackgroundImage(){const file=await pickFile('image/*');if(!file)return;showModal(`<h3>Uploading…</h3><div class="loading-spinner"><div class="spinner"></div><span>Please wait</span></div>`);try{const url=await uploadToImgBB(file);await db.ref(`${basePath}/settings/backgroundImage`).set(url);document.body.style.setProperty('--bg-image',`url(${url})`);document.body.classList.add('has-bg');closeModal();alert('Background updated!');}catch(e){closeModal();alert('Upload failed: '+e.message);}}
 async function uploadNavbarLogo(){const file=await pickFile('image/*');if(!file)return;showModal(`<h3>Uploading…</h3><div class="loading-spinner"><div class="spinner"></div><span>Please wait</span></div>`);try{const url=await uploadToImgBB(file);await db.ref(`${basePath}/navbar_logo`).set(url);await loadNavbarLogo();closeModal();alert('Logo updated!');}catch(e){closeModal();alert('Upload failed: '+e.message);}}
-async function uploadTeamIcon(){const teamName=prompt("Enter exact team name:");if(!teamName)return;const file=await pickFile('image/*');if(!file)return;showModal(`<h3>Processing Icon</h3><div class="loading-spinner"><div class="spinner"></div><span>Removing background…</span></div>`);try{let blob;try{blob=await removeBackground(file);}catch(e){blob=file;}const url=await uploadToImgBB(blob);await db.ref(`${basePath}/teamIcons/${teamName}`).set({imageUrl:url,updatedAt:Date.now()});teamIconsCache[teamName]=url;closeModal();renderCurrentTab();alert(`Icon saved for "${teamName}"!`);}catch(e){closeModal();alert('Failed: '+e.message);}}
+
+// ─── CHANGE: Team icon upload without background removal ───
+async function uploadTeamIcon(){const teamName=prompt("Enter exact team name:");if(!teamName)return;const file=await pickFile('image/*');if(!file)return;showModal(`<h3>Processing Icon</h3><div class="loading-spinner"><div class="spinner"></div><span>Uploading…</span></div>`);try{const url=await uploadToImgBB(file);await db.ref(`${basePath}/teamIcons/${teamName}`).set({imageUrl:url,updatedAt:Date.now()});teamIconsCache[teamName]=url;closeModal();renderCurrentTab();alert(`Icon saved for "${teamName}"!`);}catch(e){closeModal();alert('Failed: '+e.message);}}
+
 async function manageFlagsUI(){
   const refresh=()=>{
     let prev='<div class="flag-preview-grid">';orbitFlags.forEach((url,idx)=>{prev+=`<div class="flag-thumb"><img src="${url}" alt="flag"><span class="thumb-del" data-idx="${idx}">x</span></div>`;});prev+='</div>';
