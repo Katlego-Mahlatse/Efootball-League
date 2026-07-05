@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -909,7 +909,7 @@ function renderGroups(){
     if(isAdmin)document.getElementById('addGroupMainBtn')?.addEventListener('click',addNewGroup);return;
   }
 
-  // Season 3+ — Combined league table
+  // CHANGE 1 — Season 3+ branch: Replace "+ New Group" with "+ Add Team"
   if (currentSeasonId >= 3) {
     let allTeams = [];
     for (const gid in groupsData) {
@@ -927,7 +927,8 @@ function renderGroups(){
     const poCutoff = leaguePhaseSettings.playoffCutoff || 16;
 
     let html = '';
-    if (isAdmin) html += `<div style="display:flex;justify-content:flex-end;margin-bottom:20px;"><button class="add-btn" id="addGroupTopBtn">+ New Group</button></div>`;
+    // CHANGE 1: Replace "+ New Group" with "+ Add Team" (no addNewGroup call)
+    if (isAdmin) html += `<div style="display:flex;justify-content:flex-end;margin-bottom:20px;"><button class="add-btn" id="addTeamSeason3Btn">+ Add Team</button></div>`;
     html += `<div class="group-block"><div class="table-actions"><span class="table-actions-title">🏆 League Phase — Season ${currentSeasonId}</span></div><div class="table-scroll-wrap"><table class="stats-table"><thead><tr><th>Pos</th><th style="min-width:240px;">Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GS</th><th>GC</th><th>GD</th><th>Pts</th>${isAdmin?'<th>Actions</th>':''}</tr></thead><tbody>`;
     sorted.forEach((team, idx) => {
       const pos = idx + 1;
@@ -942,7 +943,25 @@ function renderGroups(){
     html += `</tbody></table></div><div class="legend-row"><span class="legend-item"><span class="vbar vbar-blue" style="display:inline-block;"></span> Knockout (1–${koCutoff})</span><span class="legend-item"><span class="vbar vbar-orange" style="display:inline-block;"></span> Playoff (${koCutoff+1}–${poCutoff})</span><span class="legend-item"><span class="vbar vbar-red" style="display:inline-block;"></span> Eliminated (${poCutoff+1}+)</span></div></div>`;
     card.innerHTML = html;
     if (isAdmin) {
-      document.getElementById('addGroupTopBtn')?.addEventListener('click', addNewGroup);
+      // CHANGE 1: "+ Add Team" button — open group selector modal then openTeamForm
+      document.getElementById('addTeamSeason3Btn')?.addEventListener('click', () => {
+        // Build group dropdown
+        const groupOptions = Object.entries(groupsData).map(([gid, g]) =>
+          `<option value="${gid}">${escapeHtml(g.name || gid)}</option>`
+        ).join('');
+        showModal(`<h3>➕ Add Team</h3><label>Select Group</label><select id="addTeamGroupSelect"><option value="">Choose a group…</option>${groupOptions}</select><div id="addTeamStatus"></div><div class="modal-btns"><button class="modal-btn-primary" id="addTeamConfirmBtn">Add Team</button><button class="modal-btn-cancel" id="addTeamCancelBtn">Cancel</button></div>`);
+        document.getElementById('addTeamCancelBtn').onclick = closeModal;
+        document.getElementById('addTeamConfirmBtn').onclick = () => {
+          const gid = document.getElementById('addTeamGroupSelect').value;
+          if (!gid) {
+            document.getElementById('addTeamStatus').innerHTML = '<div class="status-msg status-error">Please select a group.</div>';
+            return;
+          }
+          closeModal();
+          // Now open the team form for the selected group
+          openTeamForm(gid, null);
+        };
+      });
       card.querySelectorAll('.edit-team-btn').forEach(btn => { const team = sorted.find(t => t.key === btn.dataset.key && t.groupId === btn.dataset.gid); if (team) btn.onclick = () => openTeamForm(btn.dataset.gid, btn.dataset.key, team); });
       card.querySelectorAll('.del-team-btn').forEach(btn => { btn.onclick = async () => { if (confirm('Delete team?')) { await db.ref(sp(currentSeasonId, `groups/${btn.dataset.gid}/teams/${btn.dataset.key}`)).remove(); await loadCurrentSeasonData(); renderGroups(); } }; });
     }
@@ -1027,23 +1046,52 @@ document.getElementById('saveTeamBtn').onclick=async()=>{
 };
 document.getElementById('cancelTeamBtn').onclick=()=>document.getElementById('teamForm').classList.remove('active');
 
-// ─── RENDER FIXTURES ───
+// ─── RENDER FIXTURES (CHANGE 2 — season-scoped, correct filter) ───
 function renderFixtures(){
   const card=document.getElementById('contentCard');
   const subTabsHtml=`<div class="sub-tabs-row"><button class="sub-tab-btn ${activeFixtureSubTab==='group-stage'?'active':''}" data-subtab="group-stage">Group Stage</button><button class="sub-tab-btn ${activeFixtureSubTab==='knockout'?'active':''}" data-subtab="knockout">Knockout</button></div>`;
   if(activeFixtureSubTab==='knockout'){card.innerHTML=subTabsHtml+`<div class="coming-soon"><div class="cs-icon">🏆</div><h2>Knockout Round Coming Soon</h2><p>The knockout stage fixtures will be available shortly.</p></div>`;card.querySelectorAll('.sub-tab-btn').forEach(btn=>btn.addEventListener('click',()=>{activeFixtureSubTab=btn.dataset.subtab;renderFixtures();}));return;}
-  const allFixtures=[];const today=new Date();today.setHours(0,0,0,0);
-  for(const [dateStr,eventData] of Object.entries(calendarEventsData)){
-    if(!eventData?.title)continue;if(eventData.title.trim()!=='UEFA EUROs')continue;
-    const tournaments=eventData.tournaments||[];
-    for(const tourn of tournaments){for(const fix of (tourn.fixtures||[])){allFixtures.push({date:dateStr,tournament:tourn.name||'UEFA EUROs',home:fix.home||'',away:fix.away||''}); }}
+
+  // CHANGE 2: Build fixtures with correct season-scoped filter and tournament name filter
+  const allFixtures = [];
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
+    // Only include dates where season matches currentSeasonId
+    if (eventData.season !== currentSeasonId) continue;
+    const tournaments = eventData.tournaments || [];
+    for (const tourn of tournaments) {
+      // Only include tournaments whose name contains 'uefa euro' (case-insensitive)
+      if (!tourn.name || !tourn.name.toLowerCase().includes('uefa euro')) continue;
+      for (const fix of (tourn.fixtures || [])) {
+        allFixtures.push({
+          date: dateStr,
+          tournament: tourn.name || 'UEFA EUROs',
+          home: fix.home || '',
+          away: fix.away || '',
+          season: eventData.season // store season for filtering in applyFixtureFilters
+        });
+      }
+    }
   }
-  allFixtures.sort((a,b)=>{const da=new Date(a.date),db2=new Date(b.date),af=da>=today,bf=db2>=today;if(af&&bf)return da-db2;if(!af&&!bf)return da-db2;return af?-1:1;});
+
+  allFixtures.sort((a,b)=>{
+    const da=new Date(a.date), db2=new Date(b.date);
+    const af=da>=today, bf=db2>=today;
+    if(af && bf) return da - db2;
+    if(!af && !bf) return da - db2;
+    return af ? -1 : 1;
+  });
   const allTeams=[...new Set(allFixtures.map(f=>[f.home,f.away]).flat().filter(Boolean))].sort();
   const allMonths=[...new Set(allFixtures.map(f=>f.date.substring(0,7)))].sort();
   const ML={'01':'January','02':'February','03':'March','04':'April','05':'May','06':'June','07':'July','08':'August','09':'September','10':'October','11':'November','12':'December'};
   const grouped={};for(const fix of allFixtures){if(!grouped[fix.date])grouped[fix.date]=[];grouped[fix.date].push(fix);}
-  const sortedDates=Object.keys(grouped).sort((a,b)=>{const da=new Date(a),db2=new Date(b),af=da>=today,bf=db2>=today;if(af&&bf)return da-db2;if(!af&&!bf)return da-db2;return af?-1:1;});
+  const sortedDates=Object.keys(grouped).sort((a,b)=>{
+    const da=new Date(a), db2=new Date(b);
+    const af=da>=today, bf=db2>=today;
+    if(af && bf) return da - db2;
+    if(!af && !bf) return da - db2;
+    return af ? -1 : 1;
+  });
   let html=subTabsHtml+`<div class="filters-bar">
     <div class="filter-group"><label>Team</label><select id="fixTeamFilter"><option value="all">All Teams</option>${allTeams.map(t=>`<option value="${t}">${t}</option>`).join('')}</select></div>
     <div class="filter-group"><label>Month</label><select id="fixMonthFilter"><option value="all">All Months</option>${allMonths.map(m=>{const[y,mo]=m.split('-');return`<option value="${m}">${ML[mo]||mo} ${y}</option>`;}).join('')}</select></div>
@@ -1055,14 +1103,28 @@ function renderFixtures(){
   else{for(const dateStr of sortedDates){const d=new Date(dateStr);const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];const[y,mo]=dateStr.split('-');const isPast=d<today;html+=`<div class="fixture-date-group"><div class="fixture-date-label">${days[d.getDay()]}, ${d.getDate()} ${ML[mo]||mo} ${y}${isPast?' · Played':''}</div>`;for(const fix of grouped[dateStr]){const hIco=getTeamIconHtml(fix.home,'team-icon-lg');const aIco=getTeamIconHtml(fix.away,'team-icon-lg');html+=`<div class="fixture-card"><div class="fixture-tournament-label">${escapeHtml(fix.tournament)}</div><div class="fixture-match-row"><div class="fixture-team-side">${hIco}<span class="fixture-team-name">${escapeHtml(fix.home)}</span></div><div class="fixture-vs">VS</div><div class="fixture-team-side">${aIco}<span class="fixture-team-name">${escapeHtml(fix.away)}</span></div></div></div>`;}html+=`</div>`;}}
   card.innerHTML=html;
   card.querySelectorAll('.sub-tab-btn').forEach(btn=>btn.addEventListener('click',()=>{activeFixtureSubTab=btn.dataset.subtab;renderFixtures();}));
+
+  // CHANGE 2: applyFixtureFilters now also applies season+name filter (using allFixtures which is already filtered)
   function applyFixtureFilters(){
-    const tf=document.getElementById('fixTeamFilter')?.value||'all';const mf=document.getElementById('fixMonthFilter')?.value||'all';
-    let f=[...allFixtures];if(tf!=='all')f=f.filter(x=>x.home===tf||x.away===tf);if(mf!=='all')f=f.filter(x=>x.date.startsWith(mf));
+    const tf=document.getElementById('fixTeamFilter')?.value||'all';
+    const mf=document.getElementById('fixMonthFilter')?.value||'all';
+    // allFixtures is already filtered by season and tournament name (built above)
+    // additional team/month filters applied on top
+    let f=[...allFixtures];
+    if(tf!=='all') f=f.filter(x=>x.home===tf||x.away===tf);
+    if(mf!=='all') f=f.filter(x=>x.date.startsWith(mf));
     document.getElementById('fixFilterStats').textContent=`${f.length} fixture${f.length!==1?'s':''} found`;
+    // Remove existing fixture-date-group elements and re-render filtered ones
     card.querySelectorAll('.fixture-date-group').forEach(el=>el.remove());
     const filtersBar=card.querySelector('.filters-bar');
     const grp={};for(const fix of f){if(!grp[fix.date])grp[fix.date]=[];grp[fix.date].push(fix);}
-    const sD=Object.keys(grp).sort((a,b)=>{const da=new Date(a),db2=new Date(b),af=da>=today,bf=db2>=today;if(af&&bf)return da-db2;if(!af&&!bf)return da-db2;return af?-1:1;});
+    const sD=Object.keys(grp).sort((a,b)=>{
+      const da=new Date(a), db2=new Date(b);
+      const af=da>=today, bf=db2>=today;
+      if(af && bf) return da-db2;
+      if(!af && !bf) return da-db2;
+      return af?-1:1;
+    });
     if(!sD.length){const emp=document.createElement('div');emp.className='empty-state';emp.innerHTML='<div class="empty-icon">📅</div><p>No fixtures found</p>';filtersBar.after(emp);}
     else{let ins=filtersBar;for(const dateStr of sD){const d=new Date(dateStr);const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];const[y,mo]=dateStr.split('-');const isPast=d<today;const dg=document.createElement('div');dg.className='fixture-date-group';let dgHtml=`<div class="fixture-date-label">${days[d.getDay()]}, ${d.getDate()} ${ML[mo]||mo} ${y}${isPast?' · Played':''}</div>`;for(const fix of grp[dateStr]){const hIco=getTeamIconHtml(fix.home,'team-icon-lg');const aIco=getTeamIconHtml(fix.away,'team-icon-lg');dgHtml+=`<div class="fixture-card"><div class="fixture-tournament-label">${escapeHtml(fix.tournament)}</div><div class="fixture-match-row"><div class="fixture-team-side">${hIco}<span class="fixture-team-name">${escapeHtml(fix.home)}</span></div><div class="fixture-vs">VS</div><div class="fixture-team-side">${aIco}<span class="fixture-team-name">${escapeHtml(fix.away)}</span></div></div></div>`;}dg.innerHTML=dgHtml;ins.after(dg);ins=dg;}}
   }
