@@ -1,4 +1,3 @@
-```
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1972,36 +1971,17 @@ async function findManagerKeyId(keyValue) {
   }
   return null;
 }
+
+// REMOVED LIMITS: always allowed
 async function canUserSubmitResult(managerKey) {
-  const id = await findManagerKeyId(managerKey);
-  if (!id) return { allowed: false, message: 'Invalid manager key.' };
-  const entry = managerKeysCache[id];
-  const last = entry.lastSubmissionTimestamp || 0;
-  const hoursSince = (Date.now() - last) / (1000 * 60 * 60);
-  if (hoursSince < 24) {
-    const remaining = Math.ceil(24 - hoursSince);
-    return { allowed: false, message: `Please wait ${remaining} hour(s) before submitting again.` };
-  }
   return { allowed: true };
 }
+
+// REMOVED LIMITS: always allowed
 async function validateDailyMatchLimit(managerKey, proposedMatchday) {
-  const todaySAST = getSASTDate();
-  const snap = await db.ref(sp(currentSeasonId, 'pending_results')).once('value');
-  const data = snap.val() || {};
-  const submissions = [];
-  for (const id in data) {
-    const entry = data[id];
-    if (entry.submittedBy === managerKey) {
-      const subDate = new Date(new Date(entry.submittedAt).getTime() + (2*60*60*1000)).toISOString().split('T')[0];
-      if (subDate === todaySAST) submissions.push(entry);
-    }
-  }
-  if (submissions.length >= 2) return { allowed: false, message: 'You have already submitted 2 results today.' };
-  for (const sub of submissions) {
-    if (sub.md === proposedMatchday) return { allowed: false, message: `You already submitted a result for Matchday ${proposedMatchday} today.` };
-  }
   return { allowed: true };
 }
+
 function formatResultText(homeTeam, homeScore, awayTeam, awayScore, forfeitType) {
   if (forfeitType === 'no_contest') return `${homeTeam} F - F ${awayTeam} (No Contest)`;
   if (forfeitType === 'forfeit_no_reply') return `${homeTeam} ${homeScore} - ${awayScore} ${awayTeam} (Forfeited - No Reply)`;
@@ -2144,8 +2124,7 @@ function openUserResultForm(dateStr) {
       const awayScore = parseInt(document.getElementById('userAwayScore').value) || 0;
       if (!awayTeam) { statusEl.innerHTML = '<div class="status-msg status-error">Select an opponent.</div>'; return; }
       if (managerUploadedImages.length === 0) { statusEl.innerHTML = '<div class="status-msg status-error">Upload at least 1 image.</div>'; return; }
-      const limitCheck = await validateDailyMatchLimit(rememberedManagerKey, mdForResult);
-      if (!limitCheck.allowed) { statusEl.innerHTML = `<div class="status-msg status-error">${escapeHtml(limitCheck.message)}</div>`; return; }
+      // No limit check — always allowed
       statusEl.innerHTML = '<div class="status-msg status-loading">Uploading & saving…</div>';
       try {
         const imageUrls = [];
@@ -2215,8 +2194,7 @@ function openForfeitSubmitForm(dateStr, forfeitType) {
       const opponent = document.getElementById('forfeitOpponent').value;
       if (!opponent) { statusEl.innerHTML = '<div class="status-msg status-error">Select an opponent.</div>'; return; }
       if (managerUploadedImages.length === 0) { statusEl.innerHTML = '<div class="status-msg status-error">Upload at least 1 screenshot.</div>'; return; }
-      const limitCheck = await validateDailyMatchLimit(rememberedManagerKey, mdForResult);
-      if (!limitCheck.allowed) { statusEl.innerHTML = `<div class="status-msg status-error">${escapeHtml(limitCheck.message)}</div>`; return; }
+      // No limit check — always allowed
       statusEl.innerHTML = '<div class="status-msg status-loading">Uploading & submitting…</div>';
       try {
         const imageUrls = [];
@@ -2421,4 +2399,3 @@ init();
 </script>
 </body>
 </html>
-```
