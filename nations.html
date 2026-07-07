@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2088,23 +2088,140 @@
         }
 
         function openSetCurrentMatchdayModal() {
-            showModal(
-                `<h3>📊 Set Current Matchday</h3><p style="color:rgba(255,255,255,0.6);margin-bottom:20px;">Current: <strong style="color:white;">${currentMatchday}</strong></p><label>New Matchday Number</label><input type="number" id="matchdayInput" value="${currentMatchday}" min="1"><div id="matchdayStatus"></div><div class="modal-btns"><button class="modal-btn-primary" id="saveMatchdayBtn">Save</button><button class="modal-btn-cancel" id="cancelMatchdayBtn">Cancel</button></div>`
-                );
-            document.getElementById('cancelMatchdayBtn').onclick = closeModal;
-            document.getElementById('saveMatchdayBtn').onclick = async () => {
-                const val = parseInt(document.getElementById('matchdayInput').value);
-                if (isNaN(val) || val < 1) {
-                    document.getElementById('matchdayStatus').innerHTML =
-                    '<div class="status-msg status-error">Invalid number.</div>';
-                    return;
+            const todayStr = getSASTToday();
+            const fixtureDates = [];
+            for (const [date, eventData] of Object.entries(calendarEventsData)) {
+                const eventSeason = eventData.season;
+                if (eventSeason !== undefined && eventSeason !== null && eventSeason !== currentSeasonId) continue;
+                if (eventData.tournaments && Array.isArray(eventData.tournaments)) {
+                    for (const tournament of eventData.tournaments) {
+                        if (!tournament.name) continue;
+                        const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
+                        if (!normalized.includes('nationsleague') && !normalized.includes('uefanations')) continue;
+                        if (tournament.fixtures && Array.isArray(tournament.fixtures) && tournament.fixtures.length >
+                            0) {
+                            if (!fixtureDates.includes(date)) fixtureDates.push(date);
+                        }
+                    }
                 }
-                await db.ref(sp(currentSeasonId, 'currentMatchday')).set(val);
-                currentMatchday = val;
-                document.getElementById('matchdayStatus').innerHTML =
-                '<div class="status-msg status-success">✅ Saved!</div>';
-                setTimeout(closeModal, 800);
+            }
+            fixtureDates.sort((a, b) => a.localeCompare(b));
+            let filteredDates = fixtureDates.filter(d => d >= todayStr);
+            if (filteredDates.length === 0 && fixtureDates.length > 0) filteredDates = [fixtureDates[fixtureDates.length -
+                1]];
+            const dateItems = filteredDates.map(date => ({
+                date,
+                currentMd: calendarEventsData[date]?.matchday || '',
+                predicted: calendarEventsData[date]?.matchday || ''
+            }));
+            if (dateItems.length === 0) {
+                showModal(
+                    `<h3>📊 Set Current Matchday</h3><div class="empty-state"><div class="empty-icon">📅</div><p>No fixture dates found for this season.</p></div><div class="modal-btns"><button class="modal-btn-cancel" id="closeMatchdayEmpty">Close</button></div>`
+                    );
+                document.getElementById('closeMatchdayEmpty').onclick = closeModal;
+                return;
+            }
+            const renderMatchdayModal = () => {
+                const monthLabels = { '01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr', '05': 'May', '06': 'Jun',
+                    '07': 'Jul', '08': 'Aug', '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dec' };
+                let listHtml = dateItems.map(item => {
+                    const dateObj = new Date(item.date);
+                    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
+                        'Saturday'
+                    ];
+                    const [y, mo, d] = item.date.split('-');
+                    const label =
+                        `${dayNames[dateObj.getDay()]} ${parseInt(d)} ${monthLabels[mo]||mo} ${y}`;
+                    const isToday = item.date === todayStr;
+                    return `<div style="display:flex;align-items:center;gap:16px;padding:12px 16px;background:${isToday?'rgba(0,180,216,0.15)':'rgba(0,0,0,0.2)'};border-radius:16px;margin-bottom:10px;border-left:4px solid ${isToday?'var(--nl-accent)':'rgba(0,180,216,0.2)'};"> <span style="font-weight:600;color:white;min-width:200px;">${label}${isToday?' ⭐':''}</span> <span style="color:rgba(255,255,255,0.4);font-size:1rem;">MD</span> <input type="number" class="matchday-prediction-input" data-date="${item.date}" value="${item.predicted||''}" min="1" style="width:80px;padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(0,180,216,0.4);border-radius:14px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.2rem;outline:none;text-align:center;"> <span style="color:rgba(255,255,255,0.3);font-size:0.85rem;margin-left:auto;">${item.currentMd?`(prev: ${item.currentMd})`:'(unassigned)'}</span> </div>`;
+                }).join('');
+                showModal(
+                    `<h3>📊 Matchday Scheduling</h3> <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Set matchday numbers for each Nations League fixture date. Predict auto-increments from today forward and backward.</p> <div style="display:flex;gap:12px;align-items:center;padding:16px 20px;background:rgba(0,0,0,0.25);border-radius:20px;margin-bottom:20px;"> <span style="color:rgba(255,255,255,0.6);font-weight:600;">Today's MD:</span> <input type="number" id="todayMatchdayInput" value="${currentMatchday||1}" min="1" style="width:100px;padding:10px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(0,180,216,0.4);border-radius:14px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.4rem;outline:none;text-align:center;"> <button class="modal-btn-primary" id="predictMatchdaysBtn" style="padding:10px 28px;font-size:1.2rem;">🔮 Predict</button> </div> <div style="max-height:400px;overflow-y:auto;margin:12px 0;">${listHtml}</div> <div style="padding:16px;background:rgba(0,0,0,0.2);border-radius:16px;margin-bottom:16px;"> <p style="color:rgba(255,255,255,0.4);font-size:1rem;">📌 Predict fills today's MD forward (+1 each date) and backward (-1 each date). Edit any value manually before confirming.</p> </div> <div class="modal-btns" style="margin-top:20px;"> <button class="modal-btn-primary" id="confirmMatchdayPredictions">✅ Confirm All</button> <button class="modal-btn-cancel" id="cancelMatchdayModal">Cancel</button> </div> <div id="matchdayPredictionStatus"></div>`
+                    );
+                document.getElementById('cancelMatchdayModal').onclick = closeModal;
+                document.getElementById('predictMatchdaysBtn').onclick = () => {
+                    const todayMd = parseInt(document.getElementById('todayMatchdayInput').value);
+                    if (isNaN(todayMd) || todayMd < 1) {
+                        document.getElementById('matchdayPredictionStatus').innerHTML =
+                            '<div class="status-msg status-error">Enter a valid matchday number.</div>';
+                        return;
+                    }
+                    let startIdx = dateItems.findIndex(d => d.date === todayStr);
+                    if (startIdx === -1) startIdx = 0;
+                    let md = todayMd;
+                    for (let i = startIdx; i < dateItems.length; i++) {
+                        dateItems[i].predicted = md;
+                        md++;
+                    }
+                    if (startIdx > 0) {
+                        let bmd = todayMd - 1;
+                        for (let i = startIdx - 1; i >= 0; i--) {
+                            dateItems[i].predicted = bmd;
+                            bmd--;
+                        }
+                    }
+                    renderMatchdayModal();
+                };
+                document.getElementById('confirmMatchdayPredictions').onclick = async () => {
+                    const statusEl = document.getElementById('matchdayPredictionStatus');
+                    const btn = document.getElementById('confirmMatchdayPredictions');
+                    btn.disabled = true;
+                    btn.innerHTML = 'Saving...';
+                    statusEl.innerHTML = '<div class="status-msg status-loading">Saving matchday assignments...</div>';
+                    const inputs = document.querySelectorAll('.matchday-prediction-input');
+                    const updates = [];
+                    let todayMdSave = null;
+                    for (const inp of inputs) {
+                        const date = inp.dataset.date;
+                        const val = parseInt(inp.value);
+                        if (!isNaN(val) && val > 0) {
+                            updates.push({ date, md: val });
+                            if (date === todayStr) todayMdSave = val;
+                            if (!calendarEventsData[date]) calendarEventsData[date] = {};
+                            calendarEventsData[date].matchday = val;
+                        }
+                    }
+                    if (!updates.length) {
+                        statusEl.innerHTML =
+                            '<div class="status-msg status-error">No valid matchday numbers entered.</div>';
+                        btn.disabled = false;
+                        btn.innerHTML = '✅ Confirm All';
+                        return;
+                    }
+                    try {
+                        for (const u of updates) {
+                            await db.ref(`calendarEvents/${u.date}/matchday`).set(u.md);
+                        }
+                        if (todayMdSave !== null) {
+                            await db.ref(sp(currentSeasonId, 'currentMatchday')).set(todayMdSave);
+                            currentMatchday = todayMdSave;
+                        } else if (updates.length > 0) {
+                            const earliest = updates.reduce((a, b) => a.date < b.date ? a : b);
+                            await db.ref(sp(currentSeasonId, 'currentMatchday')).set(earliest.md);
+                            currentMatchday = earliest.md;
+                        }
+                        await loadCalendarEvents();
+                        statusEl.innerHTML =
+                            `<div class="status-msg status-success">✅ ${updates.length} matchday(s) saved!</div>`;
+                        btn.innerHTML = '✓ Done';
+                        setTimeout(() => {
+                            closeModal();
+                            renderCurrentTab();
+                        }, 1000);
+                    } catch (e) {
+                        statusEl.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                        btn.disabled = false;
+                        btn.innerHTML = '✅ Confirm All';
+                    }
+                };
+                document.querySelectorAll('.matchday-prediction-input').forEach(inp => {
+                    inp.addEventListener('change', function() {
+                        const item = dateItems.find(d => d.date === this.dataset.date);
+                        if (item) item.predicted = parseInt(this.value) || 0;
+                    });
+                });
             };
+            renderMatchdayModal();
         }
 
         // ─── Seasons ───
@@ -2127,7 +2244,6 @@
             availableSeasons.sort((a, b) => a - b);
             if (!availableSeasons.includes(activeSeasonId) && availableSeasons.length) activeSeasonId = availableSeasons[0];
             currentSeasonId = activeSeasonId;
-            // Load currentMatchday
             await loadCurrentMatchday();
             updateSeasonUI();
             await loadCurrentSeasonData();
@@ -2222,7 +2338,6 @@
                 return;
             }
 
-            // Season 3+ branch: League phase
             if (currentSeasonId >= 3) {
                 let allTeams = [];
                 for (const gid in groupsData) {
@@ -2300,7 +2415,6 @@
                 return;
             }
 
-            // Seasons 1 & 2 — Multi-group rendering
             let html = '';
             if (isAdmin) html +=
                 `<div style="display:flex;justify-content:flex-end;margin-bottom:20px;"><button class="add-btn" id="addGroupTopBtn">+ New Group</button></div>`;
@@ -2605,6 +2719,11 @@
                     allResults.push({ key, groupId: gid, groupName: groupsData[gid]?.name || gid, ...val });
                 }
             }
+            const genSnap = await db.ref(sp(currentSeasonId, 'general_results')).once('value');
+            const genData = genSnap.val() || {};
+            for (const [key, val] of Object.entries(genData)) {
+                allResults.push({ key, groupId: null, groupName: 'League Phase', ...val });
+            }
             const mdFilter = document.getElementById('mdResultFilter')?.value || 'all';
             const teamFilter = document.getElementById('teamResultFilter')?.value || 'all';
             const allMds = [...new Set(allResults.map(r => r.md).filter(m => m != null))].sort((a, b) => a - b);
@@ -2684,7 +2803,7 @@
             }
         }
 
-        // ─── Result Form ───
+        // ─── ADMIN RESULT FORM — REMOVE GROUP SELECTOR, USE FLAT TEAM LIST ───
         let editingResultKey = null,
             editingResultGroupId = null;
 
@@ -2693,131 +2812,166 @@
             editingResultGroupId = r?.groupId || null;
             tempScorersHome = r?.goalScorers?.home ? [...r.goalScorers.home] : [];
             tempScorersAway = r?.goalScorers?.away ? [...r.goalScorers.away] : [];
-            const groupOpts = Object.entries(groupsData).map(([gid, g]) =>
-                `<option value="${gid}" ${editingResultGroupId===gid?'selected':''}>${escapeHtml(g.name||gid)}</option>`
-            ).join('');
-            let homeOpts = '<option value="">Home Team</option>';
-            let awayOpts = '<option value="">Away Team</option>';
-            if (editingResultGroupId && groupsData[editingResultGroupId]) {
-                const teams = Object.values(groupsData[editingResultGroupId].teams || {}).map(t => t.name).sort();
-                teams.forEach(t => {
-                    homeOpts += `<option value="${t}" ${r?.homeTeam===t?'selected':''}>${t}</option>`;
-                    awayOpts += `<option value="${t}" ${r?.awayTeam===t?'selected':''}>${t}</option>`;
-                });
+
+            const allTeams = [];
+            for (const gid in groupsData) {
+                const teams = groupsData[gid]?.teams || {};
+                for (const k in teams) {
+                    if (teams[k]?.name) allTeams.push(teams[k].name);
+                }
             }
-            showModal(`
-            <h3>${r?'Edit Result':'Add Result'}</h3>
-            <label>Group</label><select id="rGroup"><option value="">Select Group</option>${groupOpts}</select>
-            <label>Home Team</label><select id="rHome">${homeOpts}</select>
-            <label>Away Team</label><select id="rAway">${awayOpts}</select>
-            <label>Home Score</label><input id="rHS" type="number" value="${r?.homeScore??0}">
-            <label>Away Score</label><input id="rAS" type="number" value="${r?.awayScore??0}">
-            <label>Forfeit Type</label>
-            <select id="rForfeit">
-              <option value="none" ${(!r?.forfeitType||r.forfeitType==='none')?'selected':''}>Normal Result</option>
-              <option value="no_contest" ${r?.forfeitType==='no_contest'?'selected':''}>No Contest (F-F)</option>
-              <option value="forfeit" ${r?.forfeitType==='forfeit'?'selected':''}>Forfeit</option>
-            </select>
-            <label>Matchday</label><input id="rMd" type="number" value="${r?.md||''}">
-            <div class="scorer-section">
-              <h4>Home Scorers</h4>
-              <div style="display:flex;gap:10px;margin-bottom:10px;">
-                <input type="text" id="homeScorerName" placeholder="Player name" style="flex:2;">
-                <input type="number" id="homeScorerGoals" placeholder="Goals" value="1" style="width:90px;">
-                <button id="addHomeScorer" class="modal-btn-primary" style="padding:10px 20px;flex-shrink:0;">Add</button>
-              </div>
-              <div id="homeScorerList" class="scorer-list"></div>
-            </div>
-            <div class="scorer-section">
-              <h4>Away Scorers</h4>
-              <div style="display:flex;gap:10px;margin-bottom:10px;">
-                <input type="text" id="awayScorerName" placeholder="Player name" style="flex:2;">
-                <input type="number" id="awayScorerGoals" placeholder="Goals" value="1" style="width:90px;">
-                <button id="addAwayScorer" class="modal-btn-primary" style="padding:10px 20px;flex-shrink:0;">Add</button>
-              </div>
-              <div id="awayScorerList" class="scorer-list"></div>
-            </div>
-            <div class="modal-btns">
-              <button class="modal-btn-primary" id="saveResultBtn">Save</button>
-              <button class="modal-btn-cancel" id="cancelResultBtn">Cancel</button>
-            </div>
-          `);
-            renderScorerList('home');
-            renderScorerList('away');
-            document.getElementById('rGroup').addEventListener('change', e => {
-                const gid = e.target.value;
-                const teams = gid && groupsData[gid] ? Object.values(groupsData[gid].teams || {}).map(t => t.name)
-                    .sort() : [];
-                const opts = '<option value="">Select</option>' + teams.map(t =>
-                    `<option value="${t}">${t}</option>`).join('');
-                document.getElementById('rHome').innerHTML = opts;
-                document.getElementById('rAway').innerHTML = opts;
-                editingResultGroupId = gid;
-            });
-            document.getElementById('addHomeScorer').onclick = () => {
-                const name = document.getElementById('homeScorerName').value.trim();
-                const goals = parseInt(document.getElementById('homeScorerGoals').value) || 1;
-                if (!name) return;
-                tempScorersHome.push({ player: name, goals });
-                renderScorerList('home');
-                document.getElementById('homeScorerName').value = '';
-                document.getElementById('homeScorerGoals').value = '1';
-            };
-            document.getElementById('addAwayScorer').onclick = () => {
-                const name = document.getElementById('awayScorerName').value.trim();
-                const goals = parseInt(document.getElementById('awayScorerGoals').value) || 1;
-                if (!name) return;
-                tempScorersAway.push({ player: name, goals });
-                renderScorerList('away');
-                document.getElementById('awayScorerName').value = '';
-                document.getElementById('awayScorerGoals').value = '1';
-            };
-            document.getElementById('cancelResultBtn').onclick = closeModal;
-            document.getElementById('saveResultBtn').onclick = async () => {
-                const gid = document.getElementById('rGroup').value || editingResultGroupId;
-                const home = document.getElementById('rHome').value;
-                const away = document.getElementById('rAway').value;
-                const hs = parseInt(document.getElementById('rHS').value) || 0;
-                const as2 = parseInt(document.getElementById('rAS').value) || 0;
-                const forfeit = document.getElementById('rForfeit').value;
-                const md = parseInt(document.getElementById('rMd').value) || 0;
-                if (!gid) { alert('Select a group'); return; }
-                if (!home || !away) { alert('Select both teams'); return; }
-                if (home === away) { alert('Teams cannot be the same'); return; }
-                let matchText = `${home} ${hs} - ${as2} ${away}`;
-                if (forfeit === 'no_contest') matchText = `${home} F - F ${away} (No Contest)`;
-                else if (forfeit === 'forfeit') matchText += ` (Forfeit)`;
-                const resultObj = { matchText, homeTeam: home, awayTeam: away, homeScore: hs, awayScore: as2,
-                    forfeitType: forfeit, md, goalScorers: { home: tempScorersHome, away: tempScorersAway } };
-                const path = sp(currentSeasonId, `groups/${gid}/results`);
-                if (editingResultKey) await db.ref(`${path}/${editingResultKey}`).set(resultObj);
-                else await db.ref(path).push(resultObj);
-                if (!editingResultKey) await updateGroupTeamStats(gid, home, away, hs, as2, forfeit);
-                closeModal();
-                await loadCurrentSeasonData();
-                renderResults();
-            };
-        }
+            const uniqueTeams = [...new Set(allTeams)].sort();
 
-        function renderScorerList(side) {
-            const list = side === 'home' ? tempScorersHome : tempScorersAway;
-            const container = document.getElementById(`${side}ScorerList`);
-            if (!container) return;
-            container.innerHTML = list.map((s, idx) =>
-                    `<div class="scorer-badge">${escapeHtml(s.player)} (${s.goals})<button class="remove-scorer" data-side="${side}" data-idx="${idx}">x</button></div>`
-                    )
-                .join('');
-            container.querySelectorAll('.remove-scorer').forEach(btn => {
-                btn.onclick = () => {
-                    const idx = parseInt(btn.dataset.idx);
-                    if (btn.dataset.side === 'home') tempScorersHome.splice(idx, 1);
-                    else tempScorersAway.splice(idx, 1);
-                    renderScorerList(btn.dataset.side);
+            let selectedHome = r?.homeTeam || '';
+            let selectedAway = r?.awayTeam || '';
+            let hsVal = r?.homeScore ?? 0;
+            let asVal = r?.awayScore ?? 0;
+            let forfeitVal = r?.forfeitType || 'none';
+            let mdVal = r?.md || '';
+
+            const renderResultForm = () => {
+                const homeOpts = uniqueTeams.map(t =>
+                    `<option value="${t}" ${selectedHome===t?'selected':''}>${t}</option>`
+                ).join('');
+                const awayOpts = uniqueTeams.map(t =>
+                    `<option value="${t}" ${selectedAway===t?'selected':''}>${t}</option>`
+                ).join('');
+                const hsh = tempScorersHome.map((s, i) =>
+                    `<div class="scorer-badge">${escapeHtml(s.player)} (${s.goals})<button class="remove-scorer" data-side="home" data-idx="${i}">x</button></div>`
+                ).join('');
+                const ash = tempScorersAway.map((s, i) =>
+                    `<div class="scorer-badge">${escapeHtml(s.player)} (${s.goals})<button class="remove-scorer" data-side="away" data-idx="${i}">x</button></div>`
+                ).join('');
+
+                showModal(`
+              <h3>${r?'Edit Result':'Add Result'}</h3>
+              <label>Home Team</label><select id="rHome"><option value="">Select Home Team</option>${homeOpts}</select>
+              <label>Away Team</label><select id="rAway"><option value="">Select Away Team</option>${awayOpts}</select>
+              <label>Home Score</label><input id="rHS" type="number" value="${hsVal}">
+              <label>Away Score</label><input id="rAS" type="number" value="${asVal}">
+              <label>Forfeit Type</label>
+              <select id="rForfeit">
+                <option value="none" ${forfeitVal==='none'?'selected':''}>Normal Result</option>
+                <option value="no_contest" ${forfeitVal==='no_contest'?'selected':''}>No Contest (F-F)</option>
+                <option value="forfeit_no_reply" ${forfeitVal==='forfeit_no_reply'?'selected':''}>Forfeit Win</option>
+              </select>
+              <label>Matchday</label><input id="rMd" type="number" value="${mdVal}">
+              <div class="scorer-section">
+                <h4>Home Scorers</h4>
+                <div style="display:flex;gap:10px;margin-bottom:10px;">
+                  <input type="text" id="homeScorerName" placeholder="Player name" style="flex:2;">
+                  <input type="number" id="homeScorerGoals" value="1" style="width:90px;">
+                  <button id="addHomeScorer" class="modal-btn-primary" style="padding:10px 20px;">Add</button>
+                </div>
+                <div id="homeScorerList" class="scorer-list">${hsh}</div>
+              </div>
+              <div class="scorer-section">
+                <h4>Away Scorers</h4>
+                <div style="display:flex;gap:10px;margin-bottom:10px;">
+                  <input type="text" id="awayScorerName" placeholder="Player name" style="flex:2;">
+                  <input type="number" id="awayScorerGoals" value="1" style="width:90px;">
+                  <button id="addAwayScorer" class="modal-btn-primary" style="padding:10px 20px;">Add</button>
+                </div>
+                <div id="awayScorerList" class="scorer-list">${ash}</div>
+              </div>
+              <div class="modal-btns">
+                <button class="modal-btn-primary" id="saveResultBtn">Save</button>
+                <button class="modal-btn-cancel" id="cancelResultBtn">Cancel</button>
+              </div>
+            `);
+
+                document.getElementById('rHome').addEventListener('change', e => { selectedHome = e.target.value; });
+                document.getElementById('rAway').addEventListener('change', e => { selectedAway = e.target.value; });
+                document.getElementById('rHS').addEventListener('input', e => { hsVal = parseInt(e.target.value) || 0; });
+                document.getElementById('rAS').addEventListener('input', e => { asVal = parseInt(e.target.value) || 0; });
+                document.getElementById('rForfeit').addEventListener('change', e => { forfeitVal = e.target.value; });
+                document.getElementById('rMd').addEventListener('input', e => { mdVal = parseInt(e.target.value) || 0; });
+
+                document.getElementById('addHomeScorer').onclick = () => {
+                    const name = document.getElementById('homeScorerName').value.trim();
+                    const goals = parseInt(document.getElementById('homeScorerGoals').value) || 1;
+                    if (!name) return;
+                    tempScorersHome.push({ player: name, goals });
+                    renderResultForm();
                 };
-            });
+                document.getElementById('addAwayScorer').onclick = () => {
+                    const name = document.getElementById('awayScorerName').value.trim();
+                    const goals = parseInt(document.getElementById('awayScorerGoals').value) || 1;
+                    if (!name) return;
+                    tempScorersAway.push({ player: name, goals });
+                    renderResultForm();
+                };
+                document.querySelectorAll('.remove-scorer[data-side]').forEach(btn => {
+                    btn.onclick = () => {
+                        const idx = parseInt(btn.dataset.idx);
+                        if (btn.dataset.side === 'home') tempScorersHome.splice(idx, 1);
+                        else tempScorersAway.splice(idx, 1);
+                        renderResultForm();
+                    };
+                });
+                document.getElementById('cancelResultBtn').onclick = closeModal;
+                document.getElementById('saveResultBtn').onclick = async () => {
+                    if (!selectedHome || !selectedAway) { alert('Select both teams'); return; }
+                    if (selectedHome === selectedAway) { alert('Teams cannot be the same'); return; }
+                    const hs = hsVal;
+                    const as2 = asVal;
+                    const forfeit = forfeitVal;
+                    const md = parseInt(mdVal) || 0;
+                    let matchText = `${selectedHome} ${hs} - ${as2} ${selectedAway}`;
+                    if (forfeit === 'no_contest') matchText =
+                    `${selectedHome} F - F ${selectedAway} (No Contest)`;
+                    else if (forfeit === 'forfeit_no_reply') matchText += ` (Forfeited - No Reply)`;
+
+                    const resultObj = {
+                        matchText,
+                        homeTeam: selectedHome,
+                        awayTeam: selectedAway,
+                        homeScore: hs,
+                        awayScore: as2,
+                        forfeitType: forfeit,
+                        md,
+                        goalScorers: { home: tempScorersHome, away: tempScorersAway }
+                    };
+
+                    let detectedGid = null;
+                    for (const gid in groupsData) {
+                        const teams = groupsData[gid]?.teams || {};
+                        let hasHome = false,
+                            hasAway = false;
+                        for (const k in teams) {
+                            if (teams[k]?.name === selectedHome) hasHome = true;
+                            if (teams[k]?.name === selectedAway) hasAway = true;
+                        }
+                        if (hasHome && hasAway) { detectedGid = gid; break; }
+                    }
+
+                    if (detectedGid) {
+                        const path = sp(currentSeasonId, `groups/${detectedGid}/results`);
+                        if (editingResultKey) await db.ref(`${path}/${editingResultKey}`).set(resultObj);
+                        else {
+                            await db.ref(path).push(resultObj);
+                            await updateGroupTeamStats(detectedGid, selectedHome, selectedAway, hs, as2, forfeit);
+                        }
+                    } else {
+                        const path = sp(currentSeasonId, 'general_results');
+                        if (editingResultKey) await db.ref(`${path}/${editingResultKey}`).set(resultObj);
+                        else await db.ref(path).push(resultObj);
+                    }
+
+                    await applyScorersFromScan(tempScorersHome, selectedHome);
+                    await applyScorersFromScan(tempScorersAway, selectedAway);
+                    await applyAssistsFromScan([], selectedHome);
+                    await applyAssistsFromScan([], selectedAway);
+
+                    closeModal();
+                    await loadCurrentSeasonData();
+                    renderResults();
+                };
+            };
+            renderResultForm();
         }
 
-        // ─── UPDATE GROUP TEAM STATS (with new forfeit logic) ───
+        // ─── UPDATE GROUP TEAM STATS ───
         async function updateGroupTeamStats(gid, homeTeam, awayTeam, hScore, aScore, forfeit) {
             const ref = db.ref(sp(currentSeasonId, `groups/${gid}/teams`));
             const snap = await ref.once('value');
@@ -2836,46 +2990,36 @@
             if (!aData) aData = { name: awayTeam, p: 0, w: 0, d: 0, l: 0, gs: 0, gc: 0, gd: 0, pts: 0 };
 
             if (forfeit === 'no_contest') {
-                // Both get P+1 only
                 hData.p = (hData.p || 0) + 1;
                 aData.p = (aData.p || 0) + 1;
             } else if (forfeit === 'forfeit' || forfeit === 'forfeit_no_reply' || forfeit === 'forfeit_agreement') {
-                // Forfeit win: Winner gets W+1, P+1. Loser gets L+1, P+1, GD-3, GC+3. NO points change.
                 if (hScore > aScore) {
-                    // Home wins by forfeit
                     hData.p = (hData.p || 0) + 1;
                     hData.w = (hData.w || 0) + 1;
-                    // No points change for winner
                     aData.p = (aData.p || 0) + 1;
                     aData.l = (aData.l || 0) + 1;
                     aData.gd = (aData.gd || 0) - 3;
                     aData.gc = (aData.gc || 0) + 3;
-                    // No points change for loser
                 } else if (aScore > hScore) {
-                    // Away wins by forfeit
                     aData.p = (aData.p || 0) + 1;
                     aData.w = (aData.w || 0) + 1;
-                    // No points change for winner
                     hData.p = (hData.p || 0) + 1;
                     hData.l = (hData.l || 0) + 1;
                     hData.gd = (hData.gd || 0) - 3;
                     hData.gc = (hData.gc || 0) + 3;
-                    // No points change for loser
                 } else {
-                    // Should not happen for forfeit, but fallback: no contest
                     hData.p = (hData.p || 0) + 1;
                     aData.p = (aData.p || 0) + 1;
                 }
             } else {
-                // Normal result
                 hData.p = (hData.p || 0) + 1;
                 aData.p = (aData.p || 0) + 1;
                 hData.gs = (hData.gs || 0) + hScore;
                 hData.gc = (hData.gc || 0) + aScore;
                 aData.gs = (aData.gs || 0) + aScore;
                 aData.gc = (aData.gc || 0) + hScore;
-                hData.gd = (hData.gs || 0) - (hData.gc || 0);
-                aData.gd = (aData.gs || 0) - (aData.gc || 0);
+                hData.gd = (hData.gd || 0) + (hScore - aScore);
+                aData.gd = (aData.gd || 0) + (aScore - hScore);
                 if (hScore > aScore) {
                     hData.pts = (hData.pts || 0) + 3;
                     hData.w = (hData.w || 0) + 1;
@@ -2919,9 +3063,7 @@
                     }
                 }
                 if (foundKey && foundData) {
-                    // Update existing
                     const newCount = (foundData.count || 0) + goals;
-                    // Keep existing imageUrl if present
                     await db.ref(`${basePath}/topScorer/list/${foundKey}`).set({
                         ...foundData,
                         count: newCount,
@@ -2930,7 +3072,6 @@
                         imageUrl: foundData.imageUrl || ''
                     });
                 } else {
-                    // Create new
                     await listRef.push({
                         name: name,
                         team: team,
@@ -3148,7 +3289,7 @@
                 '<div class="loading-spinner"><div class="spinner"></div><span>Loading…</span></div>';
             if (tab === 'groups') renderGroups();
             else if (tab === 'fixtures') renderFixtures();
-            else if (tab === 'results') renderResults();
+            else if (tab === 'results') renderResults().catch(console.error);
             else if (tab === 'topscorers') renderTopScorers();
             else if (tab === 'topassists') renderTopAssists();
         }
@@ -3252,7 +3393,6 @@
         }
 
         async function approveScoresheet(id, entry) {
-            // Find the existing result
             let targetResult = null;
             let targetGroupId = null;
             let targetKey = null;
@@ -3275,7 +3415,6 @@
                 return;
             }
 
-            // Merge scorers
             const existingHome = targetResult.goalScorers?.home || [];
             const existingAway = targetResult.goalScorers?.away || [];
             const newHome = entry.goalScorers || [];
@@ -3291,7 +3430,6 @@
                 }
             }
 
-            // Merge assists
             const existingAssistsHome = targetResult.userAssists?.home || [];
             const mergedAssistsHome = [...existingAssistsHome];
             const newAssists = entry.userAssists || [];
@@ -3304,17 +3442,14 @@
                 }
             }
 
-            // Update the result
             targetResult.goalScorers = { home: mergedHome, away: existingAway };
             targetResult.userAssists = { home: mergedAssistsHome, away: targetResult.userAssists?.away || [] };
 
             await db.ref(sp(currentSeasonId, `groups/${targetGroupId}/results/${targetKey}`)).set(targetResult);
 
-            // Apply scorers and assists to top lists
             await applyScorersFromScan(mergedHome, entry.homeTeam);
             await applyAssistsFromScan(mergedAssistsHome, entry.homeTeam);
 
-            // Remove the pending scoresheet
             await db.ref(sp(currentSeasonId, `pending_scoresheets/${id}`)).remove();
 
             alert('✅ Scoresheet approved and merged!');
@@ -3647,7 +3782,7 @@
 
         // ─── Submission Lock & Edit System ───
         async function getMyPendingEntries(managerKey) {
-            const snap = await db.ref(sp(activeSeasonId, 'pending_results')).once('value');
+            const snap = await db.ref(sp(currentSeasonId, 'pending_results')).once('value');
             const data = snap.val() || {};
             return Object.entries(data).filter(([k, v]) => v.submittedBy === managerKey);
         }
@@ -3662,7 +3797,6 @@
                             managerLinkedTeam = entry.teamName;
                             const pendingEntries = await getMyPendingEntries(rememberedManagerKey);
                             if (pendingEntries.length > 0) {
-                                // Show edit modal
                                 showEditPendingModal(pendingEntries);
                                 return;
                             }
@@ -3714,8 +3848,7 @@
                 btn.onclick = () => {
                     const id = btn.dataset.id;
                     closeModal();
-                    // Fetch the entry data and open edit form
-                    db.ref(sp(activeSeasonId, `pending_results/${id}`)).once('value').then(snap => {
+                    db.ref(sp(currentSeasonId, `pending_results/${id}`)).once('value').then(snap => {
                         const entry = snap.val();
                         if (entry) {
                             editingPendingId = id;
@@ -3745,7 +3878,6 @@
                     const entry = managerKeysCache[id];
                     saveManagerKey(key, entry.teamName);
                     closeModal();
-                    // Check for pending entries
                     const pendingEntries = await getMyPendingEntries(key);
                     if (pendingEntries.length > 0) {
                         showEditPendingModal(pendingEntries);
@@ -3857,7 +3989,6 @@
 
         // ─── Scoresheet Only Selection ───
         async function openScoresheetSelectionPopup(mode) {
-            // Find all approved results for the manager's team
             const allResults = [];
             for (const gid in groupsData) {
                 const rSnap = await db.ref(sp(currentSeasonId, `groups/${gid}/results`)).once('value');
@@ -4006,7 +4137,7 @@
 
         // ─── Forfeit Type Selection ───
         function openForfeitTypeSelectionPopup(dateStr, overrideMD) {
-            showModal(`<h3>🚫 Select Forfeit Type</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:20px 0;"><div style="background:rgba(255,255,255,0.06);border:2px solid rgba(255,255,255,0.15);border-radius:28px;padding:40px 20px;text-align:center;cursor:pointer;" id="choiceNoContest"><div style="font-size:3rem;">🤝</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:white;">NO CONTEST</div><div style="color:rgba(255,255,255,0.4);font-size:1rem;margin-top:6px;">F - F. Both get a game played, no points.</div></div><div style="background:rgba(255,255,255,0.06);border:2px solid rgba(255,255,255,0.15);border-radius:28px;padding:40px 20px;text-align:center;cursor:pointer;" id="choiceForfeitWin"><div style="font-size:3rem;">🏆</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:white;">FORFEIT WIN</div><div style="color:rgba(255,255,255,0.4);font-size:1rem;margin-top:6px;">You get 3 points. Opponent gets -3 GD.</div></div></div><div class="modal-btns"><button class="modal-btn-cancel" id="cancelForfeitTypeBtn" style="width:100%;">Cancel</button></div>`);
+            showModal(`<h3>🚫 Select Forfeit Type</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:20px 0;"><div style="background:rgba(255,255,255,0.06);border:2px solid rgba(255,255,255,0.15);border-radius:28px;padding:40px 20px;text-align:center;cursor:pointer;" id="choiceNoContest"><div style="font-size:3rem;">🤝</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:white;">NO CONTEST</div><div style="color:rgba(255,255,255,0.4);font-size:1rem;margin-top:6px;">F - F. Both get a game played, no points.</div></div><div style="background:rgba(255,255,255,0.06);border:2px solid rgba(255,255,255,0.15);border-radius:28px;padding:40px 20px;text-align:center;cursor:pointer;" id="choiceForfeitWin"><div style="font-size:3rem;">🏆</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:white;">FORFEIT WIN</div><div style="color:rgba(255,255,255,0.4);font-size:1rem;margin-top:6px;">You get a Win. Opponent gets a Loss and -3 GD. No points change.</div></div></div><div class="modal-btns"><button class="modal-btn-cancel" id="cancelForfeitTypeBtn" style="width:100%;">Cancel</button></div>`);
             document.getElementById('cancelForfeitTypeBtn').onclick = closeModal;
             document.getElementById('choiceNoContest').onclick = () => { closeModal();
                 openForfeitSubmitForm(dateStr, 'no_contest', overrideMD); };
@@ -4026,31 +4157,26 @@
             const uniqueTeams = [...new Set(allTeams)].sort();
             const mdForResult = overrideMD || (dateStr === getSASTYesterday() ? Math.max(1, currentMatchday - 1) :
             currentMatchday);
-            managerUploadedImages = [];
 
-            // If editing, pre-fill
-            let editScorersHome = editEntry?.goalScorers?.home || [];
-            let editScorersAway = editEntry?.goalScorers?.away || [];
-            let editAssistsHome = editEntry?.userAssists?.home || [];
-            let editAssistsAway = editEntry?.userAssists?.away || [];
-            let editHomeScore = editEntry?.homeScore || 0;
-            let editAwayScore = editEntry?.awayScore || 0;
-            let editForfeitType = editEntry?.forfeitType || 'none';
-            let editImages = editEntry?.images || [];
+            let selectedOpponent = editEntry?.awayTeam || '';
+            let homeScoreValue = editEntry?.homeScore || 0;
+            let awayScoreValue = editEntry?.awayScore || 0;
 
-            let userScorersHome = editScorersHome.map(s => ({ ...s }));
-            let userScorersAway = editScorersAway.map(s => ({ ...s }));
-            let userAssistsHome = editAssistsHome.map(a => ({ ...a }));
-            let userAssistsAway = editAssistsAway.map(a => ({ ...a }));
+            let userScorersHome = (editEntry?.goalScorers?.home || []).map(s => ({ ...s }));
+            let userScorersAway = (editEntry?.goalScorers?.away || []).map(s => ({ ...s }));
+            let userAssistsHome = (editEntry?.userAssists?.home || []).map(a => ({ ...a }));
+            let userAssistsAway = (editEntry?.userAssists?.away || []).map(a => ({ ...a }));
 
-            // Pre-load images for edit
-            if (editImages.length) {
-                managerUploadedImages = editImages.map(url => ({ file: null, dataUrl: url, isUrl: true }));
+            if (editEntry?.images && editEntry.images.length) {
+                managerUploadedImages = editEntry.images.map(url => ({ file: null, dataUrl: url, isUrl: true }));
+            } else {
+                managerUploadedImages = [];
             }
 
             const renderForm = () => {
                 const opponentOpts = uniqueTeams.map(t =>
-                    `<option value="${t}" ${editEntry?.awayTeam===t?'selected':''}>${t}</option>`).join('');
+                    `<option value="${t}" ${selectedOpponent===t?'selected':''}>${t}</option>`
+                ).join('');
                 const hsh = userScorersHome.map((s, i) =>
                     `<span class="scorer-badge">⚽ ${escapeHtml(s.player)} (${s.goals})<button class="remove-scorer" data-uside="hs" data-uidx="${i}">✖</button></span>`
                     ).join('');
@@ -4072,8 +4198,8 @@
               <p style="color:rgba(255,255,255,0.6);">Your Team: <strong style="color:white;">${escapeHtml(managerLinkedTeam)}</strong> · MD ${mdForResult} · ${dateStr}</p>
               <label>Select Opponent *</label><select id="userAwayTeam"><option value="">Select Opponent</option>${opponentOpts}</select>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;">
-                <div><label>Your Score</label><input type="number" id="userHomeScore" value="${editHomeScore}" min="0"></div>
-                <div><label>Opponent Score</label><input type="number" id="userAwayScore" value="${editAwayScore}" min="0"></div>
+                <div><label>Your Score</label><input type="number" id="userHomeScore" value="${homeScoreValue}" min="0"></div>
+                <div><label>Opponent Score</label><input type="number" id="userAwayScore" value="${awayScoreValue}" min="0"></div>
               </div>
               <label style="margin-top:16px;">Upload Images * (at least 1)</label>
               <div style="border:2px dashed rgba(255,255,255,0.2);border-radius:20px;padding:24px;text-align:center;cursor:pointer;margin-bottom:8px;" id="userImageArea">
@@ -4137,6 +4263,13 @@
                     };
                 });
 
+                document.getElementById('userAwayTeam').addEventListener('change', e => { selectedOpponent = e.target
+                        .value; });
+                document.getElementById('userHomeScore').addEventListener('input', e => { homeScoreValue = parseInt(e
+                        .target.value) || 0; });
+                document.getElementById('userAwayScore').addEventListener('input', e => { awayScoreValue = parseInt(e
+                        .target.value) || 0; });
+
                 document.getElementById('uAddHomeScorer').onclick = () => {
                     const n = document.getElementById('uHomeScorerName').value.trim();
                     const g = parseInt(document.getElementById('uHomeScorerGoals').value) || 1;
@@ -4178,9 +4311,9 @@
                 document.getElementById('userCancelResultBtn').onclick = closeModal;
                 document.getElementById('userSubmitResultBtn').onclick = async () => {
                     const statusEl = document.getElementById('userResultStatus');
-                    const awayTeam = document.getElementById('userAwayTeam').value;
-                    const homeScore = parseInt(document.getElementById('userHomeScore').value) || 0;
-                    const awayScore = parseInt(document.getElementById('userAwayScore').value) || 0;
+                    const awayTeam = selectedOpponent;
+                    const homeScore = homeScoreValue;
+                    const awayScore = awayScoreValue;
                     if (!awayTeam) { statusEl.innerHTML =
                             '<div class="status-msg status-error">Select an opponent.</div>'; return; }
                     if (managerUploadedImages.length === 0) { statusEl.innerHTML =
@@ -4197,7 +4330,8 @@
                             }
                         }
                         const resultData = {
-                            matchText: formatResultText(managerLinkedTeam, homeScore, awayTeam, awayScore, 'none'),
+                            matchText: formatResultText(managerLinkedTeam, homeScore, awayTeam, awayScore,
+                                'none'),
                             homeTeam: managerLinkedTeam,
                             awayTeam,
                             homeScore,
@@ -4213,8 +4347,6 @@
                             status: 'pending'
                         };
 
-                        // ─── Mutual Result System ───
-                        // Check if there's a matching pending result from a different submitter
                         const pendingSnap = await db.ref(sp(currentSeasonId, 'pending_results')).once('value');
                         const pendingData = pendingSnap.val() || {};
                         let existingMatch = null;
@@ -4229,7 +4361,6 @@
                         }
 
                         if (existingMatch && existingKey) {
-                            // Merge into existing
                             const mergedHome = [...(existingMatch.goalScorers?.home || [])];
                             for (const s of userScorersHome) {
                                 const found = mergedHome.find(e => e.player === s.player);
@@ -4254,7 +4385,6 @@
                                 if (found) found.assists = (found.assists || 0) + (a.assists || 1);
                                 else mergedAssAway.push({ player: a.player, assists: a.assists || 1 });
                             }
-                            // Merge images
                             const mergedImages = [...(existingMatch.images || [])];
                             for (const url of imageUrls) {
                                 if (!mergedImages.includes(url)) mergedImages.push(url);
@@ -4277,10 +4407,9 @@
                             return;
                         }
 
-                        // No existing match — check if we're editing
                         if (editEntry && editingPendingId) {
-                            // Overwrite existing
-                            await db.ref(sp(currentSeasonId, `pending_results/${editingPendingId}`)).set(resultData);
+                            await db.ref(sp(currentSeasonId, `pending_results/${editingPendingId}`)).set(
+                            resultData);
                             statusEl.innerHTML =
                                 '<div class="status-msg status-success">✅ Result updated! Waiting for approval.</div>';
                             editingPendingId = null;
@@ -4288,7 +4417,6 @@
                             return;
                         }
 
-                        // Normal push
                         await db.ref(sp(currentSeasonId, 'pending_results')).push(resultData);
                         const keyId = await findManagerKeyId(rememberedManagerKey);
                         if (keyId) await db.ref(`managerKeys/${keyId}/lastSubmissionTimestamp`).set(Date.now());
@@ -4320,7 +4448,7 @@
             const typeLabel = forfeitType === 'no_contest' ? 'No Contest (F - F)' : 'Forfeit Win';
             const typeDesc = forfeitType === 'no_contest' ?
                 'Both teams get a game played, no points, no GD change.' :
-                'You get 3 points. Opponent gets a loss and -3 GD.';
+                'You get a Win. Opponent gets a Loss and -3 GD. No points change.';
 
             const renderForfeitForm = () => {
                 const opponentOpts = uniqueTeams.map(t => `<option value="${t}">${t}</option>`).join('');
@@ -4397,7 +4525,6 @@
                             status: 'pending'
                         };
 
-                        // Check for mutual
                         const pendingSnap = await db.ref(sp(currentSeasonId, 'pending_results')).once('value');
                         const pendingData = pendingSnap.val() || {};
                         let existingMatch = null;
@@ -4412,7 +4539,6 @@
                             }
                         }
                         if (existingMatch && existingKey) {
-                            // Merge images
                             const mergedImages = [...(existingMatch.images || [])];
                             for (const url of imageUrls) {
                                 if (!mergedImages.includes(url)) mergedImages.push(url);
@@ -4565,8 +4691,10 @@
             };
         }
 
-        // ─── approvePendingResult (with auto-table update and scorers/assists) ───
+        // ─── approvePendingResult ───
         async function approvePendingResult(id, entry) {
+            await loadCurrentSeasonData();
+
             const forfeitType = entry.forfeitType || 'none';
             const homeScore = entry.homeScore || 0;
             const awayScore = entry.awayScore || 0;
@@ -4600,7 +4728,6 @@
                 }
                 if (hasHome && hasAway) {
                     await db.ref(sp(currentSeasonId, `groups/${gid}/results`)).push(resultObj);
-                    // Auto update table stats (new forfeit logic)
                     await updateGroupTeamStats(gid, entry.homeTeam, entry.awayTeam, homeScore, awayScore, forfeitType);
                     groupFound = true;
                     break;
@@ -4608,10 +4735,9 @@
             }
 
             if (!groupFound) {
-                await db.ref(sp(currentSeasonId, 'knockout_results')).push(resultObj);
+                await db.ref(sp(currentSeasonId, 'general_results')).push(resultObj);
             }
 
-            // ─── Apply scorers and assists to top lists ───
             const homeScorers = entry.goalScorers?.home || [];
             const awayScorers = entry.goalScorers?.away || [];
             const homeAssists = entry.userAssists?.home || [];
@@ -4708,3 +4834,4 @@
     </script>
 </body>
 </html>
+```
