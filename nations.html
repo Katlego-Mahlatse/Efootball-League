@@ -4719,9 +4719,12 @@
                 mutuallyConfirmed: entry.mutuallyConfirmed || false
             };
 
+            // --- FIX: Read fresh groups from Firebase ---
             let groupFound = false;
-            for (const gid in groupsData) {
-                const teams = groupsData[gid]?.teams || {};
+            const freshGroupsSnap = await db.ref(sp(currentSeasonId, 'groups')).once('value');
+            const freshGroups = freshGroupsSnap.val() || {};
+            for (const gid in freshGroups) {
+                const teams = freshGroups[gid]?.teams || {};
                 let hasHome = false,
                     hasAway = false;
                 for (const k in teams) {
