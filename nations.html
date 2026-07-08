@@ -2993,24 +2993,16 @@
                 hData.p = (hData.p || 0) + 1;
                 aData.p = (aData.p || 0) + 1;
             } else if (forfeit === 'forfeit' || forfeit === 'forfeit_no_reply' || forfeit === 'forfeit_agreement') {
-                if (hScore > aScore) {
-                    hData.p = (hData.p || 0) + 1;
-                    hData.w = (hData.w || 0) + 1;
-                    aData.p = (aData.p || 0) + 1;
-                    aData.l = (aData.l || 0) + 1;
-                    aData.gd = (aData.gd || 0) - 3;
-                    aData.gc = (aData.gc || 0) + 3;
-                } else if (aScore > hScore) {
-                    aData.p = (aData.p || 0) + 1;
-                    aData.w = (aData.w || 0) + 1;
-                    hData.p = (hData.p || 0) + 1;
-                    hData.l = (hData.l || 0) + 1;
-                    hData.gd = (hData.gd || 0) - 3;
-                    hData.gc = (hData.gc || 0) + 3;
-                } else {
-                    hData.p = (hData.p || 0) + 1;
-                    aData.p = (aData.p || 0) + 1;
-                }
+                // Winner = home team (they submitted the forfeit win, homeScore is always 3, awayScore 0)
+                // Winner gets: P+1, W+1, Pts+3. No GS/GC/GD changes.
+                // Loser gets: P+1, L+1, GC+3, GD-3. No GS change.
+                hData.p = (hData.p || 0) + 1;
+                hData.w = (hData.w || 0) + 1;
+                hData.pts = (hData.pts || 0) + 3;
+                aData.p = (aData.p || 0) + 1;
+                aData.l = (aData.l || 0) + 1;
+                aData.gc = (aData.gc || 0) + 3;
+                aData.gd = (aData.gd || 0) - 3;
             } else {
                 hData.p = (hData.p || 0) + 1;
                 aData.p = (aData.p || 0) + 1;
@@ -3239,7 +3231,7 @@
             <label>Player Name</label><input id="statName" placeholder="Player Name" value="${escapeHtml(entry?.name||'')}">
             <label>Team</label><input id="statTeam" placeholder="Team" value="${escapeHtml(entry?.team||'')}">
             <label>${isScorer?'Goals':'Assists'}</label><input id="statCount" type="number" value="${entry?.count||0}">
-            <label>Player Photo (background removed automatically)</label>
+            <label>Player Photo</label>
             <input type="file" id="statPhoto" accept="image/*">
             <div id="photoPreview" style="margin-top:10px;">${entry?.imageUrl?`<img src="${entry.imageUrl}" style="max-width:120px;border-radius:12px;">`:'No photo'}</div>
             <div class="modal-btns">
@@ -3253,16 +3245,15 @@
             fi.onchange = async () => {
                 const file = fi.files[0];
                 if (!file) return;
-                pd.innerHTML = '<div class="status-msg status-loading">Removing background…</div>';
+                pd.innerHTML = '<div class="status-msg status-loading">Uploading…</div>';
                 try {
-                    let blob;
-                    try { blob = await removeBackground(file); } catch (e) { blob = file; }
-                    const url = await uploadToImgBB(blob);
+                    const url = await uploadToImgBB(file);
                     pd.innerHTML =
                         `<img src="${url}" style="max-width:120px;border-radius:12px;"><div class="status-msg status-success">Ready</div>`;
                     fi.dataset.uploadedUrl = url;
-                } catch (e) { pd.innerHTML =
-                    `<div class="status-msg status-error">Error: ${e.message}</div>`; }
+                } catch (e) {
+                    pd.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                }
             };
             document.getElementById('saveStatBtn').onclick = async () => {
                 const name = document.getElementById('statName').value.trim();
@@ -4244,20 +4235,29 @@
               <div class="modal-btns">
                 <button class="modal-btn-primary" id="userSubmitResultBtn">${editEntry?'✏️ Update':'✅ Submit'} Result</button>
                 <button class="modal-btn-cancel" id="userCancelResultBtn">Cancel</button>
-              </div>`, true);
+              </div>`);
 
+                // --- FIX BUG 1: Read DOM values before re-rendering on image add/remove ---
                 document.getElementById('userImageArea').onclick = () => document.getElementById('userImageInput').click();
                 document.getElementById('userImageInput').onchange = async function() {
+                    selectedOpponent = document.getElementById('userAwayTeam')?.value || selectedOpponent;
+                    homeScoreValue = parseInt(document.getElementById('userHomeScore')?.value) || homeScoreValue;
+                    awayScoreValue = parseInt(document.getElementById('userAwayScore')?.value) || awayScoreValue;
                     for (const file of this.files) {
-                        const dataUrl = await new Promise(r => { const rd = new FileReader();
+                        const dataUrl = await new Promise(r => {
+                            const rd = new FileReader();
                             rd.onload = e => r(e.target.result);
-                            rd.readAsDataURL(file); });
+                            rd.readAsDataURL(file);
+                        });
                         managerUploadedImages.push({ file, dataUrl, isUrl: false });
                     }
                     renderForm();
                 };
                 document.querySelectorAll('[data-uimgidx]').forEach(btn => {
                     btn.onclick = () => {
+                        selectedOpponent = document.getElementById('userAwayTeam')?.value || selectedOpponent;
+                        homeScoreValue = parseInt(document.getElementById('userHomeScore')?.value) || homeScoreValue;
+                        awayScoreValue = parseInt(document.getElementById('userAwayScore')?.value) || awayScoreValue;
                         managerUploadedImages.splice(parseInt(btn.dataset.uimgidx), 1);
                         renderForm();
                     };
@@ -4471,14 +4471,16 @@
               <div class="modal-btns">
                 <button class="modal-btn-primary" id="submitForfeitBtn">🚫 Submit Request</button>
                 <button class="modal-btn-cancel" id="cancelForfeitBtn">Cancel</button>
-              </div>`, true);
+              </div>`);
                 document.getElementById('forfeitImageArea').onclick = () => document.getElementById('forfeitImageInput')
                     .click();
                 document.getElementById('forfeitImageInput').onchange = async function() {
                     for (const file of this.files) {
-                        const dataUrl = await new Promise(r => { const rd = new FileReader();
+                        const dataUrl = await new Promise(r => {
+                            const rd = new FileReader();
                             rd.onload = e => r(e.target.result);
-                            rd.readAsDataURL(file); });
+                            rd.readAsDataURL(file);
+                        });
                         managerUploadedImages.push({ file, dataUrl, isUrl: false });
                     }
                     renderForfeitForm();
