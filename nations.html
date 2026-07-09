@@ -2783,24 +2783,41 @@
                 renderResults();
             });
             document.getElementById('addResultBtn')?.addEventListener('click', () => openResultForm(null));
-            if (isAdmin) {
-                document.querySelectorAll('#contentCard .btn-edit[data-key]').forEach(btn => {
-                    btn.onclick = async () => {
-                        const rSnap = await db.ref(sp(currentSeasonId, `groups/${btn.dataset.gid}/results/${
-                            btn.dataset.key}`)).once('value');
-                        const r = rSnap.val();
-                        if (r) openResultForm({ key: btn.dataset.key, groupId: btn.dataset.gid, ...r });
-                    };
-                });
-                document.querySelectorAll('#contentCard .btn-delete[data-key]').forEach(btn => {
-                    btn.onclick = async () => {
-                        if (!confirm('Delete result?')) return;
-                        await db.ref(sp(currentSeasonId, `groups/${btn.dataset.gid}/results/${btn.dataset
-                            .key}`)).remove();
-                        renderResults();
-                    };
-                });
-            }
+
+            // BUG 2: Fix edit handler for general_results
+            document.querySelectorAll('#contentCard .btn-edit[data-key]').forEach(btn => {
+                btn.onclick = async () => {
+                    const gid = btn.dataset.gid;
+                    const path = (!gid || gid === 'null') ?
+                        sp(currentSeasonId, `general_results/${btn.dataset.key}`) :
+                        sp(currentSeasonId, `groups/${gid}/results/${btn.dataset.key}`);
+                    const rSnap = await db.ref(path).once('value');
+                    const r = rSnap.val();
+                    if (r) {
+                        openResultForm({
+                            key: btn.dataset.key,
+                            groupId: (!gid || gid === 'null') ? null : gid,
+                            ...r
+                        });
+                    }
+                };
+            });
+
+            // BUG 2: Fix delete handler for general_results with recalc
+            document.querySelectorAll('#contentCard .btn-delete[data-key]').forEach(btn => {
+                btn.onclick = async () => {
+                    if (!confirm('Delete result?')) return;
+                    const gid = btn.dataset.gid;
+                    if (!gid || gid === 'null') {
+                        await db.ref(sp(currentSeasonId, `general_results/${btn.dataset.key}`)).remove();
+                    } else {
+                        await db.ref(sp(currentSeasonId, `groups/${gid}/results/${btn.dataset.key}`)).remove();
+                        await recalculateGroupTeamStats(gid);
+                        await loadCurrentSeasonData();
+                    }
+                    renderResults();
+                };
+            });
         }
 
         // ─── ADMIN RESULT FORM — REMOVE GROUP SELECTOR, USE FLAT TEAM LIST ───
@@ -2945,17 +2962,45 @@
                         if (hasHome && hasAway) { detectedGid = gid; break; }
                     }
 
+                    // BUG 2: Handle moving between groups and general_results
+                    if (editingResultKey) {
+                        const oldGid = editingResultGroupId;
+                        // If it was in general_results and now has a detected group, delete the old general_results entry
+                        if (!oldGid || oldGid === 'null') {
+                            if (detectedGid) {
+                                await db.ref(sp(currentSeasonId, `general_results/${editingResultKey}`)).remove();
+                            }
+                        } else {
+                            // It was in a group. If detectedGid is null OR different, delete the old group entry
+                            if (!detectedGid || detectedGid !== oldGid) {
+                                await db.ref(sp(currentSeasonId, `groups/${oldGid}/results/${editingResultKey}`))
+                                    .remove();
+                            }
+                        }
+                    }
+
                     if (detectedGid) {
                         const path = sp(currentSeasonId, `groups/${detectedGid}/results`);
-                        if (editingResultKey) await db.ref(`${path}/${editingResultKey}`).set(resultObj);
-                        else {
+                        if (editingResultKey) {
+                            // Check if key already exists under this group; if not, it's a new entry under this group
+                            const existingSnap = await db.ref(`${path}/${editingResultKey}`).once('value');
+                            if (!existingSnap.exists()) {
+                                await db.ref(path).push(resultObj);
+                            } else {
+                                await db.ref(`${path}/${editingResultKey}`).set(resultObj);
+                            }
+                        } else {
                             await db.ref(path).push(resultObj);
-                            await updateGroupTeamStats(detectedGid, selectedHome, selectedAway, hs, as2, forfeit);
                         }
+                        // BUG 1: Recalculate group stats after save
+                        await recalculateGroupTeamStats(detectedGid);
                     } else {
                         const path = sp(currentSeasonId, 'general_results');
-                        if (editingResultKey) await db.ref(`${path}/${editingResultKey}`).set(resultObj);
-                        else await db.ref(path).push(resultObj);
+                        if (editingResultKey) {
+                            await db.ref(`${path}/${editingResultKey}`).set(resultObj);
+                        } else {
+                            await db.ref(path).push(resultObj);
+                        }
                     }
 
                     await applyScorersFromScan(tempScorersHome, selectedHome);
@@ -2971,67 +3016,78 @@
             renderResultForm();
         }
 
-        // ─── UPDATE GROUP TEAM STATS ───
-        async function updateGroupTeamStats(gid, homeTeam, awayTeam, hScore, aScore, forfeit) {
-            const ref = db.ref(sp(currentSeasonId, `groups/${gid}/teams`));
-            const snap = await ref.once('value');
-            const teams = snap.val() || {};
-            let hKey = null,
-                aKey = null,
-                hData = null,
-                aData = null;
+        // ─── BUG 1: Full recalc of group team stats ───
+        async function recalculateGroupTeamStats(gid) {
+            const teamsSnap = await db.ref(sp(currentSeasonId, `groups/${gid}/teams`)).once('value');
+            const teams = teamsSnap.val() || {};
+            const resetTeams = {};
             for (const [k, v] of Object.entries(teams)) {
-                if (v.name === homeTeam) { hKey = k;
-                    hData = { ...v }; }
-                if (v.name === awayTeam) { aKey = k;
-                    aData = { ...v }; }
+                resetTeams[k] = {
+                    name: v.name,
+                    p: 0,
+                    w: 0,
+                    d: 0,
+                    l: 0,
+                    gs: 0,
+                    gc: 0,
+                    gd: 0,
+                    pts: 0
+                };
             }
-            if (!hData) hData = { name: homeTeam, p: 0, w: 0, d: 0, l: 0, gs: 0, gc: 0, gd: 0, pts: 0 };
-            if (!aData) aData = { name: awayTeam, p: 0, w: 0, d: 0, l: 0, gs: 0, gc: 0, gd: 0, pts: 0 };
-
-            if (forfeit === 'no_contest') {
-                hData.p = (hData.p || 0) + 1;
-                aData.p = (aData.p || 0) + 1;
-            } else if (forfeit === 'forfeit' || forfeit === 'forfeit_no_reply' || forfeit === 'forfeit_agreement') {
-                // Winner = home team (they submitted the forfeit win, homeScore is always 3, awayScore 0)
-                // Winner gets: P+1, W+1, Pts+3. No GS/GC/GD changes.
-                // Loser gets: P+1, L+1, GC+3, GD-3. No GS change.
-                hData.p = (hData.p || 0) + 1;
-                hData.w = (hData.w || 0) + 1;
-                hData.pts = (hData.pts || 0) + 3;
-                aData.p = (aData.p || 0) + 1;
-                aData.l = (aData.l || 0) + 1;
-                aData.gc = (aData.gc || 0) + 3;
-                aData.gd = (aData.gd || 0) - 3;
-            } else {
-                hData.p = (hData.p || 0) + 1;
-                aData.p = (aData.p || 0) + 1;
-                hData.gs = (hData.gs || 0) + hScore;
-                hData.gc = (hData.gc || 0) + aScore;
-                aData.gs = (aData.gs || 0) + aScore;
-                aData.gc = (aData.gc || 0) + hScore;
-                hData.gd = (hData.gd || 0) + (hScore - aScore);
-                aData.gd = (aData.gd || 0) + (aScore - hScore);
-                if (hScore > aScore) {
-                    hData.pts = (hData.pts || 0) + 3;
-                    hData.w = (hData.w || 0) + 1;
-                    aData.l = (aData.l || 0) + 1;
-                } else if (aScore > hScore) {
-                    aData.pts = (aData.pts || 0) + 3;
-                    aData.w = (aData.w || 0) + 1;
-                    hData.l = (hData.l || 0) + 1;
+            const resultsSnap = await db.ref(sp(currentSeasonId, `groups/${gid}/results`)).once('value');
+            const results = resultsSnap.val() || {};
+            for (const r of Object.values(results)) {
+                const hKey = Object.keys(resetTeams).find(k => resetTeams[k].name === r.homeTeam);
+                const aKey = Object.keys(resetTeams).find(k => resetTeams[k].name === r.awayTeam);
+                if (!hKey || !aKey) continue;
+                const hData = resetTeams[hKey],
+                    aData = resetTeams[aKey];
+                const forfeit = r.forfeitType || 'none';
+                const hScore = r.homeScore || 0,
+                    aScore = r.awayScore || 0;
+                if (forfeit === 'no_contest') {
+                    hData.p++;
+                    aData.p++;
+                } else if (forfeit === 'forfeit' || forfeit === 'forfeit_no_reply' || forfeit === 'forfeit_agreement') {
+                    hData.p++;
+                    aData.p++;
+                    hData.w++;
+                    hData.pts += 3;
+                    aData.l++;
+                    aData.gc += 3;
+                    aData.gd -= 3;
                 } else {
-                    hData.pts = (hData.pts || 0) + 1;
-                    aData.pts = (aData.pts || 0) + 1;
-                    hData.d = (hData.d || 0) + 1;
-                    aData.d = (aData.d || 0) + 1;
+                    hData.p++;
+                    aData.p++;
+                    hData.gs += hScore;
+                    hData.gc += aScore;
+                    aData.gs += aScore;
+                    aData.gc += hScore;
+                    hData.gd = hData.gs - hData.gc;
+                    aData.gd = aData.gs - aData.gc;
+                    if (hScore > aScore) {
+                        hData.w++;
+                        hData.pts += 3;
+                        aData.l++;
+                    } else if (aScore > hScore) {
+                        aData.w++;
+                        aData.pts += 3;
+                        hData.l++;
+                    } else {
+                        hData.d++;
+                        aData.d++;
+                        hData.pts += 1;
+                        aData.pts += 1;
+                    }
                 }
             }
+            await db.ref(sp(currentSeasonId, `groups/${gid}/teams`)).set(resetTeams);
+        }
 
-            if (!hKey) hKey = ref.push().key;
-            if (!aKey) aKey = ref.push().key;
-            await db.ref(sp(currentSeasonId, `groups/${gid}/teams/${hKey}`)).set(hData);
-            await db.ref(sp(currentSeasonId, `groups/${gid}/teams/${aKey}`)).set(aData);
+        // ─── UPDATE GROUP TEAM STATS (legacy, kept for compatibility but replaced by recalculate) ───
+        async function updateGroupTeamStats(gid, homeTeam, awayTeam, hScore, aScore, forfeit) {
+            // This function is no longer used; recalculateGroupTeamStats does the full job.
+            // Keeping it as a no-op to avoid breaking any stray calls.
         }
 
         // ─── SCORERS & ASSISTS AUTO-MERGE ───
@@ -3779,34 +3835,40 @@
         }
 
         // ─── openAddResultsKeyModal (with edit system) ───
-        function openAddResultsKeyModal() {
+        async function openAddResultsKeyModal() {
+            await loadCalendarEvents();
+            await loadCurrentMatchday();
+
             if (rememberedManagerKey) {
-                findManagerKeyId(rememberedManagerKey).then(async id => {
-                    if (id) {
-                        const entry = managerKeysCache[id];
-                        if (entry) {
-                            managerLinkedTeam = entry.teamName;
-                            const pendingEntries = await getMyPendingEntries(rememberedManagerKey);
-                            if (pendingEntries.length > 0) {
-                                showEditPendingModal(pendingEntries);
-                                return;
-                            }
-                            showModal(
-                                `<h3>👋 Welcome Back!</h3><p style="color:rgba(255,255,255,0.6);text-align:center;font-size:1.4rem;margin:20px 0;">Team: <strong style="color:white;">${escapeHtml(managerLinkedTeam)}</strong></p><div class="modal-btns"><button class="modal-btn-primary" id="welcomeConfirmBtn">Continue</button><button class="modal-btn-cancel" id="welcomeDifferentBtn">Use Different Key</button></div>`
-                                );
-                            document.getElementById('welcomeConfirmBtn').onclick = () => { closeModal();
-                                openMatchTypeSelectionPopup(); };
-                            document.getElementById('welcomeDifferentBtn').onclick = () => {
-                                clearSavedManagerKey();
-                                closeModal();
-                                openAddResultsKeyModal();
-                            };
+                const id = await findManagerKeyId(rememberedManagerKey);
+                if (id) {
+                    const entry = managerKeysCache[id];
+                    if (entry) {
+                        managerLinkedTeam = entry.teamName;
+                        const pendingEntries = await getMyPendingEntries(rememberedManagerKey);
+                        if (pendingEntries.length > 0) {
+                            showEditPendingModal(pendingEntries);
                             return;
                         }
+                        showModal(
+                            `<h3>👋 Welcome Back!</h3><p style="color:rgba(255,255,255,0.6);text-align:center;font-size:1.4rem;margin:20px 0;">Team: <strong style="color:white;">${escapeHtml(managerLinkedTeam)}</strong></p><div class="modal-btns"><button class="modal-btn-primary" id="welcomeConfirmBtn">Continue</button><button class="modal-btn-cancel" id="welcomeDifferentBtn">Use Different Key</button></div>`
+                            );
+                        document.getElementById('welcomeConfirmBtn').onclick = async () => {
+                            closeModal();
+                            await loadCalendarEvents();
+                            await loadCurrentMatchday();
+                            openMatchTypeSelectionPopup();
+                        };
+                        document.getElementById('welcomeDifferentBtn').onclick = () => {
+                            clearSavedManagerKey();
+                            closeModal();
+                            openAddResultsKeyModal();
+                        };
+                        return;
                     }
-                    clearSavedManagerKey();
-                    showKeyEntryModal();
-                });
+                }
+                clearSavedManagerKey();
+                showKeyEntryModal();
             } else {
                 showKeyEntryModal();
             }
@@ -3831,8 +3893,10 @@
           `);
 
             document.getElementById('closeEditPendingBtn').onclick = closeModal;
-            document.getElementById('newSubmissionBtn').onclick = () => {
+            document.getElementById('newSubmissionBtn').onclick = async () => {
                 closeModal();
+                await loadCalendarEvents();
+                await loadCurrentMatchday();
                 openMatchTypeSelectionPopup();
             };
             document.querySelectorAll('.edit-pending-btn').forEach(btn => {
@@ -3873,6 +3937,8 @@
                     if (pendingEntries.length > 0) {
                         showEditPendingModal(pendingEntries);
                     } else {
+                        await loadCalendarEvents();
+                        await loadCurrentMatchday();
                         openMatchTypeSelectionPopup();
                     }
                 } catch (err) {
@@ -4146,8 +4212,10 @@
                 }
             }
             const uniqueTeams = [...new Set(allTeams)].sort();
-            const mdForResult = overrideMD || (dateStr === getSASTYesterday() ? Math.max(1, currentMatchday - 1) :
-            currentMatchday);
+
+            // BUG 3: Use assigned matchday from calendarEventsData
+            const assignedMd = calendarEventsData[dateStr]?.matchday;
+            const mdForResult = overrideMD || assignedMd || (dateStr === getSASTYesterday() ? Math.max(1, currentMatchday - 1) : currentMatchday);
 
             let selectedOpponent = editEntry?.awayTeam || '';
             let homeScoreValue = editEntry?.homeScore || 0;
@@ -4442,8 +4510,11 @@
                 }
             }
             const uniqueTeams = [...new Set(allTeams)].sort();
-            const mdForResult = overrideMD || (dateStr === getSASTYesterday() ? Math.max(1, currentMatchday - 1) :
-            currentMatchday);
+
+            // BUG 3: Use assigned matchday from calendarEventsData
+            const assignedMd = calendarEventsData[dateStr]?.matchday;
+            const mdForResult = overrideMD || assignedMd || (dateStr === getSASTYesterday() ? Math.max(1, currentMatchday - 1) : currentMatchday);
+
             managerUploadedImages = [];
             const typeLabel = forfeitType === 'no_contest' ? 'No Contest (F - F)' : 'Forfeit Win';
             const typeDesc = forfeitType === 'no_contest' ?
@@ -4733,7 +4804,8 @@
                 }
                 if (hasHome && hasAway) {
                     await db.ref(sp(currentSeasonId, `groups/${gid}/results`)).push(resultObj);
-                    await updateGroupTeamStats(gid, entry.homeTeam, entry.awayTeam, homeScore, awayScore, forfeitType);
+                    // BUG 1: Use recalculateGroupTeamStats instead of updateGroupTeamStats
+                    await recalculateGroupTeamStats(gid);
                     groupFound = true;
                     break;
                 }
