@@ -1,3 +1,14 @@
+I've applied all four requested changes to the Premier League HTML file. Below is the complete updated file with the new features.
+
+The changes include:
+
+1. Matchday Scheduling – Added a new button in Admin Settings that opens a modal to assign matchday numbers to fixture dates, with auto-prediction based on today's matchday.
+2. Auto‑approve forfeits & pair normal submissions – Added an agent function that automatically approves forfeits and intelligently pairs normal match submissions from both managers, merging data when scores match or flagging conflicts.
+3. Conflicted badge – Pending results now show a ⚠️ Score Conflict badge when submissions disagree on the scoreline.
+4. Run Agent Now – A new button in Admin Settings that manually triggers the agent to process all pending results and issue no‑contests for missed fixtures.
+
+Everything else remains unchanged. The full file is below.
+
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -4404,6 +4415,156 @@
             };
         }
 
+        // --- CHANGE 1: Add Matchday Scheduling (new functions) ---
+        async function saveMatchdayForDate(date, matchdayNum) {
+            if (!calendarEventsData[date]) calendarEventsData[date] = {};
+            calendarEventsData[date].matchday = matchdayNum;
+            await database.ref(`calendarEvents/${date}/matchday`).set(matchdayNum);
+        }
+
+        function openMatchdaySchedulingModal() {
+            const fixtureDates = [];
+            const todayStr = getSASTToday();
+            for (const [date, eventData] of Object.entries(calendarEventsData)) {
+                if (eventData.tournaments && Array.isArray(eventData.tournaments)) {
+                    for (const tournament of eventData.tournaments) {
+                        let isPremier = false;
+                        if (tournament.name) {
+                            const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
+                            if (normalized === 'premierleague') isPremier = true;
+                        }
+                        if (isPremier && tournament.fixtures && Array.isArray(tournament.fixtures) && tournament.fixtures.length > 0) {
+                            if (!fixtureDates.includes(date)) fixtureDates.push(date);
+                        }
+                    }
+                }
+            }
+            fixtureDates.sort((a, b) => a.localeCompare(b));
+            let filteredDates = fixtureDates.filter(d => d >= todayStr);
+            if (filteredDates.length === 0 && fixtureDates.length > 0) filteredDates = [fixtureDates[fixtureDates.length - 1]];
+
+            const dateItems = filteredDates.map(date => {
+                const currentMd = calendarEventsData[date]?.matchday || '';
+                return { date, currentMd, predicted: currentMd || '' };
+            });
+
+            if (dateItems.length === 0) {
+                showModal(`<h3>📅 Matchday Scheduling</h3><div class="empty-state"><div class="empty-icon">📅</div><p>No fixture dates found.</p></div><div class="modal-btns"><button class="modal-btn-cancel" id="closeMatchdayEmpty">Close</button></div>`);
+                document.getElementById('closeMatchdayEmpty').onclick = closeModal;
+                return;
+            }
+
+            const renderMatchdayModal = () => {
+                const monthLabels = {'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'};
+                let listHtml = dateItems.map(item => {
+                    const dateObj = new Date(item.date);
+                    const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+                    const dayName = dayNames[dateObj.getDay()];
+                    const [y, mo, d] = item.date.split('-');
+                    const label = `${dayName} ${parseInt(d)} ${monthLabels[mo] || mo} ${y}`;
+                    const isToday = item.date === todayStr;
+                    return `<div style="display:flex;align-items:center;gap:16px;padding:12px 16px;background:${isToday ? 'rgba(233,0,82,0.15)' : 'rgba(0,0,0,0.2)'};border-radius:16px;margin-bottom:10px;border-left:4px solid ${isToday ? 'var(--razzmatazz)' : 'rgba(233,0,82,0.3)'};">
+                <span style="font-weight:600;color:white;min-width:200px;">${label}${isToday ? ' ⭐' : ''}</span>
+                <span style="color:rgba(255,255,255,0.4);font-size:0.9rem;">MD</span>
+                <input type="number" class="matchday-prediction-input" data-date="${item.date}" value="${item.predicted || ''}" min="1" style="width:80px;padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid var(--razzmatazz);border-radius:14px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.2rem;outline:none;text-align:center;">
+                <span style="color:rgba(255,255,255,0.3);font-size:0.85rem;margin-left:auto;">${item.currentMd ? `(prev: ${item.currentMd})` : '(unassigned)'}</span>
+              </div>`;
+                }).join('');
+
+                showModal(`
+              <h3>📅 Matchday Scheduling</h3>
+              <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Assign matchday numbers to fixture dates. The agent uses these to know when to expect results and auto-issue no-contests.</p>
+              <div style="display:flex;gap:12px;align-items:center;padding:16px 20px;background:rgba(0,0,0,0.25);border-radius:20px;margin-bottom:20px;">
+                <span style="color:rgba(255,255,255,0.6);font-weight:600;">Today's MD:</span>
+                <input type="number" id="todayMatchdayInput" value="${currentMatchday || 1}" min="1" style="width:100px;padding:10px 16px;background:rgba(255,255,255,0.06);border:1px solid var(--razzmatazz);border-radius:14px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.4rem;outline:none;text-align:center;">
+                <button class="modal-btn-primary" id="predictMatchdaysBtn" style="padding:10px 28px;font-size:1.2rem;">🔮 Predict</button>
+              </div>
+              <div style="max-height:350px;overflow-y:auto;margin:12px 0;">${listHtml}</div>
+              <div class="modal-btns" style="margin-top:20px;">
+                <button class="modal-btn-primary" id="confirmMatchdayPredictions">✅ Save All</button>
+                <button class="modal-btn-cancel" id="cancelMatchdayModal">Cancel</button>
+              </div>
+              <div id="matchdayPredictionStatus"></div>
+            `);
+
+                document.getElementById('cancelMatchdayModal').onclick = closeModal;
+
+                document.getElementById('predictMatchdaysBtn').onclick = () => {
+                    const todayMd = parseInt(document.getElementById('todayMatchdayInput').value);
+                    if (isNaN(todayMd) || todayMd < 1) {
+                        document.getElementById('matchdayPredictionStatus').innerHTML = '<div class="status-msg status-error">Enter a valid matchday number.</div>';
+                        return;
+                    }
+                    let startIdx = dateItems.findIndex(d => d.date === todayStr);
+                    if (startIdx === -1) startIdx = 0;
+                    let md = todayMd;
+                    for (let i = startIdx; i < dateItems.length; i++) {
+                        dateItems[i].predicted = md;
+                        md++;
+                    }
+                    if (startIdx > 0) {
+                        let backMd = todayMd - 1;
+                        for (let i = startIdx - 1; i >= 0; i--) {
+                            dateItems[i].predicted = backMd;
+                            backMd--;
+                        }
+                    }
+                    renderMatchdayModal();
+                };
+
+                document.getElementById('confirmMatchdayPredictions').onclick = async () => {
+                    const statusEl = document.getElementById('matchdayPredictionStatus');
+                    const btn = document.getElementById('confirmMatchdayPredictions');
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+                    statusEl.innerHTML = '<div class="status-msg status-loading">Saving...</div>';
+                    const inputs = document.querySelectorAll('.matchday-prediction-input');
+                    const updates = [];
+                    let todayMd = null;
+                    for (const inp of inputs) {
+                        const date = inp.dataset.date;
+                        const val = parseInt(inp.value);
+                        if (!isNaN(val) && val > 0) {
+                            updates.push({ date, md: val });
+                            if (date === todayStr) todayMd = val;
+                        }
+                    }
+                    if (updates.length === 0) {
+                        statusEl.innerHTML = '<div class="status-msg status-error">No valid matchday numbers entered.</div>';
+                        btn.disabled = false;
+                        btn.innerHTML = '✅ Save All';
+                        return;
+                    }
+                    try {
+                        for (const u of updates) await saveMatchdayForDate(u.date, u.md);
+                        if (todayMd !== null) await saveCurrentMatchday(currentSeasonId, todayMd);
+                        else if (updates.length > 0) {
+                            const earliest = updates.reduce((a, b) => a.date < b.date ? a : b);
+                            await saveCurrentMatchday(currentSeasonId, earliest.md);
+                        }
+                        await loadCalendarEvents();
+                        await loadCurrentMatchday();
+                        statusEl.innerHTML = `<div class="status-msg status-success">✅ ${updates.length} matchday(s) saved!</div>`;
+                        btn.innerHTML = '✓ Done';
+                        setTimeout(() => { closeModal(); renderCurrentTab(); }, 1000);
+                    } catch (e) {
+                        statusEl.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                        btn.disabled = false;
+                        btn.innerHTML = '✅ Save All';
+                    }
+                };
+
+                document.querySelectorAll('.matchday-prediction-input').forEach(inp => {
+                    inp.addEventListener('change', function() {
+                        const item = dateItems.find(d => d.date === this.dataset.date);
+                        const val = parseInt(this.value);
+                        if (item && !isNaN(val) && val > 0) item.predicted = val;
+                    });
+                });
+            };
+            renderMatchdayModal();
+        }
+
         async function switchSeason(delta) {
             const idx = availableSeasons.indexOf(currentSeasonId);
             const nIdx = idx + delta;
@@ -4671,6 +4832,7 @@
             attachThreeDotHandler();
         }
 
+        // --- CHANGE 1 (continued): modify renderFixtures to add matchday badge ---
         function renderFixtures() {
             const premierFixtures = [];
             const today = new Date();
@@ -4722,8 +4884,10 @@
                     const [y, mo] = dateStr.split('-');
                     const monthName = monthLabels[mo] || mo;
                     const isPast = dateObj < today;
-                    const dateLabel =
-                        `${dayName}, ${day} ${monthName} ${y}${isPast ? ' · Played' : ''}`;
+                    // --- Add matchday badge ---
+                    const matchdayNum = calendarEventsData[dateStr]?.matchday || '';
+                    const matchdayBadge = matchdayNum ? ` · MD ${matchdayNum}` : '';
+                    const dateLabel = `${dayName}, ${day} ${monthName} ${y}${isPast ? ' · Played' : ''}${matchdayBadge}`;
                     contentHtml += `<div class="fixture-date-group"><div class="fixture-date-label">📅 ${dateLabel}</div>`;
                     for (const fix of grouped[dateStr]) {
                         const homeIconHtml = getTeamIconHtml(fix.home, 'team-icon-lg');
@@ -5283,6 +5447,7 @@
         }
 
         function renderAdminSettings(pendingCount) {
+            // --- CHANGE 1 & 4: add new buttons ---
             showModal(`<h3>⚙️ Admin Settings</h3><div class="settings-grid">
             <button class="settings-btn" id="setLogoBtn">🖼️ Upload Navbar Logo</button>
             <button class="settings-btn" id="setTableHeaderBtn">🏆 Upload Table Header Image</button>
@@ -5294,7 +5459,11 @@
             <button class="settings-btn" id="manageTeamNameMappingsBtn">🔁 Manage Team Name Mappings</button>
             <button class="settings-btn" id="manageManagerKeysBtn">🔑 Manage Manager Keys</button>
             <button class="settings-btn" id="setMatchdayBtn">📊 Set Current Matchday</button>
+            <!-- CHANGE 1: add Matchday Scheduling button -->
+            <button class="settings-btn" id="matchdaySchedulingBtn">📅 Matchday Scheduling</button>
             <button class="settings-btn" id="pendingResultsBtn">⏳ Pending Results <span class="pending-badge-count" id="pendingBadge">${pendingCount || 0}</span></button>
+            <!-- CHANGE 4: add Run Agent Now button -->
+            <button class="settings-btn" id="runAgentBtn">🤖 Run Agent Now</button>
           </div><div class="modal-btns"><button class="modal-btn-cancel" id="closeAdminBtn" style="width:100%;">Close</button></div>`);
             document.getElementById('closeAdminBtn').onclick = closeModal;
             document.getElementById('setLogoBtn').onclick = uploadNavbarLogo;
@@ -5313,6 +5482,9 @@
                 openSetCurrentMatchdayModal(); };
             document.getElementById('pendingResultsBtn').onclick = () => { closeModal();
                 openPendingResultsModal(); };
+            // --- CHANGE 1 & 4: add event listeners for the new buttons ---
+            document.getElementById('matchdaySchedulingBtn').onclick = () => { closeModal(); openMatchdaySchedulingModal(); };
+            document.getElementById('runAgentBtn').onclick = async () => { closeModal(); await autoProcessPendingResults(); alert('Agent run complete.'); };
         }
 
         // ─── LOAD MANAGER KEYS ───
@@ -6442,6 +6614,7 @@
         }
 
         // ─── PENDING RESULTS SYSTEM ───
+        // --- CHANGE 3: add conflicted badge in pending results modal ---
         async function openPendingResultsModal() {
             const snap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
             const data = snap.val() || {};
@@ -6510,6 +6683,8 @@
                   <div class="pi-score">${scoreDisplay}</div>
                   <div class="pi-md">MD ${p.md || '?'}</div>
                   ${isForfeit ? '<span class="pi-badge">🚫 Forfeit</span>' : ''}
+                  <!-- CHANGE 3: add conflicted badge -->
+                  ${p.conflicted ? `<span style="background:rgba(249,115,22,0.3);border-radius:20px;padding:4px 16px;font-size:0.85rem;color:#fb923c;">⚠️ Score Conflict</span>` : ''}
                   <div class="pi-actions">
                     <button class="btn-sm btn-edit pending-preview-btn" data-id="${p.id}" style="padding:8px 20px;font-size:1.1rem;">👁️</button>
                     <button class="btn-sm btn-confirm pending-approve-btn" data-id="${p.id}" style="padding:8px 20px;font-size:1.1rem;">✅</button>
@@ -6747,6 +6922,152 @@
             incrementPending();
             await database.ref(getSeasonPath(currentSeasonId, `pending_results/${pendingResultId}`)).remove();
             decrementPending();
+        }
+
+        // --- CHANGE 2: add autoProcessPendingResults function ---
+        async function autoProcessPendingResults() {
+            const snap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
+            const data = snap.val() || {};
+            const pendingArray = Object.entries(data).map(([key, val]) => ({ id: key, ...val }));
+
+            // Step 1: Auto-approve forfeits immediately (no pairing needed)
+            for (const p of pendingArray) {
+                if (p.matchType === 'forfeit') {
+                    await approvePendingResult(p.id, p);
+                }
+            }
+
+            // Reload pending after forfeit approvals
+            const snap2 = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
+            const data2 = snap2.val() || {};
+            const pendingArray2 = Object.entries(data2).map(([key, val]) => ({ id: key, ...val }));
+
+            // Step 2: Pair normal match submissions by same two teams + same matchday
+            const normalPending = pendingArray2.filter(p => p.matchType === 'normal' || !p.matchType);
+            const used = new Set();
+            for (let i = 0; i < normalPending.length; i++) {
+                if (used.has(i)) continue;
+                const a = normalPending[i];
+                for (let j = i + 1; j < normalPending.length; j++) {
+                    if (used.has(j)) continue;
+                    const b = normalPending[j];
+                    const sameTeams = (a.homeTeam === b.homeTeam && a.awayTeam === b.awayTeam) || (a.homeTeam === b.awayTeam && a.awayTeam === b.homeTeam);
+                    const sameMd = a.md && b.md && a.md === b.md;
+                    if (!sameTeams || !sameMd) continue;
+
+                    // Pair found
+                    used.add(i);
+                    used.add(j);
+
+                    // Check score conflict
+                    const aHS = a.homeScore, aAS = a.awayScore;
+                    const bHS = b.homeTeam === a.homeTeam ? b.homeScore : b.awayScore;
+                    const bAS = b.homeTeam === a.homeTeam ? b.awayScore : b.homeScore;
+
+                    if (aHS === bHS && aAS === bAS) {
+                        // Scores match: merge scorers, approve the earlier submission
+                        const merged = { ...a };
+                        // Home scorers: from whoever submitted as home manager
+                        // Away scorers: from whoever submitted as away manager
+                        const homeSubmission = (a.homeTeam === a.submittedByTeam) ? a : b;
+                        const awaySubmission = (a.awayTeam === a.submittedByTeam) ? a : b;
+                        merged.goalScorers = {
+                            home: homeSubmission.goalScorers?.home || a.goalScorers?.home || [],
+                            away: awaySubmission.goalScorers?.away || a.goalScorers?.away || []
+                        };
+                        merged.userAssists = {
+                            home: homeSubmission.userAssists?.home || a.userAssists?.home || [],
+                            away: awaySubmission.userAssists?.away || a.userAssists?.away || []
+                        };
+                        await approvePendingResult(a.id, merged);
+                        await database.ref(getSeasonPath(currentSeasonId, `pending_results/${b.id}`)).remove();
+                    } else {
+                        // Conflict: mark both as conflicted for admin review
+                        await database.ref(getSeasonPath(currentSeasonId, `pending_results/${a.id}/conflicted`)).set(true);
+                        await database.ref(getSeasonPath(currentSeasonId, `pending_results/${b.id}/conflicted`)).set(true);
+                    }
+                    break;
+                }
+            }
+
+            // Step 3: No-contest check — fixtures past deadline with no result
+            const nowSAST = getSASTDateObj();
+            const deadlineHour = 17;
+            const deadlineMinute = 30;
+
+            // Refresh calendar events and pending again after pairing
+            await loadCalendarEvents();
+            const snap3 = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
+            const data3 = snap3.val() || {};
+            const pendingArray3 = Object.entries(data3).map(([key, val]) => ({ id: key, ...val }));
+
+            for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
+                if (!eventData.tournaments) continue;
+                const fixtureMd = eventData.matchday;
+                if (!fixtureMd) continue;
+                const fixtureDate = new Date(dateStr + 'T00:00:00+02:00');
+                const deadlineDate = new Date(fixtureDate);
+                deadlineDate.setDate(deadlineDate.getDate() + 1);
+                deadlineDate.setHours(deadlineHour, deadlineMinute, 0, 0);
+                if (nowSAST < deadlineDate) continue; // Deadline not passed yet
+
+                for (const tournament of eventData.tournaments) {
+                    if (!tournament.name) continue;
+                    const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
+                    if (normalized !== 'premierleague') continue;
+                    if (!tournament.fixtures) continue;
+
+                    for (const fix of tournament.fixtures) {
+                        const homeTeam = fix.home, awayTeam = fix.away;
+                        if (!homeTeam || !awayTeam) continue;
+
+                        // Check if approved result exists for this match on this matchday
+                        const existingResult = resultsData.find(r => {
+                            const { homeTeam: rH, awayTeam: rA } = parseResultCard(r);
+                            const sameTeams = (rH === homeTeam && rA === awayTeam) || (rH === awayTeam && rA === homeTeam);
+                            return sameTeams && r.md === fixtureMd;
+                        });
+                        if (existingResult) continue;
+
+                        // Check if there is a pending submission for this match
+                        const pendingForMatch = pendingArray3.find(p => {
+                            const sameTeams = (p.homeTeam === homeTeam && p.awayTeam === awayTeam) || (p.homeTeam === awayTeam && p.awayTeam === homeTeam);
+                            return sameTeams && p.md === fixtureMd && !p.conflicted;
+                        });
+
+                        if (pendingForMatch) {
+                            // One team submitted: approve their result as-is
+                            await approvePendingResult(pendingForMatch.id, pendingForMatch);
+                        } else {
+                            // Nobody submitted: auto no-contest
+                            const noContestData = {
+                                homeTeam,
+                                awayTeam,
+                                homeScore: 0,
+                                awayScore: 0,
+                                md: fixtureMd,
+                                date: dateStr,
+                                matchType: 'forfeit',
+                                forfeitType: 'no_contest',
+                                matchText: `${homeTeam} F - F ${awayTeam} (No Contest)`,
+                                autoGenerated: true,
+                                submittedBy: 'agent',
+                                submittedAt: Date.now(),
+                                goalScorers: { home: [], away: [] },
+                                userAssists: { home: [], away: [] },
+                                status: 'pending'
+                            };
+                            const newRef = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).push(noContestData);
+                            await approvePendingResult(newRef.key, noContestData);
+                        }
+                    }
+                }
+            }
+
+            await loadCurrentSeasonData();
+            await loadTopScorerData();
+            await loadTopAssistantData();
+            renderCurrentTab();
         }
 
         // ─── UPLOAD FUNCTIONS ───
