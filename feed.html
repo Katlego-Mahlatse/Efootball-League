@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -259,6 +259,15 @@
         .story-item-new.side .story-image-wrapper-new { width: 64px; height: 64px; }
         .story-item-new.side .story-caption-new { font-size: 11px; opacity: 0.8; }
 
+        /* ===== COUNTDOWN SECTION ===== */
+        .countdown-section { display: flex; flex-direction: column; gap: 10px; padding: 12px 16px; background: #000; border-bottom: 1px solid rgba(255,215,0,0.1); }
+        .countdown-block { display: flex; align-items: center; justify-content: space-between; background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.2); border-radius: 12px; padding: 8px 14px; }
+        .countdown-title { color: #FFD700; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .countdown-circles { display: flex; gap: 8px; }
+        .countdown-circle { width: 42px; height: 42px; border-radius: 50%; background: #1a1a1a; border: 1.5px solid #FFD700; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .countdown-circle span { color: #FFD700; font-size: 13px; font-weight: 700; line-height: 1; }
+        .countdown-circle small { color: #888; font-size: 7px; text-transform: uppercase; margin-top: 1px; }
+
         /* ===== GALLERY ===== */
         .gallery-img { width: 100%; height: auto !important; object-fit: contain; background: #000; }
         .gallery-video { width: 100%; height: auto; aspect-ratio: 16/9; border: none; }
@@ -466,6 +475,26 @@
     <div class="story-carousel-new" id="storyCarouselNew">
         <div class="story-carousel-wrapper">
             <div class="story-track-new" id="storyTrackNew"></div>
+        </div>
+    </div>
+
+    <!-- COUNTDOWN SECTION -->
+    <div class="countdown-section" id="countdownSection">
+        <div class="countdown-block">
+            <div class="countdown-title">⚽ Today's Matchday</div>
+            <div class="countdown-circles">
+                <div class="countdown-circle"><span id="matchdayHours">00</span><small>Hrs</small></div>
+                <div class="countdown-circle"><span id="matchdayMinutes">00</span><small>Min</small></div>
+                <div class="countdown-circle"><span id="matchdaySeconds">00</span><small>Sec</small></div>
+            </div>
+        </div>
+        <div class="countdown-block">
+            <div class="countdown-title">⏸️ Postponed Match</div>
+            <div class="countdown-circles">
+                <div class="countdown-circle"><span id="postponedHours">00</span><small>Hrs</small></div>
+                <div class="countdown-circle"><span id="postponedMinutes">00</span><small>Min</small></div>
+                <div class="countdown-circle"><span id="postponedSeconds">00</span><small>Sec</small></div>
+            </div>
         </div>
     </div>
 
@@ -695,26 +724,24 @@
         let editMediaItems = [];
         let currentEditLikesPostId = null;
         let leaguesData = [];
+        let leaguesExpanded = false;
         // track which posts user has liked (session only)
         let userLikedPosts = new Set();
 
         const defaultLeagues = [
             { id: 'premier', name: 'Premier League', url: 'adminpremier.html', color: '#3d195b' },
             { id: 'laliga', name: 'La Liga', url: 'laliga.html', color: '#ee3524' },
-            { id: 'seriea', name: 'Serie A', url: 'seriea.html', color: '#00529f' },
-            { id: 'ucl', name: 'UEFA Champions League', url: 'newchampion.html', color: '#003399' },
             { id: 'uel', name: 'UEFA Europa League', url: 'neweuropa.html', color: '#f58220' },
-            { id: 'uecl', name: 'UEFA Conference League', url: 'newconference.html', color: '#5db846' },
+            { id: 'ucl', name: 'UEFA Champions League', url: 'newchampion.html', color: '#003399' },
+            { id: 'cwc', name: 'FIFA Club World Cup', url: 'newclubworldcup.html', color: '#326295' },
+            { id: 'wc', name: 'FIFA World Cup', url: 'fwc.html', color: '#d4a017' },
             { id: 'supercup', name: 'UEFA Super Cup', url: 'newsupercup.html', color: '#0066cc' },
+            { id: 'fsc', name: 'FIFA Super Cup', url: 'fsc.html', color: '#0057a8' },
+            { id: 'uecl', name: 'UEFA Conference League', url: 'newconference.html', color: '#5db846' },
             { id: 'nations', name: 'UEFA Nations League', url: 'nations.html', color: '#0057a8' },
             { id: 'euro', name: 'UEFA Euro', url: 'euro.html', color: '#0057a8' },
             { id: 'facup', name: 'FA Cup', url: 'facup.html', color: '#cc0000' },
             { id: 'copadelrey', name: 'Copa del Rey', url: 'copadelrey.html', color: '#c60b1e' },
-            { id: 'coppaditalia', name: 'Coppa Italia', url: 'coppaditalia.html', color: '#00529f' },
-            { id: 'supercoppaitaliana', name: 'Supercoppa Italiana', url: 'supercoppaitaliana.html', color: '#00529f' },
-            { id: 'supercopaesp', name: 'Supercopa de España', url: 'supercopa.html', color: '#c60b1e' },
-            { id: 'cwc', name: 'FIFA Club World Cup', url: 'newclubworldcup.html', color: '#326295' },
-            { id: 'wc', name: 'FIFA World Cup', url: 'fwc.html', color: '#d4a017' },
             { id: 'cs', name: 'Community Shield', url: 'cs.html', color: '#e60000' }
         ];
 
@@ -722,7 +749,37 @@
             loadStories();
             loadPosts();
             loadLeagues();
+            startCountdowns();
         };
+
+        // ===== COUNTDOWN TIMERS =====
+        function startCountdowns() {
+            function updateCountdowns() {
+                const now = new Date();
+
+                const nextMidnight = new Date(now);
+                nextMidnight.setHours(24, 0, 0, 0);
+                const matchdayDiff = nextMidnight - now;
+                setCircle('matchdayHours', 'matchdayMinutes', 'matchdaySeconds', matchdayDiff);
+
+                const next5pm = new Date(now);
+                next5pm.setHours(17, 0, 0, 0);
+                if (now >= next5pm) next5pm.setDate(next5pm.getDate() + 1);
+                const postponedDiff = next5pm - now;
+                setCircle('postponedHours', 'postponedMinutes', 'postponedSeconds', postponedDiff);
+            }
+            function setCircle(hId, mId, sId, diffMs) {
+                let totalSeconds = Math.floor(diffMs / 1000);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                document.getElementById(hId).textContent = String(hours).padStart(2, '0');
+                document.getElementById(mId).textContent = String(minutes).padStart(2, '0');
+                document.getElementById(sId).textContent = String(seconds).padStart(2, '0');
+            }
+            updateCountdowns();
+            setInterval(updateCountdowns, 1000);
+        }
 
         // ===== FORMAT LIKES =====
         function formatLikes(n) {
@@ -863,16 +920,17 @@
             } catch(e) {
                 leaguesData = defaultLeagues.map(l => ({ ...l, icon: null, bgImage: null }));
             }
-            renderLeagueGrid(leaguesData);
+            renderLeagueGrid(leaguesData, false);
         }
 
-        function renderLeagueGrid(leagues) {
+        function renderLeagueGrid(leagues, isFiltered) {
             const grid = document.getElementById('leagueGrid');
             if (!leagues.length) {
                 grid.innerHTML = '<div class="league-no-results">No leagues found</div>';
                 return;
             }
-            grid.innerHTML = leagues.map(league => {
+
+            function buildBlock(league) {
                 const bgStyle = league.bgImage
                     ? `background-image: url('${league.bgImage}'); background-size: cover; background-position: center;`
                     : `background: #1a1a1a;`;
@@ -887,14 +945,42 @@
                         <div class="league-block-name">${league.name}</div>
                     </a>
                 `;
-            }).join('');
+            }
+
+            if (isFiltered) {
+                grid.innerHTML = leagues.map(buildBlock).join('');
+                return;
+            }
+
+            const primary = leagues.slice(0, 8);
+            const rest = leagues.slice(8);
+
+            let html = primary.map(buildBlock).join('');
+
+            if (rest.length) {
+                html += `<div class="see-more-wrap" style="grid-column:1/-1;display:flex;justify-content:center;padding:10px 0;">
+                    <button onclick="toggleSeeMore()" style="background:none;border:1.5px solid #FFD700;color:#FFD700;padding:8px 24px;border-radius:20px;font-weight:600;font-size:13px;cursor:pointer;">
+                        ${leaguesExpanded ? '➖ See Less' : '➕ See More'}
+                    </button>
+                </div>`;
+                if (leaguesExpanded) {
+                    html += rest.map(buildBlock).join('');
+                }
+            }
+
+            grid.innerHTML = html;
+        }
+
+        function toggleSeeMore() {
+            leaguesExpanded = !leaguesExpanded;
+            renderLeagueGrid(leaguesData, false);
         }
 
         function filterLeagues() {
             const query = document.getElementById('leagueSearchInput').value.toLowerCase().trim();
-            if (!query) { renderLeagueGrid(leaguesData); return; }
+            if (!query) { renderLeagueGrid(leaguesData, false); return; }
             const filtered = leaguesData.filter(l => l.name.toLowerCase().includes(query));
-            renderLeagueGrid(filtered);
+            renderLeagueGrid(filtered, true);
         }
 
         // ===== EDIT LEAGUE ICONS =====
