@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1595,6 +1595,10 @@
         .dashed-sep-red td {
             border-bottom: 3px dashed #b91c1c !important;
         }
+        /* NEW: white dashed line for Club World Cup separator */
+        .dashed-sep-white td {
+            border-bottom: 3px dashed #ffffff !important;
+        }
         .legend-row {
             margin-top: 24px;
             padding: 16px 20px;
@@ -2389,6 +2393,11 @@
         }
         .autocomplete-container {
             position: relative;
+        }
+
+        /* Date pill touch-action fix */
+        .date-pill {
+            touch-action: manipulation;
         }
     </style>
 </head>
@@ -3582,39 +3591,43 @@
 
         // ─── REMOVED: openSetCurrentMatchdayModal, openMatchdaySchedulingModal, saveMatchdayForDate ───
 
-        // ─── NEW: Manage Agent Modal (fixed) ───
+        // ─── NEW: Manage Agent Modal (view-only, no Run Agent button) ───
         async function openManageAgentModal() {
-            // Use the global activeSeasonId directly — no shadowing
             const activeSeason = activeSeasonId;
 
-            // Fetch active season team list directly from Firebase
+            // Fetch active season's team list (for filtering fixtures to valid teams)
             const activeSeasonTableSnap = await database.ref(getSeasonPath(activeSeason, 'table')).once('value');
             const activeSeasonTeams = activeSeasonTableSnap.val() ? Object.values(activeSeasonTableSnap.val()).map(t => t.name) : [];
 
-            // Build list of dates with Premier League fixtures for the active season
-            const fixtureDates = [];
-            for (const [date, eventData] of Object.entries(calendarEventsData)) {
-                if (!eventData.tournaments) continue;
+            // Build fixture list exactly like renderFixtures() does, filtered to active season teams
+            const premierFixtures = [];
+            for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
+                if (!eventData || !eventData.tournaments) continue;
                 for (const tournament of eventData.tournaments) {
                     let isPremier = false;
                     if (tournament.name) {
                         const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
                         if (normalized === 'premierleague') isPremier = true;
                     }
-                    if (isPremier && tournament.fixtures && tournament.fixtures.length > 0) {
-                        // Use activeSeasonTeams to filter (not currentSeason's teamsData)
-                        const hasValidFixtures = tournament.fixtures.some(fix => {
-                            return activeSeasonTeams.includes(fix.home) && activeSeasonTeams.includes(fix.away);
-                        });
-                        if (hasValidFixtures) {
-                            if (!fixtureDates.includes(date)) fixtureDates.push(date);
+                    if (isPremier && tournament.fixtures && Array.isArray(tournament.fixtures)) {
+                        for (const fix of tournament.fixtures) {
+                            if (activeSeasonTeams.includes(fix.home) && activeSeasonTeams.includes(fix.away)) {
+                                premierFixtures.push({ date: dateStr, home: fix.home || '', away: fix.away || '' });
+                            }
                         }
                     }
                 }
             }
-            fixtureDates.sort((a, b) => a.localeCompare(b));
 
-            // Build modal content
+            // Group by date
+            const grouped = {};
+            for (const fix of premierFixtures) {
+                if (!grouped[fix.date]) grouped[fix.date] = [];
+                grouped[fix.date].push(fix);
+            }
+            const fixtureDates = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
+
+            // Build date pills
             let datePillsHtml = '';
             const monthLabels = {'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'};
             for (const date of fixtureDates) {
@@ -3622,81 +3635,53 @@
                 const day = dateObj.getDate();
                 const [y, mo] = date.split('-');
                 const label = calendarEventsData[date]?.matchday ? `Matchday ${calendarEventsData[date].matchday}` : `${day} ${monthLabels[mo] || mo}`;
-                const isActive = (currentSeasonId === activeSeason);
                 datePillsHtml += `
-                    <button class="date-pill" data-date="${date}" style="background:rgba(150,60,255,0.2);border:1px solid var(--razzmatazz);border-radius:40px;padding:8px 18px;color:white;cursor:pointer;margin:4px;font-family:'Rajdhani',sans-serif;font-size:1rem;transition:0.2s;" onclick="showFixturesForDate('${date}');">
+                    <button class="date-pill" data-date="${date}" style="background:rgba(150,60,255,0.2);border:1px solid var(--razzmatazz);border-radius:40px;padding:8px 18px;color:white;cursor:pointer;margin:4px;font-family:'Rajdhani',sans-serif;font-size:1rem;transition:0.2s;flex-shrink:0;" onclick="showFixturesForDate('${date}');">
                         ${label}
                     </button>
                 `;
             }
 
-            // Define the function for showing fixtures (uses closure variables activeSeason and activeSeasonTeams)
             window.showFixturesForDate = async (date) => {
                 const display = document.getElementById('fixturesDisplay');
                 display.innerHTML = '<div class="loading-spinner" style="padding:20px;"><div class="spinner"></div><span>Loading fixtures...</span></div>';
 
-                // Get fixtures for that date
-                const eventData = calendarEventsData[date];
-                if (!eventData || !eventData.tournaments) {
+                const fixtures = grouped[date] || [];
+                if (fixtures.length === 0) {
                     display.innerHTML = '<div style="color:rgba(255,255,255,0.4);text-align:center;padding:30px;">No fixtures for this date.</div>';
                     return;
                 }
-                let fixtures = [];
-                for (const tournament of eventData.tournaments) {
-                    let isPremier = false;
-                    if (tournament.name) {
-                        const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
-                        if (normalized === 'premierleague') isPremier = true;
-                    }
-                    if (isPremier && tournament.fixtures) {
-                        fixtures = tournament.fixtures;
-                        break;
-                    }
-                }
 
-                if (fixtures.length === 0) {
-                    display.innerHTML = '<div style="color:rgba(255,255,255,0.4);text-align:center;padding:30px;">No Premier League fixtures for this date.</div>';
-                    return;
-                }
+                const md = calendarEventsData[date]?.matchday || null;
+                let listHtml = `<div style="margin-bottom:12px;color:rgba(255,255,255,0.6);">${md ? `Matchday: <strong style="color:white;">${md}</strong>` : 'No matchday assigned yet for this date'}</div>`;
 
-                // Filter fixtures to active season teams (using activeSeasonTeams)
-                fixtures = fixtures.filter(fix => activeSeasonTeams.includes(fix.home) && activeSeasonTeams.includes(fix.away));
-
-                // Build list HTML
-                let listHtml = '';
-                const md = eventData.matchday || '?';
-                listHtml += `<div style="margin-bottom:12px;display:flex;gap:16px;align-items:center;"><span style="color:rgba(255,255,255,0.6);">Matchday: <strong style="color:white;">${md}</strong></span>
-                    <button class="view-toggle" style="background:rgba(150,60,255,0.2);border:1px solid var(--razzmatazz);border-radius:20px;padding:4px 16px;color:white;cursor:pointer;">View by: Date</button>
-                </div>`;
-
-                // Fetch pending results for active season
                 const pendingSnap = await database.ref(getSeasonPath(activeSeason, 'pending_results')).once('value');
                 const pendingData = pendingSnap.val() || {};
 
-                // Fetch approved results for active season (instead of global resultsData)
                 const activeSeasonResultsSnap = await database.ref(getSeasonPath(activeSeason, 'results')).once('value');
                 const activeSeasonResults = activeSeasonResultsSnap.val() ? Object.entries(activeSeasonResultsSnap.val()).map(([k,v]) => ({ key: k, ...v })) : [];
 
                 for (const fix of fixtures) {
                     const home = fix.home;
                     const away = fix.away;
-                    // Check if approved result exists (using activeSeasonResults)
+
                     let approvedResult = null;
                     for (const r of activeSeasonResults) {
                         const { homeTeam, awayTeam } = parseResultCard(r);
                         const sameTeams = (homeTeam === home && awayTeam === away) || (homeTeam === away && awayTeam === home);
-                        if (sameTeams && r.md === md) {
+                        const sameMd = md ? (r.md === md) : true;
+                        if (sameTeams && sameMd) {
                             approvedResult = r;
                             break;
                         }
                     }
 
-                    // Check pending
                     let pendingEntry = null;
                     for (const key in pendingData) {
                         const p = pendingData[key];
                         const sameTeams = (p.homeTeam === home && p.awayTeam === away) || (p.homeTeam === away && p.awayTeam === home);
-                        if (sameTeams && p.md === md) {
+                        const sameMd = md ? (p.md === md) : true;
+                        if (sameTeams && sameMd) {
                             pendingEntry = { id: key, ...p };
                             break;
                         }
@@ -3709,7 +3694,7 @@
                             <span style="font-weight:700;color:white;font-size:1.4rem;">${escapeHtml(away)}</span>
                         </div>
                         <div style="flex:2;">
-                            ${approvedResult ? 
+                            ${approvedResult ?
                                 `<div style="color:var(--turquoise);font-weight:600;font-size:1.2rem;">✅ Approved: ${approvedResult.matchText}</div>
                                  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
                                     ${(approvedResult.goalScorers?.home || []).map(s => `<span class="scorer-badge" style="font-size:0.9rem;">⚽ ${s.player} (${s.goals})</span>`).join('')}
@@ -3733,38 +3718,22 @@
                 display.innerHTML = listHtml;
             };
 
-            // Build the modal HTML
             const modalHtml = `
                 <h3>🤖 Manage Agent</h3>
-                <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Review and approve results for each matchday. Agent automatically processes pending results based on matchday deadlines.</p>
+                <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Review submitted results by date. Agent auto-approves after 20 minutes with no conflict, and auto-issues no-contest at 5:30 PM SAST the day after a fixture if no result was submitted.</p>
                 ${currentSeasonId !== activeSeason ? `<div style="background:rgba(233,0,82,0.2);border:1px solid var(--razzmatazz);border-radius:16px;padding:16px;margin-bottom:16px;color:#ffaaaa;font-size:1.2rem;font-weight:600;">⚠️ Agent only operates on the active season (Season ${activeSeason}). You are viewing Season ${currentSeasonId}.</div>` : ''}
-                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;max-height:150px;overflow-y:auto;">
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;max-height:180px;overflow-y:auto;padding:8px;-webkit-overflow-scrolling:touch;">
                     ${datePillsHtml || '<span style="color:rgba(255,255,255,0.4);">No Premier League fixtures found for this season.</span>'}
                 </div>
                 <div id="fixturesDisplay">
                     <div style="color:rgba(255,255,255,0.4);text-align:center;padding:30px;">Select a date to view fixtures.</div>
                 </div>
-                ${currentSeasonId === activeSeason ? `<button class="modal-btn-primary" id="runAgentBtnInModal" style="margin-top:20px;">🚀 Run Agent Now</button>` : `<button class="modal-btn-primary" disabled style="opacity:0.5;cursor:not-allowed;margin-top:20px;">🚀 Run Agent Now (only on active season)</button>`}
                 <div class="modal-btns">
                     <button class="modal-btn-cancel" id="closeManageAgentBtn">Close</button>
                 </div>
             `;
             showModal(modalHtml, true);
             document.getElementById('closeManageAgentBtn').onclick = closeModal;
-
-            // Run Agent button in modal
-            document.getElementById('runAgentBtnInModal')?.addEventListener('click', async () => {
-                if (currentSeasonId !== activeSeason) {
-                    alert('Agent can only run on the active season.');
-                    return;
-                }
-                const btn = document.getElementById('runAgentBtnInModal');
-                btn.disabled = true;
-                btn.innerHTML = '<span class="btn-spinner"></span> Running...';
-                await autoProcessPendingResults();
-                btn.innerHTML = '✅ Done!';
-                setTimeout(() => { closeModal(); }, 1000);
-            });
         }
 
         // ─── ADMIN SETTINGS (modified) ───
@@ -5719,7 +5688,7 @@
             renderHistory('');
         }
 
-        // ─── TABLE RENDER (modified: unified bar/medals, legend) ───
+        // ─── TABLE RENDER (modified: season-specific bar/line and legend) ───
         function renderTable() {
             const sorted = [...teamsData].sort((a, b) => (b.pts || 0) - (a.pts || 0) || (b.gd || 0) - (a.gd || 0));
             let headerHtml = tableHeaderImageUrl ? `<img src="${tableHeaderImageUrl}" class="table-header-img" alt="Table Header">` :
@@ -5742,18 +5711,29 @@
             const tbody = document.getElementById('tableBody');
             sorted.forEach((team, idx) => {
                 const pos = idx + 1;
-                // Unified logic
+                // Season-specific bar/line logic
                 let barClass = '', rowClass = '';
-                if (pos <= 10) barClass = 'vbar-blue';
-                else if (pos <= 20) barClass = 'vbar-orange';
-                if (pos === 2) rowClass = 'dashed-sep';
-                if (pos === 16) rowClass = 'dashed-sep-red';
+                if (currentSeasonId === 1) {
+                    if (pos <= 4) barClass = 'vbar-blue';
+                    else if (pos <= 8) barClass = 'vbar-orange';
+                    else if (pos <= 12) barClass = 'vbar-green';
+                } else if (currentSeasonId === 2) {
+                    if (pos <= 4) barClass = 'vbar-blue';
+                    else if (pos <= 8) barClass = 'vbar-orange';
+                    else if (pos <= 12) barClass = 'vbar-green';
+                    if (pos === 8) rowClass = 'dashed-sep-white';
+                } else {
+                    if (pos <= 10) barClass = 'vbar-blue';
+                    else if (pos <= 20) barClass = 'vbar-orange';
+                    if (pos === 4) rowClass = 'dashed-sep-white';
+                    if (pos === 16) rowClass = 'dashed-sep-red';
+                }
 
                 const row = document.createElement('tr');
                 if (rowClass) row.className = rowClass;
                 const posCell = document.createElement('td');
                 posCell.className = 'rank-cell stat-number';
-                // Medal: 🥇🥈🥉 for top 3
+                // Medal: 🥇🥈🥉 for top 3, otherwise number
                 let medal = pos;
                 if (pos === 1) medal = '🥇';
                 else if (pos === 2) medal = '🥈';
@@ -5815,13 +5795,31 @@
                 tbody.appendChild(row);
             });
 
+            // Season-specific legend
             const legend = document.getElementById('legendContainer');
-            legend.innerHTML = `
-                <span class="legend-item"><span class="vbar vbar-blue"></span> UEFA Champions League</span>
-                <span class="legend-item"><span class="vbar vbar-orange"></span> Europa League</span>
-                <span class="legend-item"><span class="legend-dashed"></span> Club World Cup</span>
-                <span class="legend-item"><span class="legend-dashed" style="border-color:#b91c1c;"></span> No World Cup</span>
-            `;
+            let legendHtml = '';
+            if (currentSeasonId === 1) {
+                legendHtml = `
+                    <span class="legend-item"><span class="vbar vbar-blue"></span> UEFA Champions League</span>
+                    <span class="legend-item"><span class="vbar vbar-orange"></span> Europa League</span>
+                    <span class="legend-item"><span class="vbar vbar-green"></span> UEFA Conference League</span>
+                `;
+            } else if (currentSeasonId === 2) {
+                legendHtml = `
+                    <span class="legend-item"><span class="vbar vbar-blue"></span> UEFA Champions League</span>
+                    <span class="legend-item"><span class="vbar vbar-orange"></span> Europa League</span>
+                    <span class="legend-item"><span class="vbar vbar-green"></span> UEFA Conference League</span>
+                    <span class="legend-item"><span class="legend-dashed" style="border-color:#ffffff;"></span> Club World Cup</span>
+                `;
+            } else {
+                legendHtml = `
+                    <span class="legend-item"><span class="vbar vbar-blue"></span> UEFA Champions League</span>
+                    <span class="legend-item"><span class="vbar vbar-orange"></span> Europa League</span>
+                    <span class="legend-item"><span class="legend-dashed" style="border-color:#ffffff;"></span> Club World Cup</span>
+                    <span class="legend-item"><span class="legend-dashed" style="border-color:#b91c1c;"></span> No World Cup</span>
+                `;
+            }
+            legend.innerHTML = legendHtml;
 
             if (isAdminMode) {
                 document.getElementById('addTeamBtnInner')?.addEventListener('click', () => openTeamForm(null));
@@ -6649,3 +6647,4 @@
     </script>
 </body>
 </html>
+```
