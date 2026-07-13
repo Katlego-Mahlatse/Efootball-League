@@ -2792,8 +2792,6 @@
             return saved;
         }
 
-        // ─── Scan functions removed ───
-
         // ─── Load Team Name Mappings ───
         async function loadTeamNameMappings() {
             const snap = await database.ref('teamNameMappings').once('value');
@@ -3038,7 +3036,7 @@
                     const status = statusSelect.value;
                     const matchdayJoined = parseInt(mdJoinedInput.value) || 0;
                     const matchdayLeft = mdLeftInput.value ? parseInt(mdLeftInput.value) : null;
-                    if (!name) { alert('Manager name required.'); return; }
+                    if (!name) { alert("Manager name required."); return; }
                     const key = container.querySelector('.save-mgr-btn').dataset.key;
                     const teamName = team;
 
@@ -3591,152 +3589,22 @@
 
         // ─── REMOVED: openSetCurrentMatchdayModal, openMatchdaySchedulingModal, saveMatchdayForDate ───
 
-        // ─── NEW: Manage Agent Modal (view-only, no Run Agent button) ───
+        // ─── Manage Agent Modal (placeholder) ───
         async function openManageAgentModal() {
-            const activeSeason = activeSeasonId;
-
-            // Fetch active season's team list (for filtering fixtures to valid teams)
-            const activeSeasonTableSnap = await database.ref(getSeasonPath(activeSeason, 'table')).once('value');
-            const activeSeasonTeams = activeSeasonTableSnap.val() ? Object.values(activeSeasonTableSnap.val()).map(t => t.name) : [];
-
-            // Build fixture list exactly like renderFixtures() does, filtered to active season teams
-            const premierFixtures = [];
-            for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
-                if (!eventData || !eventData.tournaments) continue;
-                for (const tournament of eventData.tournaments) {
-                    let isPremier = false;
-                    if (tournament.name) {
-                        const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
-                        if (normalized === 'premierleague') isPremier = true;
-                    }
-                    if (isPremier && tournament.fixtures && Array.isArray(tournament.fixtures)) {
-                        for (const fix of tournament.fixtures) {
-                            if (activeSeasonTeams.includes(fix.home) && activeSeasonTeams.includes(fix.away)) {
-                                premierFixtures.push({ date: dateStr, home: fix.home || '', away: fix.away || '' });
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Group by date
-            const grouped = {};
-            for (const fix of premierFixtures) {
-                if (!grouped[fix.date]) grouped[fix.date] = [];
-                grouped[fix.date].push(fix);
-            }
-            const fixtureDates = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
-
-            // Build date pills
-            let datePillsHtml = '';
-            const monthLabels = {'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'};
-            for (const date of fixtureDates) {
-                const dateObj = new Date(date);
-                const day = dateObj.getDate();
-                const [y, mo] = date.split('-');
-                const label = calendarEventsData[date]?.matchday ? `Matchday ${calendarEventsData[date].matchday}` : `${day} ${monthLabels[mo] || mo}`;
-                datePillsHtml += `
-                    <button class="date-pill" data-date="${date}" style="background:rgba(150,60,255,0.2);border:1px solid var(--razzmatazz);border-radius:40px;padding:8px 18px;color:white;cursor:pointer;margin:4px;font-family:'Rajdhani',sans-serif;font-size:1rem;transition:0.2s;flex-shrink:0;" onclick="showFixturesForDate('${date}');">
-                        ${label}
-                    </button>
-                `;
-            }
-
-            window.showFixturesForDate = async (date) => {
-                const display = document.getElementById('fixturesDisplay');
-                display.innerHTML = '<div class="loading-spinner" style="padding:20px;"><div class="spinner"></div><span>Loading fixtures...</span></div>';
-
-                const fixtures = grouped[date] || [];
-                if (fixtures.length === 0) {
-                    display.innerHTML = '<div style="color:rgba(255,255,255,0.4);text-align:center;padding:30px;">No fixtures for this date.</div>';
-                    return;
-                }
-
-                const md = calendarEventsData[date]?.matchday || null;
-                let listHtml = `<div style="margin-bottom:12px;color:rgba(255,255,255,0.6);">${md ? `Matchday: <strong style="color:white;">${md}</strong>` : 'No matchday assigned yet for this date'}</div>`;
-
-                const pendingSnap = await database.ref(getSeasonPath(activeSeason, 'pending_results')).once('value');
-                const pendingData = pendingSnap.val() || {};
-
-                const activeSeasonResultsSnap = await database.ref(getSeasonPath(activeSeason, 'results')).once('value');
-                const activeSeasonResults = activeSeasonResultsSnap.val() ? Object.entries(activeSeasonResultsSnap.val()).map(([k,v]) => ({ key: k, ...v })) : [];
-
-                for (const fix of fixtures) {
-                    const home = fix.home;
-                    const away = fix.away;
-
-                    let approvedResult = null;
-                    for (const r of activeSeasonResults) {
-                        const { homeTeam, awayTeam } = parseResultCard(r);
-                        const sameTeams = (homeTeam === home && awayTeam === away) || (homeTeam === away && awayTeam === home);
-                        const sameMd = md ? (r.md === md) : true;
-                        if (sameTeams && sameMd) {
-                            approvedResult = r;
-                            break;
-                        }
-                    }
-
-                    let pendingEntry = null;
-                    for (const key in pendingData) {
-                        const p = pendingData[key];
-                        const sameTeams = (p.homeTeam === home && p.awayTeam === away) || (p.homeTeam === away && p.awayTeam === home);
-                        const sameMd = md ? (p.md === md) : true;
-                        if (sameTeams && sameMd) {
-                            pendingEntry = { id: key, ...p };
-                            break;
-                        }
-                    }
-
-                    listHtml += `<div style="background:rgba(0,0,0,0.2);border-radius:16px;padding:16px;margin-bottom:12px;display:flex;flex-wrap:wrap;align-items:center;gap:16px;">
-                        <div style="display:flex;align-items:center;gap:12px;flex:2;min-width:200px;">
-                            <span style="font-weight:700;color:white;font-size:1.4rem;">${escapeHtml(home)}</span>
-                            <span style="color:rgba(255,255,255,0.4);">vs</span>
-                            <span style="font-weight:700;color:white;font-size:1.4rem;">${escapeHtml(away)}</span>
-                        </div>
-                        <div style="flex:2;">
-                            ${approvedResult ?
-                                `<div style="color:var(--turquoise);font-weight:600;font-size:1.2rem;">✅ Approved: ${approvedResult.matchText}</div>
-                                 <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
-                                    ${(approvedResult.goalScorers?.home || []).map(s => `<span class="scorer-badge" style="font-size:0.9rem;">⚽ ${s.player} (${s.goals})</span>`).join('')}
-                                    ${(approvedResult.goalScorers?.away || []).map(s => `<span class="scorer-badge" style="font-size:0.9rem;">⚽ ${s.player} (${s.goals})</span>`).join('')}
-                                 </div>`
-                                : pendingEntry ?
-                                    `<div style="color:#f97316;font-weight:600;font-size:1.2rem;">⏳ Pending: ${pendingEntry.homeScore || 0} - ${pendingEntry.awayScore || 0}</div>
-                                     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
-                                        ${(pendingEntry.goalScorers?.home || []).map(s => `<span class="scorer-badge" style="font-size:0.9rem;">⚽ ${s.player} (${s.goals})</span>`).join('')}
-                                        ${(pendingEntry.goalScorers?.away || []).map(s => `<span class="scorer-badge" style="font-size:0.9rem;">⚽ ${s.player} (${s.goals})</span>`).join('')}
-                                     </div>
-                                     ${currentSeasonId === activeSeason ? `<div style="margin-top:8px;display:flex;gap:8px;">
-                                        <button class="btn-sm btn-confirm" style="padding:4px 16px;font-size:1rem;" onclick="approvePendingResult('${pendingEntry.id}', ${JSON.stringify(pendingEntry).replace(/"/g, '&quot;')})">Approve</button>
-                                        <button class="btn-sm btn-delete" style="padding:4px 16px;font-size:1rem;" onclick="rejectPendingResult('${pendingEntry.id}')">Reject</button>
-                                     </div>` : ''}`
-                                    : `<div style="color:#ef4444;font-weight:600;font-size:1.2rem;">❌ No results yet</div>`
-                            }
-                        </div>
-                    </div>`;
-                }
-                display.innerHTML = listHtml;
-            };
-
-            const modalHtml = `
+            showModal(`
                 <h3>🤖 Manage Agent</h3>
-                <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Review submitted results by date. Agent auto-approves after 20 minutes with no conflict, and auto-issues no-contest at 5:30 PM SAST the day after a fixture if no result was submitted.</p>
-                ${currentSeasonId !== activeSeason ? `<div style="background:rgba(233,0,82,0.2);border:1px solid var(--razzmatazz);border-radius:16px;padding:16px;margin-bottom:16px;color:#ffaaaa;font-size:1.2rem;font-weight:600;">⚠️ Agent only operates on the active season (Season ${activeSeason}). You are viewing Season ${currentSeasonId}.</div>` : ''}
-                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;max-height:180px;overflow-y:auto;padding:8px;-webkit-overflow-scrolling:touch;">
-                    ${datePillsHtml || '<span style="color:rgba(255,255,255,0.4);">No Premier League fixtures found for this season.</span>'}
-                </div>
-                <div id="fixturesDisplay">
-                    <div style="color:rgba(255,255,255,0.4);text-align:center;padding:30px;">Select a date to view fixtures.</div>
+                <div class="empty-state">
+                    <div class="empty-icon">🛠️</div>
+                    <p>Kath is still building it</p>
                 </div>
                 <div class="modal-btns">
                     <button class="modal-btn-cancel" id="closeManageAgentBtn">Close</button>
                 </div>
-            `;
-            showModal(modalHtml, true);
+            `);
             document.getElementById('closeManageAgentBtn').onclick = closeModal;
         }
 
-        // ─── ADMIN SETTINGS (modified) ───
+        // ─── ADMIN SETTINGS ───
         function openAdminSettings() {
             // Load pending count
             let pendingCount = 0;
@@ -5126,169 +4994,7 @@
             decrementPending();
         }
 
-        // ─── AUTO PROCESS PENDING RESULTS (fixed: uses activeSeasonId throughout) ───
-        async function autoProcessPendingResults() {
-            // Guard: only operate on active season
-            if (currentSeasonId !== activeSeasonId) {
-                console.log('AutoProcess: not on active season, skipping.');
-                return;
-            }
-
-            const snap = await database.ref(getSeasonPath(activeSeasonId, 'pending_results')).once('value');
-            const data = snap.val() || {};
-            const pendingArray = Object.entries(data).map(([key, val]) => ({ id: key, ...val }));
-
-            // Step 1: Auto-approve forfeits immediately
-            for (const p of pendingArray) {
-                if (p.matchType === 'forfeit') {
-                    await approvePendingResult(p.id, p);
-                }
-            }
-
-            // Reload pending after forfeit approvals
-            const snap2 = await database.ref(getSeasonPath(activeSeasonId, 'pending_results')).once('value');
-            const data2 = snap2.val() || {};
-            const pendingArray2 = Object.entries(data2).map(([key, val]) => ({ id: key, ...val }));
-
-            // Step 2: Pair normal match submissions by same two teams + same matchday
-            const normalPending = pendingArray2.filter(p => p.matchType === 'normal' || !p.matchType);
-            const used = new Set();
-            for (let i = 0; i < normalPending.length; i++) {
-                if (used.has(i)) continue;
-                const a = normalPending[i];
-                // Check if a is older than 20 minutes and no duplicate found yet
-                const now = Date.now();
-                const isOld = (now - a.submittedAt) >= 20 * 60 * 1000;
-                let duplicateFound = false;
-                for (let j = i + 1; j < normalPending.length; j++) {
-                    if (used.has(j)) continue;
-                    const b = normalPending[j];
-                    const sameTeams = (a.homeTeam === b.homeTeam && a.awayTeam === b.awayTeam) || (a.homeTeam === b.awayTeam && a.awayTeam === b.homeTeam);
-                    const sameMd = a.md && b.md && a.md === b.md;
-                    if (!sameTeams || !sameMd) continue;
-
-                    // Duplicate found
-                    duplicateFound = true;
-                    used.add(i);
-                    used.add(j);
-
-                    // Check score conflict
-                    const aHS = a.homeScore, aAS = a.awayScore;
-                    const bHS = b.homeTeam === a.homeTeam ? b.homeScore : b.awayScore;
-                    const bAS = b.homeTeam === a.homeTeam ? b.awayScore : b.homeScore;
-
-                    if (aHS === bHS && aAS === bAS) {
-                        // Scores match: merge scorers, approve the earlier submission
-                        const merged = { ...a };
-                        // Home scorers: from whoever submitted as home manager
-                        // Away scorers: from whoever submitted as away manager
-                        const homeSubmission = (a.homeTeam === a.submittedByTeam) ? a : b;
-                        const awaySubmission = (a.awayTeam === a.submittedByTeam) ? a : b;
-                        merged.goalScorers = {
-                            home: homeSubmission.goalScorers?.home || a.goalScorers?.home || [],
-                            away: awaySubmission.goalScorers?.away || a.goalScorers?.away || []
-                        };
-                        merged.userAssists = {
-                            home: homeSubmission.userAssists?.home || a.userAssists?.home || [],
-                            away: awaySubmission.userAssists?.away || a.userAssists?.away || []
-                        };
-                        await approvePendingResult(a.id, merged);
-                        await database.ref(getSeasonPath(activeSeasonId, `pending_results/${b.id}`)).remove();
-                    } else {
-                        // Conflict: mark both as conflicted for admin review
-                        await database.ref(getSeasonPath(activeSeasonId, `pending_results/${a.id}/conflicted`)).set(true);
-                        await database.ref(getSeasonPath(activeSeasonId, `pending_results/${b.id}/conflicted`)).set(true);
-                    }
-                    break;
-                }
-
-                // If no duplicate found and entry is old, auto-approve it
-                if (!duplicateFound && isOld) {
-                    await approvePendingResult(a.id, a);
-                }
-            }
-
-            // Step 3: No-contest check — fixtures past deadline with no result
-            const nowSAST = getSASTDateObj();
-            const deadlineHour = 17;
-            const deadlineMinute = 30;
-
-            // Refresh calendar events and pending again after pairing
-            await loadCalendarEvents();
-            const snap3 = await database.ref(getSeasonPath(activeSeasonId, 'pending_results')).once('value');
-            const data3 = snap3.val() || {};
-            const pendingArray3 = Object.entries(data3).map(([key, val]) => ({ id: key, ...val }));
-
-            for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
-                if (!eventData.tournaments) continue;
-                const fixtureMd = eventData.matchday;
-                if (!fixtureMd) continue;
-                const fixtureDate = new Date(dateStr + 'T00:00:00+02:00');
-                const deadlineDate = new Date(fixtureDate);
-                deadlineDate.setDate(deadlineDate.getDate() + 1);
-                deadlineDate.setHours(deadlineHour, deadlineMinute, 0, 0);
-                if (nowSAST < deadlineDate) continue; // Deadline not passed yet
-
-                for (const tournament of eventData.tournaments) {
-                    if (!tournament.name) continue;
-                    const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
-                    if (normalized !== 'premierleague') continue;
-                    if (!tournament.fixtures) continue;
-
-                    for (const fix of tournament.fixtures) {
-                        const homeTeam = fix.home, awayTeam = fix.away;
-                        if (!homeTeam || !awayTeam) continue;
-
-                        // Check if approved result exists for this match on this matchday
-                        const existingResult = resultsData.find(r => {
-                            const { homeTeam: rH, awayTeam: rA } = parseResultCard(r);
-                            const sameTeams = (rH === homeTeam && rA === awayTeam) || (rH === awayTeam && rA === homeTeam);
-                            return sameTeams && r.md === fixtureMd;
-                        });
-                        if (existingResult) continue;
-
-                        // Check if there is a pending submission for this match
-                        const pendingForMatch = pendingArray3.find(p => {
-                            const sameTeams = (p.homeTeam === homeTeam && p.awayTeam === awayTeam) || (p.homeTeam === awayTeam && p.awayTeam === homeTeam);
-                            return sameTeams && p.md === fixtureMd && !p.conflicted;
-                        });
-
-                        if (pendingForMatch) {
-                            // One team submitted: approve their result as-is
-                            await approvePendingResult(pendingForMatch.id, pendingForMatch);
-                        } else {
-                            // Nobody submitted: auto no-contest
-                            const noContestData = {
-                                homeTeam,
-                                awayTeam,
-                                homeScore: 0,
-                                awayScore: 0,
-                                md: fixtureMd,
-                                date: dateStr,
-                                matchType: 'forfeit',
-                                forfeitType: 'no_contest',
-                                matchText: `${homeTeam} F - F ${awayTeam} (No Contest)`,
-                                autoGenerated: true,
-                                submittedBy: 'agent',
-                                submittedAt: Date.now(),
-                                goalScorers: { home: [], away: [] },
-                                userAssists: { home: [], away: [] },
-                                status: 'pending'
-                            };
-                            const newRef = await database.ref(getSeasonPath(activeSeasonId, 'pending_results')).push(noContestData);
-                            await approvePendingResult(newRef.key, noContestData);
-                        }
-                    }
-                }
-            }
-
-            await loadCurrentSeasonData();
-            await loadTopScorerData();
-            await loadTopAssistantData();
-            renderCurrentTab();
-        }
-
-        // ─── applyScorersFromScan and applyAssistsFromScan kept ───
+        // ─── applyScorersFromScan and applyAssistsFromScan ───
         function normalizeName(name) {
             return (name || '').toLowerCase().replace(/\s/g, '');
         }
@@ -5688,7 +5394,7 @@
             renderHistory('');
         }
 
-        // ─── TABLE RENDER (modified: season-specific bar/line and legend) ───
+        // ─── TABLE RENDER ───
         function renderTable() {
             const sorted = [...teamsData].sort((a, b) => (b.pts || 0) - (a.pts || 0) || (b.gd || 0) - (a.gd || 0));
             let headerHtml = tableHeaderImageUrl ? `<img src="${tableHeaderImageUrl}" class="table-header-img" alt="Table Header">` :
@@ -5832,7 +5538,7 @@
             attachThreeDotHandler();
         }
 
-        // ─── Other render functions (unchanged) ───
+        // ─── Other render functions ───
         function renderFixtures() {
             const premierFixtures = [];
             const today = new Date();
@@ -6429,36 +6135,6 @@
                     popupEl = null; } });
         }
 
-        // ─── ADMIN SETTINGS ─── (modified above)
-
-        // ─── LOAD MANAGER KEYS ─── (already defined)
-
-        // ─── ADMIN: Manage Manager Keys Modal ─── (already defined)
-
-        // ─── 24-HOUR THROTTLE CHECK ─── (already defined)
-
-        // ─── USER: Open Add Results Key Modal ─── (already defined)
-
-        // ─── MATCH TYPE SELECTION ─── (already defined)
-
-        // ─── FORFEIT TYPE SELECTION ─── (already defined)
-
-        // ─── FORFEIT SUBMIT FORM ─── (already defined)
-
-        // ─── USER: Result Submission Form ─── (already defined)
-
-        // ─── PENDING RESULTS SYSTEM ─── (already defined)
-
-        // ─── AUTO PROCESS PENDING RESULTS ─── (already defined)
-
-        // ─── applyScorersFromScan and applyAssistsFromScan ─── (kept)
-
-        // ─── UPLOAD FUNCTIONS ─── (already defined)
-
-        // ─── TABLE RENDER ─── (modified above)
-
-        // ─── Other render functions ─── (already defined)
-
         // ─── SWITCH SEASON ───
         async function switchSeason(delta) {
             const idx = availableSeasons.indexOf(currentSeasonId);
@@ -6634,17 +6310,9 @@
             await loadCurrentMatchday();
             attachRealtimeListeners();
             renderCurrentTab();
-
-            // Auto-run agent every 5 minutes, but only if on active season
-            setInterval(() => {
-                if (currentSeasonId === activeSeasonId) {
-                    autoProcessPendingResults();
-                }
-            }, 5 * 60 * 1000);
         }
 
         init();
     </script>
 </body>
 </html>
-```
