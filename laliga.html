@@ -1,4 +1,4 @@
-`tm
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,12 +30,13 @@
         :root {
             --laliga-red: #E9102E;
             --laliga-red-light: #ff2a46;
-            --laliga-red-dark: #c40c26;
-            --laliga-navy: #1A2B5E;
-            --laliga-navy-dark: #0E1A3A;
+            --laliga-red-dark: #8c0a1c;
+            --laliga-navy: #5c0716;
+            --laliga-navy-dark: #3a0410;
             --laliga-white: #ffffff;
             --glass-bg: rgba(233, 16, 46, 0.07);
             --glass-border: rgba(233, 16, 46, 0.25);
+            --glass-blur: blur(12px);
         }
 
         @keyframes fadeInDown {
@@ -120,11 +121,28 @@
             font-size: 20px;
             padding-bottom: 3rem;
         }
+        body.has-bg::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: var(--bg-image);
+            background-size: var(--bg-size, cover);
+            background-position: var(--bg-pos, center);
+            background-repeat: no-repeat;
+            z-index: -2;
+        }
+        body.has-bg::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: rgba(58, 4, 16, 0.55);
+            z-index: -1;
+        }
 
         /* ─── NAVBAR ─── */
         .navbar {
-            background: var(--laliga-red);
-            border-bottom: 3px solid var(--laliga-navy);
+            background: linear-gradient(90deg, var(--laliga-red) 0%, var(--laliga-red-dark) 50%, var(--laliga-navy-dark) 100%);
+            border-bottom: 2px solid var(--laliga-white);
             padding: 0 2rem;
             height: 100px;
             display: flex;
@@ -150,7 +168,7 @@
             font-family: 'Bebas Neue', sans-serif;
             font-size: 2.2rem;
             letter-spacing: 3px;
-            color: var(--laliga-navy);
+            color: var(--laliga-white);
             cursor: pointer;
             font-weight: bold;
         }
@@ -221,7 +239,7 @@
             color: var(--laliga-red);
         }
         .menu-item {
-            padding: 20px 28px;
+            padding: 40px 28px;
             margin: 12px 0;
             border: 1px solid rgba(233, 16, 46, 0.3);
             border-radius: 20px;
@@ -406,7 +424,7 @@
         .content-card {
             margin: 24px 36px 40px;
             background: var(--glass-bg);
-            backdrop-filter: blur(12px);
+            backdrop-filter: var(--glass-blur);
             border: 1px solid var(--glass-border);
             border-radius: 32px;
             padding: 32px;
@@ -466,18 +484,20 @@
             border-collapse: collapse;
             font-family: 'Rajdhani', sans-serif;
             min-width: 900px;
-            background: var(--laliga-red);
-            color: var(--laliga-navy);
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            color: var(--laliga-white);
         }
         .stats-table thead th {
-            background: rgba(26, 43, 94, 0.2);
-            color: var(--laliga-navy);
+            background: rgba(0, 0, 0, 0.25);
+            color: var(--laliga-white);
             font-size: 1.3rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1px;
             padding: 16px 18px;
-            border-bottom: 2px solid var(--laliga-navy);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
             white-space: nowrap;
             z-index: 20;
         }
@@ -488,12 +508,14 @@
             position: sticky;
             left: 0;
             z-index: 25;
-            background: var(--laliga-red);
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
             width: 64px;
             min-width: 64px;
         }
         .stats-table thead th:first-child {
-            background: rgba(233, 16, 46, 0.95);
+            background: rgba(0, 0, 0, 0.25);
             z-index: 30;
         }
 
@@ -503,25 +525,27 @@
             position: sticky;
             left: 64px;
             z-index: 24;
-            background: var(--laliga-red);
-            box-shadow: 4px 0 8px -2px rgba(26, 43, 94, 0.45);
-            border-right: 2px solid rgba(26, 43, 94, 0.35);
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            box-shadow: 4px 0 8px -2px rgba(0, 0, 0, 0.45);
+            border-right: 2px solid rgba(255, 255, 255, 0.15);
         }
         .stats-table thead th:nth-child(2) {
-            background: rgba(233, 16, 46, 0.95);
+            background: rgba(0, 0, 0, 0.25);
             z-index: 30;
         }
 
         .stats-table tbody tr {
-            border-bottom: 1px solid rgba(26, 43, 94, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             transition: background 0.2s;
         }
         .stats-table tbody tr:hover {
-            background: rgba(26, 43, 94, 0.1);
+            background: rgba(255, 255, 255, 0.05);
         }
         .stats-table td {
             padding: 14px 18px;
-            color: var(--laliga-navy);
+            color: var(--laliga-white);
             font-size: 1.3rem;
             font-weight: 600;
             white-space: nowrap;
@@ -534,16 +558,16 @@
         .team-name-text {
             font-weight: 700;
             font-size: 2.8rem !important;
-            color: var(--laliga-navy);
+            color: var(--laliga-white);
         }
         .pts-cell {
             font-weight: 800;
-            color: var(--laliga-navy);
+            color: var(--laliga-white);
             font-size: 1.5rem;
         }
         .rank-cell {
             font-weight: 700;
-            color: var(--laliga-navy);
+            color: var(--laliga-white);
             font-family: 'Bebas Neue', sans-serif;
             font-size: 1.6rem;
         }
@@ -552,11 +576,12 @@
         .table-header-row {
             display: flex;
             align-items: center;
-            background: var(--laliga-red);
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
             border-radius: 20px 20px 0 0;
             padding: 0;
             overflow: hidden;
-            border: 2px solid rgba(26, 43, 94, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.15);
             border-bottom: none;
         }
         .table-actions {
@@ -564,23 +589,24 @@
             justify-content: flex-end;
             gap: 12px;
             padding: 14px 18px;
-            background: var(--laliga-red);
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
             border-radius: 20px 20px 0 0;
-            border: 2px solid rgba(26, 43, 94, 0.2);
-            border-bottom: 3px solid var(--laliga-navy);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 3px solid rgba(255, 255, 255, 0.2);
             align-items: center;
         }
         .table-actions-title {
             font-family: 'Bebas Neue', sans-serif;
             font-size: 1.6rem;
-            color: var(--laliga-navy);
+            color: var(--laliga-white);
             letter-spacing: 2px;
             flex: 1;
         }
         .add-btn {
-            background: rgba(26, 43, 94, 0.15);
-            border: 2px solid var(--laliga-navy);
-            color: var(--laliga-navy);
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--laliga-red);
+            color: var(--laliga-white);
             font-family: 'Rajdhani', sans-serif;
             font-weight: 700;
             font-size: 1.2rem;
@@ -590,14 +616,14 @@
             transition: all 0.2s;
         }
         .add-btn:hover {
-            background: var(--laliga-navy);
-            color: var(--laliga-red);
+            background: var(--laliga-red);
+            color: var(--laliga-white);
             transform: translateY(-2px);
         }
         .three-dot-btn {
-            background: rgba(26, 43, 94, 0.15);
-            border: 2px solid var(--laliga-navy);
-            color: var(--laliga-navy);
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--laliga-red);
+            color: var(--laliga-white);
             font-size: 2.2rem;
             width: 52px;
             height: 52px;
@@ -609,8 +635,8 @@
             justify-content: center;
         }
         .three-dot-btn:hover {
-            background: var(--laliga-navy);
-            color: var(--laliga-red);
+            background: var(--laliga-red);
+            color: var(--laliga-white);
         }
 
         /* ─── TOP SCORERS & TOP ASSISTANTS ─── */
@@ -618,42 +644,44 @@
             width: 100%;
             border-collapse: collapse;
             font-family: 'Rajdhani', sans-serif;
-            background: var(--laliga-red);
-            color: var(--laliga-navy);
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            color: var(--laliga-white);
         }
         .stats-list thead th {
-            background: rgba(26, 43, 94, 0.15);
-            color: var(--laliga-navy);
+            background: rgba(0, 0, 0, 0.25);
+            color: var(--laliga-white);
             font-size: 1.4rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1px;
             padding: 18px 22px;
-            border-bottom: 2px solid var(--laliga-navy);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
         }
         .stats-list tbody tr {
-            border-bottom: 1px solid rgba(26, 43, 94, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             transition: background 0.2s;
         }
         .stats-list tbody tr:hover {
-            background: rgba(26, 43, 94, 0.1);
+            background: rgba(255, 255, 255, 0.05);
         }
         .stats-list td {
             padding: 18px 22px;
-            color: var(--laliga-navy);
+            color: var(--laliga-white);
             font-size: 1.4rem;
             font-weight: 600;
         }
         .stats-list td:first-child {
-            color: var(--laliga-navy);
+            color: var(--laliga-white);
             font-family: 'Bebas Neue', sans-serif;
             font-size: 2rem;
             font-weight: bold;
         }
         .count-badge {
-            background: rgba(26, 43, 94, 0.2);
-            border: 1px solid var(--laliga-navy);
-            color: var(--laliga-navy);
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--laliga-white);
             padding: 6px 22px;
             border-radius: 50px;
             font-weight: 700;
@@ -663,7 +691,7 @@
             display: flex;
             align-items: center;
             gap: 16px;
-            color: var(--laliga-navy);
+            color: var(--laliga-white);
         }
 
         /* TOP 3 BLOCKS */
@@ -679,7 +707,9 @@
             position: relative;
             text-align: center;
             flex: 1;
-            background: rgba(26, 43, 94, 0.4);
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
             border-radius: 0;
             padding: 0;
             transition: transform 0.3s;
@@ -814,7 +844,7 @@
             align-items: flex-end;
             margin-bottom: 30px;
             padding: 20px;
-            background: rgba(26, 43, 94, 0.3);
+            background: rgba(0, 0, 0, 0.3);
             border-radius: 28px;
         }
         .filter-group {
@@ -882,7 +912,7 @@
             box-shadow: 0 8px 24px rgba(233, 16, 46, 0.4);
         }
 
-        /* ─── FIXTURE CARDS (red bg) ─── */
+        /* ─── FIXTURE CARDS ─── */
         .fixture-date-group {
             margin-bottom: 32px;
             animation: cardSlideIn 0.4s ease both;
@@ -919,7 +949,7 @@
             margin-left: auto;
         }
         .edit-matchday-btn {
-            background: rgba(26, 43, 94, 0.6);
+            background: rgba(0, 0, 0, 0.4);
             border: 1px solid var(--laliga-red);
             border-radius: 30px;
             padding: 6px 16px;
@@ -935,13 +965,15 @@
             transform: translateY(-2px);
         }
         .fixture-card {
-            background: var(--laliga-red);
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
             border-radius: 28px;
             padding: 28px 40px;
             margin-bottom: 16px;
             transition: all 0.25s;
             animation: cardSlideIn 0.4s ease both;
-            border: 1px solid rgba(26, 43, 94, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .fixture-card:hover {
             transform: translateY(-4px);
@@ -950,7 +982,7 @@
         .fixture-tournament-label {
             font-size: 1rem;
             font-weight: 700;
-            color: rgba(26, 43, 94, 0.7);
+            color: rgba(255, 255, 255, 0.7);
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 16px;
@@ -977,12 +1009,12 @@
             font-family: 'Rajdhani', sans-serif;
             font-weight: 700;
             font-size: 2.2rem;
-            color: var(--laliga-navy);
+            color: var(--laliga-white);
         }
         .fixture-vs {
             font-family: 'Bebas Neue', sans-serif;
             font-size: 3rem;
-            color: var(--laliga-navy);
+            color: var(--laliga-white);
             letter-spacing: 4px;
             flex-shrink: 0;
             opacity: 0.6;
@@ -1007,19 +1039,21 @@
             transform: translateY(-2px);
         }
 
-        /* ─── MATCH CARDS (red bg) ─── */
+        /* ─── MATCH CARDS ─── */
         .matches-list {
             display: flex;
             flex-direction: column;
             gap: 24px;
         }
         .match-card {
-            background: var(--laliga-red);
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
             border-radius: 28px;
             padding: 32px 48px;
             transition: all 0.25s;
             animation: cardSlideIn 0.4s ease both;
-            border: 1px solid rgba(26, 43, 94, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .match-card:hover {
             transform: translateY(-4px);
@@ -1043,7 +1077,7 @@
             font-family: 'Rajdhani', sans-serif;
             font-weight: 700;
             font-size: 2.8rem;
-            color: var(--laliga-navy);
+            color: var(--laliga-white);
             letter-spacing: 0.3px;
         }
         .match-center {
@@ -1057,26 +1091,26 @@
         .score-display {
             font-family: 'Bebas Neue', sans-serif;
             font-size: 4.5rem;
-            color: var(--laliga-navy);
+            color: var(--laliga-white);
             letter-spacing: 6px;
-            background: rgba(26, 43, 94, 0.15);
+            background: rgba(0, 0, 0, 0.3);
             padding: 14px 42px;
             border-radius: 80px;
-            border: 2px solid rgba(26, 43, 94, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
         }
         .forfeit-display {
             font-family: 'Bebas Neue', sans-serif;
             font-size: 3rem;
-            color: #7a0000;
+            color: #ffaaaa;
             letter-spacing: 4px;
-            background: rgba(26, 43, 94, 0.15);
+            background: rgba(0, 0, 0, 0.3);
             padding: 12px 28px;
             border-radius: 60px;
-            border: 2px solid rgba(26, 43, 94, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
         }
         .aggregate-text {
             font-size: 1.6rem;
-            color: rgba(26, 43, 94, 0.7);
+            color: rgba(255, 255, 255, 0.7);
             font-family: 'Rajdhani', sans-serif;
         }
         .goal-scorers {
@@ -1084,13 +1118,13 @@
         }
         .goal-scorer-item {
             display: inline-block;
-            background: rgba(26, 43, 94, 0.12);
-            border: 1px solid rgba(26, 43, 94, 0.25);
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(233, 16, 46, 0.5);
             padding: 5px 14px;
             border-radius: 30px;
             margin: 3px;
             font-size: 1.4rem;
-            color: #000000;
+            color: var(--laliga-white);
         }
         .match-meta {
             display: flex;
@@ -1102,11 +1136,11 @@
         .meta-tag {
             font-size: 1.4rem;
             font-weight: 500;
-            color: var(--laliga-navy);
-            background: rgba(26, 43, 94, 0.1);
+            color: var(--laliga-white);
+            background: rgba(0, 0, 0, 0.3);
             padding: 10px 24px;
             border-radius: 50px;
-            border: 1px solid rgba(26, 43, 94, 0.25);
+            border: 1px solid rgba(233, 16, 46, 0.3);
             font-family: 'Inter', sans-serif;
         }
         .admin-row {
@@ -1127,18 +1161,18 @@
             letter-spacing: 1px;
         }
         .btn-edit {
-            background: rgba(26, 43, 94, 0.15);
-            color: var(--laliga-navy);
-            border: 1px solid var(--laliga-navy);
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--laliga-white);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         .btn-edit:hover {
-            background: var(--laliga-navy);
+            background: var(--laliga-white);
             color: var(--laliga-red);
         }
         .btn-delete {
-            background: rgba(100, 0, 0, 0.15);
-            color: #7a0000;
-            border: 1px solid rgba(100, 0, 0, 0.3);
+            background: rgba(100, 0, 0, 0.25);
+            color: #ffaaaa;
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
         .btn-delete:hover {
             background: #7a0000;
@@ -1149,7 +1183,7 @@
             display: inline-flex;
             align-items: center;
             gap: 14px;
-            background: rgba(26, 43, 94, 0.5);
+            background: rgba(0, 0, 0, 0.4);
             border: 2px solid var(--laliga-red);
             color: var(--laliga-red);
             font-family: 'Rajdhani', sans-serif;
@@ -1328,7 +1362,7 @@
             margin: 10px 0;
         }
         .scorer-badge {
-            background: rgba(26, 43, 94, 0.6);
+            background: rgba(0, 0, 0, 0.4);
             border: 1px solid var(--laliga-red);
             border-radius: 32px;
             padding: 7px 18px;
@@ -1403,7 +1437,7 @@
             gap: 16px;
         }
         .settings-btn {
-            background: rgba(26, 43, 94, 0.4);
+            background: rgba(0, 0, 0, 0.4);
             border: 1px solid var(--laliga-red);
             color: var(--laliga-white);
             padding: 18px 26px;
@@ -1488,7 +1522,7 @@
             background: #dc2626;
         }
 
-        /* ─── SCAN MATCH BLOCKS (NEW) ─── */
+        /* ─── SCAN MATCH BLOCKS ─── */
         .btn-spinner {
             display: inline-block;
             width: 20px;
@@ -1501,7 +1535,7 @@
             vertical-align: middle;
         }
         .match-scan-block {
-            background: rgba(26, 43, 94, 0.25);
+            background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(233, 16, 46, 0.4);
             border-radius: 24px;
             padding: 24px;
@@ -1635,7 +1669,7 @@
             transform: none;
         }
         .preview-match-card {
-            background: rgba(26, 43, 94, 0.3);
+            background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(233, 16, 46, 0.4);
             border-radius: 20px;
             padding: 22px;
@@ -1770,7 +1804,7 @@
             color: white;
         }
         .cBlank {
-            background: rgba(26, 43, 94, 0.2);
+            background: rgba(255, 255, 255, 0.1);
         }
         .arrow-up {
             color: #0033cc;
@@ -1781,12 +1815,12 @@
             font-size: 1.6rem;
         }
         .arrow-side {
-            color: var(--laliga-navy);
+            color: var(--laliga-white);
             font-size: 1.6rem;
             opacity: 0.7;
         }
         .dashed-sep td {
-            border-bottom: 3px dashed var(--laliga-navy) !important;
+            border-bottom: 3px dashed rgba(255, 255, 255, 0.3) !important;
         }
         .dashed-sep-red td {
             border-bottom: 3px dashed #b91c1c !important;
@@ -1794,7 +1828,7 @@
         .legend-row {
             margin-top: 24px;
             padding: 16px 20px;
-            background: rgba(26, 43, 94, 0.4);
+            background: rgba(0, 0, 0, 0.3);
             border-radius: 20px;
             display: flex;
             gap: 28px;
@@ -1886,16 +1920,30 @@
             font-size: 0.9rem;
             margin-top: 6px;
         }
-        .btn-spinner {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            margin-right: 8px;
-            vertical-align: middle;
+
+        /* ─── CROP TOOL ─── */
+        .crop-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            overflow: hidden;
+            background: #111;
+            border-radius: 20px;
+            margin: 20px 0;
+            cursor: grab;
+        }
+        .crop-img {
+            position: absolute;
+            transform-origin: 0 0;
+            user-select: none;
+            pointer-events: none;
+            max-width: none;
+        }
+        .crop-controls {
+            margin: 15px 0;
+        }
+        .crop-slider {
+            width: 100%;
         }
 
         footer {
@@ -1905,100 +1953,6 @@
             font-size: 1.1rem;
             border-top: 1px solid rgba(233, 16, 46, 0.3);
             margin-top: 24px;
-        }
-
-        /* ─── DESKTOP UI SIZE INCREASE (Change 3) ─── */
-        @media (min-width: 768px) {
-            .menu-item {
-                padding: 40px 56px;
-                font-size: 3rem;
-                border-radius: 40px;
-                margin: 24px 0;
-            }
-            .tab-btn {
-                font-size: 2.6rem;
-                padding: 20px 56px;
-                border-radius: 80px;
-            }
-            .season-controls {
-                gap: 40px;
-                padding: 24px 64px;
-                border-radius: 120px;
-            }
-            .season-number {
-                font-size: 4.4rem;
-                min-width: 360px;
-            }
-            .season-admin-btn {
-                padding: 16px 40px;
-                font-size: 2.2rem;
-                border-radius: 80px;
-            }
-            .add-btn {
-                font-size: 2.4rem;
-                padding: 20px 48px;
-                border-radius: 80px;
-            }
-            .three-dot-btn {
-                font-size: 4.4rem;
-                width: 104px;
-                height: 104px;
-                border-radius: 50%;
-            }
-            .settings-btn {
-                padding: 36px 52px;
-                font-size: 3rem;
-                border-radius: 56px;
-            }
-            .btn-sm {
-                font-size: 3rem;
-                padding: 24px 64px;
-                border-radius: 80px;
-            }
-            .add-btn-main {
-                font-size: 4rem;
-                padding: 40px 112px;
-                border-radius: 120px;
-            }
-            .add-result-top-btn {
-                font-size: 2.4rem;
-                padding: 24px 56px;
-                border-radius: 80px;
-            }
-            .filter-group select,
-            .filter-group button {
-                padding: 24px 40px;
-                font-size: 2.4rem;
-                border-radius: 80px;
-            }
-            .view-calendar-btn {
-                font-size: 2.4rem;
-                padding: 24px 56px;
-                border-radius: 80px;
-            }
-            .close-menu {
-                font-size: 5.6rem;
-                margin-bottom: 80px;
-            }
-            .menu-btn {
-                width: 140px;
-                height: 140px;
-                border-radius: 40px;
-                gap: 16px;
-            }
-            .menu-btn span {
-                width: 64px;
-                height: 8px;
-                border-radius: 8px;
-            }
-            .side-menu {
-                width: 720px;
-                padding: 80px 56px;
-                right: -720px;
-            }
-            .side-menu.active {
-                right: 0;
-            }
         }
     </style>
 </head>
@@ -2121,9 +2075,9 @@
         let calendarEventsData = {};
 
         // New state for changes
-        let managerHistory = {}; // keyed by team name, array of { key, name, status, matchdayJoined, matchdayLeft }
-        let LALIGA_TEAM_MAP = {}; // lowercase efootball name -> real name
-        let teamLogoMappings = {}; // teamName -> { imageUrl, efootballName }
+        let managerHistory = {};
+        let LALIGA_TEAM_MAP = {};
+        let teamLogoMappings = {};
 
         let showFormArrows = false;
         let showLast5 = true;
@@ -2151,6 +2105,11 @@
         let managerKeysCache = {};
         let currentMatchday = 1;
 
+        // ─── Background image state ───
+        let bgImageUrl = '';
+        let bgSize = 'cover';
+        let bgPosition = 'center';
+
         // ─── Pending saves pattern ───
         let pendingSaves = 0;
         let pendingRenderTab = null;
@@ -2160,7 +2119,7 @@
         function decrementPending() { pendingSaves--; if (pendingSaves === 0 && pendingRenderTab) { const tab = pendingRenderTab;
                 pendingRenderTab = null; renderCurrentTab(tab); } }
 
-        // ─── Helpers (all paths changed to laliga/) ───
+        // ─── Helpers ───
         function getSeasonPath(seasonNum, subPath = "") {
             return `laliga/seasons/season_${seasonNum}${subPath ? "/" + subPath : ""}`;
         }
@@ -2261,7 +2220,7 @@
             await database.ref(`calendarEvents/${date}/matchday`).set(matchdayNum);
         }
 
-        // ─── AUTO TABLE UPDATE (forfeit logic) ───
+        // ─── AUTO TABLE UPDATE ───
         async function applyResultToTable(homeTeam, awayTeam, homeScore, awayScore, forfeitType) {
             const isNoContest = forfeitType === 'no_contest';
             const isForfeitWin = (forfeitType === 'forfeit_no_reply' || forfeitType === 'forfeit_agreement');
@@ -2433,6 +2392,76 @@
                     teamLogoMappings[team] = { imageUrl: val.imageUrl, efootballName: val.efootballName };
                 }
             }
+        }
+
+        // ─── Background image ───
+        async function loadBackgroundImage() {
+            const snap = await database.ref('laliga/settings/backgroundImage').once('value');
+            const settings = snap.val() || {};
+            bgImageUrl = settings.url || '';
+            bgSize = settings.size || 'cover';
+            bgPosition = settings.position || 'center';
+            if (bgImageUrl) {
+                document.body.style.setProperty('--bg-image', `url(${bgImageUrl})`);
+                document.body.style.setProperty('--bg-size', bgSize);
+                document.body.style.setProperty('--bg-pos', bgPosition);
+                document.body.classList.add('has-bg');
+            } else {
+                document.body.classList.remove('has-bg');
+            }
+        }
+
+        async function setBackgroundImage(url, size, position) {
+            await database.ref('laliga/settings/backgroundImage').set({ url, size, position });
+            await loadBackgroundImage();
+        }
+
+        async function openBgCropTool() {
+            const file = await pickFile('image/*');
+            if (!file) return;
+            const objectUrl = URL.createObjectURL(file);
+            showModal(
+                `<h3>🌄 Set Background Image</h3><div class="crop-container" id="cropContainer"><img class="crop-img" id="cropImg" src="${objectUrl}" draggable="false"></div><div class="crop-controls"><label>Zoom</label><input class="crop-slider" id="zoomSlider" type="range" min="0.5" max="2" step="0.01" value="1"><label>Horizontal Position</label><input class="crop-slider" id="posXSlider" type="range" min="0" max="100" step="1" value="50"><label>Vertical Position</label><input class="crop-slider" id="posYSlider" type="range" min="0" max="100" step="1" value="50"></div><div class="modal-btns"><button class="modal-btn-primary" id="applyCropBtn">Apply Background</button><button class="modal-btn-cancel" id="cancelCropBtn">Cancel</button></div>`
+            );
+            const img = document.getElementById('cropImg');
+            const zoomSlider = document.getElementById('zoomSlider');
+            const posXSlider = document.getElementById('posXSlider');
+            const posYSlider = document.getElementById('posYSlider');
+            let zoom = 1,
+                posX = 50,
+                posY = 50;
+
+            function updatePreview() {
+                const scale = zoom;
+                const px = (posX / 100) * (1 - 1 / scale) * 100;
+                const py = (posY / 100) * (1 - 1 / scale) * 100;
+                img.style.transform = `scale(${scale}) translate(${px}%, ${py}%)`;
+            }
+            zoomSlider.oninput = () => { zoom = parseFloat(zoomSlider.value);
+                updatePreview(); };
+            posXSlider.oninput = () => { posX = parseFloat(posXSlider.value);
+                updatePreview(); };
+            posYSlider.oninput = () => { posY = parseFloat(posYSlider.value);
+                updatePreview(); };
+            img.onload = () => { updatePreview(); };
+            document.getElementById('cancelCropBtn').onclick = () => { URL.revokeObjectURL(objectUrl);
+                closeModal(); };
+            document.getElementById('applyCropBtn').onclick = async () => {
+                const btn = document.getElementById('applyCropBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="btn-spinner"></span> Uploading...';
+                try {
+                    const url = await uploadToImgBB(file);
+                    await setBackgroundImage(url, 'cover', `${posX}% ${posY}%`);
+                    btn.innerHTML = '✓ Applied!';
+                    setTimeout(() => { closeModal();
+                        URL.revokeObjectURL(objectUrl); }, 1000);
+                } catch (e) {
+                    alert('Failed: ' + e.message);
+                    btn.disabled = false;
+                    btn.innerHTML = 'Apply Background';
+                }
+            };
         }
 
         // ─── Switch Season ───
@@ -3076,7 +3105,7 @@
             return { homeTeam, awayTeam, homeScore, awayScore, isForfeit, forfeitType, md: r.md };
         }
 
-        // ─── RENDER RESULTS (with Scan button) ───
+        // ─── RENDER RESULTS ───
         function renderResults() {
             let filtered = [...resultsData];
             if (currentMdFilter && currentMdFilter !== 'all') {
@@ -3276,7 +3305,7 @@
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ?
                 '&lt;' : '&gt;'); }
 
-        // ─── RENDER WATCH MATCH (multiple videos) ───
+        // ─── RENDER WATCH MATCH ───
         function renderWatchMatch() {
             let html = '';
             const allVideos = [...watchMatchVideos];
@@ -3396,7 +3425,7 @@
             };
         }
 
-        // ─── RENDER CURRENT TAB (with pending saves) ───
+        // ─── RENDER CURRENT TAB ───
         function renderCurrentTab(tabOverride) {
             const tab = tabOverride || document.querySelector('.tab-btn.active')?.dataset.tab;
             if (pendingSaves > 0) {
@@ -3575,7 +3604,7 @@
             };
         }
 
-        // ─── openStatModal (Change 1: remove background removal) ───
+        // ─── openStatModal ───
         async function openStatModal(type, entry = null) {
             const isScorer = type === 'scorer' || type === 'topscorer';
             const currentImageUrl = entry?.imageUrl || '';
@@ -3682,10 +3711,11 @@
         // ─── ADMIN SETTINGS ───
         function openAdminSettings() {
             showModal(
-                `<h3>⚙️ Admin Settings</h3><div class="settings-grid"><button class="settings-btn" id="setLogoBtn">🖼️ Upload Navbar Logo</button><button class="settings-btn" id="manageSlideBtn">🎞️ Manage Main Slideshow</button><button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button><button class="settings-btn" id="manageHeaderBgBtn">🖼️ Table Header Background (legacy)</button><button class="settings-btn" id="setWatchBtnAdmin">🎥 Manage Watch Videos</button><button class="settings-btn" id="managerHistoryBtn">👥 Manager History</button><button class="settings-btn" id="teamNameMappingsBtn">🔁 Manage Team Name Mappings</button><button class="settings-btn" id="teamLogoMappingsBtn">🏷️ Manage Team Logo Mappings</button><button class="settings-btn" id="manageManagerKeysBtn">🔑 Manage Manager Keys</button><button class="settings-btn" id="setMatchdayBtn">📊 Set Current Matchday</button><button class="settings-btn" id="pendingResultsBtn">⏳ Pending Results</button></div><div class="modal-btns"><button class="modal-btn-cancel" id="closeAdminBtn" style="width:100%;">Close</button></div>`
+                `<h3>⚙️ Admin Settings</h3><div class="settings-grid"><button class="settings-btn" id="setLogoBtn">🖼️ Upload Navbar Logo</button><button class="settings-btn" id="setBgBtn">🌄 Set Background Image</button><button class="settings-btn" id="manageSlideBtn">🎞️ Manage Main Slideshow</button><button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button><button class="settings-btn" id="manageHeaderBgBtn">🖼️ Table Header Background (legacy)</button><button class="settings-btn" id="setWatchBtnAdmin">🎥 Manage Watch Videos</button><button class="settings-btn" id="managerHistoryBtn">👥 Manager History</button><button class="settings-btn" id="teamNameMappingsBtn">🔁 Manage Team Name Mappings</button><button class="settings-btn" id="teamLogoMappingsBtn">🏷️ Manage Team Logo Mappings</button><button class="settings-btn" id="manageManagerKeysBtn">🔑 Manage Manager Keys</button><button class="settings-btn" id="setMatchdayBtn">📊 Set Current Matchday</button><button class="settings-btn" id="pendingResultsBtn">⏳ Pending Results</button><button class="settings-btn" id="manageAgentBtn">🤖 Manage Agent</button></div><div class="modal-btns"><button class="modal-btn-cancel" id="closeAdminBtn" style="width:100%;">Close</button></div>`
                 );
             document.getElementById('closeAdminBtn').onclick = closeModal;
             document.getElementById('setLogoBtn').onclick = uploadNavbarLogo;
+            document.getElementById('setBgBtn').onclick = openBgCropTool;
             document.getElementById('manageSlideBtn').onclick = manageSlideshowUI;
             document.getElementById('addIconBtn').onclick = uploadTeamIcon;
             document.getElementById('manageHeaderBgBtn').onclick = uploadHeaderBgImage;
@@ -3703,6 +3733,14 @@
                 openSetCurrentMatchdayModal(); };
             document.getElementById('pendingResultsBtn').onclick = () => { closeModal();
                 openPendingResultsModal(); };
+            document.getElementById('manageAgentBtn').onclick = () => { closeModal();
+                openManageAgentModal(); };
+        }
+
+        // ─── MANAGE AGENT PLACEHOLDER ───
+        async function openManageAgentModal() {
+            showModal(` <h3>🤖 Manage Agent</h3> <div class="empty-state"> <div class="empty-icon">🛠️</div> <p>Kath is still building it</p> </div> <div class="modal-btns"> <button class="modal-btn-cancel" id="closeManageAgentBtn">Close</button> </div> `);
+            document.getElementById('closeManageAgentBtn').onclick = closeModal;
         }
 
         // ─── UPLOAD FUNCTIONS ───
@@ -4123,7 +4161,7 @@
             return null;
         }
 
-        // ─── Apply scorers from scan (smart merging) ───
+        // ─── Apply scorers from scan ───
         async function applyScorersFromScan(scorers, team) {
             if (!scorers || !scorers.length) return;
             const path = getSeasonPath(currentSeasonId, 'topScorers/list');
@@ -4158,7 +4196,6 @@
 
         // ─── MULTI-SCAN SYSTEM ───
 
-        // 5a. Entry point
         function openMultiScanModal() {
             multiScanMatches = [];
             multiScanIdCounter = 1;
@@ -4166,7 +4203,6 @@
             renderMultiScanModal();
         }
 
-        // 5b. Render the scan input modal
         function renderMultiScanModal() {
             let blocksHtml = multiScanMatches.map((match, mIdx) => {
                 let thumbsHtml = match.images.map((img, iIdx) => `
@@ -4252,7 +4288,6 @@
             document.getElementById('scanAllBtn').onclick = () => scanAllMatches();
         }
 
-        // 5c. Scan all matches
         async function scanAllMatches() {
             const statusEl = document.getElementById('scanAllStatus');
             const scanBtn = document.getElementById('scanAllBtn');
@@ -4279,7 +4314,6 @@
             openMultiScanPreviewModal(results);
         }
 
-        // 5d. Scan images via Render backend
         async function scanMatchImages(images, statusEl) {
             const contentParts = [{
                 type: 'text',
@@ -4329,7 +4363,6 @@
                 throw new Error('Could not parse AI response: ' + clean.substring(0, 100));
             }
 
-            // Apply team name mappings
             if (parsed.homeTeam) parsed.homeTeam = mapTeamName(parsed.homeTeam);
             if (parsed.awayTeam) parsed.awayTeam = mapTeamName(parsed.awayTeam);
             parsed.homeScore = parseInt(parsed.homeScore) || 0;
@@ -4340,7 +4373,6 @@
             return parsed;
         }
 
-        // 5e. Open preview modal after scanning
         function openMultiScanPreviewModal(results) {
             previewMatches = results.map(r => {
                 if (r.error || !r.scanned) {
@@ -4386,7 +4418,6 @@
             renderPreviewModal();
         }
 
-        // 5f. Render preview modal
         function renderPreviewModal() {
             const teamNames = teamsData.map(t => t.name).sort();
 
@@ -4566,7 +4597,6 @@
             document.getElementById('confirmAllScanBtn').onclick = () => confirmAndSaveAll();
         }
 
-        // 5g. Confirm and save all
         async function confirmAndSaveAll() {
             const btn = document.getElementById('confirmAllScanBtn');
             const statusEl = document.getElementById('confirmSaveStatus');
@@ -4576,7 +4606,6 @@
                 btn.innerHTML = '<span class="btn-spinner"></span> Saving…';
             }
 
-            // Read all current field values into previewMatches
             document.querySelectorAll('[data-field][data-idx]').forEach(el => {
                 const idx = parseInt(el.dataset.idx);
                 const field = el.dataset.field;
@@ -5630,9 +5659,8 @@
             });
         }
 
-        // ─── NEW SET CURRENT MATCHDAY MODAL (Change 2) ───
+        // ─── NEW SET CURRENT MATCHDAY MODAL ───
         function openSetCurrentMatchdayModal() {
-            // Gather all dates with LaLiga fixtures for current season
             const fixtureDates = [];
             const todayStr = getSASTToday();
 
@@ -5660,20 +5688,16 @@
 
             fixtureDates.sort((a, b) => a.localeCompare(b));
 
-            // Filter to today and forward, but also include past unassigned dates
             let filteredDates = fixtureDates.filter(d => d >= todayStr);
-            // If no future dates, include the latest past date
             if (filteredDates.length === 0 && fixtureDates.length > 0) {
                 filteredDates = [fixtureDates[fixtureDates.length - 1]];
             }
 
-            // Build list with current matchday assignments
             const dateItems = filteredDates.map((date, idx) => {
                 const currentMd = calendarEventsData[date]?.matchday || '';
                 return { date, currentMd: currentMd, predicted: currentMd || '' };
             });
 
-            // If no dates at all, show empty state
             if (dateItems.length === 0) {
                 showModal(`
               <h3>📊 Set Current Matchday</h3>
@@ -5727,7 +5751,6 @@
 
                 document.getElementById('cancelMatchdayModal').onclick = closeModal;
 
-                // Predict button
                 document.getElementById('predictMatchdaysBtn').onclick = () => {
                     const todayMd = parseInt(document.getElementById('todayMatchdayInput').value);
                     if (isNaN(todayMd) || todayMd < 1) {
@@ -5735,7 +5758,6 @@
                             '<div class="status-msg status-error">Enter a valid matchday number.</div>';
                         return;
                     }
-                    // Find the index of today's date (or the earliest date if today not in list)
                     let startIdx = dateItems.findIndex(d => d.date === todayStr);
                     if (startIdx === -1) startIdx = 0;
 
@@ -5744,8 +5766,6 @@
                         dateItems[i].predicted = currentMd;
                         currentMd++;
                     }
-                    // Also fill dates before today if any (optional: leave as is or fill backward?)
-                    // We'll fill backward if today is in the list
                     if (startIdx > 0) {
                         let backwardMd = todayMd - 1;
                         for (let i = startIdx - 1; i >= 0; i--) {
@@ -5756,7 +5776,6 @@
                     renderMatchdayModal();
                 };
 
-                // Confirm All
                 document.getElementById('confirmMatchdayPredictions').onclick = async () => {
                     const statusEl = document.getElementById('matchdayPredictionStatus');
                     const btn = document.getElementById('confirmMatchdayPredictions');
@@ -5764,7 +5783,6 @@
                     btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
                     statusEl.innerHTML = '<div class="status-msg status-loading">Saving matchday assignments...</div>';
 
-                    // Read all inputs
                     const inputs = document.querySelectorAll('.matchday-prediction-input');
                     const updates = [];
                     let todayMd = null;
@@ -5788,11 +5806,9 @@
                         for (const u of updates) {
                             await saveMatchdayForDate(u.date, u.md);
                         }
-                        // Also set currentMatchday for the user submission form
                         if (todayMd !== null) {
                             await saveCurrentMatchday(todayMd);
                         } else if (updates.length > 0) {
-                            // Use the earliest date's matchday as fallback
                             const earliest = updates.reduce((a, b) => a.date < b.date ? a : b);
                             await saveCurrentMatchday(earliest.md);
                         }
@@ -5812,7 +5828,6 @@
                     }
                 };
 
-                // Live input changes: update the dateItems array
                 document.querySelectorAll('.matchday-prediction-input').forEach(inp => {
                     inp.addEventListener('change', function() {
                         const date = this.dataset.date;
@@ -5842,47 +5857,60 @@
         document.getElementById('addResultsMenuBtn').onclick = () => { closeMenu();
             openAddResultsKeyModal(); };
 
-        document.getElementById('adminModeBtn').onclick = () => {
+        document.getElementById('adminModeBtn').onclick = async () => {
+            if (localStorage.getItem('laliga_adminModeVerified') === 'true') {
+                isAdminMode = true;
+                document.getElementById('seasonAdminPanel').style.display = 'flex';
+                renderCurrentTab();
+                if (!document.getElementById('adminSettingsItem')) {
+                    const item = document.createElement('div');
+                    item.id = 'adminSettingsItem';
+                    item.className = 'menu-item';
+                    item.innerHTML = '⚙️ Admin Settings';
+                    item.onclick = () => { openAdminSettings();
+                        closeMenu(); };
+                    document.getElementById('sideMenu').appendChild(item);
+                }
+                return;
+            }
             const key = prompt("Enter admin key:");
-            if (!key) return;
-
+            if (key === null) return;
             const btn = document.getElementById('adminModeBtn');
             const origText = btn.textContent;
             btn.textContent = '⏳ Verifying...';
             btn.style.opacity = '0.6';
-
-            fetch(RENDER_URL + '/verify-admin', {
+            try {
+                const res = await fetch(RENDER_URL + '/verify-admin', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ key: key })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    btn.textContent = origText;
-                    btn.style.opacity = '1';
-                    if (data.success === true) {
-                        isAdminMode = true;
-                        alert("Admin mode activated ✅");
-                        document.getElementById('seasonAdminPanel').style.display = 'flex';
-                        renderCurrentTab();
-                        if (!document.getElementById('adminSettingsItem')) {
-                            const item = document.createElement('div');
-                            item.id = 'adminSettingsItem';
-                            item.className = 'menu-item';
-                            item.innerHTML = '⚙️ Admin Settings';
-                            item.onclick = () => { openAdminSettings();
-                                closeMenu(); };
-                            document.getElementById('sideMenu').appendChild(item);
-                        }
-                    } else {
-                        alert("Incorrect key");
-                    }
-                })
-                .catch(err => {
-                    btn.textContent = origText;
-                    btn.style.opacity = '1';
-                    alert("Error verifying key: " + err.message);
                 });
+                const data = await res.json();
+                btn.textContent = origText;
+                btn.style.opacity = '1';
+                if (data.success === true) {
+                    isAdminMode = true;
+                    localStorage.setItem('laliga_adminModeVerified', 'true');
+                    alert("Admin mode activated ✅");
+                    document.getElementById('seasonAdminPanel').style.display = 'flex';
+                    renderCurrentTab();
+                    if (!document.getElementById('adminSettingsItem')) {
+                        const item = document.createElement('div');
+                        item.id = 'adminSettingsItem';
+                        item.className = 'menu-item';
+                        item.innerHTML = '⚙️ Admin Settings';
+                        item.onclick = () => { openAdminSettings();
+                            closeMenu(); };
+                        document.getElementById('sideMenu').appendChild(item);
+                    }
+                } else {
+                    alert("Incorrect key");
+                }
+            } catch (err) {
+                btn.textContent = origText;
+                btn.style.opacity = '1';
+                alert("Error verifying key: " + err.message);
+            }
         };
 
         document.getElementById('prevSeasonBtn').onclick = () => switchSeason(-1);
@@ -5925,6 +5953,7 @@
         }
 
         async function init() {
+            await loadBackgroundImage();
             await loadSlideshow();
             await loadTeamIcons();
             await loadNavbarLogo();
@@ -5945,3 +5974,4 @@
     </script>
 </body>
 </html>
+``
