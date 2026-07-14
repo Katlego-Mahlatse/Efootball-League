@@ -3340,9 +3340,9 @@
                 openRequestsHistoryModal(); };
         }
 
-        // ─── LOAD MANAGER KEYS ───
+        // ─── LOAD MANAGER KEYS (updated) ───
         async function loadManagerKeys() {
-            const snap = await database.ref('fifasupercup_managerKeys').once('value');
+            const snap = await database.ref('managerKeys').once('value');
             const data = snap.val() || {};
             managerKeysCache = {};
             for (const key in data) {
@@ -3354,100 +3354,68 @@
             return managerKeysCache;
         }
 
-        // ─── ADMIN: Manage Manager Keys Modal ───
+        // ─── FIND MANAGER KEY ID (updated) ───
+        async function findManagerKeyId(managerKey) {
+            const snap = await database.ref('managerKeys').orderByChild('key').equalTo(managerKey).once('value');
+            const keys = snap.val();
+            if (!keys) return null;
+            return Object.keys(keys)[0];
+        }
+
+        // ─── ADMIN: Manage Manager Keys Modal (updated) ───
         async function openManagerKeysModal() {
-            // Ensure teams are loaded before rendering the modal
-            await loadTeamsList();
             await loadManagerKeys();
             const teamNames = teamsData.map(t => t.name).sort();
-
-            let keysHtml = '';
             const keysArray = Object.values(managerKeysCache);
+            let keysHtml = '';
             if (keysArray.length === 0) {
                 keysHtml = '<div style="color:rgba(255,255,255,0.4);padding:16px 0;">No manager keys created yet.</div>';
             } else {
-                keysHtml = '<div class="key-list-container">';
+                keysHtml = '<div style="max-height:350px;overflow-y:auto;">';
                 for (const entry of keysArray) {
                     const createdAt = entry.createdAt ? new Date(entry.createdAt).toLocaleString() : 'N/A';
-                    const lastSub = entry.lastSubmissionTimestamp ? new Date(entry.lastSubmissionTimestamp)
-                        .toLocaleString() : 'Never';
+                    const lastSub = entry.lastSubmissionTimestamp ? new Date(entry.lastSubmissionTimestamp).toLocaleString() : 'Never';
                     keysHtml += `
-                <div class="key-list-item">
-                  <div>
-                    <span class="key-value">${escapeHtml(entry.key)}</span>
-                    <span class="key-team">→ ${escapeHtml(entry.teamName)}</span>
-                  </div>
-                  <div>
-                    <span class="key-meta">Created: ${createdAt}</span>
-                    <span class="key-meta" style="margin-left:12px;">Last submit: ${lastSub}</span>
-                  </div>
-                  <button class="key-delete-btn" data-keyid="${entry.id}" title="Delete key">🗑️</button>
-                </div>
-              `;
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:rgba(0,206,209,0.06);border-radius:16px;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+                          <div>
+                            <span style="font-family:monospace;font-weight:700;color:var(--turquoise);background:rgba(0,0,0,0.2);padding:4px 14px;border-radius:20px;">${escapeHtml(entry.key)}</span>
+                            <span style="color:white;font-weight:600;margin-left:10px;">→ ${escapeHtml(entry.teamName)}</span>
+                          </div>
+                          <div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">Created: ${createdAt} · Last submit: ${lastSub}</div>
+                          <button class="key-delete-btn btn-sm btn-delete" data-keyid="${entry.id}" style="padding:6px 16px;font-size:1rem;">🗑️</button>
+                        </div>
+                    `;
                 }
                 keysHtml += '</div>';
             }
-
             showModal(`
-            <h3>🔑 Manage Manager Keys</h3>
-            <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Keys allow managers to submit match results. Each key is linked to a team.</p>
-
-            <div class="key-create-form">
-              <div>
-                <label>Key Value</label>
-                <input type="text" id="newKeyValue" placeholder="e.g. ABC123" style="font-family:'Inter',monospace;">
-              </div>
-              <div>
-                <label>Team</label>
-                <select id="newKeyTeam">
-                  <option value="">Select Team</option>
-                  ${teamNames.map(t => `<option value="${t}">${escapeHtml(t)}</option>`).join('')}
-                </select>
-              </div>
-              <button id="createKeyBtn">+ Create Key</button>
-            </div>
-            <div id="createKeyStatus"></div>
-
-            <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:16px;margin-top:8px;">
-              <h4 style="color:var(--turquoise);font-size:1.2rem;margin-bottom:12px;">Existing Keys</h4>
-              ${keysHtml}
-            </div>
-
-            <div class="modal-btns">
-              <button class="modal-btn-cancel" id="closeKeysModal">Close</button>
-            </div>
-          `);
-
+                <h3>🔑 Manage Manager Keys</h3>
+                <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Keys allow managers to submit match results. Each key is linked to a team.</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;padding:16px;background:rgba(0,0,0,0.2);border-radius:20px;margin-bottom:20px;">
+                  <div><label style="display:block;color:rgba(255,255,255,0.5);font-size:0.75rem;margin-bottom:6px;">KEY VALUE</label><input type="text" id="newKeyValue" placeholder="e.g. ABC123" style="width:100%;padding:10px 16px;background:rgba(255,255,255,0.06);border:1px solid var(--razzmatazz);border-radius:16px;color:white;font-family:'Inter',monospace;font-size:1.1rem;outline:none;"></div>
+                  <div><label style="display:block;color:rgba(255,255,255,0.5);font-size:0.75rem;margin-bottom:6px;">TEAM</label><select id="newKeyTeam" style="width:100%;padding:10px 16px;background:rgba(10,27,61,0.8);border:1px solid var(--razzmatazz);border-radius:16px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.1rem;outline:none;"><option value="">Select Team</option>${teamNames.map(t => `<option value="${t}">${escapeHtml(t)}</option>`).join('')}</select></div>
+                  <button class="modal-btn-primary" id="createKeyBtn" style="padding:10px 28px;white-space:nowrap;">+ Create Key</button>
+                </div>
+                <div id="createKeyStatus"></div>
+                <h4 style="color:var(--turquoise);font-size:1.2rem;margin-bottom:12px;">Existing Keys</h4>
+                ${keysHtml}
+                <div class="modal-btns"><button class="modal-btn-cancel" id="closeKeysModal">Close</button></div>
+            `);
             document.getElementById('closeKeysModal').onclick = closeModal;
-
             document.getElementById('createKeyBtn').onclick = async () => {
                 const keyVal = document.getElementById('newKeyValue').value.trim().toUpperCase();
                 const teamName = document.getElementById('newKeyTeam').value;
                 const statusEl = document.getElementById('createKeyStatus');
-
                 if (!keyVal) { statusEl.innerHTML = '<div class="status-msg status-error">Please enter a key value.</div>'; return; }
                 if (!teamName) { statusEl.innerHTML = '<div class="status-msg status-error">Please select a team.</div>'; return; }
-
                 const existing = Object.values(managerKeysCache).find(e => e.key === keyVal);
-                if (existing) {
-                    statusEl.innerHTML = `<div class="status-msg status-error">Key "${keyVal}" already exists for ${existing.teamName}.</div>`;
-                    return;
-                }
-
+                if (existing) { statusEl.innerHTML = `<div class="status-msg status-error">Key "${keyVal}" already exists for ${existing.teamName}.</div>`; return; }
                 const btn = document.getElementById('createKeyBtn');
                 btn.disabled = true;
                 btn.innerHTML = '<span class="btn-spinner"></span> Creating...';
-
                 try {
-                    incrementPending();
-                    await database.ref('fifasupercup_managerKeys').push({
-                        key: keyVal,
-                        teamName: teamName,
-                        createdAt: Date.now(),
-                        createdBy: 'admin'
-                    });
-                    decrementPending();
-                    statusEl.innerHTML = `<div class="status-msg status-success">✅ Key "${keyVal}" created for ${teamName}!</div>`;
+                    await database.ref('managerKeys').push({ key: keyVal, teamName, createdAt: Date.now(), createdBy: 'admin' });
+                    statusEl.innerHTML = `<div class="status-msg status-success">✅ Key "${keyVal}" created for ${escapeHtml(teamName)}!</div>`;
                     await loadManagerKeys();
                     setTimeout(() => { openManagerKeysModal(); }, 800);
                 } catch (e) {
@@ -3456,15 +3424,12 @@
                     btn.innerHTML = '+ Create Key';
                 }
             };
-
             document.querySelectorAll('.key-delete-btn').forEach(btn => {
                 btn.onclick = async () => {
                     const keyId = btn.dataset.keyid;
                     if (!confirm('Delete this manager key? This cannot be undone.')) return;
                     try {
-                        incrementPending();
-                        await database.ref(`fifasupercup_managerKeys/${keyId}`).remove();
-                        decrementPending();
+                        await database.ref(`managerKeys/${keyId}`).remove();
                         await loadManagerKeys();
                         openManagerKeysModal();
                     } catch (e) {
@@ -3476,7 +3441,7 @@
 
         // ─── 24-HOUR THROTTLE CHECK ───
         async function canUserSubmitResult(managerKey) {
-            const snap = await database.ref('fifasupercup_managerKeys').orderByChild('key').equalTo(managerKey).once('value');
+            const snap = await database.ref('managerKeys').orderByChild('key').equalTo(managerKey).once('value');
             const keys = snap.val();
             if (!keys) return { allowed: false, message: 'Invalid key' };
 
@@ -3501,13 +3466,6 @@
             }
 
             return { allowed: true, message: null };
-        }
-
-        async function findManagerKeyId(managerKey) {
-            const snap = await database.ref('fifasupercup_managerKeys').orderByChild('key').equalTo(managerKey).once('value');
-            const keys = snap.val();
-            if (!keys) return null;
-            return Object.keys(keys)[0];
         }
 
         // ─── SAST DAILY SUBMISSION COUNT ───
@@ -4515,7 +4473,7 @@
             };
         }
 
-        // ─── USER: openAddResultsKeyModal (modified to go to Action Hub) ───
+        // ─── USER: openAddResultsKeyModal (modified with fixed verification) ───
         function openAddResultsKeyModal() {
             const saved = getSavedManagerKey();
             if (saved) {
@@ -4587,20 +4545,11 @@
                     }
 
                     saveManagerKey(key, entry.teamName);
-
-                    const check = await canUserSubmitResult(key);
-                    if (!check.allowed) {
-                        statusEl.innerHTML = `<div class="status-msg status-error">⏳ ${check.message}</div>`;
-                        btn.disabled = false;
-                        btn.innerHTML = '🔍 Verify Key';
-                        return;
-                    }
-
                     statusEl.innerHTML = `<div class="status-msg status-success">✅ Verified! Welcome ${entry.teamName}.</div>`;
                     btn.innerHTML = '✓ Verified';
                     setTimeout(() => {
                         closeModal();
-                        openManagerActionHub(entry.teamName, key);
+                        openMatchTypeSelectionPopup(entry.teamName, key);
                     }, 600);
 
                 } catch (e) {
@@ -4691,7 +4640,7 @@
             };
         }
 
-        // ─── FORFEIT SUBMIT FORM (modified with prefilled params) ───
+        // ─── FORFEIT SUBMIT FORM (modified with prefilled params and updated path) ───
         function openForfeitSubmitForm(linkedTeam, managerKey, forfeitType, prefilledOpponent, prefilledDate) {
             const teamNames = teamsData.map(t => t.name).sort();
             const otherTeams = teamNames.filter(t => t !== linkedTeam);
@@ -4873,7 +4822,7 @@
 
                             const keyId = await findManagerKeyId(managerKey);
                             if (keyId) {
-                                await database.ref(`fifasupercup_managerKeys/${keyId}/lastSubmissionTimestamp`).set(Date
+                                await database.ref(`managerKeys/${keyId}/lastSubmissionTimestamp`).set(Date
                                 .now());
                             }
 
@@ -4895,7 +4844,7 @@
             renderForfeitForm();
         }
 
-        // ─── USER: Result Submission Form (modified with prefilled params) ───
+        // ─── USER: Result Submission Form (modified with prefilled params and updated path) ───
         function openUserResultForm(linkedTeam, managerKey, prefilledOpponent, prefilledDate) {
             const teamNames = teamsData.map(t => t.name).sort();
             const otherTeams = teamNames.filter(t => t !== linkedTeam);
@@ -5169,78 +5118,6 @@
 
                 document.getElementById('userCancelResultBtn').onclick = closeModal;
 
-                function setupAutocomplete(inputId, dropdownId, teamSource, type) {
-                    const input = document.getElementById(inputId);
-                    const dropdown = document.getElementById(dropdownId);
-                    if (!input || !dropdown) return;
-
-                    input.addEventListener('input', function() {
-                        const team = typeof teamSource === 'function' ? teamSource() : teamSource;
-                        if (!team) { dropdown.style.display = 'none'; return; }
-                        const query = this.value.trim().toLowerCase();
-                        if (!query) { dropdown.style.display = 'none'; return; }
-
-                        let list = [];
-                        if (type === 'scorer') {
-                            list = topScorerList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
-                        } else {
-                            list = topAssistantList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
-                        }
-
-                        if (list.length === 0) { dropdown.style.display = 'none'; return; }
-
-                        dropdown.innerHTML = '';
-                        list.forEach(p => {
-                            const div = document.createElement('div');
-                            div.textContent = p.name;
-                            div.addEventListener('mousedown', (e) => {
-                                e.preventDefault();
-                                input.value = p.name;
-                                dropdown.style.display = 'none';
-                            });
-                            dropdown.appendChild(div);
-                        });
-                        dropdown.style.display = 'block';
-                    });
-
-                    input.addEventListener('blur', function() {
-                        setTimeout(() => { dropdown.style.display = 'none'; }, 150);
-                    });
-
-                    input.addEventListener('focus', function() {
-                        const team = typeof teamSource === 'function' ? teamSource() : teamSource;
-                        if (!team) return;
-                        const query = this.value.trim().toLowerCase();
-                        if (!query) { dropdown.style.display = 'none'; return; }
-                        let list = [];
-                        if (type === 'scorer') {
-                            list = topScorerList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
-                        } else {
-                            list = topAssistantList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
-                        }
-                        if (list.length > 0) {
-                            dropdown.innerHTML = '';
-                            list.forEach(p => {
-                                const div = document.createElement('div');
-                                div.textContent = p.name;
-                                div.addEventListener('mousedown', (e) => {
-                                    e.preventDefault();
-                                    input.value = p.name;
-                                    dropdown.style.display = 'none';
-                                });
-                                dropdown.appendChild(div);
-                            });
-                            dropdown.style.display = 'block';
-                        }
-                    });
-
-                    document.addEventListener('click', function(e) {
-                        if (!dropdown.contains(e.target) && e.target !== input) {
-                            dropdown.style.display = 'none';
-                        }
-                    });
-                }
-
                 setupAutocomplete('uHomeScorerName', 'uHomeScorerDropdown', linkedTeam, 'scorer');
                 setupAutocomplete('uHomeAssistName', 'uHomeAssistDropdown', linkedTeam, 'assist');
                 setupAutocomplete('uAwayScorerName', 'uAwayScorerDropdown', () => selectedOpponent, 'scorer');
@@ -5326,7 +5203,7 @@
 
                             const keyId = await findManagerKeyId(managerKey);
                             if (keyId) {
-                                await database.ref(`fifasupercup_managerKeys/${keyId}/lastSubmissionTimestamp`).set(Date
+                                await database.ref(`managerKeys/${keyId}/lastSubmissionTimestamp`).set(Date
                                 .now());
                             }
 
@@ -5344,6 +5221,78 @@
                     });
                 };
             };
+
+            function setupAutocomplete(inputId, dropdownId, teamSource, type) {
+                const input = document.getElementById(inputId);
+                const dropdown = document.getElementById(dropdownId);
+                if (!input || !dropdown) return;
+
+                input.addEventListener('input', function() {
+                    const team = typeof teamSource === 'function' ? teamSource() : teamSource;
+                    if (!team) { dropdown.style.display = 'none'; return; }
+                    const query = this.value.trim().toLowerCase();
+                    if (!query) { dropdown.style.display = 'none'; return; }
+
+                    let list = [];
+                    if (type === 'scorer') {
+                        list = topScorerList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
+                    } else {
+                        list = topAssistantList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
+                    }
+
+                    if (list.length === 0) { dropdown.style.display = 'none'; return; }
+
+                    dropdown.innerHTML = '';
+                    list.forEach(p => {
+                        const div = document.createElement('div');
+                        div.textContent = p.name;
+                        div.addEventListener('mousedown', (e) => {
+                            e.preventDefault();
+                            input.value = p.name;
+                            dropdown.style.display = 'none';
+                        });
+                        dropdown.appendChild(div);
+                    });
+                    dropdown.style.display = 'block';
+                });
+
+                input.addEventListener('blur', function() {
+                    setTimeout(() => { dropdown.style.display = 'none'; }, 150);
+                });
+
+                input.addEventListener('focus', function() {
+                    const team = typeof teamSource === 'function' ? teamSource() : teamSource;
+                    if (!team) return;
+                    const query = this.value.trim().toLowerCase();
+                    if (!query) { dropdown.style.display = 'none'; return; }
+                    let list = [];
+                    if (type === 'scorer') {
+                        list = topScorerList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
+                    } else {
+                        list = topAssistantList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
+                    }
+                    if (list.length > 0) {
+                        dropdown.innerHTML = '';
+                        list.forEach(p => {
+                            const div = document.createElement('div');
+                            div.textContent = p.name;
+                            div.addEventListener('mousedown', (e) => {
+                                e.preventDefault();
+                                input.value = p.name;
+                                dropdown.style.display = 'none';
+                            });
+                            dropdown.appendChild(div);
+                        });
+                        dropdown.style.display = 'block';
+                    }
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!dropdown.contains(e.target) && e.target !== input) {
+                        dropdown.style.display = 'none';
+                    }
+                });
+            }
 
             renderForm();
         }
