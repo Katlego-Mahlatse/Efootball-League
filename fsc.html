@@ -5917,6 +5917,47 @@
                 });
 
                 // Autocomplete
+                function setupEditAutocomplete(inputId, dropdownId, team, type) {
+                    const input = document.getElementById(inputId);
+                    const dropdown = document.getElementById(dropdownId);
+                    if (!input || !dropdown) return;
+
+                    input.addEventListener('input', function() {
+                        if (!team) { dropdown.style.display = 'none'; return; }
+                        const query = this.value.trim().toLowerCase();
+                        if (!query) { dropdown.style.display = 'none'; return; }
+                        let list = [];
+                        if (type === 'scorer') {
+                            list = topScorerList.filter(p => p.team === team && p.name.toLowerCase().includes(
+                            query));
+                        } else {
+                            list = topAssistantList.filter(p => p.team === team && p.name.toLowerCase().includes(
+                                query));
+                        }
+                        if (list.length === 0) { dropdown.style.display = 'none'; return; }
+                        dropdown.innerHTML = '';
+                        list.forEach(p => {
+                            const div = document.createElement('div');
+                            div.textContent = p.name;
+                            div.addEventListener('mousedown', (e) => {
+                                e.preventDefault();
+                                input.value = p.name;
+                                dropdown.style.display = 'none';
+                            });
+                            dropdown.appendChild(div);
+                        });
+                        dropdown.style.display = 'block';
+                    });
+                    input.addEventListener('blur', function() {
+                        setTimeout(() => { dropdown.style.display = 'none'; }, 150);
+                    });
+                    document.addEventListener('click', function(e) {
+                        if (!dropdown.contains(e.target) && e.target !== input) {
+                            dropdown.style.display = 'none';
+                        }
+                    });
+                }
+
                 setupEditAutocomplete('eHomeScorerName', 'eHomeScorerDropdown', homeTeam, 'scorer');
                 setupEditAutocomplete('eHomeAssistName', 'eHomeAssistDropdown', homeTeam, 'assist');
                 setupEditAutocomplete('eAwayScorerName', 'eAwayScorerDropdown', awayTeam, 'scorer');
@@ -5996,45 +6037,6 @@
                     });
                 };
             };
-
-            function setupEditAutocomplete(inputId, dropdownId, team, type) {
-                const input = document.getElementById(inputId);
-                const dropdown = document.getElementById(dropdownId);
-                if (!input || !dropdown) return;
-
-                input.addEventListener('input', function() {
-                    if (!team) { dropdown.style.display = 'none'; return; }
-                    const query = this.value.trim().toLowerCase();
-                    if (!query) { dropdown.style.display = 'none'; return; }
-                    let list = [];
-                    if (type === 'scorer') {
-                        list = topScorerList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
-                    } else {
-                        list = topAssistantList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
-                    }
-                    if (list.length === 0) { dropdown.style.display = 'none'; return; }
-                    dropdown.innerHTML = '';
-                    list.forEach(p => {
-                        const div = document.createElement('div');
-                        div.textContent = p.name;
-                        div.addEventListener('mousedown', (e) => {
-                            e.preventDefault();
-                            input.value = p.name;
-                            dropdown.style.display = 'none';
-                        });
-                        dropdown.appendChild(div);
-                    });
-                    dropdown.style.display = 'block';
-                });
-                input.addEventListener('blur', function() {
-                    setTimeout(() => { dropdown.style.display = 'none'; }, 150);
-                });
-                document.addEventListener('click', function(e) {
-                    if (!dropdown.contains(e.target) && e.target !== input) {
-                        dropdown.style.display = 'none';
-                    }
-                });
-            }
 
             renderEditForm();
         }
@@ -6760,6 +6762,104 @@
 
             renderCurrentTab();
         }
+
+        // Tab switching - this must run after all functions are defined
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderCurrentTab();
+            });
+        });
+
+        // Admin mode button
+        document.getElementById('adminModeBtn').onclick = async () => {
+            if (localStorage.getItem('fifasupercupAdminModeVerified') === 'true') {
+                isAdminMode = true;
+                document.getElementById('seasonAdminPanel').style.display = 'flex';
+                renderCurrentTab();
+                if (!document.getElementById('adminSettingsItem')) {
+                    const item = document.createElement('div');
+                    item.id = 'adminSettingsItem';
+                    item.className = 'menu-item';
+                    item.innerHTML = '⚙️ Admin Settings';
+                    item.onclick = () => { openAdminSettings();
+                        closeMenu(); };
+                    document.getElementById('sideMenu').appendChild(item);
+                }
+                return;
+            }
+
+            const key = prompt("Enter admin key:");
+            if (key === null) return;
+
+            const loadingModal = document.createElement('div');
+            loadingModal.className = 'modal-overlay active';
+            loadingModal.style.display = 'flex';
+            loadingModal.innerHTML = `
+            <div class="modal-card" style="max-width:400px;text-align:center;">
+              <h3>⏳ Verifying...</h3>
+              <div class="loading-spinner" style="padding:20px;">
+                <div class="spinner"></div>
+                <span>Checking credentials...</span>
+              </div>
+            </div>
+          `;
+            document.body.appendChild(loadingModal);
+
+            try {
+                const response = await fetch(RENDER_URL + '/verify-admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: key })
+                });
+                const data = await response.json();
+                loadingModal.remove();
+
+                if (data.success === true) {
+                    isAdminMode = true;
+                    localStorage.setItem('fifasupercupAdminModeVerified', 'true');
+                    alert("Admin mode activated ✅");
+                    document.getElementById('seasonAdminPanel').style.display = 'flex';
+                    renderCurrentTab();
+
+                    const existingAI = document.getElementById('aiAssistantMenuItem');
+                    if (existingAI) existingAI.remove();
+
+                    if (!document.getElementById('adminSettingsItem')) {
+                        const item = document.createElement('div');
+                        item.id = 'adminSettingsItem';
+                        item.className = 'menu-item';
+                        item.innerHTML = '⚙️ Admin Settings';
+                        item.onclick = () => { openAdminSettings();
+                            closeMenu(); };
+                        document.getElementById('sideMenu').appendChild(item);
+                    }
+                } else {
+                    alert("Incorrect key");
+                }
+            } catch (e) {
+                loadingModal.remove();
+                alert("Error verifying admin key: " + e.message);
+            }
+        };
+
+        // Add Results menu button
+        document.getElementById('addResultsMenuBtn').onclick = () => {
+            closeMenu();
+            openAddResultsKeyModal();
+        };
+
+        // Debug Info button
+        document.getElementById('debugInfoBtn').onclick = () => { openDebugInfoModal();
+            closeMenu(); };
+
+        // Season buttons
+        document.getElementById('prevSeasonBtn').onclick = () => switchSeason(-1);
+        document.getElementById('nextSeasonBtn').onclick = () => switchSeason(1);
+        document.getElementById('addSeasonBtn').onclick = () => isAdminMode && addNewSeason();
+        document.getElementById('renameSeasonBtn').onclick = () => isAdminMode && renameSeason();
+        document.getElementById('setActiveSeasonBtn').onclick = () => isAdminMode && setActiveSeason();
 
         init();
     </script>
