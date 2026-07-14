@@ -3356,6 +3356,8 @@
 
         // ─── ADMIN: Manage Manager Keys Modal ───
         async function openManagerKeysModal() {
+            // Ensure teams are loaded before rendering the modal
+            await loadTeamsList();
             await loadManagerKeys();
             const teamNames = teamsData.map(t => t.name).sort();
 
@@ -5167,6 +5169,78 @@
 
                 document.getElementById('userCancelResultBtn').onclick = closeModal;
 
+                function setupAutocomplete(inputId, dropdownId, teamSource, type) {
+                    const input = document.getElementById(inputId);
+                    const dropdown = document.getElementById(dropdownId);
+                    if (!input || !dropdown) return;
+
+                    input.addEventListener('input', function() {
+                        const team = typeof teamSource === 'function' ? teamSource() : teamSource;
+                        if (!team) { dropdown.style.display = 'none'; return; }
+                        const query = this.value.trim().toLowerCase();
+                        if (!query) { dropdown.style.display = 'none'; return; }
+
+                        let list = [];
+                        if (type === 'scorer') {
+                            list = topScorerList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
+                        } else {
+                            list = topAssistantList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
+                        }
+
+                        if (list.length === 0) { dropdown.style.display = 'none'; return; }
+
+                        dropdown.innerHTML = '';
+                        list.forEach(p => {
+                            const div = document.createElement('div');
+                            div.textContent = p.name;
+                            div.addEventListener('mousedown', (e) => {
+                                e.preventDefault();
+                                input.value = p.name;
+                                dropdown.style.display = 'none';
+                            });
+                            dropdown.appendChild(div);
+                        });
+                        dropdown.style.display = 'block';
+                    });
+
+                    input.addEventListener('blur', function() {
+                        setTimeout(() => { dropdown.style.display = 'none'; }, 150);
+                    });
+
+                    input.addEventListener('focus', function() {
+                        const team = typeof teamSource === 'function' ? teamSource() : teamSource;
+                        if (!team) return;
+                        const query = this.value.trim().toLowerCase();
+                        if (!query) { dropdown.style.display = 'none'; return; }
+                        let list = [];
+                        if (type === 'scorer') {
+                            list = topScorerList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
+                        } else {
+                            list = topAssistantList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
+                        }
+                        if (list.length > 0) {
+                            dropdown.innerHTML = '';
+                            list.forEach(p => {
+                                const div = document.createElement('div');
+                                div.textContent = p.name;
+                                div.addEventListener('mousedown', (e) => {
+                                    e.preventDefault();
+                                    input.value = p.name;
+                                    dropdown.style.display = 'none';
+                                });
+                                dropdown.appendChild(div);
+                            });
+                            dropdown.style.display = 'block';
+                        }
+                    });
+
+                    document.addEventListener('click', function(e) {
+                        if (!dropdown.contains(e.target) && e.target !== input) {
+                            dropdown.style.display = 'none';
+                        }
+                    });
+                }
+
                 setupAutocomplete('uHomeScorerName', 'uHomeScorerDropdown', linkedTeam, 'scorer');
                 setupAutocomplete('uHomeAssistName', 'uHomeAssistDropdown', linkedTeam, 'assist');
                 setupAutocomplete('uAwayScorerName', 'uAwayScorerDropdown', () => selectedOpponent, 'scorer');
@@ -5270,78 +5344,6 @@
                     });
                 };
             };
-
-            function setupAutocomplete(inputId, dropdownId, teamSource, type) {
-                const input = document.getElementById(inputId);
-                const dropdown = document.getElementById(dropdownId);
-                if (!input || !dropdown) return;
-
-                input.addEventListener('input', function() {
-                    const team = typeof teamSource === 'function' ? teamSource() : teamSource;
-                    if (!team) { dropdown.style.display = 'none'; return; }
-                    const query = this.value.trim().toLowerCase();
-                    if (!query) { dropdown.style.display = 'none'; return; }
-
-                    let list = [];
-                    if (type === 'scorer') {
-                        list = topScorerList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
-                    } else {
-                        list = topAssistantList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
-                    }
-
-                    if (list.length === 0) { dropdown.style.display = 'none'; return; }
-
-                    dropdown.innerHTML = '';
-                    list.forEach(p => {
-                        const div = document.createElement('div');
-                        div.textContent = p.name;
-                        div.addEventListener('mousedown', (e) => {
-                            e.preventDefault();
-                            input.value = p.name;
-                            dropdown.style.display = 'none';
-                        });
-                        dropdown.appendChild(div);
-                    });
-                    dropdown.style.display = 'block';
-                });
-
-                input.addEventListener('blur', function() {
-                    setTimeout(() => { dropdown.style.display = 'none'; }, 150);
-                });
-
-                input.addEventListener('focus', function() {
-                    const team = typeof teamSource === 'function' ? teamSource() : teamSource;
-                    if (!team) return;
-                    const query = this.value.trim().toLowerCase();
-                    if (!query) { dropdown.style.display = 'none'; return; }
-                    let list = [];
-                    if (type === 'scorer') {
-                        list = topScorerList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
-                    } else {
-                        list = topAssistantList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
-                    }
-                    if (list.length > 0) {
-                        dropdown.innerHTML = '';
-                        list.forEach(p => {
-                            const div = document.createElement('div');
-                            div.textContent = p.name;
-                            div.addEventListener('mousedown', (e) => {
-                                e.preventDefault();
-                                input.value = p.name;
-                                dropdown.style.display = 'none';
-                            });
-                            dropdown.appendChild(div);
-                        });
-                        dropdown.style.display = 'block';
-                    }
-                });
-
-                document.addEventListener('click', function(e) {
-                    if (!dropdown.contains(e.target) && e.target !== input) {
-                        dropdown.style.display = 'none';
-                    }
-                });
-            }
 
             renderForm();
         }
