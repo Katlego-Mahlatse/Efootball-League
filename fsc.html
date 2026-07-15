@@ -3393,7 +3393,12 @@
                 <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Keys allow managers to submit match results. Each key is linked to a team.</p>
                 <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;padding:16px;background:rgba(0,0,0,0.2);border-radius:20px;margin-bottom:20px;">
                   <div><label style="display:block;color:rgba(255,255,255,0.5);font-size:0.75rem;margin-bottom:6px;">KEY VALUE</label><input type="text" id="newKeyValue" placeholder="e.g. ABC123" style="width:100%;padding:10px 16px;background:rgba(255,255,255,0.06);border:1px solid var(--razzmatazz);border-radius:16px;color:white;font-family:'Inter',monospace;font-size:1.1rem;outline:none;"></div>
-                  <div><label style="display:block;color:rgba(255,255,255,0.5);font-size:0.75rem;margin-bottom:6px;">TEAM</label><select id="newKeyTeam" style="width:100%;padding:10px 16px;background:rgba(10,27,61,0.8);border:1px solid var(--razzmatazz);border-radius:16px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.1rem;outline:none;"><option value="">Select Team</option>${teamNames.map(t => `<option value="${t}">${escapeHtml(t)}</option>`).join('')}</select></div>
+                  <div><label style="display:block;color:rgba(255,255,255,0.5);font-size:0.75rem;margin-bottom:6px;">TEAM</label>
+                    <div style="position:relative;">
+                        <input type="text" id="newKeyTeam" placeholder="Type team name..." style="width:100%;padding:10px 16px;background:rgba(10,27,61,0.8);border:1px solid var(--razzmatazz);border-radius:16px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.1rem;outline:none;" autocomplete="off">
+                        <div id="keyTeamDropdown" style="display:none;position:absolute;background:rgba(10,27,61,0.98);border:1px solid var(--razzmatazz);border-radius:12px;padding:8px 0;z-index:300;max-height:200px;overflow-y:auto;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.6);"></div>
+                    </div>
+                  </div>
                   <button class="modal-btn-primary" id="createKeyBtn" style="padding:10px 28px;white-space:nowrap;">+ Create Key</button>
                 </div>
                 <div id="createKeyStatus"></div>
@@ -3401,6 +3406,25 @@
                 ${keysHtml}
                 <div class="modal-btns"><button class="modal-btn-cancel" id="closeKeysModal">Close</button></div>
             `);
+
+            // Autocomplete setup for team input
+            setTimeout(() => {
+                const teamInput = document.getElementById('newKeyTeam');
+                const teamDropdown = document.getElementById('keyTeamDropdown');
+                if (teamInput && teamDropdown) {
+                    teamInput.addEventListener('input', function() {
+                        const query = this.value.trim().toLowerCase();
+                        if (!query) { teamDropdown.style.display = 'none'; return; }
+                        const matches = teamNames.filter(t => t.toLowerCase().includes(query));
+                        if (matches.length === 0) { teamDropdown.style.display = 'none'; return; }
+                        teamDropdown.innerHTML = matches.map(t => `<div style="padding:12px 18px;cursor:pointer;color:white;font-size:1.2rem;font-family:'Rajdhani',sans-serif;transition:background 0.15s;" onmouseover="this.style.background='rgba(0,206,209,0.2)'" onmouseout="this.style.background=''" onmousedown="document.getElementById('newKeyTeam').value='${t.replace(/'/g,"\\'")}';document.getElementById('keyTeamDropdown').style.display='none';">${escapeHtml(t)}</div>`).join('');
+                        teamDropdown.style.display = 'block';
+                    });
+                    teamInput.addEventListener('blur', () => setTimeout(() => { teamDropdown.style.display = 'none'; }, 200));
+                    document.addEventListener('click', e => { if (e.target !== teamInput) teamDropdown.style.display = 'none'; });
+                }
+            }, 100);
+
             document.getElementById('closeKeysModal').onclick = closeModal;
             document.getElementById('createKeyBtn').onclick = async () => {
                 const keyVal = document.getElementById('newKeyValue').value.trim().toUpperCase();
@@ -3489,21 +3513,27 @@
             return { count, submittedMds };
         }
 
+        // ─── CHANGE 1: Replace validateDailyMatchLimit entirely ───
         async function validateDailyMatchLimit(managerKey, proposedMatchday) {
             const sastDate = getSASTDate();
-            const { count, submittedMds } = await getUserDailySubmissionCount(managerKey, sastDate);
-
-            if (count >= 2) {
-                return { allowed: false, message: "You've reached your 2-match daily limit. Try again tomorrow." };
-            }
-
-            if (count === 1) {
-                const existingMd = submittedMds[0];
-                if (existingMd === proposedMatchday) {
-                    return { allowed: false, message: "Your daily matches must be on different matchdays (one current, one previous)." };
+            const pendingSnap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
+            const pendingData = pendingSnap.val() || {};
+            const approvedSnap = await database.ref(getSeasonPath(currentSeasonId, 'results')).once('value');
+            const approvedData = approvedSnap.val() || {};
+            const allData = { ...pendingData, ...approvedData };
+            let count = 0;
+            for (const key in allData) {
+                const entry = allData[key];
+                if (entry.submittedBy === managerKey && entry.submittedAt) {
+                    const entryDate = new Date(entry.submittedAt);
+                    const entrySAST = new Date(entryDate.getTime() + (2 * 3600000));
+                    const entryDateStr = entrySAST.toISOString().split('T')[0];
+                    if (entryDateStr === sastDate) count++;
                 }
             }
-
+            if (count >= 3) {
+                return { allowed: false, message: "You've reached your 3-match daily limit. Try again tomorrow (SAST midnight)." };
+            }
             return { allowed: true, message: null };
         }
 
@@ -3866,6 +3896,31 @@
 
         // ─── Apply result stats to table ───
         async function applyResultStats(resultData) {
+            // ─── CHANGE 8: Add no_contest handler at very top ───
+            if (resultData.matchType === 'forfeit' && resultData.forfeitType === 'no_contest') {
+                const homeTeam = resultData.homeTeam;
+                const awayTeam = resultData.awayTeam;
+                const tablePath = getSeasonPath(currentSeasonId, 'table');
+                const snap = await database.ref(tablePath).once('value');
+                const tableData = snap.val() || {};
+                let homeKey = null, homeEntry = null, awayKey = null, awayEntry = null;
+                for (const key in tableData) {
+                    if (tableData[key].name === homeTeam) { homeKey = key; homeEntry = { ...tableData[key] }; }
+                    if (tableData[key].name === awayTeam) { awayKey = key; awayEntry = { ...tableData[key] }; }
+                }
+                if (!homeEntry) { homeEntry = { name: homeTeam, p: 0, w: 0, d: 0, l: 0, gs: 0, gc: 0, gd: 0, pts: 0 }; const nr = await database.ref(tablePath).push(homeEntry); homeKey = nr.key; }
+                if (!awayEntry) { awayEntry = { name: awayTeam, p: 0, w: 0, d: 0, l: 0, gs: 0, gc: 0, gd: 0, pts: 0 }; const nr = await database.ref(tablePath).push(awayEntry); awayKey = nr.key; }
+                homeEntry.p = (homeEntry.p || 0) + 1;
+                homeEntry.l = (homeEntry.l || 0) + 1;
+                awayEntry.p = (awayEntry.p || 0) + 1;
+                awayEntry.l = (awayEntry.l || 0) + 1;
+                homeEntry.gd = (homeEntry.gs || 0) - (homeEntry.gc || 0);
+                awayEntry.gd = (awayEntry.gs || 0) - (awayEntry.gc || 0);
+                await database.ref(tablePath + '/' + homeKey).set(homeEntry);
+                await database.ref(tablePath + '/' + awayKey).set(awayEntry);
+                return;
+            }
+
             const homeTeam = resultData.homeTeam;
             const awayTeam = resultData.awayTeam;
             const homeScore = resultData.homeScore || 0;
@@ -4149,6 +4204,17 @@
                     matchText: matchText,
                     matchType: resultData.matchType || ''
                 });
+            } else {
+                // Forfeit: apply stats via applyResultStats which handles no_contest
+                await applyResultStats({
+                    homeTeam: resultData.homeTeam,
+                    awayTeam: resultData.awayTeam,
+                    homeScore: resultData.homeScore || 0,
+                    awayScore: resultData.awayScore || 0,
+                    matchText: matchText,
+                    matchType: resultData.matchType || 'forfeit',
+                    forfeitType: resultData.forfeitType || ''
+                });
             }
 
             // Update scorers
@@ -4398,12 +4464,167 @@
         document.getElementById('overlay').onclick = closeMenu;
         document.getElementById('homeBtn').onclick = () => window.location.href = 'feed.html';
 
-        // ─── MANAGER ACTION HUB (NEW) ───
-        function openManagerActionHub(linkedTeam, managerKey) {
+        // ─── CHANGE 2: Add 4 new functions before openManagerActionHub ───
+        async function savePlayedOpponent(managerKey, teamName, opponentName, matchday) {
+            const safeKey = (managerKey + '_' + matchday + '_' + opponentName).replace(/[^a-zA-Z0-9_]/g, '_');
+            await database.ref('fifasupercup_played_opponents/' + safeKey).set({
+                managerKey,
+                teamName,
+                opponentName,
+                matchday,
+                submittedAt: Date.now()
+            });
+        }
+
+        async function getPlayedOpponents(managerKey) {
+            const snap = await database.ref('fifasupercup_played_opponents').once('value');
+            const data = snap.val() || {};
+            const played = [];
+            for (const key in data) {
+                if (data[key].managerKey === managerKey) {
+                    played.push({ opponent: data[key].opponentName, matchday: data[key].matchday });
+                }
+            }
+            return played;
+        }
+
+        async function getExistingMatchResult(teamName, opponentName, matchday) {
+            const pendingSnap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
+            const pendingData = pendingSnap.val() || {};
+            for (const key in pendingData) {
+                const r = pendingData[key];
+                const sameMatch = (
+                    (r.homeTeam === teamName && r.awayTeam === opponentName) ||
+                    (r.homeTeam === opponentName && r.awayTeam === teamName)
+                ) && String(r.md) === String(matchday);
+                if (sameMatch) return { found: true, data: r, key, location: 'pending' };
+            }
+            const approvedSnap = await database.ref(getSeasonPath(currentSeasonId, 'results')).once('value');
+            const approvedData = approvedSnap.val() || {};
+            for (const key in approvedData) {
+                const r = approvedData[key];
+                const sameMatch = (
+                    (r.homeTeam === teamName && r.awayTeam === opponentName) ||
+                    (r.homeTeam === opponentName && r.awayTeam === teamName)
+                ) && String(r.md) === String(matchday);
+                if (sameMatch) return { found: true, data: r, key, location: 'approved' };
+            }
+            return { found: false };
+        }
+
+        async function revokeResultStats(resultData) {
+            const homeTeam = resultData.homeTeam;
+            const awayTeam = resultData.awayTeam;
+            const homeScore = resultData.homeScore || 0;
+            const awayScore = resultData.awayScore || 0;
+            const isForfeit = resultData.matchType === 'forfeit';
+            const forfeitType = resultData.forfeitType || '';
+            const tablePath = getSeasonPath(currentSeasonId, 'table');
+            const snap = await database.ref(tablePath).once('value');
+            const tableData = snap.val() || {};
+
+            let homeKey = null, homeEntry = null;
+            let awayKey = null, awayEntry = null;
+            for (const key in tableData) {
+                if (tableData[key].name === homeTeam) { homeKey = key; homeEntry = { ...tableData[key] }; }
+                if (tableData[key].name === awayTeam) { awayKey = key; awayEntry = { ...tableData[key] }; }
+            }
+            if (!homeEntry || !awayEntry) return;
+
+            if (isForfeit && forfeitType === 'no_contest') {
+                // No contest = loss for both, no goals, no points
+                homeEntry.p = Math.max(0, (homeEntry.p || 0) - 1);
+                homeEntry.l = Math.max(0, (homeEntry.l || 0) - 1);
+                awayEntry.p = Math.max(0, (awayEntry.p || 0) - 1);
+                awayEntry.l = Math.max(0, (awayEntry.l || 0) - 1);
+            } else if (isForfeit && forfeitType === 'forfeit_win') {
+                // Forfeit win: home gets 3pts win, away gets loss
+                homeEntry.p = Math.max(0, (homeEntry.p || 0) - 1);
+                homeEntry.w = Math.max(0, (homeEntry.w || 0) - 1);
+                homeEntry.pts = Math.max(0, (homeEntry.pts || 0) - 3);
+                homeEntry.gs = Math.max(0, (homeEntry.gs || 0) - 3);
+                homeEntry.gc = Math.max(0, (homeEntry.gc || 0) - 0);
+                awayEntry.p = Math.max(0, (awayEntry.p || 0) - 1);
+                awayEntry.l = Math.max(0, (awayEntry.l || 0) - 1);
+                awayEntry.gc = Math.max(0, (awayEntry.gc || 0) - 3);
+            } else {
+                // Normal match
+                homeEntry.p = Math.max(0, (homeEntry.p || 0) - 1);
+                awayEntry.p = Math.max(0, (awayEntry.p || 0) - 1);
+                homeEntry.gs = Math.max(0, (homeEntry.gs || 0) - homeScore);
+                homeEntry.gc = Math.max(0, (homeEntry.gc || 0) - awayScore);
+                awayEntry.gs = Math.max(0, (awayEntry.gs || 0) - awayScore);
+                awayEntry.gc = Math.max(0, (awayEntry.gc || 0) - homeScore);
+                if (homeScore > awayScore) {
+                    homeEntry.w = Math.max(0, (homeEntry.w || 0) - 1);
+                    homeEntry.pts = Math.max(0, (homeEntry.pts || 0) - 3);
+                    awayEntry.l = Math.max(0, (awayEntry.l || 0) - 1);
+                } else if (homeScore < awayScore) {
+                    awayEntry.w = Math.max(0, (awayEntry.w || 0) - 1);
+                    awayEntry.pts = Math.max(0, (awayEntry.pts || 0) - 3);
+                    homeEntry.l = Math.max(0, (homeEntry.l || 0) - 1);
+                } else {
+                    homeEntry.d = Math.max(0, (homeEntry.d || 0) - 1);
+                    homeEntry.pts = Math.max(0, (homeEntry.pts || 0) - 1);
+                    awayEntry.d = Math.max(0, (awayEntry.d || 0) - 1);
+                    awayEntry.pts = Math.max(0, (awayEntry.pts || 0) - 1);
+                }
+            }
+            homeEntry.gd = (homeEntry.gs || 0) - (homeEntry.gc || 0);
+            awayEntry.gd = (awayEntry.gs || 0) - (awayEntry.gc || 0);
+            await database.ref(tablePath + '/' + homeKey).set(homeEntry);
+            await database.ref(tablePath + '/' + awayKey).set(awayEntry);
+
+            // Reverse scorers
+            const scorersPath = getSeasonPath(currentSeasonId, 'topScorers/list');
+            const assistsPath = getSeasonPath(currentSeasonId, 'topAssistants/list');
+            await loadTopScorerData();
+            await loadTopAssistantData();
+
+            const allScorers = [...(resultData.goalScorers?.home || []), ...(resultData.goalScorers?.away || [])];
+            const scorerTeams = [
+                ...(resultData.goalScorers?.home || []).map(s => ({ ...s, team: homeTeam })),
+                ...(resultData.goalScorers?.away || []).map(s => ({ ...s, team: awayTeam }))
+            ];
+            for (const s of scorerTeams) {
+                const existing = findMatchingPlayer(topScorerList, s.player, s.team);
+                if (existing && existing.key) {
+                    const newCount = Math.max(0, (existing.count || 0) - (s.goals || 1));
+                    if (newCount === 0) await database.ref(scorersPath + '/' + existing.key).remove();
+                    else await database.ref(scorersPath + '/' + existing.key + '/count').set(newCount);
+                }
+            }
+
+            const assistTeams = [
+                ...(resultData.userAssists?.home || []).map(a => ({ ...a, team: homeTeam })),
+                ...(resultData.userAssists?.away || []).map(a => ({ ...a, team: awayTeam }))
+            ];
+            for (const a of assistTeams) {
+                const existing = findMatchingPlayer(topAssistantList, a.player, a.team);
+                if (existing && existing.key) {
+                    const newCount = Math.max(0, (existing.count || 0) - (a.assists || 1));
+                    if (newCount === 0) await database.ref(assistsPath + '/' + existing.key).remove();
+                    else await database.ref(assistsPath + '/' + existing.key + '/count').set(newCount);
+                }
+            }
+
+            // Remove played opponent records for both managers
+            const playedSnap = await database.ref('fifasupercup_played_opponents').once('value');
+            const playedData = playedSnap.val() || {};
+            for (const key in playedData) {
+                const entry = playedData[key];
+                const matchesHome = entry.teamName === homeTeam && entry.opponentName === awayTeam && String(entry.matchday) === String(resultData.md);
+                const matchesAway = entry.teamName === awayTeam && entry.opponentName === homeTeam && String(entry.matchday) === String(resultData.md);
+                if (matchesHome || matchesAway) {
+                    await database.ref('fifasupercup_played_opponents/' + key).remove();
+                }
+            }
+        }
+
+        // ─── CHANGE 3: Replace entire openManagerActionHub ───
+        async function openManagerActionHub(linkedTeam, managerKey) {
             processEditApprovals();
-            // Get all fixtures for this team sorted by date (earliest first)
             const allFixtures = getTeamFixturesFromCalendar(linkedTeam);
-            // Build matchday number for each fixture date (1st date = MD1, 2nd = MD2, etc.)
             const uniqueDates = [];
             const seenDates = new Set();
             for (const fix of allFixtures) {
@@ -4412,7 +4633,6 @@
                     uniqueDates.push(fix.date);
                 }
             }
-            // Build list of opponents with their matchday number
             const opponentList = allFixtures.map(fix => {
                 const opponent = fix.home === linkedTeam ? fix.away : fix.home;
                 const md = uniqueDates.indexOf(fix.date) + 1;
@@ -4423,18 +4643,31 @@
                 showModal(`
                     <h3>🔑 ${escapeHtml(linkedTeam)}</h3>
                     <p style="color:rgba(255,255,255,0.6);font-size:1.4rem;margin:20px 0;">No fixtures found for your team. Please contact the admin.</p>
-                    <div class="modal-btns">
-                        <button class="modal-btn-cancel" id="closeActionHubBtn">Cancel</button>
-                    </div>
+                    <div class="modal-btns"><button class="modal-btn-cancel" id="closeActionHubBtn">Cancel</button></div>
                 `);
                 document.getElementById('closeActionHubBtn').onclick = closeModal;
                 return;
             }
 
-            let opponentsHtml = opponentList.map((item, idx) => {
+            const playedOpponents = await getPlayedOpponents(managerKey);
+            const availableOpponents = opponentList.filter(item =>
+                !playedOpponents.some(p => p.opponent === item.opponent && String(p.matchday) === String(item.md))
+            );
+
+            if (availableOpponents.length === 0) {
+                showModal(`
+                    <h3>🔑 ${escapeHtml(linkedTeam)}</h3>
+                    <p style="color:rgba(255,255,255,0.6);font-size:1.4rem;margin:20px 0;">You have already submitted results for all your fixtures. Contact admin if this is an error.</p>
+                    <div class="modal-btns"><button class="modal-btn-cancel" id="closeActionHubBtn">Close</button></div>
+                `);
+                document.getElementById('closeActionHubBtn').onclick = closeModal;
+                return;
+            }
+
+            let opponentsHtml = availableOpponents.map((item, idx) => {
                 const iconHtml = getTeamIconHtml(item.opponent, 'team-icon-sm');
                 return `
-                    <div class="today-yesterday-block opponent-select-block" data-idx="${idx}" style="cursor:pointer;display:flex;align-items:center;gap:16px;padding:20px 28px;text-align:left;border-radius:20px;margin-bottom:12px;background:rgba(30,144,255,0.1);border:2px solid var(--glass-border);transition:all 0.2s;">
+                    <div class="opponent-select-block" data-idx="${idx}" style="cursor:pointer;display:flex;align-items:center;gap:16px;padding:20px 28px;text-align:left;border-radius:20px;margin-bottom:12px;background:rgba(30,144,255,0.1);border:2px solid var(--glass-border);transition:all 0.2s;">
                         <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--turquoise);min-width:60px;">MD ${item.md}</div>
                         ${iconHtml}
                         <div>
@@ -4448,9 +4681,7 @@
             showModal(`
                 <h3>🔑 ${escapeHtml(linkedTeam)}</h3>
                 <p style="color:rgba(255,255,255,0.6);font-size:1.4rem;margin-bottom:20px;">Select the opponent you played against:</p>
-                <div style="max-height:420px;overflow-y:auto;">
-                    ${opponentsHtml}
-                </div>
+                <div style="max-height:420px;overflow-y:auto;">${opponentsHtml}</div>
                 <div class="modal-btns" style="margin-top:16px;">
                     <button class="modal-btn-cancel" id="closeActionHubBtn">Cancel</button>
                 </div>
@@ -4469,141 +4700,390 @@
                 });
                 block.onclick = () => {
                     const idx = parseInt(block.dataset.idx);
-                    const selected = opponentList[idx];
+                    const selected = availableOpponents[idx];
                     closeModal();
-                    openMatchTypeSelectionPopup(linkedTeam, managerKey, selected.opponent, selected.date);
+                    openMatchTypeSelectionPopup(linkedTeam, managerKey, selected.opponent, selected.date, selected.md);
                 };
             });
         }
 
-        // ─── USER: openAddResultsKeyModal (modified with fixed verification) ───
-        function openAddResultsKeyModal() {
-            const saved = getSavedManagerKey();
-            if (saved) {
-                validateSavedKey().then(valid => {
-                    if (valid) {
-                        showModal(`
-                  <h3>🔑 Welcome back, ${escapeHtml(valid.teamName)}!</h3>
-                  <p style="color:rgba(255,255,255,0.6);font-size:1.3rem;margin:20px 0;">Are you the manager for <strong style="color:var(--turquoise);">${escapeHtml(valid.teamName)}</strong>?</p>
-                  <div class="modal-btns">
-                    <button class="modal-btn-primary" id="confirmSavedKeyBtn">✅ Confirm</button>
-                    <button class="modal-btn-cancel" id="differentKeyBtn">Use Different Key</button>
-                  </div>
+        // ─── CHANGE 4: Replace entire openMatchTypeSelectionPopup ───
+        function openMatchTypeSelectionPopup(linkedTeam, managerKey, prefilledOpponent, prefilledDate, prefilledMd) {
+            showModal(`
+                <h3>🏆 Select Match Type</h3>
+                <p style="color:rgba(255,255,255,0.6);font-size:1.3rem;margin-bottom:16px;">Opponent: <strong style="color:var(--turquoise);">${escapeHtml(prefilledOpponent)}</strong> · MD ${prefilledMd} · ${escapeHtml(prefilledDate)}</p>
+                <div class="match-type-grid">
+                    <div class="match-type-block" id="normalMatchBlock">
+                        <div class="mt-icon">⚽</div>
+                        <div class="mt-title">NORMAL MATCH</div>
+                        <div class="mt-desc">Submit a regular match result with score, scorers, and assists</div>
+                    </div>
+                    <div class="match-type-block" id="forfeitMatchBlock">
+                        <div class="mt-icon">🚫</div>
+                        <div class="mt-title">FORFEIT MATCH</div>
+                        <div class="mt-desc">Request a forfeit win with screenshot evidence</div>
+                    </div>
+                </div>
+                <button class="modal-btn-cancel" id="cancelMatchTypeBtn" style="width:100%;">Cancel</button>
+            `);
+            document.getElementById('cancelMatchTypeBtn').onclick = closeModal;
+            document.getElementById('normalMatchBlock').onclick = () => {
+                closeModal();
+                openUserResultForm(linkedTeam, managerKey, prefilledOpponent, prefilledDate, prefilledMd);
+            };
+            document.getElementById('forfeitMatchBlock').onclick = () => {
+                closeModal();
+                openForfeitTypeSelectionPopup(linkedTeam, managerKey, prefilledOpponent, prefilledDate, prefilledMd);
+            };
+        }
+
+        // ─── CHANGE 5: Replace entire openUserResultForm ───
+        function openUserResultForm(linkedTeam, managerKey, prefilledOpponent, prefilledDate, prefilledMd) {
+            const homeTeam = linkedTeam;
+            const awayTeam = prefilledOpponent;
+            const md = prefilledMd;
+
+            let userScorersHome = [];
+            let userAssistsHome = [];
+            let userImages = [];
+            let matchNotesValue = '';
+            let homeScoreValue = 0;
+            let awayScoreValue = 0;
+            let scoreLocked = false;
+            let existingResultKey = null;
+            let existingResultLocation = null;
+
+            function askQuantity(playerName, type, callback) {
+                const label = type === 'scorer' ? 'goals' : 'assists';
+                const emoji = type === 'scorer' ? '⚽' : '🎯';
+                showModal(`
+                    <h3 style="color:var(--turquoise);">${emoji} ${escapeHtml(playerName)}</h3>
+                    <p style="color:rgba(255,255,255,0.8);font-size:2.2rem;margin:24px 0;text-align:center;">How many ${label} did <strong style="color:var(--razzmatazz);">${escapeHtml(playerName)}</strong> get?</p>
+                    <input type="number" id="qtyInput" inputmode="numeric" pattern="[0-9]*" value="1" min="1" style="text-align:center;font-size:3.5rem;font-family:'Bebas Neue',sans-serif;width:100%;padding:24px;background:rgba(255,255,255,0.06);border:2px solid var(--razzmatazz);border-radius:28px;color:white;outline:none;">
+                    <div class="modal-btns" style="margin-top:24px;">
+                        <button class="modal-btn-primary" id="confirmQtyBtn" style="font-size:2rem;padding:20px;">Confirm</button>
+                        <button class="modal-btn-cancel" id="cancelQtyBtn" style="font-size:2rem;padding:20px;">Cancel</button>
+                    </div>
                 `);
-                        document.getElementById('confirmSavedKeyBtn').onclick = () => {
-                            closeModal();
-                            openManagerActionHub(valid.teamName, valid.key);
-                        };
-                        document.getElementById('differentKeyBtn').onclick = () => {
-                            clearSavedManagerKey();
-                            closeModal();
-                            openAddResultsKeyModal();
-                        };
-                        return;
-                    } else {
-                        clearSavedManagerKey();
-                    }
+                document.getElementById('cancelQtyBtn').onclick = () => { closeModal(); renderForm(); };
+                document.getElementById('confirmQtyBtn').onclick = () => {
+                    const qty = parseInt(document.getElementById('qtyInput').value) || 1;
+                    closeModal();
+                    callback(qty);
+                    renderForm();
+                };
+                setTimeout(() => {
+                    const inp = document.getElementById('qtyInput');
+                    if (inp) { inp.focus(); inp.select(); }
+                }, 100);
+                document.getElementById('qtyInput') && document.getElementById('qtyInput').addEventListener('keydown', e => {
+                    if (e.key === 'Enter') document.getElementById('confirmQtyBtn').click();
                 });
-                return;
             }
 
-            showModal(`
-            <h3>🔐 Manager Key Required</h3>
-            <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;font-size:1.2rem;">Enter your manager key to submit match results.</p>
-            <label>Manager Key</label>
-            <input type="password" id="managerKeyInput" placeholder="Enter your key" style="font-family:'Inter',monospace;letter-spacing:2px;">
-            <div id="keyVerifyStatus"></div>
-            <div class="modal-btns">
-              <button class="modal-btn-primary" id="verifyKeyBtn">🔍 Verify Key</button>
-              <button class="modal-btn-cancel" id="cancelKeyModalBtn">Cancel</button>
-            </div>
-          `);
+            const renderForm = () => {
+                const homeScorersHtml = userScorersHome.map((s, idx) =>
+                    `<span class="scorer-badge">⚽ ${escapeHtml(s.player)} (${s.goals})<button class="remove-scorer" data-uside="homeScorer" data-uidx="${idx}">✖</button></span>`
+                ).join('');
+                const homeAssistsHtml = userAssistsHome.map((a, idx) =>
+                    `<span class="scorer-badge">🎯 ${escapeHtml(a.player)} (${a.assists})<button class="remove-scorer" data-uside="homeAssist" data-uidx="${idx}">✖</button></span>`
+                ).join('');
 
-            document.getElementById('cancelKeyModalBtn').onclick = closeModal;
+                let imgThumbsHtml = userImages.map((img, idx) => `
+                    <div class="preview-thumb" style="width:120px;height:120px;">
+                        <img src="${img.dataUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;border:2px solid var(--razzmatazz);">
+                        <span class="thumb-del" data-uimgidx="${idx}" style="cursor:pointer;position:absolute;top:-10px;right:-10px;background:#ef4444;color:white;border:none;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:bold;">✕</span>
+                    </div>
+                `).join('');
 
-            document.getElementById('verifyKeyBtn').onclick = async () => {
-                const keyInput = document.getElementById('managerKeyInput');
-                const statusEl = document.getElementById('keyVerifyStatus');
-                const key = keyInput.value.trim().toUpperCase();
+                showModal(`
+                    <h3>⚽ Submit Match Result</h3>
+                    <div style="text-align:center;margin-bottom:20px;padding:16px;background:rgba(30,144,255,0.1);border-radius:20px;">
+                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:rgba(255,255,255,0.5);letter-spacing:2px;">MD ${md} · ${escapeHtml(prefilledDate)}</div>
+                        <div style="display:flex;justify-content:center;align-items:center;gap:20px;margin-top:10px;">
+                            <span style="font-family:'Bebas Neue',sans-serif;font-size:2.8rem;color:var(--turquoise);">${escapeHtml(homeTeam)}</span>
+                            <span style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:rgba(255,255,255,0.4);">VS</span>
+                            <span style="font-family:'Bebas Neue',sans-serif;font-size:2.8rem;color:var(--razzmatazz);">${escapeHtml(awayTeam)}</span>
+                        </div>
+                        ${scoreLocked ? `<div style="color:#f97316;font-size:1.2rem;margin-top:8px;">🔒 Score locked — opponent already submitted</div>` : ''}
+                    </div>
 
-                if (!key) {
-                    statusEl.innerHTML = '<div class="status-msg status-error">Please enter your manager key.</div>';
-                    return;
-                }
+                    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;margin:20px 0;text-align:center;">
+                        <div>
+                            <div style="color:rgba(255,255,255,0.5);font-size:1.4rem;margin-bottom:6px;">YOUR SCORE</div>
+                            <input type="number" id="userHomeScore" value="${homeScoreValue}" min="0" ${scoreLocked ? 'readonly style="text-align:center;font-size:2.8rem;font-family:Bebas Neue,sans-serif;opacity:0.6;cursor:not-allowed;"' : 'style="text-align:center;font-size:2.8rem;font-family:Bebas Neue,sans-serif;"'}>
+                        </div>
+                        <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:rgba(255,255,255,0.4);">—</div>
+                        <div>
+                            <div style="color:rgba(255,255,255,0.5);font-size:1.4rem;margin-bottom:6px;">OPPONENT SCORE</div>
+                            <input type="number" id="userAwayScore" value="${awayScoreValue}" min="0" ${scoreLocked ? 'readonly style="text-align:center;font-size:2.8rem;font-family:Bebas Neue,sans-serif;opacity:0.6;cursor:not-allowed;"' : 'style="text-align:center;font-size:2.8rem;font-family:Bebas Neue,sans-serif;"'}>
+                        </div>
+                    </div>
 
-                const btn = document.getElementById('verifyKeyBtn');
-                btn.disabled = true;
-                btn.innerHTML = '<span class="btn-spinner"></span> Verifying...';
-                statusEl.innerHTML = '<div class="status-msg status-loading">Checking key...</div>';
+                    <div style="margin-top:20px;">
+                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--turquoise);margin-bottom:10px;">YOUR SCORERS ⚽</div>
+                        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:flex-end;">
+                            <div class="autocomplete-container" style="flex:2;min-width:120px;position:relative;">
+                                <input type="text" id="uHomeScorerName" placeholder="Type player name..." style="width:100%;" autocomplete="off">
+                                <div id="uHomeScorerDropdown" class="autocomplete-dropdown" style="display:none;"></div>
+                            </div>
+                            <button class="modal-btn-primary" id="uAddHomeScorer" style="padding:10px 20px;font-size:1.3rem;align-self:flex-end;">Add</button>
+                        </div>
+                        <div class="scorer-list" id="uHomeScorerList">${homeScorersHtml}</div>
+                    </div>
 
-                try {
-                    await loadManagerKeys();
-                    const entry = Object.values(managerKeysCache).find(e => e.key === key);
+                    <div style="margin-top:20px;">
+                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--turquoise);margin-bottom:10px;">YOUR ASSISTS 🎯</div>
+                        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:flex-end;">
+                            <div class="autocomplete-container" style="flex:2;min-width:120px;position:relative;">
+                                <input type="text" id="uHomeAssistName" placeholder="Type player name..." style="width:100%;" autocomplete="off">
+                                <div id="uHomeAssistDropdown" class="autocomplete-dropdown" style="display:none;"></div>
+                            </div>
+                            <button class="modal-btn-primary" id="uAddHomeAssist" style="padding:10px 20px;font-size:1.3rem;align-self:flex-end;">Add</button>
+                        </div>
+                        <div class="scorer-list" id="uHomeAssistList">${homeAssistsHtml}</div>
+                    </div>
 
-                    if (!entry) {
-                        statusEl.innerHTML = '<div class="status-msg status-error">❌ Invalid manager key. Please check and try again.</div>';
-                        btn.disabled = false;
-                        btn.innerHTML = '🔍 Verify Key';
+                    <label style="margin-top:20px;">Upload Match Images <span class="required-star">*</span></label>
+                    <div class="image-upload-area" id="userImageArea">
+                        <div class="upload-icon">📸</div>
+                        <div class="upload-text" style="font-size:1.4rem;">Click to add images (${userImages.length} added)</div>
+                        <input type="file" id="userImageInput" accept="image/*" multiple style="display:none;">
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:12px;margin:12px 0;" id="userImagePreview">${imgThumbsHtml}</div>
+
+                    <label style="margin-top:20px;">Match Notes (optional)</label>
+                    <textarea id="userMatchNotes" placeholder="Any notes for the admin..." style="min-height:80px;font-size:1.4rem;">${escapeHtml(matchNotesValue)}</textarea>
+
+                    <div class="modal-btns" style="margin-top:20px;">
+                        <button class="modal-btn-primary" id="userSubmitResultBtn" style="flex:2;">✅ Submit Result</button>
+                        <button class="modal-btn-cancel" id="userCancelResultBtn">Cancel</button>
+                    </div>
+                    <div id="userResultStatus"></div>
+                `, true);
+
+                document.getElementById('userHomeScore').addEventListener('input', function() { homeScoreValue = parseInt(this.value) || 0; });
+                document.getElementById('userAwayScore').addEventListener('input', function() { awayScoreValue = parseInt(this.value) || 0; });
+                document.getElementById('userMatchNotes').addEventListener('input', function() { matchNotesValue = this.value; });
+
+                document.getElementById('uAddHomeScorer').onclick = () => {
+                    const name = document.getElementById('uHomeScorerName').value.trim();
+                    if (!name) return;
+                    askQuantity(name, 'scorer', (qty) => {
+                        const existing = userScorersHome.find(s => s.player.toLowerCase() === name.toLowerCase());
+                        if (existing) existing.goals += qty;
+                        else userScorersHome.push({ player: name, goals: qty });
+                    });
+                };
+
+                document.getElementById('uAddHomeAssist').onclick = () => {
+                    const name = document.getElementById('uHomeAssistName').value.trim();
+                    if (!name) return;
+                    askQuantity(name, 'assist', (qty) => {
+                        const existing = userAssistsHome.find(a => a.player.toLowerCase() === name.toLowerCase());
+                        if (existing) existing.assists += qty;
+                        else userAssistsHome.push({ player: name, assists: qty });
+                    });
+                };
+
+                document.querySelectorAll('.remove-scorer[data-uside]').forEach(btn => {
+                    btn.onclick = () => {
+                        const side = btn.dataset.uside;
+                        const idx = parseInt(btn.dataset.uidx);
+                        if (side === 'homeScorer') userScorersHome.splice(idx, 1);
+                        else if (side === 'homeAssist') userAssistsHome.splice(idx, 1);
+                        renderForm();
+                    };
+                });
+
+                const area = document.getElementById('userImageArea');
+                const fileInput = document.getElementById('userImageInput');
+                area.onclick = () => fileInput.click();
+                fileInput.onchange = async function() {
+                    const files = Array.from(this.files);
+                    for (const file of files) {
+                        const dataUrl = await fileToDataUrl(file);
+                        userImages.push({ file, dataUrl });
+                    }
+                    renderForm();
+                };
+
+                document.querySelectorAll('[data-uimgidx]').forEach(el => {
+                    el.onclick = () => { userImages.splice(parseInt(el.dataset.uimgidx), 1); renderForm(); };
+                });
+
+                document.getElementById('userCancelResultBtn').onclick = closeModal;
+
+                setupAutocomplete('uHomeScorerName', 'uHomeScorerDropdown', homeTeam, 'scorer');
+                setupAutocomplete('uHomeAssistName', 'uHomeAssistDropdown', homeTeam, 'assist');
+
+                document.getElementById('userSubmitResultBtn').onclick = () => {
+                    const hs = parseInt(document.getElementById('userHomeScore').value) || 0;
+                    const as2 = parseInt(document.getElementById('userAwayScore').value) || 0;
+                    const matchNotes = document.getElementById('userMatchNotes').value.trim();
+
+                    if (userImages.length === 0) {
+                        document.getElementById('userResultStatus').innerHTML = '<div class="status-msg status-error">Please upload at least one image.</div>';
                         return;
                     }
 
-                    saveManagerKey(key, entry.teamName);
-                    statusEl.innerHTML = `<div class="status-msg status-success">✅ Verified! Welcome ${entry.teamName}.</div>`;
-                    btn.innerHTML = '✓ Verified';
-                    setTimeout(() => {
-                        closeModal();
-                        openManagerActionHub(entry.teamName, key);
-                    }, 600);
+                    showModal(`
+                        <h3 style="color:#ff4444;font-family:'Bebas Neue',sans-serif;font-size:3.5rem;letter-spacing:3px;">⚠️ WARNING</h3>
+                        <p style="color:rgba(255,255,255,0.95);font-size:2.8rem;line-height:1.6;margin:28px 0;text-align:center;font-family:'Rajdhani',sans-serif;font-weight:700;">Please be sure your results are correct. You cannot edit them after submission. False results will result in a <strong style="color:#ff4444;">6 point deduction</strong>. Your results will update your statistics immediately.</p>
+                        <div class="modal-btns" style="margin-top:28px;">
+                            <button class="modal-btn-primary" id="confirmResultSubmitBtn" style="font-size:2rem;padding:20px;">✅ Confirm</button>
+                            <button class="modal-btn-cancel" id="reviewResultBtn" style="font-size:2rem;padding:20px;">🔍 Review</button>
+                        </div>
+                    `);
 
-                } catch (e) {
-                    statusEl.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
-                    btn.disabled = false;
-                    btn.innerHTML = '🔍 Verify Key';
-                }
+                    document.getElementById('reviewResultBtn').onclick = () => { closeModal(); renderForm(); };
+
+                    document.getElementById('confirmResultSubmitBtn').onclick = async () => {
+                        closeModal();
+
+                        const statusEl = document.getElementById('userResultStatus');
+                        const limitCheck = await validateDailyMatchLimit(managerKey, md);
+                        if (!limitCheck.allowed) {
+                            showModal(`<h3>⏳ Limit Reached</h3><p style="color:rgba(255,255,255,0.7);font-size:1.6rem;margin:20px 0;">${limitCheck.message}</p><div class="modal-btns"><button class="modal-btn-cancel" id="closeLimitBtn">Close</button></div>`);
+                            document.getElementById('closeLimitBtn').onclick = closeModal;
+                            return;
+                        }
+
+                        showModal(`<h3>⏳ Submitting...</h3><div class="loading-spinner"><div class="spinner"></div><span>Uploading images and updating stats...</span></div>`);
+
+                        try {
+                            const imageUrls = [];
+                            for (const img of userImages) {
+                                const url = await uploadToImgBB(img.file);
+                                imageUrls.push(url);
+                            }
+
+                            const matchText = formatResultText(homeTeam, hs, awayTeam, as2, '');
+
+                            const resultData = {
+                                matchText,
+                                md,
+                                date: prefilledDate,
+                                matchNotes,
+                                goalScorers: { home: userScorersHome, away: [] },
+                                userAssists: { home: userAssistsHome, away: [] },
+                                images: imageUrls,
+                                submittedBy: managerKey,
+                                submittedAt: Date.now(),
+                                homeTeam,
+                                awayTeam,
+                                homeScore: hs,
+                                awayScore: as2,
+                                matchType: 'normal',
+                                forfeitType: 'none',
+                                userSubmitted: true,
+                                status: 'approved',
+                                approvedAt: Date.now()
+                            };
+
+                            // If other manager already submitted, merge scorers only
+                            if (scoreLocked && existingResultKey) {
+                                const path = existingResultLocation === 'pending'
+                                    ? getSeasonPath(currentSeasonId, 'pending_results/' + existingResultKey)
+                                    : getSeasonPath(currentSeasonId, 'results/' + existingResultKey);
+
+                                const snap = await database.ref(path).once('value');
+                                const existing = snap.val() || {};
+
+                                const mergedHomeScorers = mergeScorersOrAssists(existing.goalScorers?.home || [], userScorersHome);
+                                const mergedHomeAssists = mergeScorersOrAssists(existing.userAssists?.home || [], userAssistsHome);
+
+                                // Determine which side is home and which is away for this manager
+                                let updatedGoalScorers, updatedAssists;
+                                if (existing.homeTeam === homeTeam) {
+                                    updatedGoalScorers = { home: mergedHomeScorers, away: existing.goalScorers?.away || [] };
+                                    updatedAssists = { home: mergedHomeAssists, away: existing.userAssists?.away || [] };
+                                } else {
+                                    updatedGoalScorers = { home: existing.goalScorers?.home || [], away: mergedHomeScorers };
+                                    updatedAssists = { home: existing.userAssists?.home || [], away: mergedHomeAssists };
+                                }
+
+                                await database.ref(path).update({
+                                    goalScorers: updatedGoalScorers,
+                                    userAssists: updatedAssists
+                                });
+
+                                // Apply only the scorers/assists from this manager
+                                await loadTopScorerData();
+                                await loadTopAssistantData();
+                                if (userScorersHome.length) await applyScorersFromScan(userScorersHome, homeTeam);
+                                if (userAssistsHome.length) await applyAssistsFromScan(userAssistsHome, homeTeam);
+
+                            } else {
+                                // First manager submitting — write full result and update all stats
+                                incrementPending();
+                                await database.ref(getSeasonPath(currentSeasonId, 'results')).push(resultData);
+                                decrementPending();
+
+                                await applyResultStats({
+                                    homeTeam, awayTeam,
+                                    homeScore: hs, awayScore: as2,
+                                    matchText, matchType: 'normal'
+                                });
+
+                                await loadTopScorerData();
+                                await loadTopAssistantData();
+                                if (userScorersHome.length) await applyScorersFromScan(userScorersHome, homeTeam);
+                                if (userAssistsHome.length) await applyAssistsFromScan(userAssistsHome, homeTeam);
+                            }
+
+                            // Save played opponent record
+                            await savePlayedOpponent(managerKey, homeTeam, awayTeam, md);
+
+                            // Update manager last submission timestamp
+                            const keyId = await findManagerKeyId(managerKey);
+                            if (keyId) await database.ref('managerKeys/' + keyId + '/lastSubmissionTimestamp').set(Date.now());
+
+                            await loadCurrentSeasonData();
+                            renderCurrentTab();
+
+                            showModal(`
+                                <div style="text-align:center;padding:40px 0;">
+                                    <div style="font-size:5rem;">✅</div>
+                                    <h3 style="color:var(--turquoise);font-size:2.8rem;margin:20px 0;">Result Submitted!</h3>
+                                    <p style="color:rgba(255,255,255,0.6);font-size:1.6rem;">Your stats have been updated immediately.</p>
+                                    <button class="modal-btn-cancel" id="closeSuccessBtn" style="width:100%;margin-top:20px;font-size:1.6rem;padding:16px;">Close</button>
+                                </div>
+                            `);
+                            document.getElementById('closeSuccessBtn').onclick = closeModal;
+
+                        } catch (e) {
+                            showModal(`
+                                <h3>❌ Error</h3>
+                                <p style="color:#ffaaaa;font-size:1.6rem;margin:20px 0;">${escapeHtml(e.message)}</p>
+                                <div class="modal-btns"><button class="modal-btn-cancel" id="closeErrBtn">Close</button></div>
+                            `);
+                            document.getElementById('closeErrBtn').onclick = () => { closeModal(); renderForm(); };
+                        }
+                    };
+                };
             };
 
-            document.getElementById('managerKeyInput').addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    document.getElementById('verifyKeyBtn').click();
+            // Check if other manager already submitted this match before rendering form
+            getExistingMatchResult(homeTeam, awayTeam, md).then(existing => {
+                if (existing.found) {
+                    scoreLocked = true;
+                    existingResultKey = existing.key;
+                    existingResultLocation = existing.location;
+                    if (existing.data.homeTeam === homeTeam) {
+                        homeScoreValue = existing.data.homeScore || 0;
+                        awayScoreValue = existing.data.awayScore || 0;
+                    } else {
+                        homeScoreValue = existing.data.awayScore || 0;
+                        awayScoreValue = existing.data.homeScore || 0;
+                    }
                 }
+                renderForm();
             });
         }
 
-        // ─── MATCH TYPE SELECTION (modified with prefilled params) ───
-        function openMatchTypeSelectionPopup(linkedTeam, managerKey, prefilledOpponent, prefilledDate) {
-            showModal(`
-            <h3>🏆 Select Match Type</h3>
-            ${prefilledOpponent ? `<p style="color:rgba(255,255,255,0.6);font-size:1.3rem;margin-bottom:16px;">Opponent: <strong style="color:var(--turquoise);">${escapeHtml(prefilledOpponent)}</strong>${prefilledDate ? ` · ${escapeHtml(prefilledDate)}` : ''}</p>` : ''}
-            <div class="match-type-grid">
-              <div class="match-type-block" id="normalMatchBlock">
-                <div class="mt-icon">⚽</div>
-                <div class="mt-title">NORMAL MATCH</div>
-                <div class="mt-desc">Submit a regular match result with score, scorers, and assists</div>
-              </div>
-              <div class="match-type-block" id="forfeitMatchBlock">
-                <div class="mt-icon">🚫</div>
-                <div class="mt-title">FORFEIT MATCH</div>
-                <div class="mt-desc">Request a forfeit win with screenshot evidence</div>
-              </div>
-            </div>
-            <button class="modal-btn-cancel" id="cancelMatchTypeBtn" style="width:100%;">Cancel</button>
-          `);
-
-            document.getElementById('cancelMatchTypeBtn').onclick = closeModal;
-
-            document.getElementById('normalMatchBlock').onclick = () => {
-                closeModal();
-                openUserResultForm(linkedTeam, managerKey, prefilledOpponent, prefilledDate);
-            };
-
-            document.getElementById('forfeitMatchBlock').onclick = () => {
-                closeModal();
-                openForfeitTypeSelectionPopup(linkedTeam, managerKey, prefilledOpponent, prefilledDate);
-            };
-        }
-
         // ─── FORFEIT TYPE SELECTION (modified with prefilled params) ───
-        function openForfeitTypeSelectionPopup(linkedTeam, managerKey, prefilledOpponent, prefilledDate) {
+        function openForfeitTypeSelectionPopup(linkedTeam, managerKey, prefilledOpponent, prefilledDate, prefilledMd) {
             const teamNames = teamsData.map(t => t.name).sort();
             const otherTeams = teamNames.filter(t => t !== linkedTeam);
             const awayOpts = otherTeams.map(t => `<option value="${t}">${escapeHtml(t)}</option>`).join('');
@@ -4614,6 +5094,7 @@
               Your Team: <strong style="color:var(--turquoise);">${escapeHtml(linkedTeam)}</strong>
               ${prefilledOpponent ? ` · Opponent: <strong style="color:var(--razzmatazz);">${escapeHtml(prefilledOpponent)}</strong>` : ''}
               ${prefilledDate ? ` · ${escapeHtml(prefilledDate)}` : ''}
+              ${prefilledMd ? ` · MD ${prefilledMd}` : ''}
             </p>
             <div class="match-type-grid">
               <div class="match-type-block" id="noContestBlock">
@@ -4634,17 +5115,17 @@
 
             document.getElementById('noContestBlock').onclick = () => {
                 closeModal();
-                openForfeitSubmitForm(linkedTeam, managerKey, 'no_contest', prefilledOpponent, prefilledDate);
+                openForfeitSubmitForm(linkedTeam, managerKey, 'no_contest', prefilledOpponent, prefilledDate, prefilledMd);
             };
 
             document.getElementById('forfeitWinBlock').onclick = () => {
                 closeModal();
-                openForfeitSubmitForm(linkedTeam, managerKey, 'forfeit_win', prefilledOpponent, prefilledDate);
+                openForfeitSubmitForm(linkedTeam, managerKey, 'forfeit_win', prefilledOpponent, prefilledDate, prefilledMd);
             };
         }
 
         // ─── FORFEIT SUBMIT FORM (modified with prefilled params and updated path) ───
-        function openForfeitSubmitForm(linkedTeam, managerKey, forfeitType, prefilledOpponent, prefilledDate) {
+        function openForfeitSubmitForm(linkedTeam, managerKey, forfeitType, prefilledOpponent, prefilledDate, prefilledMd) {
             const teamNames = teamsData.map(t => t.name).sort();
             const otherTeams = teamNames.filter(t => t !== linkedTeam);
             let forfeitImages = [];
@@ -4656,8 +5137,8 @@
                 'You will receive 3 points and a win. Opponent receives a loss and -3 GD.';
 
             // Compute auto-matchday
-            let autoMd = null;
-            if (prefilledDate) {
+            let autoMd = prefilledMd || null;
+            if (!autoMd && prefilledDate) {
                 autoMd = getAutoMatchdayForTeamAndDate(linkedTeam, prefilledDate);
             }
 
@@ -4685,6 +5166,7 @@
                 Your Team: <strong style="color:var(--turquoise);">${escapeHtml(linkedTeam)}</strong>
                 ${prefilledOpponent ? ` · Opponent: <strong style="color:var(--razzmatazz);">${escapeHtml(prefilledOpponent)}</strong>` : ''}
                 ${prefilledDate ? ` · ${escapeHtml(prefilledDate)}` : ''}
+                ${prefilledMd ? ` · MD ${prefilledMd}` : ''}
               </p>
               <div class="forfeit-desc" style="font-size:1.3rem;">${typeDesc}</div>
 
@@ -4848,6 +5330,9 @@
                                 // Auto-approve forfeit submissions immediately (they're user-submitted and auto-approved)
                                 await autoApproveFreshSubmission(newRef.key, forfeitData);
 
+                                // ─── CHANGE 9: Save played opponent record ───
+                                await savePlayedOpponent(managerKey, homeTeam, awayTeam, md);
+
                                 status.innerHTML = '<div class="status-msg status-success">✅ Forfeit submitted and approved!</div>';
                                 btn.innerHTML = '✓ Submitted!';
                                 setTimeout(() => { closeModal(); }, 1500);
@@ -4864,365 +5349,151 @@
             renderForfeitForm();
         }
 
-        // ─── USER: Result Submission Form (modified with prefilled params and updated path) ───
-        function openUserResultForm(linkedTeam, managerKey, prefilledOpponent, prefilledDate) {
-            const teamNames = teamsData.map(t => t.name).sort();
-            const otherTeams = teamNames.filter(t => t !== linkedTeam);
-
-            let userScorersHome = [];
-            let userScorersAway = [];
-            let userAssistsHome = [];
-            let userAssistsAway = [];
-            let userImages = [];
-            let selectedOpponent = prefilledOpponent || '';
-            let homeScoreValue = 0;
-            let awayScoreValue = 0;
-            let matchNotesValue = '';
-            let submittedDate = prefilledDate || getSASTToday();
-
-            // Compute auto-matchday from fixture order
-            let autoMd = null;
-            if (prefilledDate && prefilledOpponent) {
-                const allFix = getTeamFixturesFromCalendar(linkedTeam);
-                const uniqueDatesArr = [];
-                const seenDatesSet = new Set();
-                for (const f of allFix) {
-                    if (!seenDatesSet.has(f.date)) {
-                        seenDatesSet.add(f.date);
-                        uniqueDatesArr.push(f.date);
+        // ─── USER: openAddResultsKeyModal (modified with fixed verification) ───
+        function openAddResultsKeyModal() {
+            const saved = getSavedManagerKey();
+            if (saved) {
+                validateSavedKey().then(valid => {
+                    if (valid) {
+                        showModal(`
+                  <h3>🔑 Welcome back, ${escapeHtml(valid.teamName)}!</h3>
+                  <p style="color:rgba(255,255,255,0.6);font-size:1.3rem;margin:20px 0;">Are you the manager for <strong style="color:var(--turquoise);">${escapeHtml(valid.teamName)}</strong>?</p>
+                  <div class="modal-btns">
+                    <button class="modal-btn-primary" id="confirmSavedKeyBtn">✅ Confirm</button>
+                    <button class="modal-btn-cancel" id="differentKeyBtn">Use Different Key</button>
+                  </div>
+                `);
+                        document.getElementById('confirmSavedKeyBtn').onclick = () => {
+                            closeModal();
+                            openManagerActionHub(valid.teamName, valid.key);
+                        };
+                        document.getElementById('differentKeyBtn').onclick = () => {
+                            clearSavedManagerKey();
+                            closeModal();
+                            openAddResultsKeyModal();
+                        };
+                        return;
+                    } else {
+                        clearSavedManagerKey();
                     }
-                }
-                const fixIdx = uniqueDatesArr.indexOf(prefilledDate);
-                if (fixIdx !== -1) autoMd = fixIdx + 1;
+                });
+                return;
             }
 
-            const renderForm = () => {
-                const awayOpts = otherTeams.map(t =>
-                    `<option value="${t}" ${selectedOpponent === t ? 'selected' : ''}>${escapeHtml(t)}</option>`
-                ).join('');
+            showModal(`
+            <h3>🔐 Manager Key Required</h3>
+            <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;font-size:1.2rem;">Enter your manager key to submit match results.</p>
+            <label>Manager Key</label>
+            <input type="password" id="managerKeyInput" placeholder="Enter your key" style="font-family:'Inter',monospace;letter-spacing:2px;">
+            <div id="keyVerifyStatus"></div>
+            <div class="modal-btns">
+              <button class="modal-btn-primary" id="verifyKeyBtn">🔍 Verify Key</button>
+              <button class="modal-btn-cancel" id="cancelKeyModalBtn">Cancel</button>
+            </div>
+          `);
 
-                let mdOptions = '';
-                for (let i = 1; i <= currentMatchday + 2; i++) {
-                    const selected = (autoMd !== null && i === autoMd) ? 'selected' : (i === currentMatchday ? 'selected' :
-                        '');
-                    mdOptions += `<option value="${i}" ${selected}>MD ${i}</option>`;
+            document.getElementById('cancelKeyModalBtn').onclick = closeModal;
+
+            document.getElementById('verifyKeyBtn').onclick = async () => {
+                const keyInput = document.getElementById('managerKeyInput');
+                const statusEl = document.getElementById('keyVerifyStatus');
+                const key = keyInput.value.trim().toUpperCase();
+
+                if (!key) {
+                    statusEl.innerHTML = '<div class="status-msg status-error">Please enter your manager key.</div>';
+                    return;
                 }
 
-                const homeScorersHtml = userScorersHome.map((s, idx) =>
-                    `<span class="scorer-badge">⚽ ${escapeHtml(s.player)} (${s.goals})<button class="remove-scorer" data-uside="homeScorer" data-uidx="${idx}">✖</button></span>`
-                ).join('');
-                const homeAssistsHtml = userAssistsHome.map((a, idx) =>
-                    `<span class="scorer-badge">🎯 ${escapeHtml(a.player)} (${a.assists})<button class="remove-scorer" data-uside="homeAssist" data-uidx="${idx}">✖</button></span>`
-                ).join('');
+                const btn = document.getElementById('verifyKeyBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="btn-spinner"></span> Verifying...';
+                statusEl.innerHTML = '<div class="status-msg status-loading">Checking key...</div>';
 
-                let imgThumbsHtml = userImages.map((img, idx) => `
-              <div class="preview-thumb" style="width:120px;height:120px;">
-                <img src="${img.dataUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;border:2px solid var(--razzmatazz);">
-                <span class="thumb-del" data-uimgidx="${idx}" style="cursor:pointer;position:absolute;top:-10px;right:-10px;background:#ef4444;color:white;border:none;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:bold;">✕</span>
-              </div>
-            `).join('');
+                try {
+                    await loadManagerKeys();
+                    const entry = Object.values(managerKeysCache).find(e => e.key === key);
 
-                const opponentDisplay = selectedOpponent || '?';
-
-                showModal(`
-              <h3>⚽ Submit Match Result</h3>
-              <div style="text-align:center;margin-bottom:16px;">
-                <div style="color:rgba(255,255,255,0.5);font-size:1.6rem;">VS OPPONENT</div>
-                <div style="font-family:'Bebas Neue',sans-serif;font-size:3.5rem;color:var(--turquoise);letter-spacing:3px;">${escapeHtml(opponentDisplay)}</div>
-                ${prefilledDate ? `<div style="color:rgba(255,255,255,0.4);font-size:1.2rem;margin-top:4px;">${escapeHtml(prefilledDate)}</div>` : ''}
-              </div>
-
-              <label>Select Opponent <span class="required-star">*</span></label>
-              <select id="userAwayTeam">
-                <option value="">Select Opponent</option>
-                ${awayOpts}
-              </select>
-
-              <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;margin:20px 0;text-align:center;">
-                <div>
-                  <div style="color:rgba(255,255,255,0.5);font-size:1.4rem;margin-bottom:6px;">YOUR SCORE</div>
-                  <input type="number" id="userHomeScore" value="${homeScoreValue}" min="0" style="text-align:center;font-size:2.8rem;font-family:'Bebas Neue',sans-serif;">
-                </div>
-                <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:rgba(255,255,255,0.4);">—</div>
-                <div>
-                  <div style="color:rgba(255,255,255,0.5);font-size:1.4rem;margin-bottom:6px;">OPPONENT SCORE</div>
-                  <input type="number" id="userAwayScore" value="${awayScoreValue}" min="0" style="text-align:center;font-size:2.8rem;font-family:'Bebas Neue',sans-serif;">
-                </div>
-              </div>
-
-              <label>Matchday <span class="required-star">*</span></label>
-              <select id="userMatchdaySelect">${mdOptions}</select>
-
-              <div style="display:grid;grid-template-columns:1fr;gap:20px;margin-top:20px;">
-                <div>
-                  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--turquoise);margin-bottom:10px;">YOUR TEAM</div>
-                  <div class="scorer-section user-result-form">
-                    <h4>⚽ Your Scorers</h4>
-                    <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:flex-end;">
-                      <div class="autocomplete-container" style="flex:2;min-width:80px;position:relative;">
-                        <input type="text" id="uHomeScorerName" placeholder="Player" style="width:100%;" autocomplete="off">
-                        <div id="uHomeScorerDropdown" class="autocomplete-dropdown" style="display:none;"></div>
-                      </div>
-                      <div style="display:flex;flex-direction:column;gap:4px;">
-                        <label style="font-size:0.75rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.5px;">Goals</label>
-                        <input type="number" id="uHomeScorerGoals" value="1" style="width:60px;padding:8px;background:rgba(255,255,255,0.06);border:1px solid var(--razzmatazz);border-radius:14px;color:white;font-family:'Rajdhani',sans-serif;font-size:1rem;outline:none;">
-                      </div>
-                      <button class="modal-btn-primary" id="uAddHomeScorer" style="padding:8px 12px;font-size:1.2rem;align-self:flex-end;">Add</button>
-                    </div>
-                    <div class="scorer-list" id="uHomeScorerList">${homeScorersHtml}</div>
-                  </div>
-                  <div class="scorer-section user-result-form">
-                    <h4>🎯 Your Assists</h4>
-                    <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:flex-end;">
-                      <div class="autocomplete-container" style="flex:2;min-width:80px;position:relative;">
-                        <input type="text" id="uHomeAssistName" placeholder="Player" style="width:100%;" autocomplete="off">
-                        <div id="uHomeAssistDropdown" class="autocomplete-dropdown" style="display:none;"></div>
-                      </div>
-                      <div style="display:flex;flex-direction:column;gap:4px;">
-                        <label style="font-size:0.75rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.5px;">Assists</label>
-                        <input type="number" id="uHomeAssistCount" value="1" style="width:60px;padding:8px;background:rgba(255,255,255,0.06);border:1px solid var(--razzmatazz);border-radius:14px;color:white;font-family:'Rajdhani',sans-serif;font-size:1rem;outline:none;">
-                      </div>
-                      <button class="modal-btn-primary" id="uAddHomeAssist" style="padding:8px 12px;font-size:1.2rem;align-self:flex-end;">Add</button>
-                    </div>
-                    <div class="scorer-list" id="uHomeAssistList">${homeAssistsHtml}</div>
-                  </div>
-                </div>
-              </div>
-
-              <label style="margin-top:20px;">Upload Match Images <span class="required-star">*</span> (at least 1 required, no limit)</label>
-              <div class="image-upload-area" id="userImageArea">
-                <div class="upload-icon">📸</div>
-                <div class="upload-text" style="font-size:1.4rem;">Click to add images (${userImages.length} added)</div>
-                <input type="file" id="userImageInput" accept="image/*" multiple style="display:none;">
-              </div>
-              <div style="display:flex;flex-wrap:wrap;gap:12px;margin:12px 0;" id="userImagePreview">
-                ${imgThumbsHtml}
-              </div>
-
-              <label style="margin-top:20px;">Match Notes for Admin (optional)</label>
-              <textarea id="userMatchNotes" placeholder="Any notes for the admin reviewing this result..." style="min-height:80px;font-size:1.4rem;">${escapeHtml(matchNotesValue)}</textarea>
-
-              <div class="modal-btns" style="margin-top:20px;">
-                <button class="modal-btn-primary" id="userSubmitResultBtn" style="flex:2;">✅ Submit Result</button>
-                <button class="modal-btn-cancel" id="userCancelResultBtn">Cancel</button>
-              </div>
-              <div id="userResultStatus"></div>
-            `, true);
-
-                document.getElementById('userAwayTeam').addEventListener('change', e => {
-                    selectedOpponent = e.target.value;
-                });
-
-                document.getElementById('userHomeScore').addEventListener('input', function() {
-                    homeScoreValue = parseInt(this.value) || 0;
-                });
-                document.getElementById('userAwayScore').addEventListener('input', function() {
-                    awayScoreValue = parseInt(this.value) || 0;
-                });
-
-                document.getElementById('userMatchNotes').addEventListener('input', function() {
-                    matchNotesValue = this.value;
-                });
-
-                document.getElementById('uAddHomeScorer').onclick = () => {
-                    const name = document.getElementById('uHomeScorerName').value.trim();
-                    const goals = parseInt(document.getElementById('uHomeScorerGoals').value) || 1;
-                    if (!name) return;
-                    const existing = userScorersHome.find(s => s.player.toLowerCase() === name.toLowerCase());
-                    if (existing) {
-                        existing.goals += goals;
-                    } else {
-                        userScorersHome.push({ player: name, goals });
+                    if (!entry) {
+                        statusEl.innerHTML = '<div class="status-msg status-error">❌ Invalid manager key. Please check and try again.</div>';
+                        btn.disabled = false;
+                        btn.innerHTML = '🔍 Verify Key';
+                        return;
                     }
-                    renderForm();
-                };
-                document.getElementById('uAddHomeAssist').onclick = () => {
-                    const name = document.getElementById('uHomeAssistName').value.trim();
-                    const assists = parseInt(document.getElementById('uHomeAssistCount').value) || 1;
-                    if (!name) return;
-                    const existing = userAssistsHome.find(a => a.player.toLowerCase() === name.toLowerCase());
-                    if (existing) {
-                        existing.assists += assists;
-                    } else {
-                        userAssistsHome.push({ player: name, assists });
-                    }
-                    renderForm();
-                };
 
-                document.querySelectorAll('.remove-scorer[data-uside]').forEach(btn => {
-                    btn.onclick = () => {
-                        const side = btn.dataset.uside;
-                        const idx = parseInt(btn.dataset.uidx);
-                        if (side === 'homeScorer') userScorersHome.splice(idx, 1);
-                        else if (side === 'homeAssist') userAssistsHome.splice(idx, 1);
-                        renderForm();
-                    };
-                });
-
-                const area = document.getElementById('userImageArea');
-                const fileInput = document.getElementById('userImageInput');
-
-                area.onclick = () => fileInput.click();
-
-                fileInput.onchange = async function() {
-                    const files = Array.from(this.files);
-                    for (const file of files) {
-                        const dataUrl = await fileToDataUrl(file);
-                        userImages.push({ file, dataUrl });
-                    }
-                    renderForm();
-                };
-
-                document.querySelectorAll('[data-uimgidx]').forEach(el => {
-                    el.onclick = () => {
-                        const idx = parseInt(el.dataset.uimgidx);
-                        userImages.splice(idx, 1);
-                        renderForm();
-                    };
-                });
-
-                document.getElementById('userCancelResultBtn').onclick = closeModal;
-
-                setupAutocomplete('uHomeScorerName', 'uHomeScorerDropdown', linkedTeam, 'scorer');
-                setupAutocomplete('uHomeAssistName', 'uHomeAssistDropdown', linkedTeam, 'assist');
-
-                document.getElementById('userSubmitResultBtn').onclick = () => {
-                    // Show confirmation warning before submitting
-                    showModal(`
-                        <h3>⚠️ Confirm Your Results</h3>
-                        <div class="fraud-disclaimer-text">
-                            Be sure of your results. <strong>You cannot edit them after submission.</strong>
-                            False results will result in a <strong>3 point deduction.</strong>
-                        </div>
-                        <div class="modal-btns">
-                            <button class="modal-btn-primary" id="confirmResultSubmitBtn">✅ Confirm Results</button>
-                            <button class="modal-btn-cancel" id="reviewResultBtn">🔍 Review Results</button>
-                        </div>
-                    `);
-                    document.getElementById('reviewResultBtn').onclick = () => {
+                    saveManagerKey(key, entry.teamName);
+                    statusEl.innerHTML = `<div class="status-msg status-success">✅ Verified! Welcome ${entry.teamName}.</div>`;
+                    btn.innerHTML = '✓ Verified';
+                    setTimeout(() => {
                         closeModal();
-                        renderForm();
-                    };
-                    document.getElementById('confirmResultSubmitBtn').onclick = async () => {
-                        closeModal();
-                        (async () => {
-                            const statusEl = document.getElementById('userResultStatus');
-                            const btn = document.getElementById('userSubmitResultBtn');
+                        openManagerActionHub(entry.teamName, key);
+                    }, 600);
 
-                            selectedOpponent = document.getElementById('userAwayTeam').value;
-                            const homeTeam = linkedTeam;
-                            const awayTeam = selectedOpponent;
-                            const homeScore = parseInt(document.getElementById('userHomeScore').value) || 0;
-                            const awayScore = parseInt(document.getElementById('userAwayScore').value) || 0;
-                            const md = parseInt(document.getElementById('userMatchdaySelect').value) || currentMatchday;
-                            const matchNotes = document.getElementById('userMatchNotes').value.trim();
-
-                            if (!awayTeam) {
-                                statusEl.innerHTML = '<div class="status-msg status-error">Please select an opponent.</div>';
-                                return;
-                            }
-                            if (homeTeam === awayTeam) {
-                                statusEl.innerHTML = '<div class="status-msg status-error">Cannot play against your own team.</div>';
-                                return;
-                            }
-                            if (userImages.length === 0) {
-                                statusEl.innerHTML = '<div class="status-msg status-error">Please upload at least one image.</div>';
-                                return;
-                            }
-
-                            const hasScorers = userScorersHome.length > 0 || userScorersAway.length > 0;
-                            const isZeroZero = homeScore === 0 && awayScore === 0;
-                            if (hasScorers && isZeroZero) {
-                                statusEl.innerHTML = '<div class="status-msg status-error">❌ Cannot add a scoresheet with scorers on a 0-0 result. Please fix the score or remove the scorers.</div>';
-                                return;
-                            }
-
-                            const limitCheck = await validateDailyMatchLimit(managerKey, md);
-                            if (!limitCheck.allowed) {
-                                statusEl.innerHTML = `<div class="status-msg status-error">⏳ ${limitCheck.message}</div>`;
-                                return;
-                            }
-
-                            btn.disabled = true;
-                            btn.innerHTML = '<span class="btn-spinner"></span> Submitting...';
-                            statusEl.innerHTML = '<div class="status-msg status-loading">Submitting result for admin approval...</div>';
-
-                            try {
-                                const imageUrls = [];
-                                for (const img of userImages) {
-                                    const url = await uploadToImgBB(img.file);
-                                    imageUrls.push(url);
-                                }
-
-                                const matchText = formatResultText(homeTeam, homeScore, awayTeam, awayScore, '');
-                                const dateDisplay = submittedDate;
-
-                                const resultData = {
-                                    matchText,
-                                    md: md,
-                                    date: dateDisplay,
-                                    matchNotes: matchNotes,
-                                    goalScorers: { home: userScorersHome || [], away: userScorersAway || [] },
-                                    userAssists: { home: userAssistsHome || [], away: userAssistsAway || [] },
-                                    images: imageUrls,
-                                    submittedBy: managerKey,
-                                    submittedAt: Date.now(),
-                                    homeTeam: homeTeam,
-                                    awayTeam: awayTeam,
-                                    homeScore: homeScore,
-                                    awayScore: awayScore,
-                                    matchType: 'normal',
-                                    forfeitType: 'none',
-                                    status: 'pending'
-                                };
-
-                                incrementPending();
-                                const newRef = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).push(
-                                resultData);
-                                decrementPending();
-
-                                const keyId = await findManagerKeyId(managerKey);
-                                if (keyId) {
-                                    await database.ref(`managerKeys/${keyId}/lastSubmissionTimestamp`).set(Date
-                                    .now());
-                                }
-
-                                // Auto-approve fresh submission
-                                await autoApproveFreshSubmission(newRef.key, resultData);
-
-                                statusEl.innerHTML = '<div class="status-msg status-success">✅ Result submitted and approved!</div>';
-                                btn.innerHTML = '✓ Submitted!';
-                                setTimeout(() => { closeModal(); }, 1500);
-                            } catch (e) {
-                                statusEl.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
-                                btn.disabled = false;
-                                btn.innerHTML = '✅ Submit Result';
-                            }
-                        })();
-                    };
-                };
+                } catch (e) {
+                    statusEl.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                    btn.disabled = false;
+                    btn.innerHTML = '🔍 Verify Key';
+                }
             };
 
-            function setupAutocomplete(inputId, dropdownId, teamSource, type) {
-                const input = document.getElementById(inputId);
-                const dropdown = document.getElementById(dropdownId);
-                if (!input || !dropdown) return;
+            document.getElementById('managerKeyInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    document.getElementById('verifyKeyBtn').click();
+                }
+            });
+        }
 
-                input.addEventListener('input', function() {
-                    const team = typeof teamSource === 'function' ? teamSource() : teamSource;
-                    if (!team) { dropdown.style.display = 'none'; return; }
-                    const query = this.value.trim().toLowerCase();
-                    if (!query) { dropdown.style.display = 'none'; return; }
+        function setupAutocomplete(inputId, dropdownId, teamSource, type) {
+            const input = document.getElementById(inputId);
+            const dropdown = document.getElementById(dropdownId);
+            if (!input || !dropdown) return;
 
-                    let list = [];
-                    if (type === 'scorer') {
-                        list = topScorerList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
-                    } else {
-                        list = topAssistantList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
-                    }
+            const getTeam = typeof teamSource === 'function' ? teamSource : () => teamSource;
 
-                    if (list.length === 0) { dropdown.style.display = 'none'; return; }
+            input.addEventListener('input', function() {
+                const team = getTeam();
+                if (!team) { dropdown.style.display = 'none'; return; }
+                const query = this.value.trim().toLowerCase();
+                if (!query) { dropdown.style.display = 'none'; return; }
 
+                let list = [];
+                if (type === 'scorer') {
+                    list = topScorerList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
+                } else {
+                    list = topAssistantList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
+                }
+
+                if (list.length === 0) { dropdown.style.display = 'none'; return; }
+
+                dropdown.innerHTML = '';
+                list.forEach(p => {
+                    const div = document.createElement('div');
+                    div.textContent = p.name;
+                    div.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        input.value = p.name;
+                        dropdown.style.display = 'none';
+                    });
+                    dropdown.appendChild(div);
+                });
+                dropdown.style.display = 'block';
+            });
+
+            input.addEventListener('blur', function() {
+                setTimeout(() => { dropdown.style.display = 'none'; }, 150);
+            });
+
+            input.addEventListener('focus', function() {
+                const team = getTeam();
+                if (!team) return;
+                const query = this.value.trim().toLowerCase();
+                if (!query) { dropdown.style.display = 'none'; return; }
+                let list = [];
+                if (type === 'scorer') {
+                    list = topScorerList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
+                } else {
+                    list = topAssistantList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
+                }
+                if (list.length > 0) {
                     dropdown.innerHTML = '';
                     list.forEach(p => {
                         const div = document.createElement('div');
@@ -5235,47 +5506,14 @@
                         dropdown.appendChild(div);
                     });
                     dropdown.style.display = 'block';
-                });
+                }
+            });
 
-                input.addEventListener('blur', function() {
-                    setTimeout(() => { dropdown.style.display = 'none'; }, 150);
-                });
-
-                input.addEventListener('focus', function() {
-                    const team = typeof teamSource === 'function' ? teamSource() : teamSource;
-                    if (!team) return;
-                    const query = this.value.trim().toLowerCase();
-                    if (!query) { dropdown.style.display = 'none'; return; }
-                    let list = [];
-                    if (type === 'scorer') {
-                        list = topScorerList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
-                    } else {
-                        list = topAssistantList.filter(p => p.team === team && p.name.toLowerCase().includes(query));
-                    }
-                    if (list.length > 0) {
-                        dropdown.innerHTML = '';
-                        list.forEach(p => {
-                            const div = document.createElement('div');
-                            div.textContent = p.name;
-                            div.addEventListener('mousedown', (e) => {
-                                e.preventDefault();
-                                input.value = p.name;
-                                dropdown.style.display = 'none';
-                            });
-                            dropdown.appendChild(div);
-                        });
-                        dropdown.style.display = 'block';
-                    }
-                });
-
-                document.addEventListener('click', function(e) {
-                    if (!dropdown.contains(e.target) && e.target !== input) {
-                        dropdown.style.display = 'none';
-                    }
-                });
-            }
-
-            renderForm();
+            document.addEventListener('click', function(e) {
+                if (!dropdown.contains(e.target) && e.target !== input) {
+                    dropdown.style.display = 'none';
+                }
+            });
         }
 
         // ─── PENDING RESULTS SYSTEM ───
@@ -6574,47 +6812,55 @@
             });
         }
 
-        // ─── REQUESTS HISTORY ───
+        // ─── CHANGE 6: Replace entire openRequestsHistoryModal ───
         async function openRequestsHistoryModal() {
             const approvedSnap = await database.ref(getSeasonPath(currentSeasonId, 'results')).once('value');
             const approvedData = approvedSnap.val() || {};
-            const approvedEntries = Object.entries(approvedData)
-                .map(([key, val]) => ({ id: key, ...val }))
-                .filter(r => r.userSubmitted === true);
+            const approvedEntries = Object.entries(approvedData).map(([key, val]) => ({ id: key, ...val, status: 'approved' }));
 
             const pendingSnap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
             const pendingData = pendingSnap.val() || {};
             const pendingEntries = Object.entries(pendingData).map(([key, val]) => ({ id: key, ...val, status: 'pending' }));
 
             const allEntries = [...approvedEntries, ...pendingEntries];
-            allEntries.sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
+            allEntries.sort((a, b) => (b.submittedAt || b.approvedAt || 0) - (a.submittedAt || a.approvedAt || 0));
 
             const teamNames = teamsData.map(t => t.name).sort();
 
             const renderHistory = (filterTeam = '') => {
                 let filtered = allEntries;
-                if (filterTeam) {
-                    filtered = filtered.filter(r => (r.homeTeam === filterTeam || r.awayTeam === filterTeam));
-                }
+                if (filterTeam) filtered = filtered.filter(r => r.homeTeam === filterTeam || r.awayTeam === filterTeam);
 
                 let listHtml = '';
                 if (filtered.length === 0) {
-                    listHtml = '<div style="color:rgba(255,255,255,0.3);padding:30px;text-align:center;">No requests found.</div>';
+                    listHtml = '<div style="color:rgba(255,255,255,0.3);padding:30px;text-align:center;font-size:1.4rem;">No requests found.</div>';
                 } else {
-                    listHtml = '<div style="max-height:400px;overflow-y:auto;">';
+                    listHtml = '<div style="max-height:500px;overflow-y:auto;">';
                     for (const r of filtered) {
-                        const statusClass = r.status === 'pending' ? 'status-loading' : 'status-success';
+                        const statusColor = r.status === 'pending' ? '#f97316' : '#22c55e';
                         const statusText = r.status === 'pending' ? '⏳ Pending' : '✅ Approved';
                         const submittedAt = r.submittedAt ? new Date(r.submittedAt).toLocaleString() : 'N/A';
-                        const scoreDisplay = r.matchText || `${r.homeScore || 0} - ${r.awayScore || 0}`;
+                        const scoreDisplay = r.matchText || ((r.homeScore || 0) + ' - ' + (r.awayScore || 0));
+                        const homeIcon = getTeamIconHtml(r.homeTeam || '', 'team-icon-sm');
+                        const awayIcon = getTeamIconHtml(r.awayTeam || '', 'team-icon-sm');
                         listHtml += `
-                            <div style="background:rgba(30,144,255,0.08);border-radius:16px;padding:14px 18px;margin-bottom:8px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;border-left:4px solid ${r.status === 'pending' ? '#f97316' : '#22c55e'};">
-                                <div style="flex:2;min-width:150px;font-weight:600;color:white;">${escapeHtml(r.homeTeam || '?')} vs ${escapeHtml(r.awayTeam || '?')}</div>
-                                <div style="font-weight:600;color:var(--turquoise);">${escapeHtml(scoreDisplay)}</div>
-                                <div style="color:rgba(255,255,255,0.5);">MD ${r.md || '?'}</div>
-                                <div style="color:rgba(255,255,255,0.5);">${escapeHtml(r.submittedBy || '')}</div>
-                                <div style="font-size:0.85rem;color:rgba(255,255,255,0.4);">${escapeHtml(submittedAt)}</div>
-                                <div><span class="status-msg ${statusClass}" style="padding:2px 12px;font-size:0.9rem;display:inline-block;">${statusText}</span></div>
+                            <div style="background:rgba(30,144,255,0.08);border-radius:16px;padding:16px 18px;margin-bottom:10px;border-left:4px solid ${statusColor};">
+                                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:8px;">
+                                    <div style="display:flex;align-items:center;gap:8px;flex:2;min-width:200px;">
+                                        ${homeIcon}
+                                        <span style="font-weight:700;color:white;font-size:1.5rem;">${escapeHtml(r.homeTeam || '?')}</span>
+                                        <span style="color:var(--turquoise);font-size:1.6rem;font-family:'Bebas Neue',sans-serif;">${r.homeScore || 0} - ${r.awayScore || 0}</span>
+                                        <span style="font-weight:700;color:white;font-size:1.5rem;">${escapeHtml(r.awayTeam || '?')}</span>
+                                        ${awayIcon}
+                                    </div>
+                                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                                        <span style="color:rgba(255,255,255,0.5);font-size:1.1rem;">MD ${r.md || '?'}</span>
+                                        <span style="color:rgba(255,255,255,0.4);font-size:0.9rem;">${escapeHtml(r.submittedBy || '')}</span>
+                                        <span style="color:${statusColor};font-weight:700;font-size:1.1rem;">${statusText}</span>
+                                        ${isAdminMode ? `<button class="btn-sm btn-delete revoke-result-btn" data-id="${r.id}" data-status="${r.status}" style="padding:6px 18px;font-size:1rem;background:rgba(180,0,0,0.4);border:1px solid #cc3333;color:#ffaaaa;border-radius:20px;cursor:pointer;">🔄 Revoke</button>` : ''}
+                                    </div>
+                                </div>
+                                <div style="color:rgba(255,255,255,0.35);font-size:0.85rem;">${escapeHtml(submittedAt)}</div>
                             </div>
                         `;
                     }
@@ -6625,19 +6871,59 @@
 
                 showModal(`
                     <h3>📜 Requests History</h3>
-                    <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Showing all submitted result requests (approved and pending) for Season ${currentSeasonId}.</p>
+                    <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;font-size:1.3rem;">All submitted result requests for Season ${currentSeasonId}. ${isAdminMode ? 'Admins can revoke any result.' : ''}</p>
                     <div class="filter-group" style="margin-bottom:20px;">
                         <label>Filter by Team</label>
                         <select id="historyTeamFilter">${filterOptions}</select>
                     </div>
-                    <div style="margin-top:10px;">${listHtml}</div>
+                    ${listHtml}
                     <div class="modal-btns"><button class="modal-btn-cancel" id="closeHistoryBtn">Close</button></div>
-                `);
+                `, true);
 
                 document.getElementById('closeHistoryBtn').onclick = closeModal;
-                document.getElementById('historyTeamFilter').addEventListener('change', (e) => {
-                    const team = e.target.value;
-                    renderHistory(team);
+                document.getElementById('historyTeamFilter').addEventListener('change', e => renderHistory(e.target.value));
+
+                document.querySelectorAll('.revoke-result-btn').forEach(btn => {
+                    btn.onclick = async () => {
+                        const id = btn.dataset.id;
+                        const status = btn.dataset.status;
+                        const entry = allEntries.find(e => e.id === id);
+                        if (!entry) return;
+
+                        if (!confirm(`Revoke result: ${entry.homeTeam} ${entry.homeScore || 0} - ${entry.awayScore || 0} ${entry.awayTeam}?\n\nThis will reverse all stats for both teams.`)) return;
+
+                        btn.disabled = true;
+                        btn.innerHTML = '⏳ Revoking...';
+
+                        try {
+                            // Reverse stats
+                            await revokeResultStats(entry);
+
+                            // Remove from results or pending
+                            if (status === 'approved') {
+                                await database.ref(getSeasonPath(currentSeasonId, 'results/' + id)).remove();
+                            } else {
+                                await database.ref(getSeasonPath(currentSeasonId, 'pending_results/' + id)).remove();
+                            }
+
+                            await loadCurrentSeasonData();
+                            await loadTopScorerData();
+                            await loadTopAssistantData();
+                            renderCurrentTab();
+
+                            // Remove from local array and re-render
+                            const idx = allEntries.findIndex(e => e.id === id);
+                            if (idx !== -1) allEntries.splice(idx, 1);
+
+                            const currentFilter = document.getElementById('historyTeamFilter')?.value || '';
+                            renderHistory(currentFilter);
+
+                        } catch (e) {
+                            alert('Error revoking result: ' + e.message);
+                            btn.disabled = false;
+                            btn.innerHTML = '🔄 Revoke';
+                        }
+                    };
                 });
             };
 
