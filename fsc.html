@@ -4398,79 +4398,82 @@
         document.getElementById('overlay').onclick = closeMenu;
         document.getElementById('homeBtn').onclick = () => window.location.href = 'feed.html';
 
-        // ─── MANAGER ACTION HUB ───
+        // ─── MANAGER ACTION HUB (NEW) ───
         function openManagerActionHub(linkedTeam, managerKey) {
-            // Process edit approvals on open
             processEditApprovals();
+            // Get all fixtures for this team sorted by date (earliest first)
+            const allFixtures = getTeamFixturesFromCalendar(linkedTeam);
+            // Build matchday number for each fixture date (1st date = MD1, 2nd = MD2, etc.)
+            const uniqueDates = [];
+            const seenDates = new Set();
+            for (const fix of allFixtures) {
+                if (!seenDates.has(fix.date)) {
+                    seenDates.add(fix.date);
+                    uniqueDates.push(fix.date);
+                }
+            }
+            // Build list of opponents with their matchday number
+            const opponentList = allFixtures.map(fix => {
+                const opponent = fix.home === linkedTeam ? fix.away : fix.home;
+                const md = uniqueDates.indexOf(fix.date) + 1;
+                return { opponent, date: fix.date, md };
+            });
 
-            const todayStr = getSASTToday();
-            const yesterdayStr = getSASTYesterday();
-            const todayOpponent = getTeamOpponentForDate(linkedTeam, todayStr);
-            const yesterdayOpponent = getTeamOpponentForDate(linkedTeam, yesterdayStr);
+            if (opponentList.length === 0) {
+                showModal(`
+                    <h3>🔑 ${escapeHtml(linkedTeam)}</h3>
+                    <p style="color:rgba(255,255,255,0.6);font-size:1.4rem;margin:20px 0;">No fixtures found for your team. Please contact the admin.</p>
+                    <div class="modal-btns">
+                        <button class="modal-btn-cancel" id="closeActionHubBtn">Cancel</button>
+                    </div>
+                `);
+                document.getElementById('closeActionHubBtn').onclick = closeModal;
+                return;
+            }
 
-            const todayBlockHtml = todayOpponent ?
-                `<div class="today-yesterday-block" id="todayBlock" style="border-color:var(--turquoise);">
-              <div class="ty-icon">⚽</div>
-              <div class="ty-title">TODAY vs ${escapeHtml(todayOpponent)}</div>
-              <div class="ty-sub">${todayStr}</div>
-            </div>` :
-                `<div class="today-yesterday-block" style="opacity:0.4;cursor:not-allowed;border-color:rgba(255,255,255,0.1);">
-              <div class="ty-icon">📅</div>
-              <div class="ty-title">No match scheduled today</div>
-              <div class="ty-sub">${todayStr}</div>
-            </div>`;
-
-            const yesterdayBlockHtml = yesterdayOpponent ?
-                `<div class="today-yesterday-block" id="yesterdayBlock" style="border-color:var(--razzmatazz);">
-              <div class="ty-icon">⏪</div>
-              <div class="ty-title">YESTERDAY vs ${escapeHtml(yesterdayOpponent)}</div>
-              <div class="ty-sub">${yesterdayStr}</div>
-            </div>` :
-                `<div class="today-yesterday-block" style="opacity:0.4;cursor:not-allowed;border-color:rgba(255,255,255,0.1);">
-              <div class="ty-icon">📅</div>
-              <div class="ty-title">No match scheduled yesterday</div>
-              <div class="ty-sub">${yesterdayStr}</div>
-            </div>`;
+            let opponentsHtml = opponentList.map((item, idx) => {
+                const iconHtml = getTeamIconHtml(item.opponent, 'team-icon-sm');
+                return `
+                    <div class="today-yesterday-block opponent-select-block" data-idx="${idx}" style="cursor:pointer;display:flex;align-items:center;gap:16px;padding:20px 28px;text-align:left;border-radius:20px;margin-bottom:12px;background:rgba(30,144,255,0.1);border:2px solid var(--glass-border);transition:all 0.2s;">
+                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--turquoise);min-width:60px;">MD ${item.md}</div>
+                        ${iconHtml}
+                        <div>
+                            <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--white);letter-spacing:1px;">${escapeHtml(item.opponent)}</div>
+                            <div style="color:rgba(255,255,255,0.4);font-size:1rem;margin-top:2px;">${escapeHtml(item.date)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
 
             showModal(`
-            <h3>🔑 ${escapeHtml(linkedTeam)}</h3>
-            <p style="color:rgba(255,255,255,0.6);font-size:1.4rem;margin-bottom:20px;">What would you like to do?</p>
-            <div class="today-yesterday-grid">
-              ${todayBlockHtml}
-              ${yesterdayBlockHtml}
-            </div>
-            <button class="add-match-block-btn" id="differentMatchBtn" style="margin-top:8px;">📋 Submit for a Different Match</button>
-            <button class="add-match-block-btn" id="editResultsBtn" style="margin-top:8px;">✏️ Edit My Results</button>
-            <div class="modal-btns" style="margin-top:16px;">
-              <button class="modal-btn-cancel" id="closeActionHubBtn">Cancel</button>
-            </div>
-          `);
+                <h3>🔑 ${escapeHtml(linkedTeam)}</h3>
+                <p style="color:rgba(255,255,255,0.6);font-size:1.4rem;margin-bottom:20px;">Select the opponent you played against:</p>
+                <div style="max-height:420px;overflow-y:auto;">
+                    ${opponentsHtml}
+                </div>
+                <div class="modal-btns" style="margin-top:16px;">
+                    <button class="modal-btn-cancel" id="closeActionHubBtn">Cancel</button>
+                </div>
+            `);
 
             document.getElementById('closeActionHubBtn').onclick = closeModal;
 
-            if (todayOpponent) {
-                document.getElementById('todayBlock').onclick = () => {
+            document.querySelectorAll('.opponent-select-block').forEach(block => {
+                block.addEventListener('mouseenter', () => {
+                    block.style.borderColor = 'var(--razzmatazz)';
+                    block.style.background = 'rgba(0,206,209,0.12)';
+                });
+                block.addEventListener('mouseleave', () => {
+                    block.style.borderColor = 'var(--glass-border)';
+                    block.style.background = 'rgba(30,144,255,0.1)';
+                });
+                block.onclick = () => {
+                    const idx = parseInt(block.dataset.idx);
+                    const selected = opponentList[idx];
                     closeModal();
-                    openMatchTypeSelectionPopup(linkedTeam, managerKey, todayOpponent, todayStr);
+                    openMatchTypeSelectionPopup(linkedTeam, managerKey, selected.opponent, selected.date);
                 };
-            }
-
-            if (yesterdayOpponent) {
-                document.getElementById('yesterdayBlock').onclick = () => {
-                    closeModal();
-                    openMatchTypeSelectionPopup(linkedTeam, managerKey, yesterdayOpponent, yesterdayStr);
-                };
-            }
-
-            document.getElementById('differentMatchBtn').onclick = () => {
-                closeModal();
-                openMatchTypeSelectionPopup(linkedTeam, managerKey, null, null);
-            };
-
-            document.getElementById('editResultsBtn').onclick = () => {
-                closeModal();
-                openEditResultsListModal(linkedTeam, managerKey);
-            };
+            });
         }
 
         // ─── USER: openAddResultsKeyModal (modified with fixed verification) ───
@@ -4549,7 +4552,7 @@
                     btn.innerHTML = '✓ Verified';
                     setTimeout(() => {
                         closeModal();
-                        openMatchTypeSelectionPopup(entry.teamName, key);
+                        openManagerActionHub(entry.teamName, key);
                     }, 600);
 
                 } catch (e) {
@@ -4744,100 +4747,117 @@
                 });
 
                 document.getElementById('submitForfeitBtn').onclick = () => {
-                    // Show fraud disclaimer first
-                    showFraudDisclaimer(async () => {
-                        const status = document.getElementById('forfeitStatus');
-                        const btn = document.getElementById('submitForfeitBtn');
-                        const opponent = document.getElementById('forfeitOpponent').value;
-                        const matchNotes = document.getElementById('forfeitMatchNotes').value.trim();
-                        const md = parseInt(document.getElementById('forfeitMatchday').value) || currentMatchday;
+                    showModal(`
+                        <h3>⚠️ Confirm Forfeit Request</h3>
+                        <div class="fraud-disclaimer-text">
+                            Be sure of your request. <strong>You cannot edit it after submission.</strong>
+                            False forfeit requests will result in a <strong>3 point deduction.</strong>
+                        </div>
+                        <div class="modal-btns">
+                            <button class="modal-btn-primary" id="confirmForfeitSubmitBtn">✅ Confirm</button>
+                            <button class="modal-btn-cancel" id="reviewForfeitBtn">🔍 Review</button>
+                        </div>
+                    `);
+                    document.getElementById('reviewForfeitBtn').onclick = () => {
+                        closeModal();
+                        renderForfeitForm();
+                    };
+                    document.getElementById('confirmForfeitSubmitBtn').onclick = async () => {
+                        closeModal();
+                        (async () => {
+                            const status = document.getElementById('forfeitStatus');
+                            const btn = document.getElementById('submitForfeitBtn');
+                            const opponent = document.getElementById('forfeitOpponent').value;
+                            const matchNotes = document.getElementById('forfeitMatchNotes').value.trim();
+                            const md = parseInt(document.getElementById('forfeitMatchday').value) || currentMatchday;
 
-                        if (!opponent) {
-                            status.innerHTML = '<div class="status-msg status-error">Please select an opponent.</div>';
-                            return;
-                        }
-                        if (opponent === linkedTeam) {
-                            status.innerHTML = '<div class="status-msg status-error">Cannot forfeit against your own team.</div>';
-                            return;
-                        }
-                        if (forfeitImages.length === 0) {
-                            status.innerHTML = '<div class="status-msg status-error">Please upload at least one screenshot.</div>';
-                            return;
-                        }
-
-                        // Daily limit check for forfeit
-                        const limitCheck = await validateDailyMatchLimit(managerKey, md);
-                        if (!limitCheck.allowed) {
-                            status.innerHTML = `<div class="status-msg status-error">⏳ ${limitCheck.message}</div>`;
-                            return;
-                        }
-
-                        btn.disabled = true;
-                        btn.innerHTML = '<span class="btn-spinner"></span> Submitting...';
-                        status.innerHTML = '<div class="status-msg status-loading">Submitting forfeit request...</div>';
-
-                        try {
-                            const imageUrls = [];
-                            for (const img of forfeitImages) {
-                                const url = await uploadToImgBB(img.file);
-                                imageUrls.push(url);
+                            if (!opponent) {
+                                status.innerHTML = '<div class="status-msg status-error">Please select an opponent.</div>';
+                                return;
+                            }
+                            if (opponent === linkedTeam) {
+                                status.innerHTML = '<div class="status-msg status-error">Cannot forfeit against your own team.</div>';
+                                return;
+                            }
+                            if (forfeitImages.length === 0) {
+                                status.innerHTML = '<div class="status-msg status-error">Please upload at least one screenshot.</div>';
+                                return;
                             }
 
-                            const homeTeam = linkedTeam;
-                            const awayTeam = opponent;
-                            let matchText = '';
-                            let homeScore = 0;
-                            let awayScore = 0;
-                            if (forfeitType === 'no_contest') {
-                                matchText = `${homeTeam} F - F ${awayTeam} (No Contest)`;
-                                homeScore = 0;
-                                awayScore = 0;
-                            } else {
-                                matchText = `${homeTeam} 3 - 0 ${awayTeam} (Forfeited - No Reply)`;
-                                homeScore = 3;
-                                awayScore = 0;
+                            // Daily limit check for forfeit
+                            const limitCheck = await validateDailyMatchLimit(managerKey, md);
+                            if (!limitCheck.allowed) {
+                                status.innerHTML = `<div class="status-msg status-error">⏳ ${limitCheck.message}</div>`;
+                                return;
                             }
 
-                            const forfeitData = {
-                                matchType: 'forfeit',
-                                forfeitType: forfeitType,
-                                homeTeam: homeTeam,
-                                awayTeam: awayTeam,
-                                homeScore: homeScore,
-                                awayScore: awayScore,
-                                md: md,
-                                date: prefilledDate || getSASTToday(),
-                                images: imageUrls,
-                                submittedBy: managerKey,
-                                submittedAt: Date.now(),
-                                matchText: matchText,
-                                matchNotes: matchNotes,
-                                status: 'pending'
-                            };
+                            btn.disabled = true;
+                            btn.innerHTML = '<span class="btn-spinner"></span> Submitting...';
+                            status.innerHTML = '<div class="status-msg status-loading">Submitting forfeit request...</div>';
 
-                            incrementPending();
-                            const newRef = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).push(
-                            forfeitData);
-                            decrementPending();
+                            try {
+                                const imageUrls = [];
+                                for (const img of forfeitImages) {
+                                    const url = await uploadToImgBB(img.file);
+                                    imageUrls.push(url);
+                                }
 
-                            const keyId = await findManagerKeyId(managerKey);
-                            if (keyId) {
-                                await database.ref(`managerKeys/${keyId}/lastSubmissionTimestamp`).set(Date
-                                .now());
+                                const homeTeam = linkedTeam;
+                                const awayTeam = opponent;
+                                let matchText = '';
+                                let homeScore = 0;
+                                let awayScore = 0;
+                                if (forfeitType === 'no_contest') {
+                                    matchText = `${homeTeam} F - F ${awayTeam} (No Contest)`;
+                                    homeScore = 0;
+                                    awayScore = 0;
+                                } else {
+                                    matchText = `${homeTeam} 3 - 0 ${awayTeam} (Forfeited - No Reply)`;
+                                    homeScore = 3;
+                                    awayScore = 0;
+                                }
+
+                                const forfeitData = {
+                                    matchType: 'forfeit',
+                                    forfeitType: forfeitType,
+                                    homeTeam: homeTeam,
+                                    awayTeam: awayTeam,
+                                    homeScore: homeScore,
+                                    awayScore: awayScore,
+                                    md: md,
+                                    date: prefilledDate || getSASTToday(),
+                                    images: imageUrls,
+                                    submittedBy: managerKey,
+                                    submittedAt: Date.now(),
+                                    matchText: matchText,
+                                    matchNotes: matchNotes,
+                                    status: 'pending'
+                                };
+
+                                incrementPending();
+                                const newRef = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).push(
+                                forfeitData);
+                                decrementPending();
+
+                                const keyId = await findManagerKeyId(managerKey);
+                                if (keyId) {
+                                    await database.ref(`managerKeys/${keyId}/lastSubmissionTimestamp`).set(Date
+                                    .now());
+                                }
+
+                                // Auto-approve forfeit submissions immediately (they're user-submitted and auto-approved)
+                                await autoApproveFreshSubmission(newRef.key, forfeitData);
+
+                                status.innerHTML = '<div class="status-msg status-success">✅ Forfeit submitted and approved!</div>';
+                                btn.innerHTML = '✓ Submitted!';
+                                setTimeout(() => { closeModal(); }, 1500);
+                            } catch (e) {
+                                status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                                btn.disabled = false;
+                                btn.innerHTML = '🚫 Submit Forfeit Request';
                             }
-
-                            // Auto-approve forfeit submissions immediately (they're user-submitted and auto-approved)
-                            await autoApproveFreshSubmission(newRef.key, forfeitData);
-
-                            status.innerHTML = '<div class="status-msg status-success">✅ Forfeit submitted and approved!</div>';
-                            btn.innerHTML = '✓ Submitted!';
-                            setTimeout(() => { closeModal(); }, 1500);
-                        } catch (e) {
-                            status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
-                            btn.disabled = false;
-                            btn.innerHTML = '🚫 Submit Forfeit Request';
-                        }
-                    });
+                        })();
+                    };
                 };
             };
 
@@ -4860,10 +4880,20 @@
             let matchNotesValue = '';
             let submittedDate = prefilledDate || getSASTToday();
 
-            // Compute auto-matchday
+            // Compute auto-matchday from fixture order
             let autoMd = null;
-            if (prefilledDate) {
-                autoMd = getAutoMatchdayForTeamAndDate(linkedTeam, prefilledDate);
+            if (prefilledDate && prefilledOpponent) {
+                const allFix = getTeamFixturesFromCalendar(linkedTeam);
+                const uniqueDatesArr = [];
+                const seenDatesSet = new Set();
+                for (const f of allFix) {
+                    if (!seenDatesSet.has(f.date)) {
+                        seenDatesSet.add(f.date);
+                        uniqueDatesArr.push(f.date);
+                    }
+                }
+                const fixIdx = uniqueDatesArr.indexOf(prefilledDate);
+                if (fixIdx !== -1) autoMd = fixIdx + 1;
             }
 
             const renderForm = () => {
@@ -4881,14 +4911,8 @@
                 const homeScorersHtml = userScorersHome.map((s, idx) =>
                     `<span class="scorer-badge">⚽ ${escapeHtml(s.player)} (${s.goals})<button class="remove-scorer" data-uside="homeScorer" data-uidx="${idx}">✖</button></span>`
                 ).join('');
-                const awayScorersHtml = userScorersAway.map((s, idx) =>
-                    `<span class="scorer-badge">⚽ ${escapeHtml(s.player)} (${s.goals})<button class="remove-scorer" data-uside="awayScorer" data-uidx="${idx}">✖</button></span>`
-                ).join('');
                 const homeAssistsHtml = userAssistsHome.map((a, idx) =>
                     `<span class="scorer-badge">🎯 ${escapeHtml(a.player)} (${a.assists})<button class="remove-scorer" data-uside="homeAssist" data-uidx="${idx}">✖</button></span>`
-                ).join('');
-                const awayAssistsHtml = userAssistsAway.map((a, idx) =>
-                    `<span class="scorer-badge">🎯 ${escapeHtml(a.player)} (${a.assists})<button class="remove-scorer" data-uside="awayAssist" data-uidx="${idx}">✖</button></span>`
                 ).join('');
 
                 let imgThumbsHtml = userImages.map((img, idx) => `
@@ -4929,7 +4953,7 @@
               <label>Matchday <span class="required-star">*</span></label>
               <select id="userMatchdaySelect">${mdOptions}</select>
 
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;">
+              <div style="display:grid;grid-template-columns:1fr;gap:20px;margin-top:20px;">
                 <div>
                   <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--turquoise);margin-bottom:10px;">YOUR TEAM</div>
                   <div class="scorer-section user-result-form">
@@ -4961,39 +4985,6 @@
                       <button class="modal-btn-primary" id="uAddHomeAssist" style="padding:8px 12px;font-size:1.2rem;align-self:flex-end;">Add</button>
                     </div>
                     <div class="scorer-list" id="uHomeAssistList">${homeAssistsHtml}</div>
-                  </div>
-                </div>
-                <div>
-                  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--razzmatazz);margin-bottom:10px;">OPPONENT</div>
-                  <div class="scorer-section user-result-form">
-                    <h4>⚽ Their Scorers</h4>
-                    <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:flex-end;">
-                      <div class="autocomplete-container" style="flex:2;min-width:80px;position:relative;">
-                        <input type="text" id="uAwayScorerName" placeholder="Player" style="width:100%;" autocomplete="off">
-                        <div id="uAwayScorerDropdown" class="autocomplete-dropdown" style="display:none;"></div>
-                      </div>
-                      <div style="display:flex;flex-direction:column;gap:4px;">
-                        <label style="font-size:0.75rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.5px;">Goals</label>
-                        <input type="number" id="uAwayScorerGoals" value="1" style="width:60px;padding:8px;background:rgba(255,255,255,0.06);border:1px solid var(--razzmatazz);border-radius:14px;color:white;font-family:'Rajdhani',sans-serif;font-size:1rem;outline:none;">
-                      </div>
-                      <button class="modal-btn-primary" id="uAddAwayScorer" style="padding:8px 12px;font-size:1.2rem;align-self:flex-end;">Add</button>
-                    </div>
-                    <div class="scorer-list" id="uAwayScorerList">${awayScorersHtml}</div>
-                  </div>
-                  <div class="scorer-section user-result-form">
-                    <h4>🎯 Their Assists</h4>
-                    <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:flex-end;">
-                      <div class="autocomplete-container" style="flex:2;min-width:80px;position:relative;">
-                        <input type="text" id="uAwayAssistName" placeholder="Player" style="width:100%;" autocomplete="off">
-                        <div id="uAwayAssistDropdown" class="autocomplete-dropdown" style="display:none;"></div>
-                      </div>
-                      <div style="display:flex;flex-direction:column;gap:4px;">
-                        <label style="font-size:0.75rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.5px;">Assists</label>
-                        <input type="number" id="uAwayAssistCount" value="1" style="width:60px;padding:8px;background:rgba(255,255,255,0.06);border:1px solid var(--razzmatazz);border-radius:14px;color:white;font-family:'Rajdhani',sans-serif;font-size:1rem;outline:none;">
-                      </div>
-                      <button class="modal-btn-primary" id="uAddAwayAssist" style="padding:8px 12px;font-size:1.2rem;align-self:flex-end;">Add</button>
-                    </div>
-                    <div class="scorer-list" id="uAwayAssistList">${awayAssistsHtml}</div>
                   </div>
                 </div>
               </div>
@@ -5045,18 +5036,6 @@
                     }
                     renderForm();
                 };
-                document.getElementById('uAddAwayScorer').onclick = () => {
-                    const name = document.getElementById('uAwayScorerName').value.trim();
-                    const goals = parseInt(document.getElementById('uAwayScorerGoals').value) || 1;
-                    if (!name) return;
-                    const existing = userScorersAway.find(s => s.player.toLowerCase() === name.toLowerCase());
-                    if (existing) {
-                        existing.goals += goals;
-                    } else {
-                        userScorersAway.push({ player: name, goals });
-                    }
-                    renderForm();
-                };
                 document.getElementById('uAddHomeAssist').onclick = () => {
                     const name = document.getElementById('uHomeAssistName').value.trim();
                     const assists = parseInt(document.getElementById('uHomeAssistCount').value) || 1;
@@ -5069,27 +5048,13 @@
                     }
                     renderForm();
                 };
-                document.getElementById('uAddAwayAssist').onclick = () => {
-                    const name = document.getElementById('uAwayAssistName').value.trim();
-                    const assists = parseInt(document.getElementById('uAwayAssistCount').value) || 1;
-                    if (!name) return;
-                    const existing = userAssistsAway.find(a => a.player.toLowerCase() === name.toLowerCase());
-                    if (existing) {
-                        existing.assists += assists;
-                    } else {
-                        userAssistsAway.push({ player: name, assists });
-                    }
-                    renderForm();
-                };
 
                 document.querySelectorAll('.remove-scorer[data-uside]').forEach(btn => {
                     btn.onclick = () => {
                         const side = btn.dataset.uside;
                         const idx = parseInt(btn.dataset.uidx);
                         if (side === 'homeScorer') userScorersHome.splice(idx, 1);
-                        else if (side === 'awayScorer') userScorersAway.splice(idx, 1);
                         else if (side === 'homeAssist') userAssistsHome.splice(idx, 1);
-                        else if (side === 'awayAssist') userAssistsAway.splice(idx, 1);
                         renderForm();
                     };
                 });
@@ -5120,105 +5085,121 @@
 
                 setupAutocomplete('uHomeScorerName', 'uHomeScorerDropdown', linkedTeam, 'scorer');
                 setupAutocomplete('uHomeAssistName', 'uHomeAssistDropdown', linkedTeam, 'assist');
-                setupAutocomplete('uAwayScorerName', 'uAwayScorerDropdown', () => selectedOpponent, 'scorer');
-                setupAutocomplete('uAwayAssistName', 'uAwayAssistDropdown', () => selectedOpponent, 'assist');
 
                 document.getElementById('userSubmitResultBtn').onclick = () => {
-                    // Show fraud disclaimer first
-                    showFraudDisclaimer(async () => {
-                        const statusEl = document.getElementById('userResultStatus');
-                        const btn = document.getElementById('userSubmitResultBtn');
+                    // Show confirmation warning before submitting
+                    showModal(`
+                        <h3>⚠️ Confirm Your Results</h3>
+                        <div class="fraud-disclaimer-text">
+                            Be sure of your results. <strong>You cannot edit them after submission.</strong>
+                            False results will result in a <strong>3 point deduction.</strong>
+                        </div>
+                        <div class="modal-btns">
+                            <button class="modal-btn-primary" id="confirmResultSubmitBtn">✅ Confirm Results</button>
+                            <button class="modal-btn-cancel" id="reviewResultBtn">🔍 Review Results</button>
+                        </div>
+                    `);
+                    document.getElementById('reviewResultBtn').onclick = () => {
+                        closeModal();
+                        renderForm();
+                    };
+                    document.getElementById('confirmResultSubmitBtn').onclick = async () => {
+                        closeModal();
+                        (async () => {
+                            const statusEl = document.getElementById('userResultStatus');
+                            const btn = document.getElementById('userSubmitResultBtn');
 
-                        selectedOpponent = document.getElementById('userAwayTeam').value;
-                        const homeTeam = linkedTeam;
-                        const awayTeam = selectedOpponent;
-                        const homeScore = parseInt(document.getElementById('userHomeScore').value) || 0;
-                        const awayScore = parseInt(document.getElementById('userAwayScore').value) || 0;
-                        const md = parseInt(document.getElementById('userMatchdaySelect').value) || currentMatchday;
-                        const matchNotes = document.getElementById('userMatchNotes').value.trim();
+                            selectedOpponent = document.getElementById('userAwayTeam').value;
+                            const homeTeam = linkedTeam;
+                            const awayTeam = selectedOpponent;
+                            const homeScore = parseInt(document.getElementById('userHomeScore').value) || 0;
+                            const awayScore = parseInt(document.getElementById('userAwayScore').value) || 0;
+                            const md = parseInt(document.getElementById('userMatchdaySelect').value) || currentMatchday;
+                            const matchNotes = document.getElementById('userMatchNotes').value.trim();
 
-                        if (!awayTeam) {
-                            statusEl.innerHTML = '<div class="status-msg status-error">Please select an opponent.</div>';
-                            return;
-                        }
-                        if (homeTeam === awayTeam) {
-                            statusEl.innerHTML = '<div class="status-msg status-error">Cannot play against your own team.</div>';
-                            return;
-                        }
-                        if (userImages.length === 0) {
-                            statusEl.innerHTML = '<div class="status-msg status-error">Please upload at least one image.</div>';
-                            return;
-                        }
-
-                        const hasScorers = userScorersHome.length > 0 || userScorersAway.length > 0;
-                        const isZeroZero = homeScore === 0 && awayScore === 0;
-                        if (hasScorers && isZeroZero) {
-                            statusEl.innerHTML = '<div class="status-msg status-error">❌ Cannot add a scoresheet with scorers on a 0-0 result. Please fix the score or remove the scorers.</div>';
-                            return;
-                        }
-
-                        const limitCheck = await validateDailyMatchLimit(managerKey, md);
-                        if (!limitCheck.allowed) {
-                            statusEl.innerHTML = `<div class="status-msg status-error">⏳ ${limitCheck.message}</div>`;
-                            return;
-                        }
-
-                        btn.disabled = true;
-                        btn.innerHTML = '<span class="btn-spinner"></span> Submitting...';
-                        statusEl.innerHTML = '<div class="status-msg status-loading">Submitting result for admin approval...</div>';
-
-                        try {
-                            const imageUrls = [];
-                            for (const img of userImages) {
-                                const url = await uploadToImgBB(img.file);
-                                imageUrls.push(url);
+                            if (!awayTeam) {
+                                statusEl.innerHTML = '<div class="status-msg status-error">Please select an opponent.</div>';
+                                return;
+                            }
+                            if (homeTeam === awayTeam) {
+                                statusEl.innerHTML = '<div class="status-msg status-error">Cannot play against your own team.</div>';
+                                return;
+                            }
+                            if (userImages.length === 0) {
+                                statusEl.innerHTML = '<div class="status-msg status-error">Please upload at least one image.</div>';
+                                return;
                             }
 
-                            const matchText = formatResultText(homeTeam, homeScore, awayTeam, awayScore, '');
-                            const dateDisplay = submittedDate;
-
-                            const resultData = {
-                                matchText,
-                                md: md,
-                                date: dateDisplay,
-                                matchNotes: matchNotes,
-                                goalScorers: { home: userScorersHome || [], away: userScorersAway || [] },
-                                userAssists: { home: userAssistsHome || [], away: userAssistsAway || [] },
-                                images: imageUrls,
-                                submittedBy: managerKey,
-                                submittedAt: Date.now(),
-                                homeTeam: homeTeam,
-                                awayTeam: awayTeam,
-                                homeScore: homeScore,
-                                awayScore: awayScore,
-                                matchType: 'normal',
-                                forfeitType: 'none',
-                                status: 'pending'
-                            };
-
-                            incrementPending();
-                            const newRef = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).push(
-                            resultData);
-                            decrementPending();
-
-                            const keyId = await findManagerKeyId(managerKey);
-                            if (keyId) {
-                                await database.ref(`managerKeys/${keyId}/lastSubmissionTimestamp`).set(Date
-                                .now());
+                            const hasScorers = userScorersHome.length > 0 || userScorersAway.length > 0;
+                            const isZeroZero = homeScore === 0 && awayScore === 0;
+                            if (hasScorers && isZeroZero) {
+                                statusEl.innerHTML = '<div class="status-msg status-error">❌ Cannot add a scoresheet with scorers on a 0-0 result. Please fix the score or remove the scorers.</div>';
+                                return;
                             }
 
-                            // Auto-approve fresh submission
-                            await autoApproveFreshSubmission(newRef.key, resultData);
+                            const limitCheck = await validateDailyMatchLimit(managerKey, md);
+                            if (!limitCheck.allowed) {
+                                statusEl.innerHTML = `<div class="status-msg status-error">⏳ ${limitCheck.message}</div>`;
+                                return;
+                            }
 
-                            statusEl.innerHTML = '<div class="status-msg status-success">✅ Result submitted and approved!</div>';
-                            btn.innerHTML = '✓ Submitted!';
-                            setTimeout(() => { closeModal(); }, 1500);
-                        } catch (e) {
-                            statusEl.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
-                            btn.disabled = false;
-                            btn.innerHTML = '✅ Submit Result';
-                        }
-                    });
+                            btn.disabled = true;
+                            btn.innerHTML = '<span class="btn-spinner"></span> Submitting...';
+                            statusEl.innerHTML = '<div class="status-msg status-loading">Submitting result for admin approval...</div>';
+
+                            try {
+                                const imageUrls = [];
+                                for (const img of userImages) {
+                                    const url = await uploadToImgBB(img.file);
+                                    imageUrls.push(url);
+                                }
+
+                                const matchText = formatResultText(homeTeam, homeScore, awayTeam, awayScore, '');
+                                const dateDisplay = submittedDate;
+
+                                const resultData = {
+                                    matchText,
+                                    md: md,
+                                    date: dateDisplay,
+                                    matchNotes: matchNotes,
+                                    goalScorers: { home: userScorersHome || [], away: userScorersAway || [] },
+                                    userAssists: { home: userAssistsHome || [], away: userAssistsAway || [] },
+                                    images: imageUrls,
+                                    submittedBy: managerKey,
+                                    submittedAt: Date.now(),
+                                    homeTeam: homeTeam,
+                                    awayTeam: awayTeam,
+                                    homeScore: homeScore,
+                                    awayScore: awayScore,
+                                    matchType: 'normal',
+                                    forfeitType: 'none',
+                                    status: 'pending'
+                                };
+
+                                incrementPending();
+                                const newRef = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).push(
+                                resultData);
+                                decrementPending();
+
+                                const keyId = await findManagerKeyId(managerKey);
+                                if (keyId) {
+                                    await database.ref(`managerKeys/${keyId}/lastSubmissionTimestamp`).set(Date
+                                    .now());
+                                }
+
+                                // Auto-approve fresh submission
+                                await autoApproveFreshSubmission(newRef.key, resultData);
+
+                                statusEl.innerHTML = '<div class="status-msg status-success">✅ Result submitted and approved!</div>';
+                                btn.innerHTML = '✓ Submitted!';
+                                setTimeout(() => { closeModal(); }, 1500);
+                            } catch (e) {
+                                statusEl.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                                btn.disabled = false;
+                                btn.innerHTML = '✅ Submit Result';
+                            }
+                        })();
+                    };
                 };
             };
 
