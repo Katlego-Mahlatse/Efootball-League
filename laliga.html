@@ -1,4 +1,4 @@
-```html
+``
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2479,6 +2479,7 @@
             <label>Goals Conceded (GC)</label><input type="number" id="teamGC">
             <label>Goal Difference (GD)</label><input type="number" id="teamGD">
             <label>Points (Pts)</label><input type="number" id="teamPts">
+            <button type="button" class="season-admin-btn" id="autoUpdateStatsBtn" style="width:100%;margin-top:14px;display:none;">🔄 Auto Update Stats from Results</button>
             <div class="modal-btns">
                 <button class="modal-btn-primary" id="saveTeamBtn">Save</button>
                 <button class="modal-btn-cancel" id="cancelTeamBtn">Cancel</button>
@@ -2646,6 +2647,11 @@
         // ─── NEW STATE FOR MANAGER KEYS ───
         let managerKeysCache = {};
         let currentMatchday = 1;
+        // ─── PENDING FIXTURES COUNTDOWN STATE ───
+        let pendingFixturesCountdownInterval = null;
+        // ─── REQUESTS HISTORY REALTIME LISTENERS ───
+        let requestsHistoryResultsListenerRef = null;
+        let requestsHistoryPendingListenerRef = null;
 
         // ─── Background image state ───
         let bgImageUrl = '';
@@ -3203,21 +3209,10 @@
                 const pos = idx + 1;
                 let barClass = '';
                 let rowClass = '';
-                if (currentSeasonId === 1) {
-                    if (pos <= 4) barClass = 'vbar-blue';
-                } else if (currentSeasonId === 2) {
-                    if (pos <= 4) barClass = 'vbar-blue';
-                    else if (pos <= 8) barClass = 'vbar-orange';
-                    else if (pos <= 12) barClass = 'vbar-green';
-                    if (pos === 8) rowClass = 'dashed-sep-white';
-                } else {
-                    if (pos <= 4) barClass = 'vbar-blue';
-                    else if (pos <= 8) barClass = 'vbar-orange';
-                    else if (pos <= 12) barClass = 'vbar-green';
-                    else if (pos >= 18) barClass = 'vbar-red';
-                    if (pos === 8) rowClass = 'dashed-sep-white';
-                    if (pos === 17) rowClass = 'dashed-sep-red';
-                }
+                if (pos <= 10) barClass = 'vbar-blue';
+                else barClass = 'vbar-orange';
+                if (pos === 4) rowClass = 'dashed-sep-white';
+
                 const row = document.createElement('tr');
                 if (rowClass) row.className = rowClass;
 
@@ -3305,28 +3300,8 @@
                 tbody.appendChild(row);
             });
 
-            const legend = document.getElementById('legendContainer');
-            let legendHtml = '';
-            if (currentSeasonId === 1) {
-                legendHtml =
-                    '<span class="legend-item"><span class="vbar vbar-blue" style="display:inline-block;"></span> UEFA Champions League</span>';
-            } else if (currentSeasonId === 2) {
-                legendHtml = `
-                    <span class="legend-item"><span class="vbar vbar-blue" style="display:inline-block;"></span> UEFA Champions League</span>
-                    <span class="legend-item"><span class="vbar vbar-orange" style="display:inline-block;"></span> Europa League</span>
-                    <span class="legend-item"><span class="vbar vbar-green" style="display:inline-block;"></span> UEFA Conference League</span>
-                    <span class="legend-item"><span class="legend-dashed" style="border-color:#ffffff;"></span> FIFA Club World Cup</span>
-                `;
-            } else {
-                legendHtml = `
-                    <span class="legend-item"><span class="vbar vbar-blue" style="display:inline-block;"></span> UEFA Champions League</span>
-                    <span class="legend-item"><span class="vbar vbar-orange" style="display:inline-block;"></span> Europa League</span>
-                    <span class="legend-item"><span class="legend-dashed" style="border-color:#ffffff;"></span> FIFA Club World Cup</span>
-                    <span class="legend-item"><span class="vbar vbar-green" style="display:inline-block;"></span> UEFA Conference League</span>
-                    <span class="legend-item"><span class="vbar vbar-red" style="display:inline-block;"></span> Relegation</span>
-                `;
-            }
-            legend.innerHTML = legendHtml;
+            const legendHtml = ` <span class="legend-item"><span class="vbar vbar-blue" style="display:inline-block;"></span> UEFA Champions League</span> <span class="legend-item"><span class="vbar vbar-orange" style="display:inline-block;"></span> Europa League</span> <span class="legend-item"><span class="legend-dashed" style="border-color:#ffffff;"></span> FIFA Club World Cup</span> `;
+            document.getElementById('legendContainer').innerHTML = legendHtml;
 
             if (isAdminMode) {
                 document.getElementById('addTeamBtnInner')?.addEventListener('click', () => openTeamForm(null));
@@ -3366,6 +3341,32 @@
             const d = getSASTDateObj();
             d.setDate(d.getDate() - 1);
             return d.toISOString().split('T')[0];
+        }
+        // ─── PENDING FIXTURES HELPERS ───
+        function getMatchdayDeadlineTimestamp(dateStr) {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const sastMidnightUTCms = Date.UTC(y, m - 1, d) - (2 * 60 * 60 * 1000);
+            return sastMidnightUTCms + (48 * 60 * 60 * 1000);
+        }
+        function formatCountdown(deadlineMs) {
+            const diff = deadlineMs - Date.now();
+            if (diff <= 0) return 'Expired';
+            const totalSeconds = Math.floor(diff / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+        }
+        function isFixtureRecentlyRecorded(home, away, md, combinedRecords) {
+            const cutoff = Date.now() - (48 * 60 * 60 * 1000);
+            for (const key in combinedRecords) {
+                const r = combinedRecords[key];
+                const sameMatch = ((r.homeTeam === home && r.awayTeam === away) || (r.homeTeam === away && r.awayTeam === home)) && String(r.md) === String(md);
+                if (!sameMatch) continue;
+                const ts = r.submittedAt || r.approvedAt || 0;
+                if (ts >= cutoff) return true;
+            }
+            return false;
         }
 
         // ─── FIXTURES RENDERER ───
@@ -4019,6 +4020,7 @@
             document.getElementById('teamGC').value = data?.gc ?? '';
             document.getElementById('teamGD').value = data?.gd ?? '';
             document.getElementById('teamPts').value = data?.pts ?? '';
+            document.getElementById('autoUpdateStatsBtn').style.display = key ? 'block' : 'none';
             document.getElementById('teamForm').classList.add('active');
         }
         document.getElementById('saveTeamBtn').onclick = async () => {
@@ -4037,6 +4039,26 @@
         };
         document.getElementById('cancelTeamBtn').onclick = () => document.getElementById('teamForm').classList.remove(
         'active');
+        document.getElementById('autoUpdateStatsBtn').onclick = async () => {
+            const teamName = document.getElementById('teamNameInput').value.trim();
+            if (!teamName) {
+                alert('Enter team name first.');
+                return;
+            }
+            document.getElementById('teamForm').classList.remove('active');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            const resultsTabBtn = document.querySelector('.tab-btn[data-tab="results"]');
+            if (resultsTabBtn) resultsTabBtn.classList.add('active');
+            currentTeamFilter = teamName;
+            renderResults();
+            try {
+                const stats = await recalculateAndApplyTeamStats(teamName);
+                alert(`✅ Stats recalculated for ${teamName}!\nP:${stats.p} W:${stats.w} D:${stats.d} L:${stats.l} GS:${stats.gs} GC:${stats.gc} GD:${stats.gd > 0 ? '+' : ''}${stats.gd} Pts:${stats.pts}`);
+                renderCurrentTab('table');
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        };
 
         function formatResultText(homeTeam, homeScore, awayTeam, awayScore, forfeitType) {
             if (forfeitType === "no_contest") return `${homeTeam} F - F ${awayTeam} (No Contest)`;
@@ -4258,6 +4280,95 @@
         function closeModalIfOpen() { if (document.getElementById('genericModal').classList.contains('active'))
                 closeModal(); }
 
+        // ─── AUTO-UPDATE STATS: SHARED CALCULATION ───
+        async function recalculateAndApplyTeamStats(teamName) {
+            const tableSnap = await database.ref(getSeasonPath(currentSeasonId, 'table')).once('value');
+            const tableVal = tableSnap.val() || {};
+            let teamKey = null;
+            let teamEntry = null;
+            for (const [key, val] of Object.entries(tableVal)) {
+                if (val.name === teamName) {
+                    teamKey = key;
+                    teamEntry = { ...val };
+                    break;
+                }
+            }
+            if (!teamKey) throw new Error('Team not found in table.');
+            const resetStats = { name: teamName, p: 0, w: 0, d: 0, l: 0, gs: 0, gc: 0, gd: 0, pts: 0 };
+            const resultsSnap = await database.ref(getSeasonPath(currentSeasonId, 'results')).once('value');
+            const allResults = resultsSnap.val() || {};
+            for (const [key, r] of Object.entries(allResults)) {
+                const text = r.matchText || '';
+                const lower = text.toLowerCase();
+                const isNoContest = lower.includes('no contest') || (lower.includes('f - f') && !lower.includes('forfeit'));
+                const isForfeitWin = lower.includes('forfeited') || (r.forfeitType === 'forfeit_no_reply' || r.forfeitType === 'forfeit_agreement');
+                let isHome = false, isAway = false;
+                let homeScore = 0, awayScore = 0;
+                if (r.homeTeam === teamName) isHome = true;
+                else if (r.awayTeam === teamName) isAway = true;
+                if (!isHome && !isAway) {
+                    const match = text.match(/(\d+)\s*-\s*(\d+)/);
+                    if (match) {
+                        homeScore = parseInt(match[1]);
+                        awayScore = parseInt(match[2]);
+                        const parts = text.split(/\s+\d+\s*-\s*\d+\s+/);
+                        if (parts.length >= 2) {
+                            if (parts[0].trim().includes(teamName)) isHome = true;
+                            else if (parts[1].trim().replace(/\(.*\)/g, '').trim().includes(teamName)) isAway = true;
+                        }
+                    } else if (lower.includes('f - f')) {
+                        if (text.split(/F\s*-\s*F/i)[0].trim().includes(teamName)) isHome = true;
+                        else isAway = true;
+                    }
+                } else {
+                    homeScore = r.homeScore || 0;
+                    awayScore = r.awayScore || 0;
+                    if (!homeScore && !awayScore) {
+                        const match = text.match(/(\d+)\s*-\s*(\d+)/);
+                        if (match) {
+                            homeScore = parseInt(match[1]);
+                            awayScore = parseInt(match[2]);
+                        }
+                    }
+                }
+                if (!isHome && !isAway) continue;
+                const myScore = isHome ? homeScore : awayScore;
+                const oppScore = isHome ? awayScore : homeScore;
+                if (isNoContest) {
+                    resetStats.p++;
+                    resetStats.l++;
+                } else if (isForfeitWin) {
+                    resetStats.p++;
+                    if ((r.homeTeam === teamName && homeScore > awayScore) || (r.awayTeam === teamName && awayScore > homeScore)) {
+                        resetStats.w++;
+                        resetStats.pts += 3;
+                    } else {
+                        resetStats.l++;
+                        resetStats.gd -= 3;
+                        resetStats.gc++;
+                    }
+                } else {
+                    resetStats.p++;
+                    resetStats.gs += myScore;
+                    resetStats.gc += oppScore;
+                    resetStats.gd += (myScore - oppScore);
+                    if (myScore > oppScore) {
+                        resetStats.w++;
+                        resetStats.pts += 3;
+                    } else if (myScore < oppScore) {
+                        resetStats.l++;
+                    } else {
+                        resetStats.d++;
+                        resetStats.pts += 1;
+                    }
+                }
+            }
+            await database.ref(getSeasonPath(currentSeasonId, `table/${teamKey}`)).set(resetStats);
+            invalidateSeasonCache();
+            await loadCurrentSeasonData();
+            return resetStats;
+        }
+
         // ─── AUTO-UPDATE STATS MODAL ───
         async function openAutoUpdateStatsModal() {
             if (popupEl) { popupEl.remove();
@@ -4289,97 +4400,7 @@
                 btn.innerHTML = '<span class="btn-spinner"></span> Recalculating...';
                 statusEl.innerHTML = '<div class="status-msg status-loading">Scanning results...</div>';
                 try {
-                    const tableSnap = await database.ref(getSeasonPath(currentSeasonId, 'table')).once('value');
-                    const tableVal = tableSnap.val() || {};
-                    let teamKey = null;
-                    let teamEntry = null;
-                    for (const [key, val] of Object.entries(tableVal)) {
-                        if (val.name === teamName) { teamKey = key;
-                            teamEntry = { ...val }; break; }
-                    }
-                    if (!teamKey) { statusEl.innerHTML =
-                            '<div class="status-msg status-error">Team not found in table.</div>'; return; }
-
-                    const resetStats = { name: teamName, p: 0, w: 0, d: 0, l: 0, gs: 0, gc: 0, gd: 0, pts: 0 };
-
-                    const resultsSnap = await database.ref(getSeasonPath(currentSeasonId, 'results')).once('value');
-                    const allResults = resultsSnap.val() || {};
-
-                    for (const [key, r] of Object.entries(allResults)) {
-                        const text = r.matchText || '';
-                        const lower = text.toLowerCase();
-                        const isNoContest = lower.includes('no contest') || (lower.includes('f - f') && !lower
-                        .includes('forfeit'));
-                        const isForfeitWin = lower.includes('forfeited') || (r.forfeitType === 'forfeit_no_reply' ||
-                            r.forfeitType === 'forfeit_agreement');
-
-                        let isHome = false,
-                            isAway = false;
-                        let homeScore = 0,
-                            awayScore = 0;
-
-                        if (r.homeTeam === teamName) isHome = true;
-                        else if (r.awayTeam === teamName) isAway = true;
-
-                        if (!isHome && !isAway) {
-                            const match = text.match(/(\d+)\s*-\s*(\d+)/);
-                            if (match) {
-                                homeScore = parseInt(match[1]);
-                                awayScore = parseInt(match[2]);
-                                const parts = text.split(/\s+\d+\s*-\s*\d+\s+/);
-                                if (parts.length >= 2) {
-                                    if (parts[0].trim().includes(teamName)) isHome = true;
-                                    else if (parts[1].trim().replace(/\(.*\)/g, '').trim().includes(teamName))
-                                    isAway = true;
-                                }
-                            } else if (lower.includes('f - f')) {
-                                if (text.split(/F\s*-\s*F/i)[0].trim().includes(teamName)) isHome = true;
-                                else isAway = true;
-                            }
-                        } else {
-                            homeScore = r.homeScore || 0;
-                            awayScore = r.awayScore || 0;
-                            if (!homeScore && !awayScore) {
-                                const match = text.match(/(\d+)\s*-\s*(\d+)/);
-                                if (match) { homeScore = parseInt(match[1]);
-                                    awayScore = parseInt(match[2]); }
-                            }
-                        }
-
-                        if (!isHome && !isAway) continue;
-
-                        const myScore = isHome ? homeScore : awayScore;
-                        const oppScore = isHome ? awayScore : homeScore;
-
-                        if (isNoContest) {
-                            resetStats.p++;
-                            resetStats.l++;
-                        } else if (isForfeitWin) {
-                            resetStats.p++;
-                            if ((r.homeTeam === teamName && homeScore > awayScore) || (r.awayTeam === teamName &&
-                                    awayScore > homeScore)) {
-                                resetStats.w++;
-                                resetStats.pts += 3;
-                            } else {
-                                resetStats.l++;
-                                resetStats.gd -= 3;
-                                resetStats.gc++;
-                            }
-                        } else {
-                            resetStats.p++;
-                            resetStats.gs += myScore;
-                            resetStats.gc += oppScore;
-                            resetStats.gd += (myScore - oppScore);
-                            if (myScore > oppScore) { resetStats.w++;
-                                resetStats.pts += 3; } else if (myScore < oppScore) { resetStats.l++; } else { resetStats
-                                    .d++;
-                                resetStats.pts += 1; }
-                        }
-                    }
-
-                    await database.ref(getSeasonPath(currentSeasonId, `table/${teamKey}`)).set(resetStats);
-                    invalidateSeasonCache();
-                    await loadCurrentSeasonData();
+                    const resetStats = await recalculateAndApplyTeamStats(teamName);
                     statusEl.innerHTML =
                         `<div class="status-msg status-success">✅ Stats recalculated for ${escapeHtml(teamName)}! P:${resetStats.p} W:${resetStats.w} D:${resetStats.d} L:${resetStats.l} GS:${resetStats.gs} GC:${resetStats.gc} GD:${resetStats.gd > 0 ? '+' : ''}${resetStats.gd} Pts:${resetStats.pts}</div>`;
                     btn.innerHTML = '✓ Done!';
@@ -6497,11 +6518,12 @@
             const todayStr = getTodaySAST();
             const yesterdayStr = getSASTYesterday();
 
-            const fixturesToShow = [];
-            for (const [date, eventData] of Object.entries(calendarEventsData)) {
-                if (date !== todayStr && date !== yesterdayStr) continue;
+            function collectFixturesForDate(dateStr) {
+                const list = [];
+                const eventData = calendarEventsData[dateStr];
+                if (!eventData) return list;
                 const eventSeason = eventData.season;
-                if (eventSeason !== undefined && eventSeason !== null && eventSeason !== currentSeasonId) continue;
+                if (eventSeason !== undefined && eventSeason !== null && eventSeason !== currentSeasonId) return list;
                 if (eventData.tournaments && Array.isArray(eventData.tournaments)) {
                     for (const tournament of eventData.tournaments) {
                         let isLaLiga = false;
@@ -6511,8 +6533,8 @@
                         }
                         if (isLaLiga && tournament.fixtures && Array.isArray(tournament.fixtures)) {
                             for (const fixture of tournament.fixtures) {
-                                fixturesToShow.push({
-                                    date: date,
+                                list.push({
+                                    date: dateStr,
                                     homeTeam: fixture.home,
                                     awayTeam: fixture.away,
                                     tournamentName: tournament.name,
@@ -6522,9 +6544,13 @@
                         }
                     }
                 }
+                return list;
             }
 
-            if (fixturesToShow.length === 0) {
+            let todayFixtures = collectFixturesForDate(todayStr);
+            let yesterdayFixtures = collectFixturesForDate(yesterdayStr);
+
+            if (todayFixtures.length === 0 && yesterdayFixtures.length === 0) {
                 showModal(`
                         <h3>⏳ Pending Fixtures</h3>
                         <div class="empty-state"><div class="empty-icon">📅</div><p>No fixtures for today or yesterday.</p></div>
@@ -6534,38 +6560,31 @@
                 return;
             }
 
-            const snap = await database.ref(getSeasonPath(currentSeasonId, 'results')).once('value');
-            const resultsDataSnap = snap.val() || {};
+            const resultsSnap = await database.ref(getSeasonPath(currentSeasonId, 'results')).once('value');
+            const resultsDataSnap = resultsSnap.val() || {};
             const pendingSnap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
             const pendingData = pendingSnap.val() || {};
+            const combinedRecords = { ...resultsDataSnap, ...pendingData };
 
-            function isMatchAlreadySubmitted(home, away, md) {
-                for (const key in resultsDataSnap) {
-                    const r = resultsDataSnap[key];
-                    if (((r.homeTeam === home && r.awayTeam === away) || (r.homeTeam === away && r.awayTeam === home)) &&
-                        String(r.md) === String(md)) {
-                        return true;
-                    }
-                }
-                for (const key in pendingData) {
-                    const p = pendingData[key];
-                    if (((p.homeTeam === home && p.awayTeam === away) || (p.homeTeam === away && p.awayTeam === home)) &&
-                        String(p.md) === String(md)) {
-                        return true;
-                    }
-                }
-                return false;
+            todayFixtures = todayFixtures.filter(fix => !isFixtureRecentlyRecorded(fix.homeTeam, fix.awayTeam, fix.matchday || 0, combinedRecords));
+            yesterdayFixtures = yesterdayFixtures.filter(fix => !isFixtureRecentlyRecorded(fix.homeTeam, fix.awayTeam, fix.matchday || 0, combinedRecords));
+
+            if (todayFixtures.length === 0 && yesterdayFixtures.length === 0) {
+                showModal(`
+                        <h3>⏳ Pending Fixtures</h3>
+                        <div class="empty-state"><div class="empty-icon">✅</div><p>All fixtures from today and yesterday have already been recorded in the last 48 hours.</p></div>
+                        <div class="modal-btns"><button class="modal-btn-cancel" id="closePendingEmptyBtn">Close</button></div>
+                    `);
+                document.getElementById('closePendingEmptyBtn').onclick = closeModal;
+                return;
             }
 
-            let listHtml = '';
-            for (const fix of fixturesToShow) {
+            function renderFixtureItem(fix) {
                 const md = fix.matchday || 0;
-                const submitted = isMatchAlreadySubmitted(fix.homeTeam, fix.awayTeam, md);
                 const homeIcon = getTeamIconHtml(fix.homeTeam, 'team-icon-sm');
                 const awayIcon = getTeamIconHtml(fix.awayTeam, 'team-icon-sm');
-
-                listHtml += `
-                        <div class="pending-item" style="${submitted ? 'opacity:0.5;' : ''}">
+                return `
+                        <div class="pending-item">
                             <div class="pi-teams">
                                 ${homeIcon}
                                 <span>${escapeHtml(fix.homeTeam)}</span>
@@ -6574,24 +6593,61 @@
                                 ${awayIcon}
                             </div>
                             <div class="pi-md">${fix.date} · MD ${md}</div>
-                            ${submitted ? '<span style="color:#22c55e;font-weight:700;">✅ Submitted</span>' : `
-                                <div class="pi-actions">
-                                    <button class="btn-sm btn-confirm pending-no-contest-btn" data-home="${escapeHtml(fix.homeTeam)}" data-away="${escapeHtml(fix.awayTeam)}" data-md="${md}" style="padding:8px 20px;font-size:1.1rem;">🤝 No Contest</button>
-                                    <button class="btn-sm btn-edit pending-dismiss-btn" data-home="${escapeHtml(fix.homeTeam)}" data-away="${escapeHtml(fix.awayTeam)}" data-md="${md}" style="padding:8px 20px;font-size:1.1rem;">✓ Dismiss</button>
-                                </div>
-                            `}
+                            <div class="pi-actions">
+                                <button class="btn-sm btn-confirm pending-no-contest-btn" data-home="${escapeHtml(fix.homeTeam)}" data-away="${escapeHtml(fix.awayTeam)}" data-md="${md}" style="padding:8px 20px;font-size:1.1rem;">🤝 No Contest</button>
+                                <button class="btn-sm btn-edit pending-dismiss-btn" data-home="${escapeHtml(fix.homeTeam)}" data-away="${escapeHtml(fix.awayTeam)}" data-md="${md}" style="padding:8px 20px;font-size:1.1rem;">✓ Dismiss</button>
+                            </div>
                         </div>
+                    `;
+            }
+
+            const todayDeadline = getMatchdayDeadlineTimestamp(todayStr);
+            const yesterdayDeadline = getMatchdayDeadlineTimestamp(yesterdayStr);
+
+            let todaySectionHtml = '';
+            if (todayFixtures.length) {
+                todaySectionHtml = `
+                        <div class="fixture-date-label" style="margin-top:10px;">
+                            <span class="date-text">📅 Today's Fixtures</span>
+                            <span class="matchday-badge" id="todayCountdownBadge">⏱ ${formatCountdown(todayDeadline)}</span>
+                        </div>
+                        ${todayFixtures.map(renderFixtureItem).join('')}
+                    `;
+            }
+
+            let yesterdaySectionHtml = '';
+            if (yesterdayFixtures.length) {
+                yesterdaySectionHtml = `
+                        <div class="fixture-date-label" style="margin-top:20px;">
+                            <span class="date-text">📅 Yesterday's Fixtures</span>
+                            <span class="matchday-badge" id="yesterdayCountdownBadge">⏱ ${formatCountdown(yesterdayDeadline)}</span>
+                        </div>
+                        ${yesterdayFixtures.map(renderFixtureItem).join('')}
                     `;
             }
 
             showModal(`
                     <h3>⏳ Pending Fixtures</h3>
-                    <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Today's and yesterday's LaLiga fixtures. Mark as No Contest if the match was not played.</p>
-                    <div style="max-height:500px;overflow-y:auto;">${listHtml}</div>
+                    <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Fixtures not yet recorded in the request history within the last 48 hours. Mark as No Contest if the match was not played.</p>
+                    <div style="max-height:500px;overflow-y:auto;">${todaySectionHtml}${yesterdaySectionHtml}</div>
                     <div class="modal-btns"><button class="modal-btn-cancel" id="closePendingBtn">Close</button></div>
                 `, true);
 
-            document.getElementById('closePendingBtn').onclick = closeModal;
+            if (pendingFixturesCountdownInterval) clearInterval(pendingFixturesCountdownInterval);
+            pendingFixturesCountdownInterval = setInterval(() => {
+                const tBadge = document.getElementById('todayCountdownBadge');
+                if (tBadge) tBadge.textContent = `⏱ ${formatCountdown(todayDeadline)}`;
+                const yBadge = document.getElementById('yesterdayCountdownBadge');
+                if (yBadge) yBadge.textContent = `⏱ ${formatCountdown(yesterdayDeadline)}`;
+            }, 1000);
+
+            document.getElementById('closePendingBtn').onclick = () => {
+                if (pendingFixturesCountdownInterval) {
+                    clearInterval(pendingFixturesCountdownInterval);
+                    pendingFixturesCountdownInterval = null;
+                }
+                closeModal();
+            };
 
             document.querySelectorAll('.pending-no-contest-btn').forEach(btn => {
                 btn.onclick = async () => {
@@ -6604,11 +6660,15 @@
                     try {
                         const matchText = `${home} F - F ${away} (No Contest)`;
                         const resultData = { matchText, md, homeTeam: home, awayTeam: away, homeScore: 0,
-                            awayScore: 0, matchType: 'forfeit', forfeitType: 'no_contest', date: getTodaySAST() };
+                            awayScore: 0, matchType: 'forfeit', forfeitType: 'no_contest', date: getTodaySAST(), submittedBy: 'admin', submittedAt: Date.now() };
                         await database.ref(getSeasonPath(currentSeasonId, 'results')).push(resultData);
                         await applyResultToTable(home, away, 0, 0, 'no_contest');
                         await loadCurrentSeasonDataSync();
                         renderCurrentTab();
+                        if (pendingFixturesCountdownInterval) {
+                            clearInterval(pendingFixturesCountdownInterval);
+                            pendingFixturesCountdownInterval = null;
+                        }
                         openPendingResultsModal();
                     } catch (e) {
                         alert('Error: ' + e.message);
@@ -6622,11 +6682,10 @@
                 btn.onclick = () => {
                     const home = btn.dataset.home;
                     const away = btn.dataset.away;
-                    const md = parseInt(btn.dataset.md);
-                    if (confirm(`Dismiss ${home} vs ${away}? This will mark it as not needing action.`)) {
-                        btn.parentElement.parentElement.style.opacity = '0.3';
-                        btn.parentElement.innerHTML =
-                        '<span style="color:rgba(255,255,255,0.4);font-size:1.1rem;">Dismissed</span>';
+                    if (confirm(`Dismiss ${home} vs ${away}? This will hide it from this view.`)) {
+                        const item = btn.closest('.pending-item');
+                        item.style.opacity = '0.3';
+                        item.querySelector('.pi-actions').innerHTML = '<span style="color:rgba(255,255,255,0.4);font-size:1.1rem;">Dismissed</span>';
                     }
                 };
             });
@@ -6634,20 +6693,33 @@
 
         // ─── REQUESTS HISTORY MODAL ───
         async function openRequestsHistoryModal() {
-            const approvedSnap = await database.ref(getSeasonPath(currentSeasonId, 'results')).once('value');
-            const approvedData = approvedSnap.val() || {};
-            const approvedEntries = Object.entries(approvedData).map(([key, val]) => ({ id: key, ...val, status: 'approved' }));
-
-            const pendingSnap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
-            const pendingData = pendingSnap.val() || {};
-            const pendingEntries = Object.entries(pendingData).map(([key, val]) => ({ id: key, ...val, status: 'pending' }));
-
-            const allEntries = [...approvedEntries, ...pendingEntries];
-            allEntries.sort((a, b) => (b.submittedAt || b.approvedAt || 0) - (a.submittedAt || a.approvedAt || 0));
-
+            let approvedData = {};
+            let pendingData = {};
+            let currentFilterTeam = '';
             const teamNames = teamsData.map(t => t.name).sort();
 
+            function buildEntries() {
+                const approvedEntries = Object.entries(approvedData).map(([key, val]) => ({ id: key, ...val, status: 'approved' }));
+                const pendingEntries = Object.entries(pendingData).map(([key, val]) => ({ id: key, ...val, status: 'pending' }));
+                const all = [...approvedEntries, ...pendingEntries];
+                all.sort((a, b) => (b.submittedAt || b.approvedAt || 0) - (a.submittedAt || a.approvedAt || 0));
+                return all;
+            }
+
+            function detachListeners() {
+                if (requestsHistoryResultsListenerRef) {
+                    requestsHistoryResultsListenerRef.off('value');
+                    requestsHistoryResultsListenerRef = null;
+                }
+                if (requestsHistoryPendingListenerRef) {
+                    requestsHistoryPendingListenerRef.off('value');
+                    requestsHistoryPendingListenerRef = null;
+                }
+            }
+
             const renderHistory = (filterTeam = '') => {
+                currentFilterTeam = filterTeam;
+                const allEntries = buildEntries();
                 let filtered = allEntries;
                 if (filterTeam) filtered = filtered.filter(r => r.homeTeam === filterTeam || r.awayTeam === filterTeam);
 
@@ -6660,7 +6732,6 @@
                         const statusColor = r.status === 'pending' ? '#f97316' : '#22c55e';
                         const statusText = r.status === 'pending' ? '⏳ Pending' : '✅ Approved';
                         const submittedAt = r.submittedAt ? new Date(r.submittedAt).toLocaleString() : 'N/A';
-                        const scoreDisplay = r.matchText || ((r.homeScore || 0) + ' - ' + (r.awayScore || 0));
                         const homeIcon = getTeamIconHtml(r.homeTeam || '', 'team-icon-sm');
                         const awayIcon = getTeamIconHtml(r.awayTeam || '', 'team-icon-sm');
                         const mdDisplay = r.md ? `MD ${r.md}` : '';
@@ -6692,7 +6763,7 @@
 
                 showModal(`
                         <h3>📜 Requests History</h3>
-                        <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;font-size:1.3rem;">All submitted result requests for Season ${currentSeasonId}. ${isAdminMode ? 'Admins can revoke any result.' : ''}</p>
+                        <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;font-size:1.3rem;">All submitted result requests for Season ${currentSeasonId} (live updating). ${isAdminMode ? 'Admins can revoke any result.' : ''}</p>
                         <div class="filter-group" style="margin-bottom:20px;">
                             <label>Filter by Team</label>
                             <select id="historyTeamFilter">${filterOptions}</select>
@@ -6701,13 +6772,17 @@
                         <div class="modal-btns"><button class="modal-btn-cancel" id="closeHistoryBtn">Close</button></div>
                     `, true);
 
-                document.getElementById('closeHistoryBtn').onclick = closeModal;
+                document.getElementById('closeHistoryBtn').onclick = () => {
+                    detachListeners();
+                    closeModal();
+                };
                 document.getElementById('historyTeamFilter').addEventListener('change', e => renderHistory(e.target.value));
 
                 document.querySelectorAll('.revoke-result-btn').forEach(btn => {
                     btn.onclick = async () => {
                         const id = btn.dataset.id;
                         const status = btn.dataset.status;
+                        const allEntries = buildEntries();
                         const entry = allEntries.find(e => e.id === id);
                         if (!entry) return;
 
@@ -6729,12 +6804,6 @@
                             await loadTopScorerData();
                             await loadTopAssistantData();
                             renderCurrentTab();
-
-                            const idx = allEntries.findIndex(e => e.id === id);
-                            if (idx !== -1) allEntries.splice(idx, 1);
-
-                            const currentFilter = document.getElementById('historyTeamFilter')?.value || '';
-                            renderHistory(currentFilter);
                         } catch (e) {
                             alert('Error revoking result: ' + e.message);
                             btn.disabled = false;
@@ -6744,7 +6813,19 @@
                 });
             };
 
-            renderHistory('');
+            detachListeners();
+
+            requestsHistoryResultsListenerRef = database.ref(getSeasonPath(currentSeasonId, 'results'));
+            requestsHistoryResultsListenerRef.on('value', snap => {
+                approvedData = snap.val() || {};
+                if (document.getElementById('genericModal').classList.contains('active')) renderHistory(currentFilterTeam);
+            });
+
+            requestsHistoryPendingListenerRef = database.ref(getSeasonPath(currentSeasonId, 'pending_results'));
+            requestsHistoryPendingListenerRef.on('value', snap => {
+                pendingData = snap.val() || {};
+                if (document.getElementById('genericModal').classList.contains('active')) renderHistory(currentFilterTeam);
+            });
         }
 
         // ─── MANAGER KEYS ADMIN MODAL ───
