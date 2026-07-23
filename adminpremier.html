@@ -413,6 +413,7 @@
             padding: 32px;
             min-height: 200px;
             animation: fadeInUp 0.5s ease 0.4s both;
+            padding-bottom: 0;
         }
 
         .loading-spinner {
@@ -1602,7 +1603,7 @@
             margin-top: 0;
             padding: 16px 20px;
             background: rgba(150, 60, 255, 0.2);
-            border-radius: 20px;
+            border-radius: 0 0 20px 20px;
             display: flex;
             gap: 28px;
             flex-wrap: wrap;
@@ -2456,6 +2457,7 @@
         <div class="menu-item" id="homeBtn">🏠 Home</div>
         <div class="menu-item" id="addResultsMenuBtn">⚽ Add Results</div>
         <div class="menu-item" id="adminModeBtn">🔐 Admin Mode</div>
+        <div class="menu-item" id="leagueRulesBtn">📋 League Rules</div>
         <div class="menu-item" id="debugInfoBtn">🐛 Debug Info</div>
     </div>
 
@@ -2579,20 +2581,7 @@
             addDebugLog('error', `Unhandled Promise Rejection: ${msg}`, stack);
         });
 
-        // ─── Team name mapping ───
-        let teamNameMap = {};
-
-        function mapTeamName(raw) {
-            if (!raw) return raw;
-            const normalized = raw.trim().toLowerCase().replace(/\s/g, '');
-            for (const key in teamNameMap) {
-                const keyNorm = key.trim().toLowerCase().replace(/\s/g, '');
-                if (keyNorm === normalized) {
-                    return teamNameMap[key];
-                }
-            }
-            return raw.trim();
-        }
+        // ─── Team name mapping ─── (removed)
 
         const firebaseConfig = {
             apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
@@ -2607,7 +2596,7 @@
         const database = firebase.database();
 
         const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
-        const RMBG_KEY = "zdkDj9iwQqbGNe8sJu7AEuE8";
+        // RMBG_KEY removed
 
         let isAdminMode = false;
         let currentSeasonId = 2;
@@ -2699,17 +2688,6 @@
             const data = await res.json();
             if (!data.success) throw new Error(data.error?.message || 'ImgBB upload failed');
             return data.data.url;
-        }
-
-        async function removeBackground(file) {
-            const fd = new FormData();
-            fd.append('image_file', file);
-            fd.append('size', 'auto');
-            const res = await fetch('https://api.remove.bg/v1.0/removebg', { method: 'POST', headers: { 'X-Api-Key': RMBG_KEY },
-                body: fd });
-            if (!res.ok) { const err = await res.json().catch(() => ({}));
-                throw new Error(err?.errors?.[0]?.title || 'remove.bg failed'); }
-            return await res.blob();
         }
 
         function pickFile(accept) {
@@ -2837,103 +2815,6 @@
                 return null;
             }
             return saved;
-        }
-
-        // ─── Load Team Name Mappings ───
-        async function loadTeamNameMappings() {
-            const snap = await database.ref('teamNameMappings').once('value');
-            const data = snap.val() || {};
-            teamNameMap = {};
-            for (const key in data) {
-                const entry = data[key];
-                if (entry.efootballName && entry.realName) {
-                    teamNameMap[entry.efootballName] = entry.realName;
-                }
-            }
-            console.log('[loadTeamNameMappings] Mappings loaded, count:', Object.keys(teamNameMap).length);
-        }
-
-        function openManageTeamNameMappingsModal() {
-            const render = async () => {
-                const snap = await database.ref('teamNameMappings').once('value');
-                const data = snap.val() || {};
-                let listHtml = '';
-                for (const key in data) {
-                    const entry = data[key];
-                    listHtml += `
-                <div style="display:flex;align-items:center;gap:16px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-                  <span style="flex:1;font-weight:600;color:var(--white);">${escapeHtml(entry.efootballName)}</span>
-                  <span style="flex:1;color:var(--white);">→ ${escapeHtml(entry.realName)}</span>
-                  <button class="btn-sm btn-delete" data-key="${key}" style="padding:6px 16px;font-size:1rem;">Delete</button>
-                </div>
-              `;
-                }
-                if (!listHtml) listHtml = '<div style="color:rgba(255,255,255,0.4);padding:20px 0;">No mappings yet.</div>';
-
-                showModal(`
-              <h3>🔁 Manage Team Name Mappings</h3>
-              <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;">These mappings are used to convert eFootball team names to real names during AI scanning.</p>
-              <div style="max-height:300px;overflow-y:auto;margin-bottom:20px;">
-                ${listHtml}
-              </div>
-              <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:20px;">
-                <h4 style="color:var(--turquoise);font-size:1.4rem;margin-bottom:12px;">Add New Mapping</h4>
-                <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                  <input type="text" id="newEfootballName" placeholder="eFootball name" style="flex:1;min-width:160px;">
-                  <input type="text" id="newRealName" placeholder="Real name" style="flex:1;min-width:160px;">
-                  <button class="modal-btn-primary" id="addMappingBtn" style="flex:0 0 auto;padding:12px 28px;">Add</button>
-                </div>
-                <div id="mappingStatus"></div>
-              </div>
-              <div class="modal-btns">
-                <button class="modal-btn-cancel" id="closeMappingBtn">Close</button>
-              </div>
-            `);
-
-                document.getElementById('closeMappingBtn').onclick = closeModal;
-
-                document.getElementById('addMappingBtn').onclick = async () => {
-                    const efootballName = document.getElementById('newEfootballName').value.trim();
-                    const realName = document.getElementById('newRealName').value.trim();
-                    const status = document.getElementById('mappingStatus');
-                    if (!efootballName || !realName) {
-                        status.innerHTML = '<div class="status-msg status-error">Both fields required.</div>';
-                        return;
-                    }
-                    const btn = document.getElementById('addMappingBtn');
-                    btn.disabled = true;
-                    btn.innerHTML = '<span class="btn-spinner"></span> Adding...';
-                    try {
-                        incrementPending();
-                        await database.ref('teamNameMappings').push({ efootballName, realName });
-                        decrementPending();
-                        await loadTeamNameMappings();
-                        status.innerHTML = '<div class="status-msg status-success">Mapping added! Refreshing...</div>';
-                        setTimeout(() => { render(); }, 1000);
-                    } catch (e) {
-                        status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
-                        btn.disabled = false;
-                        btn.innerHTML = 'Add';
-                    }
-                };
-
-                document.querySelectorAll('[data-key]').forEach(el => {
-                    el.onclick = async () => {
-                        if (!confirm('Delete this mapping?')) return;
-                        const key = el.dataset.key;
-                        try {
-                            incrementPending();
-                            await database.ref(`teamNameMappings/${key}`).remove();
-                            decrementPending();
-                            await loadTeamNameMappings();
-                            render();
-                        } catch (e) {
-                            alert('Delete failed: ' + e.message);
-                        }
-                    };
-                });
-            };
-            render();
         }
 
         // ─── Manager History ───
@@ -3618,8 +3499,6 @@
             topAssistantList = snap.val() ? Object.entries(snap.val()).map(([k, v]) => ({ key: k, ...v })) : [];
         }
 
-        // ─── REMOVED: loadCurrentMatchday, saveCurrentMatchday, openSetCurrentMatchdayModal ───
-
         // ─── Manage Agent Modal (placeholder) ───
         async function openManageAgentModal() {
             showModal(`
@@ -3649,9 +3528,8 @@
             <button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button>
             <button class="settings-btn" id="manageHeaderBgBtn">🖼️ Table Header Background (legacy)</button>
             <button class="settings-btn" id="manageWatchVideosBtn">🎥 Manage Watch Videos</button>
-            <button class="settings-btn" id="manageTeamNameMappingsBtn">🔁 Manage Team Name Mappings</button>
+            <button class="settings-btn" id="leagueRulesAdminBtn">📋 Set League Rules</button>
             <button class="settings-btn" id="manageManagerKeysBtn">🔑 Manage Manager Keys</button>
-            <!-- REMOVED: setMatchdayBtn and matchdaySchedulingBtn -->
             <button class="settings-btn" id="pendingResultsBtn">⏳ Pending Fixtures</button>
             <button class="settings-btn" id="manageAgentBtn">🤖 Manage Agent</button>
             <button class="settings-btn" id="requestsHistoryBtn">📜 Requests History</button>
@@ -3665,8 +3543,39 @@
             document.getElementById('manageHeaderBgBtn').onclick = uploadHeaderBgImage;
             document.getElementById('manageWatchVideosBtn').onclick = () => { closeModal();
                 openAddVideoModal(); };
-            document.getElementById('manageTeamNameMappingsBtn').onclick = () => { closeModal();
-                openManageTeamNameMappingsModal(); };
+            document.getElementById('leagueRulesAdminBtn').onclick = async () => {
+                const snap = await database.ref('premier_league/leagueRules').once('value');
+                const currentRules = snap.val() || '';
+                showModal(`
+                    <h3>📋 Set League Rules</h3>
+                    <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;font-size:1.3rem;">Type the league rules below. They will be visible to all users via the League Rules menu item.</p>
+                    <label>League Rules</label>
+                    <textarea id="leagueRulesTextarea" style="min-height:300px;font-size:1.6rem;line-height:1.6;white-space:pre-wrap;" placeholder="Type your league rules here...">${escapeHtml(currentRules)}</textarea>
+                    <div id="leagueRulesStatus"></div>
+                    <div class="modal-btns">
+                        <button class="modal-btn-primary" id="saveLeagueRulesBtn">💾 Save Rules</button>
+                        <button class="modal-btn-cancel" id="cancelLeagueRulesBtn">Cancel</button>
+                    </div>
+                `);
+                document.getElementById('cancelLeagueRulesBtn').onclick = closeModal;
+                document.getElementById('saveLeagueRulesBtn').onclick = async () => {
+                    const rules = document.getElementById('leagueRulesTextarea').value;
+                    const btn = document.getElementById('saveLeagueRulesBtn');
+                    const status = document.getElementById('leagueRulesStatus');
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+                    try {
+                        await database.ref('premier_league/leagueRules').set(rules);
+                        status.innerHTML = '<div class="status-msg status-success">✅ League rules saved!</div>';
+                        btn.innerHTML = '✓ Saved!';
+                        setTimeout(closeModal, 1200);
+                    } catch (e) {
+                        status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                        btn.disabled = false;
+                        btn.innerHTML = '💾 Save Rules';
+                    }
+                };
+            };
             document.getElementById('manageManagerKeysBtn').onclick = () => { closeModal();
                 openManagerKeysModal(); };
             document.getElementById('pendingResultsBtn').onclick = () => { closeModal();
@@ -4157,50 +4066,34 @@
             });
         }
 
-        // ─── CHANGE: openManagerActionHub (no MD, only opponent name + date) ───
+        // ─── CHANGE: openManagerActionHub (opponents from table) ───
         async function openManagerActionHub(linkedTeam, managerKey) {
-            const allFixtures = getTeamFixturesFromCalendar(linkedTeam);
-            const opponentList = allFixtures.map(fix => {
-                const opponent = fix.home === linkedTeam ? fix.away : fix.home;
-                return { opponent, date: fix.date };
-            });
+            // Load all teams from the current season table, excluding the linked team
+            const opponentList = teamsData
+                .map(t => t.name)
+                .filter(name => name && name !== linkedTeam)
+                .sort();
 
             if (opponentList.length === 0) {
                 showModal(`
                     <h3>🔑 ${escapeHtml(linkedTeam)}</h3>
-                    <p style="color:rgba(255,255,255,0.6);font-size:1.4rem;margin:20px 0;">No fixtures found for your team in the calendar. Please contact the admin.</p>
+                    <p style="color:rgba(255,255,255,0.6);font-size:1.4rem;margin:20px 0;">No opponents found in the league table. Please contact the admin.</p>
                     <div class="modal-btns"><button class="modal-btn-cancel" id="closeActionHubBtn">Cancel</button></div>
                 `);
                 document.getElementById('closeActionHubBtn').onclick = closeModal;
                 return;
             }
 
-            const playedOpponents = await getPlayedOpponents(managerKey);
-            const availableOpponents = opponentList.filter(item =>
-                !playedOpponents.some(p => p.opponent === item.opponent && p.date === item.date)
-            );
-
-            if (availableOpponents.length === 0) {
-                showModal(`
-                    <h3>🔑 ${escapeHtml(linkedTeam)}</h3>
-                    <p style="color:rgba(255,255,255,0.6);font-size:1.4rem;margin:20px 0;">You have already submitted results for all your fixtures. Contact admin if this is an error.</p>
-                    <div class="modal-btns"><button class="modal-btn-cancel" id="closeActionHubBtn">Close</button></div>
-                `);
-                document.getElementById('closeActionHubBtn').onclick = closeModal;
-                return;
-            }
-
-            // NEW: Use SAST today as the match date when submitting
             const submissionDate = getSASTToday();
 
-            let opponentsHtml = availableOpponents.map((item, idx) => {
-                const iconHtml = getTeamIconHtml(item.opponent, 'team-icon-sm');
+            let opponentsHtml = opponentList.map((opponentName, idx) => {
+                const iconUrl = teamIconsCache[opponentName] || '';
+                const iconHtml = iconUrl ? `<img src="${iconUrl}" style="width:48px;height:48px;object-fit:contain;border-radius:0;background:transparent;" alt="${opponentName}" onerror="this.style.display='none';">` : '';
                 return `
                     <div class="opponent-select-block" data-idx="${idx}" style="cursor:pointer;display:flex;align-items:center;gap:16px;padding:20px 28px;border-radius:20px;margin-bottom:12px;background:rgba(150,60,255,0.1);border:2px solid var(--glass-border);transition:all 0.2s;">
                         ${iconHtml}
                         <div>
-                            <div class="opponent-name">${escapeHtml(item.opponent)}</div>
-                            <div class="opponent-date">${escapeHtml(item.date)}</div>
+                            <div class="opponent-name" style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--white);letter-spacing:1px;">${escapeHtml(opponentName)}</div>
                         </div>
                     </div>
                 `;
@@ -4220,10 +4113,9 @@
             document.querySelectorAll('.opponent-select-block').forEach(block => {
                 block.onclick = () => {
                     const idx = parseInt(block.dataset.idx);
-                    const selected = availableOpponents[idx];
+                    const selectedOpponent = opponentList[idx];
                     closeModal();
-                    // Use submissionDate (SAST today) as the match date
-                    openMatchTypeSelectionPopup(linkedTeam, managerKey, selected.opponent, submissionDate);
+                    openMatchTypeSelectionPopup(linkedTeam, managerKey, selectedOpponent, submissionDate);
                 };
             });
         }
@@ -4233,7 +4125,7 @@
             showModal(`
                 <h3>🏆 Select Match Type</h3>
                 <p style="color:rgba(255,255,255,0.6);font-size:1.3rem;margin-bottom:16px;">
-                    Opponent: <strong style="color:var(--turquoise);">${escapeHtml(prefilledOpponent)}</strong> · ${escapeHtml(prefilledDate)}
+                    Opponent: <strong style="color:var(--turquoise);">${escapeHtml(prefilledOpponent)}</strong>
                 </p>
                 <div class="match-type-grid">
                     <div class="match-type-block" id="normalMatchBlock">
@@ -4263,7 +4155,7 @@
             };
         }
 
-        // ─── CHANGE: openUserResultForm (no MD, use date) ───
+        // ─── CHANGE: openUserResultForm (no MD) ───
         function openUserResultForm(linkedTeam, managerKey, prefilledOpponent, prefilledDate) {
             const homeTeam = linkedTeam;
             const awayTeam = prefilledOpponent;
@@ -4327,7 +4219,6 @@
                 showModal(`
                     <h3>⚽ Submit Match Result</h3>
                     <div style="text-align:center;margin-bottom:20px;padding:16px;background:rgba(150,60,255,0.1);border-radius:20px;">
-                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:rgba(255,255,255,0.5);letter-spacing:2px;">${escapeHtml(matchDate)}</div>
                         <div style="display:flex;justify-content:center;align-items:center;gap:20px;margin-top:10px;">
                             <span style="font-family:'Bebas Neue',sans-serif;font-size:2.8rem;color:var(--turquoise);">${escapeHtml(homeTeam)}</span>
                             <span style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:rgba(255,255,255,0.4);">VS</span>
@@ -4678,7 +4569,6 @@
                 <p style="color:rgba(255,255,255,0.6);font-size:1.5rem;margin-bottom:24px;">
                     Your Team: <strong style="color:var(--turquoise);">${escapeHtml(linkedTeam)}</strong>
                     ${prefilledOpponent ? ` · Opponent: <strong style="color:var(--razzmatazz);">${escapeHtml(prefilledOpponent)}</strong>` : ''}
-                    ${prefilledDate ? ` · ${escapeHtml(prefilledDate)}` : ''}
                 </p>
                 <div class="match-type-grid">
                     <div class="match-type-block" id="noContestBlock">
@@ -4730,7 +4620,6 @@
                     <p style="color:rgba(255,255,255,0.6);font-size:1.4rem;margin-bottom:16px;">
                         Your Team: <strong style="color:var(--turquoise);">${escapeHtml(linkedTeam)}</strong>
                         ${prefilledOpponent ? ` · Opponent: <strong style="color:var(--razzmatazz);">${escapeHtml(prefilledOpponent)}</strong>` : ''}
-                        ${prefilledDate ? ` · ${escapeHtml(prefilledDate)}` : ''}
                     </p>
                     <div class="forfeit-desc" style="font-size:1.3rem;">${typeDesc}</div>
                     <label>Upload Screenshot Evidence <span class="required-star">*</span></label>
@@ -4870,7 +4759,6 @@
                             // If forfeit_win, apply stats immediately
                             if (isForfeitWin) {
                                 await applyResultToTable(homeTeam, awayTeam, homeScore, awayScore, 'forfeit_win');
-                                // Add a dummy scorer entry for the forfeit win (no actual scorers)
                                 await loadTopScorerData();
                                 await loadTopAssistantData();
                             }
@@ -4910,12 +4798,77 @@
             renderForfeitForm();
         }
 
-        // ─── CHANGE: openPendingResultsModal (unsubmitted fixtures, no MD) ───
+        // ─── CHANGE: openPendingResultsModal (countdown + auto no-contest) ───
         async function openPendingResultsModal() {
             const todayStr = getSASTToday();
             const yesterdayStr = getSASTYesterday();
 
-            // Get all fixtures from calendar for today and yesterday
+            function getCountdownHtml(dateStr) {
+                const matchDayStart = new Date(dateStr + 'T00:00:00+02:00').getTime();
+                const deadline = matchDayStart + (48 * 60 * 60 * 1000);
+                const now = Date.now();
+                const remaining = deadline - now;
+                if (remaining <= 0) return `<span style="color:#ef4444;font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;">⏰ EXPIRED</span>`;
+                const hours = Math.floor(remaining / (1000 * 60 * 60));
+                const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+                const color = remaining < 3600000 ? '#ef4444' : remaining < 10800000 ? '#f97316' : '#22c55e';
+                return `<span style="color:${color};font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;" data-deadline="${deadline}">⏱ ${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}</span>`;
+            }
+
+            async function autoApplyNoContests(fixtures, dateStr) {
+                for (const fix of fixtures) {
+                    const key1 = `${fix.date}_${fix.home}_${fix.away}`;
+                    const key2 = `${fix.date}_${fix.away}_${fix.home}`;
+                    const existingSnap1 = await database.ref(getSeasonPath(currentSeasonId, 'results')).orderByChild('homeTeam').equalTo(fix.home).once('value');
+                    let alreadyExists = false;
+                    if (existingSnap1.exists()) {
+                        existingSnap1.forEach(child => {
+                            const r = child.val();
+                            if ((r.homeTeam === fix.home && r.awayTeam === fix.away && r.date === fix.date) ||
+                                (r.homeTeam === fix.away && r.awayTeam === fix.home && r.date === fix.date)) {
+                                alreadyExists = true;
+                            }
+                        });
+                    }
+                    if (alreadyExists) continue;
+                    const pendingSnap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
+                    if (pendingSnap.exists()) {
+                        pendingSnap.forEach(child => {
+                            const r = child.val();
+                            if ((r.homeTeam === fix.home && r.awayTeam === fix.away && r.date === fix.date) ||
+                                (r.homeTeam === fix.away && r.awayTeam === fix.home && r.date === fix.date)) {
+                                alreadyExists = true;
+                            }
+                        });
+                    }
+                    if (alreadyExists) continue;
+                    const matchText = `${fix.home} F - F ${fix.away} (No Contest)`;
+                    const resultData = {
+                        matchText,
+                        date: fix.date,
+                        homeTeam: fix.home,
+                        awayTeam: fix.away,
+                        homeScore: 0,
+                        awayScore: 0,
+                        matchType: 'forfeit',
+                        forfeitType: 'no_contest',
+                        submittedBy: 'system_auto',
+                        submittedAt: Date.now(),
+                        status: 'approved',
+                        approvedAt: Date.now(),
+                        approvedBy: 'system_auto',
+                        autoGenerated: true
+                    };
+                    incrementPending();
+                    await database.ref(getSeasonPath(currentSeasonId, 'results')).push(resultData);
+                    decrementPending();
+                    await applyResultToTable(fix.home, fix.away, 0, 0, 'no_contest');
+                }
+                await loadCurrentSeasonData();
+                renderCurrentTab();
+            }
+
             const todayFixtures = [];
             const yesterdayFixtures = [];
 
@@ -4938,38 +4891,35 @@
                 }
             }
 
-            // Check which fixtures already have results submitted (in results or pending_results)
             const submittedSet = new Set();
-            const allResults = [...resultsData];
-            const pendingSnap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
-            const pendingData = pendingSnap.val() || {};
-            const pendingEntries = Object.entries(pendingData).map(([k, v]) => ({ id: k, ...v }));
-
-            for (const r of allResults) {
+            for (const r of resultsData) {
                 if (r.homeTeam && r.awayTeam && r.date) {
                     submittedSet.add(`${r.date}_${r.homeTeam}_${r.awayTeam}`);
                     submittedSet.add(`${r.date}_${r.awayTeam}_${r.homeTeam}`);
                 }
             }
-            for (const r of pendingEntries) {
+            const pendingSnap2 = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
+            const pendingData2 = pendingSnap2.val() || {};
+            for (const key in pendingData2) {
+                const r = pendingData2[key];
                 if (r.homeTeam && r.awayTeam && r.date) {
                     submittedSet.add(`${r.date}_${r.homeTeam}_${r.awayTeam}`);
                     submittedSet.add(`${r.date}_${r.awayTeam}_${r.homeTeam}`);
                 }
             }
 
-            // Filter unsubmitted fixtures
-            const todayUnsubmitted = todayFixtures.filter(f => {
-                const key1 = `${f.date}_${f.home}_${f.away}`;
-                const key2 = `${f.date}_${f.away}_${f.home}`;
-                return !submittedSet.has(key1) && !submittedSet.has(key2);
-            });
+            const todayUnsubmitted = todayFixtures.filter(f => !submittedSet.has(`${f.date}_${f.home}_${f.away}`) && !submittedSet.has(`${f.date}_${f.away}_${f.home}`));
+            const yesterdayUnsubmitted = yesterdayFixtures.filter(f => !submittedSet.has(`${f.date}_${f.home}_${f.away}`) && !submittedSet.has(`${f.date}_${f.away}_${f.home}`));
 
-            const yesterdayUnsubmitted = yesterdayFixtures.filter(f => {
-                const key1 = `${f.date}_${f.home}_${f.away}`;
-                const key2 = `${f.date}_${f.away}_${f.home}`;
-                return !submittedSet.has(key1) && !submittedSet.has(key2);
-            });
+            // Auto-apply no contests for expired countdowns
+            const yesterdayDeadline = new Date(yesterdayStr + 'T00:00:00+02:00').getTime() + (48 * 60 * 60 * 1000);
+            const todayDeadline = new Date(todayStr + 'T00:00:00+02:00').getTime() + (48 * 60 * 60 * 1000);
+            if (Date.now() > yesterdayDeadline && yesterdayUnsubmitted.length > 0) {
+                await autoApplyNoContests(yesterdayUnsubmitted, yesterdayStr);
+            }
+            if (Date.now() > todayDeadline && todayUnsubmitted.length > 0) {
+                await autoApplyNoContests(todayUnsubmitted, todayStr);
+            }
 
             if (todayUnsubmitted.length === 0 && yesterdayUnsubmitted.length === 0) {
                 showModal(`
@@ -4984,7 +4934,6 @@
             function renderFixtureCard(fix, section) {
                 const homeIcon = getTeamIconHtml(fix.home, 'team-icon-sm');
                 const awayIcon = getTeamIconHtml(fix.away, 'team-icon-sm');
-                const dateDisplay = fix.date;
                 return `
                     <div class="pending-item" data-section="${section}" data-home="${escapeHtml(fix.home)}" data-away="${escapeHtml(fix.away)}" data-date="${escapeHtml(fix.date)}">
                         <div class="pi-teams">
@@ -4994,7 +4943,6 @@
                             ${awayIcon}
                             <span>${escapeHtml(fix.away)}</span>
                         </div>
-                        <div style="color:rgba(255,255,255,0.5);font-size:1.2rem;">${escapeHtml(dateDisplay)}</div>
                         <div class="pi-actions">
                             <button class="btn-sm btn-confirm no-contest-btn" style="padding:8px 20px;font-size:1.1rem;">🤝 No Contest</button>
                             <button class="btn-sm btn-edit dismiss-btn" style="padding:8px 20px;font-size:1.1rem;">✓ Dismiss</button>
@@ -5008,22 +4956,45 @@
 
             let html = `
                 <h3>⏳ Pending Fixtures</h3>
-                <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;font-size:1.3rem;">Unsubmitted matches from today and yesterday. Click "No Contest" to mark as F-F.</p>
-                <div style="border-left:4px solid var(--turquoise);padding-left:16px;margin-bottom:16px;">
-                    <h4 style="color:var(--turquoise);font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:1px;">📅 TODAY'S UNSUBMITTED MATCHES</h4>
+                <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;font-size:1.3rem;">Unsubmitted matches from today and yesterday.</p>
+                <div style="border-left:4px solid var(--turquoise);padding-left:16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                    <h4 style="color:var(--turquoise);font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:1px;">📅 TODAY'S UNSUBMITTED</h4>
+                    ${getCountdownHtml(todayStr)}
                 </div>
-                ${todayHtml || '<div style="color:rgba(255,255,255,0.3);padding:16px 0;font-size:1.2rem;">✅ All today\'s matches have been submitted.</div>'}
-                <div style="border-left:4px solid #f97316;padding-left:16px;margin-top:24px;margin-bottom:16px;">
-                    <h4 style="color:#f97316;font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:1px;">📅 YESTERDAY'S UNSUBMITTED MATCHES</h4>
+                ${todayHtml || '<div style="color:rgba(255,255,255,0.3);padding:16px 0;font-size:1.2rem;">✅ All today\'s matches submitted.</div>'}
+                <div style="border-left:4px solid #f97316;padding-left:16px;margin-top:24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                    <h4 style="color:#f97316;font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:1px;">📅 YESTERDAY'S UNSUBMITTED</h4>
+                    ${getCountdownHtml(yesterdayStr)}
                 </div>
-                ${yesterdayHtml || '<div style="color:rgba(255,255,255,0.3);padding:16px 0;font-size:1.2rem;">✅ All yesterday\'s matches have been submitted.</div>'}
+                ${yesterdayHtml || '<div style="color:rgba(255,255,255,0.3);padding:16px 0;font-size:1.2rem;">✅ All yesterday\'s matches submitted.</div>'}
                 <div class="modal-btns"><button class="modal-btn-cancel" id="closePendingBtn">Close</button></div>
             `;
 
             showModal(html, true);
             document.getElementById('closePendingBtn').onclick = closeModal;
 
-            // Handle "No Contest" buttons
+            // Live countdown ticker
+            const countdownEls = document.querySelectorAll('[data-deadline]');
+            const ticker = setInterval(() => {
+                countdownEls.forEach(el => {
+                    const deadline = parseInt(el.dataset.deadline);
+                    const remaining = deadline - Date.now();
+                    if (remaining <= 0) {
+                        el.innerHTML = '⏰ EXPIRED';
+                        el.style.color = '#ef4444';
+                        clearInterval(ticker);
+                        return;
+                    }
+                    const hours = Math.floor(remaining / (1000 * 60 * 60));
+                    const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+                    el.style.color = remaining < 3600000 ? '#ef4444' : remaining < 10800000 ? '#f97316' : '#22c55e';
+                    el.textContent = `⏱ ${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+                });
+            }, 1000);
+
+            document.getElementById('closePendingBtn').addEventListener('click', () => clearInterval(ticker));
+
             document.querySelectorAll('.no-contest-btn').forEach(btn => {
                 btn.onclick = async () => {
                     const item = btn.closest('.pending-item');
@@ -5031,53 +5002,26 @@
                     const homeTeam = item.dataset.home;
                     const awayTeam = item.dataset.away;
                     const date = item.dataset.date;
-
-                    if (!confirm(`Mark ${homeTeam} vs ${awayTeam} as NO CONTEST (F - F)?\n\nBoth teams will get +1 played, +1 loss, no points, no GD change.`)) return;
-
+                    if (!confirm(`Mark ${homeTeam} vs ${awayTeam} as NO CONTEST (F - F)?`)) return;
                     btn.disabled = true;
                     btn.innerHTML = '⏳';
-
                     try {
-                        // Save F-F result to results node
                         const matchText = `${homeTeam} F - F ${awayTeam} (No Contest)`;
                         const resultData = {
-                            matchText,
-                            date: date,
-                            homeTeam,
-                            awayTeam,
-                            homeScore: 0,
-                            awayScore: 0,
-                            matchType: 'forfeit',
-                            forfeitType: 'no_contest',
-                            submittedBy: 'admin',
-                            submittedAt: Date.now(),
-                            status: 'approved',
-                            approvedAt: Date.now(),
-                            approvedBy: 'admin'
+                            matchText, date, homeTeam, awayTeam, homeScore: 0, awayScore: 0,
+                            matchType: 'forfeit', forfeitType: 'no_contest',
+                            submittedBy: 'admin', submittedAt: Date.now(),
+                            status: 'approved', approvedAt: Date.now(), approvedBy: 'admin'
                         };
                         incrementPending();
                         await database.ref(getSeasonPath(currentSeasonId, 'results')).push(resultData);
                         decrementPending();
-
-                        // Update table stats
                         await applyResultToTable(homeTeam, awayTeam, 0, 0, 'no_contest');
-
                         await loadCurrentSeasonData();
                         renderCurrentTab();
-
-                        // Remove from view
                         item.style.opacity = '0.3';
                         item.style.transition = 'opacity 0.3s';
-                        setTimeout(() => {
-                            item.remove();
-                            // Check if both sections are empty
-                            const remainingItems = document.querySelectorAll('.pending-item');
-                            if (remainingItems.length === 0) {
-                                closeModal();
-                                openPendingResultsModal();
-                            }
-                        }, 400);
-
+                        setTimeout(() => { item.remove(); }, 400);
                         showModal(`
                             <div style="text-align:center;padding:30px 0;">
                                 <div style="font-size:4rem;">🤝</div>
@@ -5095,26 +5039,18 @@
                 };
             });
 
-            // Handle "Dismiss" buttons
             document.querySelectorAll('.dismiss-btn').forEach(btn => {
                 btn.onclick = () => {
                     const item = btn.closest('.pending-item');
                     if (!item) return;
                     item.style.opacity = '0.3';
                     item.style.transition = 'opacity 0.3s';
-                    setTimeout(() => {
-                        item.remove();
-                        const remainingItems = document.querySelectorAll('.pending-item');
-                        if (remainingItems.length === 0) {
-                            closeModal();
-                            openPendingResultsModal();
-                        }
-                    }, 300);
+                    setTimeout(() => { item.remove(); }, 300);
                 };
             });
         }
 
-        // ─── CHANGE: openRequestsHistoryModal (no MD, show date) ───
+        // ─── CHANGE: openRequestsHistoryModal (with Review button) ───
         async function openRequestsHistoryModal() {
             const approvedSnap = await database.ref(getSeasonPath(currentSeasonId, 'results')).once('value');
             const approvedData = approvedSnap.val() || {};
@@ -5159,6 +5095,7 @@
                                         <span style="color:rgba(255,255,255,0.5);font-size:1.1rem;">${escapeHtml(r.date || '')}</span>
                                         <span style="color:rgba(255,255,255,0.4);font-size:0.9rem;">${escapeHtml(r.submittedBy || '')}</span>
                                         <span style="color:${statusColor};font-weight:700;font-size:1.1rem;">${statusText}</span>
+                                        <button class="btn-sm btn-edit review-result-btn" data-id="${r.id}" style="padding:6px 18px;font-size:1rem;background:rgba(150,60,255,0.3);border:1px solid var(--electric-violet);color:var(--white);border-radius:20px;cursor:pointer;">🔍 Review</button>
                                         <button class="btn-sm btn-delete revoke-result-btn" data-id="${r.id}" data-status="${r.status}" style="padding:6px 18px;font-size:1rem;background:rgba(180,0,0,0.4);border:1px solid #cc3333;color:#ffaaaa;border-radius:20px;cursor:pointer;">🔄 Revoke</button>
                                     </div>
                                 </div>
@@ -5185,6 +5122,97 @@
                 document.getElementById('closeHistoryBtn').onclick = closeModal;
                 document.getElementById('historyTeamFilter').addEventListener('change', e => renderHistory(e.target.value));
 
+                // Review button handler
+                document.querySelectorAll('.review-result-btn').forEach(btn => {
+                    btn.onclick = () => {
+                        const id = btn.dataset.id;
+                        const entry = allEntries.find(e => e.id === id);
+                        if (!entry) return;
+
+                        const homeScorers = (entry.goalScorers?.home || []).map(s =>
+                            `<span class="scorer-badge">⚽ ${escapeHtml(s.player)}${s.goals > 1 ? ` (${s.goals})` : ''}</span>`
+                        ).join('') || '<span style="color:rgba(255,255,255,0.3);">None</span>';
+
+                        const awayScorers = (entry.goalScorers?.away || []).map(s =>
+                            `<span class="scorer-badge">⚽ ${escapeHtml(s.player)}${s.goals > 1 ? ` (${s.goals})` : ''}</span>`
+                        ).join('') || '<span style="color:rgba(255,255,255,0.3);">None</span>';
+
+                        const homeAssists = (entry.userAssists?.home || []).map(a =>
+                            `<span class="scorer-badge">🎯 ${escapeHtml(a.player)}${a.assists > 1 ? ` (${a.assists})` : ''}</span>`
+                        ).join('') || '<span style="color:rgba(255,255,255,0.3);">None</span>';
+
+                        const awayAssists = (entry.userAssists?.away || []).map(a =>
+                            `<span class="scorer-badge">🎯 ${escapeHtml(a.player)}${a.assists > 1 ? ` (${a.assists})` : ''}</span>`
+                        ).join('') || '<span style="color:rgba(255,255,255,0.3);">None</span>';
+
+                        const imagesHtml = (entry.images || []).length > 0
+                            ? (entry.images || []).map(url =>
+                                `<img src="${url}" style="width:100%;max-width:280px;border-radius:14px;border:2px solid var(--razzmatazz);object-fit:cover;" onerror="this.style.display='none';">`
+                              ).join('')
+                            : '<span style="color:rgba(255,255,255,0.3);">No images uploaded</span>';
+
+                        const homeIconHtml = getTeamIconHtml(entry.homeTeam || '', 'team-icon-sm');
+                        const awayIconHtml = getTeamIconHtml(entry.awayTeam || '', 'team-icon-sm');
+                        const statusText = entry.status === 'pending' ? '⏳ Pending' : '✅ Approved';
+                        const submittedAt = entry.submittedAt ? new Date(entry.submittedAt).toLocaleString() : 'N/A';
+
+                        showModal(`
+                            <div style="position:relative;">
+                                <button id="closeReviewBtn" style="position:absolute;top:-20px;right:-20px;background:transparent;border:none;color:var(--white);font-size:2.5rem;cursor:pointer;line-height:1;" onmouseover="this.style.color='var(--razzmatazz)'" onmouseout="this.style.color='var(--white)'">&#x2715;</button>
+                                <h3>🔍 Match Review</h3>
+
+                                <div style="text-align:center;padding:20px;background:rgba(150,60,255,0.1);border-radius:20px;margin-bottom:24px;">
+                                    <div style="display:flex;justify-content:center;align-items:center;gap:20px;flex-wrap:wrap;">
+                                        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+                                            ${homeIconHtml}
+                                            <span style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:var(--white);">${escapeHtml(entry.homeTeam || '?')}</span>
+                                        </div>
+                                        <div style="font-family:'Bebas Neue',sans-serif;font-size:4rem;color:var(--white);background:rgba(0,0,0,0.3);padding:12px 32px;border-radius:60px;border:2px solid rgba(233,0,82,0.3);">
+                                            ${entry.homeScore || 0} — ${entry.awayScore || 0}
+                                        </div>
+                                        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+                                            ${awayIconHtml}
+                                            <span style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:var(--white);">${escapeHtml(entry.awayTeam || '?')}</span>
+                                        </div>
+                                    </div>
+                                    <div style="margin-top:12px;color:rgba(255,255,255,0.5);font-size:1.2rem;">
+                                        📅 ${escapeHtml(entry.date || '')} · ${statusText} · Submitted: ${submittedAt}
+                                    </div>
+                                    ${entry.matchNotes ? `<div style="margin-top:10px;color:rgba(255,255,255,0.6);font-size:1.2rem;background:rgba(0,0,0,0.2);padding:10px 16px;border-radius:12px;">📝 ${escapeHtml(entry.matchNotes)}</div>` : ''}
+                                </div>
+
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+                                    <div>
+                                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--turquoise);margin-bottom:10px;">⚽ ${escapeHtml(entry.homeTeam || 'Home')} SCORERS</div>
+                                        <div class="scorer-list">${homeScorers}</div>
+                                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--turquoise);margin:14px 0 10px;">🎯 ${escapeHtml(entry.homeTeam || 'Home')} ASSISTS</div>
+                                        <div class="scorer-list">${homeAssists}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--razzmatazz);margin-bottom:10px;">⚽ ${escapeHtml(entry.awayTeam || 'Away')} SCORERS</div>
+                                        <div class="scorer-list">${awayScorers}</div>
+                                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--razzmatazz);margin:14px 0 10px;">🎯 ${escapeHtml(entry.awayTeam || 'Away')} ASSISTS</div>
+                                        <div class="scorer-list">${awayAssists}</div>
+                                    </div>
+                                </div>
+
+                                <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--white);margin-bottom:14px;">📸 MATCH IMAGES</div>
+                                <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;max-height:400px;overflow-y:auto;padding:10px;background:rgba(0,0,0,0.2);border-radius:16px;">
+                                    ${imagesHtml}
+                                </div>
+
+                                <div class="modal-btns" style="margin-top:24px;">
+                                    <button class="modal-btn-cancel" id="closeReviewModalBtn">Close</button>
+                                </div>
+                            </div>
+                        `, true);
+
+                        document.getElementById('closeReviewBtn').onclick = closeModal;
+                        document.getElementById('closeReviewModalBtn').onclick = closeModal;
+                    };
+                });
+
+                // Revoke button handler
                 document.querySelectorAll('.revoke-result-btn').forEach(btn => {
                     btn.onclick = async () => {
                         const id = btn.dataset.id;
@@ -5361,16 +5389,16 @@
             const file = await pickFile('image/*');
             if (!file) return;
             showModal(
-                `<h3>Processing Icon</h3><div class="loading-spinner"><div class="spinner"></div><span>Removing background…</span></div>`
+                `<h3>Processing Icon</h3><div class="loading-spinner"><div class="spinner"></div><span>Uploading…</span></div>`
                 );
-            try { let transparentBlob;
-                try { transparentBlob = await removeBackground(file); } catch (e) { transparentBlob = file; }
-                const url = await uploadToImgBB(transparentBlob);
+            try {
+                const url = await uploadToImgBB(file);
                 await database.ref(`teamIcons/${teamName}`).set({ imageUrl: url, updatedAt: Date.now() });
                 teamIconsCache[teamName] = url;
                 renderCurrentTab();
                 closeModal();
-                alert(`Icon saved for "${teamName}"!`); } catch (e) { alert('Failed: ' + e.message);
+                alert(`Icon saved for "${teamName}"!`);
+            } catch (e) { alert('Failed: ' + e.message);
                 closeModal(); }
         }
 
@@ -5510,6 +5538,25 @@
         document.getElementById('debugInfoBtn').onclick = () => { openDebugInfoModal();
             closeMenu(); };
 
+        // ─── League Rules menu item ───
+        document.getElementById('leagueRulesBtn').onclick = async () => {
+            closeMenu();
+            const snap = await database.ref('premier_league/leagueRules').once('value');
+            const rules = snap.val() || 'No league rules have been set yet. Please check back later.';
+            showModal(`
+                <div style="position:relative;">
+                    <button id="closeRulesBtn" style="position:absolute;top:-20px;right:-20px;background:transparent;border:none;color:var(--white);font-size:2.5rem;cursor:pointer;line-height:1;transition:color 0.2s;" onmouseover="this.style.color='var(--razzmatazz)'" onmouseout="this.style.color='var(--white)'">&#x2715;</button>
+                    <h3>📋 League Rules</h3>
+                    <div style="color:rgba(255,255,255,0.85);font-size:1.6rem;line-height:1.7;margin-top:20px;white-space:pre-wrap;background:rgba(150,60,255,0.1);border-radius:20px;padding:24px;border:1px solid var(--glass-border);">${escapeHtml(rules)}</div>
+                    <div class="modal-btns">
+                        <button class="modal-btn-cancel" id="closeRulesBtn2">Close</button>
+                    </div>
+                </div>
+            `);
+            document.getElementById('closeRulesBtn').onclick = closeModal;
+            document.getElementById('closeRulesBtn2').onclick = closeModal;
+        };
+
         document.getElementById('prevSeasonBtn').onclick = () => switchSeason(-1);
         document.getElementById('nextSeasonBtn').onclick = () => switchSeason(1);
         document.getElementById('addSeasonBtn').onclick = () => isAdminMode && addNewSeason();
@@ -5544,7 +5591,7 @@
             });
         }
 
-        // ─── TABLE RENDER (UPDATED: no red dashed, legend cleaned) ───
+        // ─── TABLE RENDER (UPDATED: legend inside scroll-wrap) ───
         function renderTable() {
             const sorted = [...teamsData].sort((a, b) => (b.pts || 0) - (a.pts || 0) || (b.gd || 0) - (a.gd || 0));
             let headerHtml = tableHeaderImageUrl ? `<img src="${tableHeaderImageUrl}" class="table-header-img" alt="Table Header">` :
@@ -5560,8 +5607,8 @@
                 <thead><tr><th style="min-width:64px;">Pos</th><th style="min-width:260px;">Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GS</th><th>GC</th><th>GD</th><th>Pts</th><th>Last 5</th>${isAdminMode ? '<th>Actions</th>' : ''}</tr></thead>
                 <tbody id="tableBody"></tbody>
               </table>
+              <div class="legend-row" id="legendContainer"></div>
             </div>
-            <div class="legend-row" id="legendContainer"></div>
           `;
             document.getElementById('contentCard').innerHTML = html;
             const tbody = document.getElementById('tableBody');
@@ -5581,7 +5628,6 @@
                     if (pos <= 10) barClass = 'vbar-blue';
                     else if (pos <= 20) barClass = 'vbar-orange';
                     if (pos === 4) rowClass = 'dashed-sep-white';
-                    // REMOVED: red dashed "No World Cup" line (pos === 16 removed)
                 }
 
                 const row = document.createElement('tr');
@@ -5649,7 +5695,7 @@
                 tbody.appendChild(row);
             });
 
-            // Season-specific legend (UPDATED: no red dashed, font-size 1.4rem)
+            // Season-specific legend
             const legend = document.getElementById('legendContainer');
             let legendHtml = '';
             if (currentSeasonId === 1) {
@@ -5737,7 +5783,6 @@
                     const [y, mo] = dateStr.split('-');
                     const monthName = monthLabels[mo] || mo;
                     const isPast = dateObj < today;
-                    // REMOVED: matchday badge
                     const dateLabel = `${dayName}, ${day} ${monthName} ${y}${isPast ? ' · Played' : ''}`;
                     contentHtml += `<div class="fixture-date-group"><div class="fixture-date-label">📅 ${dateLabel}</div>`;
                     for (const fix of grouped[dateStr]) {
@@ -5852,7 +5897,7 @@
                 </div>
                 <div class="match-meta">
                   ${r.venue ? `<span class="meta-tag">📍 ${r.venue}</span>` : ''}
-                  ${dateDisplay ? `<span class="meta-tag">📅 ${escapeHtml(dateDisplay)}</span>` : ''}
+                  ${(r.date || r.submittedAt) ? `<span class="meta-tag">📅 ${escapeHtml(r.date || new Date(r.submittedAt).toLocaleDateString())}</span>` : ''}
                 </div>
                 ${isAdminMode ? `<div class="admin-row"><button class="btn-sm btn-edit" data-id="${r.key}">✏️ Edit</button><button class="btn-sm btn-delete" data-id="${r.key}">🗑️ Delete</button></div>` : ''}
               </div>`;
@@ -6437,7 +6482,6 @@
             await loadTableHeaderBgImage();
             await loadWatchMatchEmbed();
             await loadCalendarEvents();
-            await loadTeamNameMappings();
 
             await loadSeasonsMetadata();
             await loadTopScorerData();
