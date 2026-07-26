@@ -497,8 +497,7 @@
             position: sticky;
             left: 0;
             z-index: 25;
-            background: var(--glass-bg);
-            backdrop-filter: var(--glass-blur);
+            background: #0A2B5E;
             width: 64px;
             min-width: 64px;
         }
@@ -511,14 +510,13 @@
             position: sticky;
             left: 64px;
             z-index: 24;
-            background: var(--glass-bg);
-            backdrop-filter: var(--glass-blur);
-            box-shadow: 4px 0 12px 4px rgba(10, 43, 94, 0.98);
-            overflow: hidden;
+            background: #0A2B5E;
+            box-shadow: 4px 0 0 0 rgba(233, 0, 82, 0.35), 8px 0 16px 0 #0A2B5E;
             border-right: 2px solid rgba(233, 0, 82, 0.35);
+            overflow: hidden;
         }
         .stats-table thead th:nth-child(2) {
-            background: rgba(150, 60, 255, 0.3);
+            background: #1a1a5e;
             z-index: 30;
         }
         .stats-table tbody tr {
@@ -3027,30 +3025,8 @@
 
         // ─── Load assets ───
         async function loadNavbarLogo() {
-            // Check localStorage cache
-            const cached = localStorage.getItem('navbarLogoUrl');
-            if (cached) {
-                navbarLogoUrl = cached;
-                renderLogo();
-                // Still fetch in background to update
-                try {
-                    const snap = await database.ref('premier_league_navbar_logo').once('value');
-                    const url = snap.val() || '';
-                    if (url !== navbarLogoUrl) {
-                        navbarLogoUrl = url;
-                        localStorage.setItem('navbarLogoUrl', url);
-                        renderLogo();
-                    }
-                } catch (e) { /* ignore */ }
-                return;
-            }
             const snap = await database.ref('premier_league_navbar_logo').once('value');
             navbarLogoUrl = snap.val() || '';
-            localStorage.setItem('navbarLogoUrl', navbarLogoUrl);
-            renderLogo();
-        }
-
-        function renderLogo() {
             const c = document.getElementById('logoContainer');
             c.innerHTML = navbarLogoUrl ?
                 `<img src="${navbarLogoUrl}" class="navbar-logo" alt="PL Logo">` :
@@ -5434,7 +5410,6 @@
                 const url = await uploadToImgBB(file);
                 await database.ref('premier_league_navbar_logo').set(url);
                 navbarLogoUrl = url;
-                localStorage.setItem('navbarLogoUrl', url);
                 await loadNavbarLogo();
                 statusDiv.className = 'status-msg status-success';
                 statusDiv.textContent = 'Logo updated!';
@@ -5485,7 +5460,6 @@
                             parseInt(btn.dataset.idx);
                         slideshowImages.splice(idx, 1);
                         await database.ref('slideshow/images').set(slideshowImages);
-                        localStorage.setItem('slideshowCache', JSON.stringify({ images: slideshowImages, duration: slideshowDuration }));
                         await loadSlideshow();
                         refresh(); }; });
                 document.getElementById('uploadSlideBtn').onclick = async () => { const file = document
@@ -5496,7 +5470,6 @@
                         const url = await uploadToImgBB(file);
                         slideshowImages.push(url);
                         await database.ref('slideshow/images').set(slideshowImages);
-                        localStorage.setItem('slideshowCache', JSON.stringify({ images: slideshowImages, duration: slideshowDuration }));
                         await loadSlideshow();
                         refresh(); } catch (e) { statusDiv.innerHTML =
                             `<div class="status-msg status-error">Error: ${e.message}</div>`; } };
@@ -5505,7 +5478,6 @@
                     sec = Math.min(10, Math.max(1, sec));
                     await database.ref('slideshow/duration').set(sec * 1000);
                     slideshowDuration = sec * 1000;
-                    localStorage.setItem('slideshowCache', JSON.stringify({ images: slideshowImages, duration: slideshowDuration }));
                     await loadSlideshow();
                     document.getElementById('slideStatus').innerHTML =
                         '<div class="status-msg status-success">Duration saved!</div>';
@@ -6094,8 +6066,6 @@
                 return;
             }
             pendingRenderTab = null;
-            document.getElementById('contentCard').innerHTML =
-                '<div class="loading-spinner"><div class="spinner"></div><span>Loading…</span></div>';
             if (tab === 'table') renderTable();
             else if (tab === 'fixtures') renderFixtures();
             else if (tab === 'results') renderResults();
@@ -6513,65 +6483,25 @@
         }
 
         async function loadSlideshow() {
-            // Check localStorage cache
-            const cached = localStorage.getItem('slideshowCache');
-            if (cached) {
-                try {
-                    const parsed = JSON.parse(cached);
-                    slideshowImages = parsed.images || [];
-                    slideshowDuration = parsed.duration || 3000;
-                    if (slideshowImages.length) {
-                        currentSlideIdx = 0;
-                        updateSlide();
-                        if (slideInterval) clearInterval(slideInterval);
-                        slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx + 1) % slideshowImages.length;
-                            updateSlide(); }, slideshowDuration);
-                    } else {
-                        document.getElementById('slideshowImg').style.display = 'none';
-                    }
-                    // Still fetch in background
-                    try {
-                        const [imgSnap, durSnap] = await Promise.all([
-                            database.ref('slideshow/images').once('value'),
-                            database.ref('slideshow/duration').once('value'),
-                        ]);
-                        const newImages = imgSnap.val() || [];
-                        const newDuration = durSnap.val() || 3000;
-                        if (JSON.stringify(newImages) !== JSON.stringify(slideshowImages) || newDuration !== slideshowDuration) {
-                            slideshowImages = newImages;
-                            slideshowDuration = newDuration;
-                            localStorage.setItem('slideshowCache', JSON.stringify({ images: slideshowImages, duration: slideshowDuration }));
-                            if (slideInterval) clearInterval(slideInterval);
-                            if (slideshowImages.length) {
-                                document.getElementById('slideshowImg').style.display = 'block';
-                                currentSlideIdx = 0;
-                                updateSlide();
-                                slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx + 1) % slideshowImages.length;
-                                    updateSlide(); }, slideshowDuration);
-                            } else {
-                                document.getElementById('slideshowImg').style.display = 'none';
-                            }
-                        }
-                    } catch (e) { /* ignore */ }
-                    return;
-                } catch (e) { /* ignore */ }
-            }
             const [imgSnap, durSnap] = await Promise.all([
                 database.ref('slideshow/images').once('value'),
                 database.ref('slideshow/duration').once('value'),
             ]);
             slideshowImages = imgSnap.val() || [];
             slideshowDuration = durSnap.val() || 3000;
-            localStorage.setItem('slideshowCache', JSON.stringify({ images: slideshowImages, duration: slideshowDuration }));
             if (slideInterval) clearInterval(slideInterval);
             const imgEl = document.getElementById('slideshowImg');
             if (slideshowImages.length) {
                 imgEl.style.display = 'block';
                 currentSlideIdx = 0;
                 updateSlide();
-                slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx + 1) % slideshowImages.length;
-                    updateSlide(); }, slideshowDuration);
-            } else { imgEl.style.display = 'none'; }
+                slideInterval = setInterval(() => {
+                    currentSlideIdx = (currentSlideIdx + 1) % slideshowImages.length;
+                    updateSlide();
+                }, slideshowDuration);
+            } else {
+                imgEl.style.display = 'none';
+            }
         }
 
         function updateSlide() {
@@ -6619,8 +6549,8 @@
                         if (slideshow.length) {
                             slideHtml =
                                 `<div class="champion-slideshow" data-season="${seasonKey}" style="margin:16px 0;text-align:center;">
-                              <div class="slideshow-frame" style="max-width:400px;margin:0 auto;">
-                                <img src="${slideshow[0]}" class="champion-slide-img" style="width:100%;max-height:300px;object-fit:contain;border-radius:12px;">
+                              <div class="slideshow-frame" style="max-width:700px;margin:0 auto;">
+                                <img src="${slideshow[0]}" class="champion-slide-img" style="width:100%;max-height:480px;object-fit:contain;border-radius:20px;">
                               </div>
                               <div class="champion-dots" style="margin-top:8px;display:flex;gap:8px;justify-content:center;"></div>
                             </div>`;
@@ -6806,23 +6736,21 @@
                 if (records.length === 0) {
                     html += `<div class="empty-state"><div class="empty-icon">📊</div><p>No records yet.</p></div>`;
                 } else {
-                    html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;">`;
+                    html += `<div style="display:flex;flex-direction:column;gap:20px;">`;
                     for (const rec of records) {
-                        const imageHtml = rec.imageUrl ? `<img src="${rec.imageUrl}" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:20px;border:2px solid var(--razzmatazz);">` :
-                            `<div style="width:100%;aspect-ratio:1/1;background:rgba(150,60,255,0.2);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:4rem;color:rgba(255,255,255,0.3);">📊</div>`;
+                        const imageHtml = rec.imageUrl ? `<img src="${rec.imageUrl}" style="width:200px;height:200px;object-fit:cover;border-radius:16px;border:2px solid var(--razzmatazz);">` :
+                            `<div style="width:200px;height:200px;background:rgba(150,60,255,0.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:4rem;color:rgba(255,255,255,0.3);border:2px solid var(--razzmatazz);">📊</div>`;
                         html += `
-                          <div style="background:rgba(150,60,255,0.1);border-radius:24px;padding:20px;border:1px solid var(--glass-border);">
-                            ${imageHtml}
-                            <div style="font-weight:700;font-size:1.8rem;color:var(--white);margin-top:12px;">${escapeHtml(rec.title || 'Record')}</div>
-                            <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--turquoise);">${escapeHtml(rec.quantity || '')}</div>
-                            <div style="color:rgba(255,255,255,0.6);font-size:1.2rem;">Manager: ${escapeHtml(rec.managerName || '')}</div>
-                            <div style="color:rgba(255,255,255,0.4);font-size:1rem;">Season: ${escapeHtml(rec.season || '')}</div>
-                            ${isAdminMode ? `
-                              <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
-                                <button class="btn-sm btn-edit edit-record-btn" data-id="${rec.id}" style="padding:6px 16px;font-size:1.1rem;">✏️ Edit</button>
-                                <button class="btn-sm btn-delete delete-record-btn" data-id="${rec.id}" style="padding:6px 16px;font-size:1.1rem;">🗑️ Delete</button>
-                              </div>
-                            ` : ''}
+                          <div style="background:rgba(150,60,255,0.1);border-radius:24px;padding:20px;border:1px solid var(--glass-border);display:flex;gap:20px;align-items:flex-start;">
+                            <div style="flex-shrink:0;width:200px;height:200px;">${imageHtml}</div>
+                            <div style="flex:1;">
+                              <div style="font-weight:700;font-size:2rem;color:var(--white);margin-bottom:4px;">${escapeHtml(rec.title || 'Record')}</div>
+                              <div style="font-family:'Bebas Neue',sans-serif;font-size:3.5rem;color:var(--turquoise);">${escapeHtml(rec.quantity || '')}</div>
+                              ${rec.playerName ? `<div style="color:rgba(255,255,255,0.8);font-size:1.4rem;">Player: ${escapeHtml(rec.playerName)}</div>` : ''}
+                              <div style="color:rgba(255,255,255,0.6);font-size:1.4rem;">Manager: ${escapeHtml(rec.managerName || '')}</div>
+                              <div style="color:rgba(255,255,255,0.4);font-size:1.1rem;">Season: ${escapeHtml(rec.season || '')}</div>
+                              ${isAdminMode ? `<div style="margin-top:12px;display:flex;gap:8px;"><button class="btn-sm btn-edit edit-record-btn" data-id="${rec.id}" style="padding:6px 16px;font-size:1.1rem;">✏️ Edit</button><button class="btn-sm btn-delete delete-record-btn" data-id="${rec.id}" style="padding:6px 16px;font-size:1.1rem;">🗑️ Delete</button></div>` : ''}
+                            </div>
                           </div>
                         `;
                     }
@@ -6866,6 +6794,7 @@
             const quantity = record?.quantity || '';
             const managerName = record?.managerName || '';
             const season = record?.season || '';
+            const playerName = record?.playerName || '';
             const imageUrl = record?.imageUrl || '';
 
             showModal(`
@@ -6878,6 +6807,8 @@
               <input type="text" id="recordManager" value="${escapeHtml(managerName)}" placeholder="Manager">
               <label>Season</label>
               <input type="text" id="recordSeason" value="${escapeHtml(season)}" placeholder="e.g. 2024/25">
+              <label>Player Name (optional)</label>
+              <input type="text" id="recordPlayerName" value="${escapeHtml(playerName)}" placeholder="e.g. Lionel Messi">
               <label>Image</label>
               <div class="image-upload-area" id="recordImageArea">
                 <div class="upload-icon">📸</div>
@@ -6919,9 +6850,10 @@
                 const quantity = document.getElementById('recordQuantity').value.trim();
                 const managerName = document.getElementById('recordManager').value.trim();
                 const season = document.getElementById('recordSeason').value.trim();
+                const playerName = document.getElementById('recordPlayerName').value.trim();
                 if (!title || !quantity || !managerName || !season) {
                     document.getElementById('recordFormStatus').innerHTML =
-                        '<div class="status-msg status-error">All fields are required.</div>';
+                        '<div class="status-msg status-error">All fields except Player Name are required.</div>';
                     return;
                 }
                 const data = {
@@ -6929,6 +6861,7 @@
                     quantity,
                     managerName,
                     season,
+                    playerName: playerName || '',
                     imageUrl: uploadedImageUrl || '',
                     updatedAt: Date.now()
                 };
