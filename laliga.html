@@ -1,5 +1,3 @@
-
-
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -479,19 +477,16 @@
             border-radius: 20px;
             position: relative;
         }
-        .table-scroll-wrap::after {
-            content: '';
-            position: sticky;
-            left: 128px;
-            top: 0;
-            height: 100%;
-            width: 32px;
-            display: block;
-            float: left;
-            margin-left: -32px;
-            background: linear-gradient(to right, rgba(58, 4, 16, 0.95) 0%, rgba(58, 4, 16, 0.6) 50%, transparent 100%);
-            pointer-events: none;
-            z-index: 22;
+        /* ─── LEGEND ─── */
+        .legend-row {
+            margin-top: 0;
+            padding: 16px 20px;
+            background: rgba(233, 16, 46, 0.2);
+            border-radius: 0 0 20px 20px;
+            display: flex;
+            gap: 28px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         /* ─── LEAGUE TABLE ─── */
@@ -522,7 +517,7 @@
             position: sticky;
             left: 0;
             z-index: 25;
-            background: var(--glass-bg);
+            background: #3a0410;
             backdrop-filter: var(--glass-blur);
             -webkit-backdrop-filter: var(--glass-blur);
             width: 64px;
@@ -540,11 +535,11 @@
             background: var(--glass-bg);
             backdrop-filter: var(--glass-blur);
             -webkit-backdrop-filter: var(--glass-blur);
-            box-shadow: 4px 0 12px 4px rgba(58, 4, 16, 1);
+            box-shadow: 4px 0 0 0 rgba(233, 16, 46, 0.35), 8px 0 16px 0 #3a0410;
             border-right: 2px solid rgba(255, 255, 255, 0.15);
         }
         .stats-table thead th:nth-child(2) {
-            background: rgba(0, 0, 0, 0.25);
+            background: #1a0010;
             z-index: 30;
         }
         .stats-table tbody tr {
@@ -1825,10 +1820,10 @@
             opacity: 0.7;
         }
         .legend-row {
-            margin-top: 24px;
+            margin-top: 0;
             padding: 16px 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 20px;
+            background: rgba(233, 16, 46, 0.2);
+            border-radius: 0 0 20px 20px;
             display: flex;
             gap: 28px;
             flex-wrap: wrap;
@@ -2424,6 +2419,10 @@
         <div class="menu-item" id="addResultsMenuBtn">⚽ Add Results</div>
         <div class="menu-item" id="adminModeBtn">🔐 Admin Mode</div>
         <div class="menu-item" id="debugInfoBtn">🐛 Debug Info</div>
+        <div class="menu-item" id="leagueRulesBtn">📋 League Rules</div>
+        <div class="menu-item" id="championsBtn">🏆 Champions</div>
+        <div class="menu-item" id="managerNamesBtn">👤 Manager Names</div>
+        <div class="menu-item" id="recordsBtn">📊 Records</div>
     </div>
 
     <div class="slideshow-wrapper">
@@ -3230,8 +3229,8 @@
             <thead><tr><th>Pos</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GS</th><th>GC</th><th>GD</th><th>Pts</th><th>Last 5</th>${isAdminMode ? '<th>Actions</th>' : ''}</tr></thead>
             <tbody id="tableBody"></tbody>
           </table>
+          <div class="legend-row" id="legendContainer"></div>
         </div>
-        <div class="legend-row" id="legendContainer"></div>
       `;
             document.getElementById('contentCard').innerHTML = html;
 
@@ -5215,85 +5214,53 @@
             return managerKeysCache;
         }
 
-        // ─── openPendingResultsModal ───
+        // ─── openPendingResultsModal ─── (REPLACED with Premier League design)
         async function openPendingResultsModal() {
             const todayStr = getSASTToday();
             const yesterdayStr = getSASTYesterday();
 
-            function collectFixturesForDate(dateStr) {
-                const list = [];
-                const eventData = calendarEventsData[dateStr];
-                if (!eventData || !eventData.tournaments) return list;
-                const eventSeason = eventData.season;
-                if (eventSeason !== undefined && eventSeason !== null && eventSeason !== currentSeasonId) return list;
-                for (const tournament of eventData.tournaments) {
-                    if (!tournament.name) continue;
-                    const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
-                    if (normalized !== 'laliga') continue;
-                    if (tournament.fixtures && Array.isArray(tournament.fixtures)) {
-                        for (const fixture of tournament.fixtures) {
-                            if (fixture.home && fixture.away) {
-                                list.push({ date: dateStr, home: fixture.home, away: fixture.away });
-                            }
-                        }
-                    }
-                }
-                return list;
-            }
-
-            function getDeadlineTimestamp(dateStr) {
-                const [y, m, d] = dateStr.split('-').map(Number);
-                const sastMidnightUTC = Date.UTC(y, m - 1, d) - (2 * 3600000);
-                return sastMidnightUTC + (48 * 3600000);
-            }
-
-            function getCountdownHtml(dateStr, badgeId) {
-                const deadline = getDeadlineTimestamp(dateStr);
-                const remaining = deadline - Date.now();
-                if (remaining <= 0) return `<span id="${badgeId}" style="color:#ef4444;font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;">⏰ EXPIRED</span>`;
-                const hours = Math.floor(remaining / 3600000);
-                const minutes = Math.floor((remaining % 3600000) / 60000);
-                const seconds = Math.floor((remaining % 60000) / 1000);
+            function getCountdownHtml(dateStr) {
+                const matchDayStart = new Date(dateStr + 'T00:00:00+02:00').getTime();
+                const deadline = matchDayStart + (48 * 60 * 60 * 1000);
+                const now = Date.now();
+                const remaining = deadline - now;
+                if (remaining <= 0) return `<span style="color:#ef4444;font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;">⏰ EXPIRED</span>`;
+                const hours = Math.floor(remaining / (1000 * 60 * 60));
+                const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
                 const color = remaining < 3600000 ? '#ef4444' : remaining < 10800000 ? '#f97316' : '#22c55e';
-                return `<span id="${badgeId}" data-deadline="${deadline}" style="color:${color};font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;">⏱ ${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}</span>`;
+                return `<span style="color:${color};font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;" data-deadline="${deadline}">⏱ ${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}</span>`;
             }
-
-            const resultsSnap = await database.ref(getSeasonPath(currentSeasonId, 'results')).once('value');
-            const approvedData = resultsSnap.val() || {};
-            const pendingSnap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
-            const pendingData = pendingSnap.val() || {};
-
-            const recordedSet = new Set();
-            function makeMatchKey(home, away, date) {
-                const sorted = [home, away].sort().join('_');
-                return `${date}_${sorted}`;
-            }
-
-            for (const key in approvedData) {
-                const r = approvedData[key];
-                if (r.homeTeam && r.awayTeam && r.date) {
-                    recordedSet.add(makeMatchKey(r.homeTeam, r.awayTeam, r.date));
-                }
-            }
-            for (const key in pendingData) {
-                const r = pendingData[key];
-                if (r.homeTeam && r.awayTeam && r.date) {
-                    recordedSet.add(makeMatchKey(r.homeTeam, r.awayTeam, r.date));
-                }
-            }
-
-            let todayFixtures = collectFixturesForDate(todayStr).filter(f => !recordedSet.has(makeMatchKey(f.home, f.away, todayStr)));
-            let yesterdayFixtures = collectFixturesForDate(yesterdayStr).filter(f => !recordedSet.has(makeMatchKey(f.home, f.away, yesterdayStr)));
 
             async function autoApplyNoContests(fixtures, dateStr) {
                 for (const fix of fixtures) {
-                    const matchKey = makeMatchKey(fix.home, fix.away, dateStr);
-                    if (recordedSet.has(matchKey)) continue;
-                    recordedSet.add(matchKey);
+                    const existingSnap = await database.ref(getSeasonPath(currentSeasonId, 'results')).orderByChild('homeTeam').equalTo(fix.home).once('value');
+                    let alreadyExists = false;
+                    if (existingSnap.exists()) {
+                        existingSnap.forEach(child => {
+                            const r = child.val();
+                            if ((r.homeTeam === fix.home && r.awayTeam === fix.away && r.date === fix.date) ||
+                                (r.homeTeam === fix.away && r.awayTeam === fix.home && r.date === fix.date)) {
+                                alreadyExists = true;
+                            }
+                        });
+                    }
+                    if (alreadyExists) continue;
+                    const pendingSnap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
+                    if (pendingSnap.exists()) {
+                        pendingSnap.forEach(child => {
+                            const r = child.val();
+                            if ((r.homeTeam === fix.home && r.awayTeam === fix.away && r.date === fix.date) ||
+                                (r.homeTeam === fix.away && r.awayTeam === fix.home && r.date === fix.date)) {
+                                alreadyExists = true;
+                            }
+                        });
+                    }
+                    if (alreadyExists) continue;
                     const matchText = `${fix.home} F - F ${fix.away} (No Contest)`;
                     const resultData = {
                         matchText,
-                        date: dateStr,
+                        date: fix.date,
                         homeTeam: fix.home,
                         awayTeam: fix.away,
                         homeScore: 0,
@@ -5314,19 +5281,67 @@
                 renderCurrentTab();
             }
 
-            const todayDeadline = getDeadlineTimestamp(todayStr);
-            const yesterdayDeadline = getDeadlineTimestamp(yesterdayStr);
+            const todayFixtures = [];
+            const yesterdayFixtures = [];
 
-            if (Date.now() > yesterdayDeadline && yesterdayFixtures.length > 0) {
-                await autoApplyNoContests(yesterdayFixtures, yesterdayStr);
-                yesterdayFixtures = [];
-            }
-            if (Date.now() > todayDeadline && todayFixtures.length > 0) {
-                await autoApplyNoContests(todayFixtures, todayStr);
-                todayFixtures = [];
+            for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
+                if (dateStr !== todayStr && dateStr !== yesterdayStr) continue;
+                if (!eventData || !eventData.tournaments) continue;
+                const eventSeason = eventData.season;
+                if (eventSeason !== undefined && eventSeason !== null && eventSeason !== currentSeasonId) continue;
+                for (const tournament of eventData.tournaments) {
+                    if (!tournament.name) continue;
+                    const normalized = tournament.name.trim().toLowerCase().replace(/\s/g, '');
+                    if (normalized !== 'laliga') continue;
+                    if (tournament.fixtures && Array.isArray(tournament.fixtures)) {
+                        for (const fix of tournament.fixtures) {
+                            if (fix.home && fix.away) {
+                                const entry = { date: dateStr, home: fix.home, away: fix.away };
+                                if (dateStr === todayStr) todayFixtures.push(entry);
+                                else if (dateStr === yesterdayStr) yesterdayFixtures.push(entry);
+                            }
+                        }
+                    }
+                }
             }
 
-            if (todayFixtures.length === 0 && yesterdayFixtures.length === 0) {
+            const submittedSet = new Set();
+            for (const r of resultsData) {
+                if (r.homeTeam && r.awayTeam && r.date) {
+                    submittedSet.add(`${r.date}_${r.homeTeam}_${r.awayTeam}`);
+                    submittedSet.add(`${r.date}_${r.awayTeam}_${r.homeTeam}`);
+                }
+            }
+            const pendingSnap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
+            const pendingData = pendingSnap.val() || {};
+            for (const key in pendingData) {
+                const r = pendingData[key];
+                if (r.homeTeam && r.awayTeam && r.date) {
+                    submittedSet.add(`${r.date}_${r.homeTeam}_${r.awayTeam}`);
+                    submittedSet.add(`${r.date}_${r.awayTeam}_${r.homeTeam}`);
+                }
+            }
+
+            const todayUnsubmitted = todayFixtures.filter(f =>
+                !submittedSet.has(`${f.date}_${f.home}_${f.away}`) &&
+                !submittedSet.has(`${f.date}_${f.away}_${f.home}`)
+            );
+            const yesterdayUnsubmitted = yesterdayFixtures.filter(f =>
+                !submittedSet.has(`${f.date}_${f.home}_${f.away}`) &&
+                !submittedSet.has(`${f.date}_${f.away}_${f.home}`)
+            );
+
+            const yesterdayDeadline = new Date(yesterdayStr + 'T00:00:00+02:00').getTime() + (48 * 60 * 60 * 1000);
+            const todayDeadline = new Date(todayStr + 'T00:00:00+02:00').getTime() + (48 * 60 * 60 * 1000);
+
+            if (Date.now() > yesterdayDeadline && yesterdayUnsubmitted.length > 0) {
+                await autoApplyNoContests(yesterdayUnsubmitted, yesterdayStr);
+            }
+            if (Date.now() > todayDeadline && todayUnsubmitted.length > 0) {
+                await autoApplyNoContests(todayUnsubmitted, todayStr);
+            }
+
+            if (todayUnsubmitted.length === 0 && yesterdayUnsubmitted.length === 0) {
                 showModal(`
                     <h3>⏳ Pending Fixtures</h3>
                     <div class="empty-state"><div class="empty-icon">✅</div><p>No unsubmitted matches found for today or yesterday.</p></div>
@@ -5336,17 +5351,17 @@
                 return;
             }
 
-            function renderFixtureCard(fix, dateStr) {
+            function renderFixtureCard(fix, section) {
                 const homeIcon = getTeamIconHtml(fix.home, 'team-icon-sm');
                 const awayIcon = getTeamIconHtml(fix.away, 'team-icon-sm');
                 return `
-                    <div class="pending-item" data-home="${escapeHtml(fix.home)}" data-away="${escapeHtml(fix.away)}" data-date="${escapeHtml(dateStr)}">
+                    <div class="pending-item" data-section="${section}" data-home="${escapeHtml(fix.home)}" data-away="${escapeHtml(fix.away)}" data-date="${escapeHtml(fix.date)}">
                         <div class="pi-teams">
                             ${homeIcon}
                             <span>${escapeHtml(fix.home)}</span>
                             <span style="color:var(--laliga-red);font-weight:400;">vs</span>
-                            <span>${escapeHtml(fix.away)}</span>
                             ${awayIcon}
+                            <span>${escapeHtml(fix.away)}</span>
                         </div>
                         <div class="pi-actions">
                             <button class="btn-sm btn-confirm no-contest-btn" style="padding:8px 20px;font-size:1.1rem;">🤝 No Contest</button>
@@ -5356,76 +5371,67 @@
                 `;
             }
 
+            let todayHtml = todayUnsubmitted.map(f => renderFixtureCard(f, 'today')).join('');
+            let yesterdayHtml = yesterdayUnsubmitted.map(f => renderFixtureCard(f, 'yesterday')).join('');
+
             let html = `
                 <h3>⏳ Pending Fixtures</h3>
                 <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;font-size:1.3rem;">Unsubmitted LaLiga matches from today and yesterday.</p>
                 <div style="border-left:4px solid var(--laliga-red);padding-left:16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
                     <h4 style="color:var(--laliga-red);font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:1px;">📅 TODAY'S UNSUBMITTED</h4>
-                    ${getCountdownHtml(todayStr, 'todayCountdown')}
+                    ${getCountdownHtml(todayStr)}
                 </div>
-                ${todayFixtures.length ? todayFixtures.map(f => renderFixtureCard(f, todayStr)).join('') : '<div style="color:rgba(255,255,255,0.3);padding:16px 0;font-size:1.2rem;">✅ All today\'s matches submitted.</div>'}
+                ${todayHtml || '<div style="color:rgba(255,255,255,0.3);padding:16px 0;font-size:1.2rem;">✅ All today\'s matches submitted.</div>'}
                 <div style="border-left:4px solid #f97316;padding-left:16px;margin-top:24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
                     <h4 style="color:#f97316;font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:1px;">📅 YESTERDAY'S UNSUBMITTED</h4>
-                    ${getCountdownHtml(yesterdayStr, 'yesterdayCountdown')}
+                    ${getCountdownHtml(yesterdayStr)}
                 </div>
-                ${yesterdayFixtures.length ? yesterdayFixtures.map(f => renderFixtureCard(f, yesterdayStr)).join('') : '<div style="color:rgba(255,255,255,0.3);padding:16px 0;font-size:1.2rem;">✅ All yesterday\'s matches submitted.</div>'}
+                ${yesterdayHtml || '<div style="color:rgba(255,255,255,0.3);padding:16px 0;font-size:1.2rem;">✅ All yesterday\'s matches submitted.</div>'}
                 <div class="modal-btns"><button class="modal-btn-cancel" id="closePendingBtn">Close</button></div>
             `;
 
             showModal(html, true);
 
-            if (pendingFixturesCountdownInterval) clearInterval(pendingFixturesCountdownInterval);
-            pendingFixturesCountdownInterval = setInterval(() => {
-                ['todayCountdown', 'yesterdayCountdown'].forEach((id, i) => {
-                    const el = document.getElementById(id);
-                    if (!el) return;
+            document.getElementById('closePendingBtn').onclick = closeModal;
+
+            const countdownEls = document.querySelectorAll('[data-deadline]');
+            const ticker = setInterval(() => {
+                countdownEls.forEach(el => {
                     const deadline = parseInt(el.dataset.deadline);
-                    if (!deadline) return;
                     const remaining = deadline - Date.now();
                     if (remaining <= 0) {
-                        el.textContent = '⏰ EXPIRED';
+                        el.innerHTML = '⏰ EXPIRED';
                         el.style.color = '#ef4444';
+                        clearInterval(ticker);
                         return;
                     }
-                    const hours = Math.floor(remaining / 3600000);
-                    const minutes = Math.floor((remaining % 3600000) / 60000);
-                    const seconds = Math.floor((remaining % 60000) / 1000);
+                    const hours = Math.floor(remaining / (1000 * 60 * 60));
+                    const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
                     el.style.color = remaining < 3600000 ? '#ef4444' : remaining < 10800000 ? '#f97316' : '#22c55e';
                     el.textContent = `⏱ ${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
                 });
             }, 1000);
 
-            document.getElementById('closePendingBtn').onclick = () => {
-                if (pendingFixturesCountdownInterval) {
-                    clearInterval(pendingFixturesCountdownInterval);
-                    pendingFixturesCountdownInterval = null;
-                }
-                closeModal();
-            };
+            document.getElementById('closePendingBtn').addEventListener('click', () => clearInterval(ticker));
 
             document.querySelectorAll('.no-contest-btn').forEach(btn => {
                 btn.onclick = async () => {
                     const item = btn.closest('.pending-item');
-                    const home = item.dataset.home;
-                    const away = item.dataset.away;
+                    if (!item) return;
+                    const homeTeam = item.dataset.home;
+                    const awayTeam = item.dataset.away;
                     const date = item.dataset.date;
-                    const matchKey = makeMatchKey(home, away, date);
-                    if (recordedSet.has(matchKey)) {
-                        item.style.opacity = '0.3';
-                        setTimeout(() => item.remove(), 400);
-                        return;
-                    }
-                    if (!confirm(`Mark ${home} vs ${away} as NO CONTEST (F - F)?`)) return;
+                    if (!confirm(`Mark ${homeTeam} vs ${awayTeam} as NO CONTEST (F - F)?`)) return;
                     btn.disabled = true;
                     btn.innerHTML = '⏳';
                     try {
-                        recordedSet.add(matchKey);
-                        const matchText = `${home} F - F ${away} (No Contest)`;
+                        const matchText = `${homeTeam} F - F ${awayTeam} (No Contest)`;
                         const resultData = {
                             matchText,
                             date,
-                            homeTeam: home,
-                            awayTeam: away,
+                            homeTeam,
+                            awayTeam,
                             homeScore: 0,
                             awayScore: 0,
                             matchType: 'forfeit',
@@ -5437,12 +5443,21 @@
                             approvedBy: 'admin'
                         };
                         await database.ref(getSeasonPath(currentSeasonId, 'results')).push(resultData);
-                        await applyResultToTable(home, away, 0, 0, 'no_contest');
+                        await applyResultToTable(homeTeam, awayTeam, 0, 0, 'no_contest');
                         await loadCurrentSeasonDataSync();
                         renderCurrentTab();
                         item.style.opacity = '0.3';
                         item.style.transition = 'opacity 0.3s';
-                        setTimeout(() => item.remove(), 400);
+                        setTimeout(() => { item.remove(); }, 400);
+                        showModal(`
+                            <div style="text-align:center;padding:30px 0;">
+                                <div style="font-size:4rem;">🤝</div>
+                                <h3 style="color:var(--laliga-red);font-size:2.4rem;margin:16px 0;">No Contest Saved!</h3>
+                                <p style="color:rgba(255,255,255,0.6);font-size:1.4rem;">${homeTeam} F - F ${awayTeam}</p>
+                                <button class="modal-btn-cancel" id="closeNoContestSuccess" style="width:100%;margin-top:16px;">Close</button>
+                            </div>
+                        `);
+                        document.getElementById('closeNoContestSuccess').onclick = closeModal;
                     } catch (e) {
                         alert('Error: ' + e.message);
                         btn.disabled = false;
@@ -5454,45 +5469,28 @@
             document.querySelectorAll('.dismiss-btn').forEach(btn => {
                 btn.onclick = () => {
                     const item = btn.closest('.pending-item');
+                    if (!item) return;
                     item.style.opacity = '0.3';
                     item.style.transition = 'opacity 0.3s';
-                    setTimeout(() => item.remove(), 300);
+                    setTimeout(() => { item.remove(); }, 300);
                 };
             });
         }
 
-        // ─── REPLACED: openRequestsHistoryModal ───
+        // ─── openRequestsHistoryModal ─── (REPLACED with Premier League design)
         async function openRequestsHistoryModal() {
-            let approvedData = {};
-            let pendingData = {};
-            let currentFilterTeam = '';
+            const approvedSnap = await database.ref(getSeasonPath(currentSeasonId, 'results')).once('value');
+            const approvedData = approvedSnap.val() || {};
+            const approvedEntries = Object.entries(approvedData).map(([key, val]) => ({ id: key, ...val, status: 'approved' }));
+            const pendingSnap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
+            const pendingData = pendingSnap.val() || {};
+            const pendingEntries = Object.entries(pendingData).map(([key, val]) => ({ id: key, ...val, status: 'pending' }));
+            const allEntries = [...approvedEntries, ...pendingEntries];
+            allEntries.sort((a, b) => (b.submittedAt || b.approvedAt || 0) - (a.submittedAt || a.approvedAt || 0));
+
             const teamNames = teamsData.map(t => t.name).sort();
 
-            function buildEntries() {
-                const approvedEntries = Object.entries(approvedData).map(([key, val]) => ({ id: key, ...val, status: 'approved' }));
-                const pendingEntries = Object.entries(pendingData).map(([key, val]) => ({ id: key, ...val, status: 'pending' }));
-                const all = [...approvedEntries, ...pendingEntries];
-                all.sort((a, b) => (b.uploadedAt || b.submittedAt || b.approvedAt || 0) - (a.uploadedAt || a.submittedAt || a.approvedAt || 0));
-                return all;
-            }
-
-            let resultsListenerRef = null;
-            let pendingListenerRef = null;
-
-            function detachListeners() {
-                if (resultsListenerRef) {
-                    resultsListenerRef.off('value');
-                    resultsListenerRef = null;
-                }
-                if (pendingListenerRef) {
-                    pendingListenerRef.off('value');
-                    pendingListenerRef = null;
-                }
-            }
-
             const renderHistory = (filterTeam = '') => {
-                currentFilterTeam = filterTeam;
-                const allEntries = buildEntries();
                 let filtered = allEntries;
                 if (filterTeam) filtered = filtered.filter(r => r.homeTeam === filterTeam || r.awayTeam === filterTeam);
 
@@ -5504,12 +5502,9 @@
                     for (const r of filtered) {
                         const statusColor = r.status === 'pending' ? '#f97316' : '#22c55e';
                         const statusText = r.status === 'pending' ? '⏳ Pending' : '✅ Approved';
-                        const uploadTime = r.uploadedAt ? new Date(r.uploadedAt).toLocaleString() : (r.submittedAt ? new Date(r.submittedAt).toLocaleString() : 'N/A');
+                        const submittedAt = r.submittedAt ? new Date(r.submittedAt).toLocaleString() : 'N/A';
                         const homeIcon = getTeamIconHtml(r.homeTeam || '', 'team-icon-sm');
                         const awayIcon = getTeamIconHtml(r.awayTeam || '', 'team-icon-sm');
-                        const mdDisplay = r.md ? `MD ${r.md}` : '';
-                        const submittedBy = r.submittedBy || 'admin';
-
                         listHtml += `
                             <div style="background:rgba(233,16,46,0.08);border-radius:16px;padding:16px 18px;margin-bottom:10px;border-left:4px solid ${statusColor};">
                                 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:8px;">
@@ -5521,14 +5516,14 @@
                                         ${awayIcon}
                                     </div>
                                     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-                                        <span style="color:rgba(255,255,255,0.5);font-size:1.1rem;">${mdDisplay}</span>
-                                        <span style="color:rgba(255,255,255,0.4);font-size:0.9rem;">by ${escapeHtml(submittedBy)}</span>
+                                        <span style="color:rgba(255,255,255,0.5);font-size:1.1rem;">${escapeHtml(r.date || '')}</span>
+                                        <span style="color:rgba(255,255,255,0.4);font-size:0.9rem;">${escapeHtml(r.submittedBy || '')}</span>
                                         <span style="color:${statusColor};font-weight:700;font-size:1.1rem;">${statusText}</span>
-                                        <button class="btn-sm btn-edit review-result-btn" data-id="${r.id}" style="padding:6px 18px;font-size:1rem;background:rgba(150,60,255,0.3);border:1px solid var(--electric-violet);color:var(--laliga-white);border-radius:20px;cursor:pointer;">🔍 Review</button>
-                                        ${isAdminMode ? `<button class="btn-sm btn-delete revoke-result-btn" data-id="${r.id}" data-status="${r.status}" style="padding:6px 18px;font-size:1rem;background:rgba(180,0,0,0.4);border:1px solid #cc3333;color:#ffaaaa;border-radius:20px;cursor:pointer;">🔄 Revoke</button>` : ''}
+                                        <button class="btn-sm btn-edit review-result-btn" data-id="${r.id}" style="padding:6px 18px;font-size:1rem;background:rgba(233,16,46,0.2);border:1px solid var(--laliga-red);color:var(--laliga-white);border-radius:20px;cursor:pointer;">🔍 Review</button>
+                                        <button class="btn-sm btn-delete revoke-result-btn" data-id="${r.id}" data-status="${r.status}" style="padding:6px 18px;font-size:1rem;background:rgba(180,0,0,0.4);border:1px solid #cc3333;color:#ffaaaa;border-radius:20px;cursor:pointer;">🔄 Revoke</button>
                                     </div>
                                 </div>
-                                <div style="color:rgba(255,255,255,0.35);font-size:0.85rem;">Uploaded: ${escapeHtml(uploadTime)}</div>
+                                <div style="color:rgba(255,255,255,0.35);font-size:0.85rem;">${escapeHtml(submittedAt)}</div>
                             </div>
                         `;
                     }
@@ -5539,7 +5534,7 @@
 
                 showModal(`
                     <h3>📜 Requests History</h3>
-                    <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;font-size:1.3rem;">All submitted result requests for Season ${currentSeasonId} (live updating).</p>
+                    <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;font-size:1.3rem;">All submitted result requests for Season ${currentSeasonId}. Admins can revoke any result.</p>
                     <div class="filter-group" style="margin-bottom:20px;">
                         <label>Filter by Team</label>
                         <select id="historyTeamFilter">${filterOptions}</select>
@@ -5548,17 +5543,12 @@
                     <div class="modal-btns"><button class="modal-btn-cancel" id="closeHistoryBtn">Close</button></div>
                 `, true);
 
-                document.getElementById('closeHistoryBtn').onclick = () => {
-                    detachListeners();
-                    closeModal();
-                };
+                document.getElementById('closeHistoryBtn').onclick = closeModal;
                 document.getElementById('historyTeamFilter').addEventListener('change', e => renderHistory(e.target.value));
 
-                // Review button
                 document.querySelectorAll('.review-result-btn').forEach(btn => {
                     btn.onclick = () => {
                         const id = btn.dataset.id;
-                        const allEntries = buildEntries();
                         const entry = allEntries.find(e => e.id === id);
                         if (!entry) return;
 
@@ -5645,12 +5635,10 @@
                     };
                 });
 
-                // Revoke button
                 document.querySelectorAll('.revoke-result-btn').forEach(btn => {
                     btn.onclick = async () => {
                         const id = btn.dataset.id;
                         const status = btn.dataset.status;
-                        const allEntries = buildEntries();
                         const entry = allEntries.find(e => e.id === id);
                         if (!entry) return;
 
@@ -5666,22 +5654,12 @@
                             } else {
                                 await database.ref(getSeasonPath(currentSeasonId, 'pending_results/' + id)).remove();
                             }
-
-                            // Remove played opponent records
-                            const playedSnap = await database.ref('laliga_played_opponents').once('value');
-                            const playedData = playedSnap.val() || {};
-                            for (const key in playedData) {
-                                const pe = playedData[key];
-                                if ((pe.teamName === entry.homeTeam && pe.opponentName === entry.awayTeam) ||
-                                    (pe.teamName === entry.awayTeam && pe.opponentName === entry.homeTeam)) {
-                                    await database.ref('laliga_played_opponents/' + key).remove();
-                                }
-                            }
-
                             await loadCurrentSeasonDataSync();
                             await loadTopScorerData();
                             await loadTopAssistantData();
                             renderCurrentTab();
+                            const idx = allEntries.findIndex(e => e.id === id);
+                            if (idx !== -1) allEntries.splice(idx, 1);
                             const currentFilter = document.getElementById('historyTeamFilter')?.value || '';
                             renderHistory(currentFilter);
                         } catch (e) {
@@ -5692,20 +5670,6 @@
                     };
                 });
             };
-
-            detachListeners();
-
-            resultsListenerRef = database.ref(getSeasonPath(currentSeasonId, 'results'));
-            resultsListenerRef.on('value', snap => {
-                approvedData = snap.val() || {};
-                if (document.getElementById('genericModal').classList.contains('active')) renderHistory(currentFilterTeam);
-            });
-
-            pendingListenerRef = database.ref(getSeasonPath(currentSeasonId, 'pending_results'));
-            pendingListenerRef.on('value', snap => {
-                pendingData = snap.val() || {};
-                if (document.getElementById('genericModal').classList.contains('active')) renderHistory(currentFilterTeam);
-            });
 
             renderHistory('');
         }
@@ -6660,6 +6624,31 @@
         document.getElementById('debugInfoBtn').onclick = () => { openDebugInfoModal();
             closeMenu(); };
 
+        document.getElementById('leagueRulesBtn').onclick = async () => {
+            closeMenu();
+            const snap = await database.ref('laliga/leagueRules').once('value');
+            const rules = snap.val() || 'No league rules have been set yet. Please check back later.';
+            showModal(`
+                <div style="position:relative;">
+                    <button id="closeRulesBtn" style="position:absolute;top:-20px;right:-20px;background:transparent;border:none;color:var(--laliga-white);font-size:2.5rem;cursor:pointer;line-height:1;transition:color 0.2s;" onmouseover="this.style.color='var(--laliga-red)'" onmouseout="this.style.color='var(--laliga-white)'">&#x2715;</button>
+                    <h3>📋 League Rules</h3>
+                    <div style="color:rgba(255,255,255,0.85);font-size:1.6rem;line-height:1.7;margin-top:20px;white-space:pre-wrap;background:rgba(233,16,46,0.1);border-radius:20px;padding:24px;border:1px solid var(--glass-border);">${escapeHtml(rules)}</div>
+                    <div class="modal-btns">
+                        <button class="modal-btn-cancel" id="closeRulesBtn2">Close</button>
+                    </div>
+                </div>
+            `);
+            document.getElementById('closeRulesBtn').onclick = closeModal;
+            document.getElementById('closeRulesBtn2').onclick = closeModal;
+        };
+
+        document.getElementById('championsBtn').onclick = () => { closeMenu();
+            openChampionsModal(); };
+        document.getElementById('managerNamesBtn').onclick = () => { closeMenu();
+            openManagerNamesModal(); };
+        document.getElementById('recordsBtn').onclick = () => { closeMenu();
+            openRecordsModal(); };
+
         document.getElementById('adminModeBtn').onclick = async () => {
             if (localStorage.getItem('laliga_adminModeVerified') === 'true') {
                 isAdminMode = true;
@@ -6758,7 +6747,7 @@
         // ─── ADMIN SETTINGS ───
         function openAdminSettings() {
             showModal(
-                `<h3>⚙️ Admin Settings</h3><div class="settings-grid"><button class="settings-btn" id="setLogoBtn">🖼️ Upload Navbar Logo</button><button class="settings-btn" id="setBgBtn">🌄 Set Background Image</button><button class="settings-btn" id="manageSlideBtn">🎞️ Manage Main Slideshow</button><button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button><button class="settings-btn" id="manageWatchVideosBtn">🎥 Manage Watch Videos</button><button class="settings-btn" id="manageTeamNameMappingsBtn">🔁 Manage Team Name Mappings</button><button class="settings-btn" id="manageManagerKeysBtn">🔑 Manage Manager Keys</button><button class="settings-btn" id="pendingResultsBtn">⏳ Pending Fixtures</button><button class="settings-btn" id="managerHistoryBtn">👥 Manager History</button><button class="settings-btn" id="requestsHistoryBtn">📜 Requests History</button><button class="settings-btn" id="manageAgentBtn">🤖 Manage Agent</button></div><div class="modal-btns"><button class="modal-btn-cancel" id="closeAdminBtn" style="width:100%;">Close</button></div>`
+                `<h3>⚙️ Admin Settings</h3><div class="settings-grid"><button class="settings-btn" id="setLogoBtn">🖼️ Upload Navbar Logo</button><button class="settings-btn" id="setBgBtn">🌄 Set Background Image</button><button class="settings-btn" id="manageSlideBtn">🎞️ Manage Main Slideshow</button><button class="settings-btn" id="addIconBtn">⚽ Add Team Icon</button><button class="settings-btn" id="manageWatchVideosBtn">🎥 Manage Watch Videos</button><button class="settings-btn" id="manageTeamNameMappingsBtn">🔁 Manage Team Name Mappings</button><button class="settings-btn" id="manageManagerKeysBtn">🔑 Manage Manager Keys</button><button class="settings-btn" id="pendingResultsBtn">⏳ Pending Fixtures</button><button class="settings-btn" id="managerHistoryBtn">👥 Manager History</button><button class="settings-btn" id="requestsHistoryBtn">📜 Requests History</button><button class="settings-btn" id="leagueRulesAdminBtn">📋 Set League Rules</button><button class="settings-btn" id="manageAgentBtn">🤖 Manage Agent</button></div><div class="modal-btns"><button class="modal-btn-cancel" id="closeAdminBtn" style="width:100%;">Close</button></div>`
                 );
             document.getElementById('closeAdminBtn').onclick = closeModal;
             document.getElementById('setLogoBtn').onclick = uploadNavbarLogo;
@@ -6777,6 +6766,39 @@
                 openManagerHistoryModal(); };
             document.getElementById('requestsHistoryBtn').onclick = () => { closeModal();
                 openRequestsHistoryModal(); };
+            document.getElementById('leagueRulesAdminBtn').onclick = async () => {
+                const snap = await database.ref('laliga/leagueRules').once('value');
+                const currentRules = snap.val() || '';
+                showModal(`
+                    <h3>📋 Set League Rules</h3>
+                    <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;font-size:1.3rem;">Type the league rules below. They will be visible to all users via the League Rules menu item.</p>
+                    <label>League Rules</label>
+                    <textarea id="leagueRulesTextarea" style="min-height:300px;font-size:1.6rem;line-height:1.6;white-space:pre-wrap;" placeholder="Type your league rules here...">${escapeHtml(currentRules)}</textarea>
+                    <div id="leagueRulesStatus"></div>
+                    <div class="modal-btns">
+                        <button class="modal-btn-primary" id="saveLeagueRulesBtn">💾 Save Rules</button>
+                        <button class="modal-btn-cancel" id="cancelLeagueRulesBtn">Cancel</button>
+                    </div>
+                `);
+                document.getElementById('cancelLeagueRulesBtn').onclick = closeModal;
+                document.getElementById('saveLeagueRulesBtn').onclick = async () => {
+                    const rules = document.getElementById('leagueRulesTextarea').value;
+                    const btn = document.getElementById('saveLeagueRulesBtn');
+                    const status = document.getElementById('leagueRulesStatus');
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+                    try {
+                        await database.ref('laliga/leagueRules').set(rules);
+                        status.innerHTML = '<div class="status-msg status-success">✅ League rules saved!</div>';
+                        btn.innerHTML = '✓ Saved!';
+                        setTimeout(closeModal, 1200);
+                    } catch (e) {
+                        status.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                        btn.disabled = false;
+                        btn.innerHTML = '💾 Save Rules';
+                    }
+                };
+            };
             document.getElementById('manageAgentBtn').onclick = () => { closeModal();
                 openManageAgentModal(); };
         }
@@ -7150,6 +7172,372 @@
                     await database.ref(`teamLogoMappings/${team}`).remove();
                     await loadTeamLogoMappings();
                     renderTeamLogoMappingsModal();
+                };
+            });
+        }
+
+        // ─── openChampionsModal ─── (ADDED)
+        async function openChampionsModal() {
+            const renderChampions = async () => {
+                const snap = await database.ref('laliga/champions').once('value');
+                const championsData = snap.val() || {};
+                const seasonKeys = Object.keys(championsData).sort((a, b) => {
+                    const numA = parseInt(a.replace('season_', ''));
+                    const numB = parseInt(b.replace('season_', ''));
+                    return numB - numA;
+                });
+                let html = `<h3>🏆 Champions</h3>`;
+                if (seasonKeys.length === 0) {
+                    html += `<div class="empty-state"><div class="empty-icon">🏆</div><p>No champions data yet.</p></div>`;
+                } else {
+                    for (const seasonKey of seasonKeys) {
+                        const data = championsData[seasonKey];
+                        const slideshow = data.slideshow || [];
+                        const teamName = data.teamName || 'TBD';
+                        const managerName = data.managerName || 'TBD';
+                        const seasonDisplay = seasonKey.replace('season_', 'Season ');
+                        let slideHtml = '';
+                        if (slideshow.length) {
+                            slideHtml = `<div class="champion-slideshow" data-season="${seasonKey}" style="margin:16px 0;text-align:center;">
+                                <div class="slideshow-frame" style="max-width:700px;margin:0 auto;">
+                                    <img src="${slideshow[0]}" class="champion-slide-img" style="width:100%;max-height:480px;object-fit:contain;border-radius:20px;">
+                                </div>
+                                <div class="champion-dots" style="margin-top:8px;display:flex;gap:8px;justify-content:center;"></div>
+                            </div>`;
+                        } else {
+                            slideHtml = `<div style="color:rgba(255,255,255,0.3);padding:20px;">No slideshow images</div>`;
+                        }
+                        html += `
+                            <div style="background:rgba(233,16,46,0.1);border-radius:24px;padding:24px;margin-bottom:24px;border:1px solid var(--laliga-red);">
+                                <div style="font-family:'Bebas Neue',sans-serif;font-size:2.4rem;color:var(--laliga-red);letter-spacing:2px;">${seasonDisplay}</div>
+                                <div style="font-size:2.8rem;font-weight:700;color:var(--laliga-white);margin:8px 0;">${escapeHtml(teamName)}</div>
+                                <div style="color:rgba(255,255,255,0.6);font-size:1.6rem;">Manager: ${escapeHtml(managerName)}</div>
+                                ${slideHtml}
+                                ${isAdminMode ? `
+                                    <div style="margin-top:16px;border-top:1px solid rgba(255,255,255,0.1);padding-top:16px;">
+                                        <button class="champion-upload-btn" data-season="${seasonKey}" style="background:rgba(233,16,46,0.2);border:2px dashed var(--laliga-red);color:var(--laliga-white);padding:8px 20px;border-radius:20px;cursor:pointer;font-size:1.2rem;margin-right:12px;">📤 Upload Images</button>
+                                        <button class="champion-delete-slide-btn" data-season="${seasonKey}" style="background:rgba(180,0,0,0.3);border:1px solid #cc3333;color:#ffaaaa;padding:8px 20px;border-radius:20px;cursor:pointer;font-size:1.2rem;margin-right:12px;">🗑️ Delete Slide</button>
+                                        <button class="champion-set-team-btn" data-season="${seasonKey}" style="background:rgba(233,16,46,0.2);border:1px solid var(--laliga-red);color:var(--laliga-white);padding:8px 20px;border-radius:20px;cursor:pointer;font-size:1.2rem;margin-right:12px;">✏️ Set Team</button>
+                                        <button class="champion-set-manager-btn" data-season="${seasonKey}" style="background:rgba(233,16,46,0.2);border:1px solid var(--laliga-red);color:var(--laliga-white);padding:8px 20px;border-radius:20px;cursor:pointer;font-size:1.2rem;">✏️ Set Manager</button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }
+                }
+                if (isAdminMode) {
+                    html += `<button class="add-btn-main" id="addChampionSeasonBtn" style="margin-top:20px;">➕ Add Champion Season</button>`;
+                }
+                html += `<div class="modal-btns"><button class="modal-btn-cancel" id="closeChampionModal">Close</button></div>`;
+                showModal(html, true);
+
+                document.querySelectorAll('.champion-slideshow').forEach(container => {
+                    const seasonKey = container.dataset.season;
+                    const data = championsData[seasonKey];
+                    const slides = data.slideshow || [];
+                    if (slides.length === 0) return;
+                    let currentIdx = 0;
+                    const img = container.querySelector('.champion-slide-img');
+                    const dotsContainer = container.querySelector('.champion-dots');
+                    dotsContainer.innerHTML = '';
+                    slides.forEach((_, i) => {
+                        const dot = document.createElement('span');
+                        dot.className = 'dot' + (i === 0 ? ' active' : '');
+                        dot.onclick = () => {
+                            currentIdx = i;
+                            img.src = slides[currentIdx];
+                            updateDots();
+                        };
+                        dotsContainer.appendChild(dot);
+                    });
+                    const updateDots = () => {
+                        dotsContainer.querySelectorAll('.dot').forEach((d, i) => {
+                            d.className = 'dot' + (i === currentIdx ? ' active' : '');
+                        });
+                    };
+                    setInterval(() => {
+                        currentIdx = (currentIdx + 1) % slides.length;
+                        img.src = slides[currentIdx];
+                        updateDots();
+                    }, 3000);
+                });
+
+                document.getElementById('closeChampionModal').onclick = closeModal;
+
+                if (isAdminMode) {
+                    document.querySelectorAll('.champion-upload-btn').forEach(btn => {
+                        btn.onclick = async () => {
+                            const seasonKey = btn.dataset.season;
+                            const files = await pickFiles('image/*');
+                            if (!files.length) return;
+                            for (const file of files) {
+                                try {
+                                    const url = await uploadToImgBB(file);
+                                    const current = championsData[seasonKey] || {};
+                                    const slides = current.slideshow || [];
+                                    slides.push(url);
+                                    await database.ref(`laliga/champions/${seasonKey}/slideshow`).set(slides);
+                                } catch (e) {
+                                    alert('Upload failed: ' + e.message);
+                                }
+                            }
+                            closeModal();
+                            openChampionsModal();
+                        };
+                    });
+                    document.querySelectorAll('.champion-delete-slide-btn').forEach(btn => {
+                        btn.onclick = async () => {
+                            const seasonKey = btn.dataset.season;
+                            const data = championsData[seasonKey];
+                            if (!data || !data.slideshow || !data.slideshow.length) {
+                                alert('No slides to delete.');
+                                return;
+                            }
+                            const slides = data.slideshow;
+                            let idx = prompt(`Enter slide index to delete (0-${slides.length-1}):`);
+                            if (idx === null) return;
+                            idx = parseInt(idx);
+                            if (isNaN(idx) || idx < 0 || idx >= slides.length) {
+                                alert('Invalid index.');
+                                return;
+                            }
+                            slides.splice(idx, 1);
+                            await database.ref(`laliga/champions/${seasonKey}/slideshow`).set(slides);
+                            closeModal();
+                            openChampionsModal();
+                        };
+                    });
+                    document.querySelectorAll('.champion-set-team-btn').forEach(btn => {
+                        btn.onclick = async () => {
+                            const seasonKey = btn.dataset.season;
+                            const current = championsData[seasonKey] || {};
+                            const newName = prompt('Enter team name:', current.teamName || '');
+                            if (newName !== null) {
+                                await database.ref(`laliga/champions/${seasonKey}/teamName`).set(newName.trim());
+                                closeModal();
+                                openChampionsModal();
+                            }
+                        };
+                    });
+                    document.querySelectorAll('.champion-set-manager-btn').forEach(btn => {
+                        btn.onclick = async () => {
+                            const seasonKey = btn.dataset.season;
+                            const current = championsData[seasonKey] || {};
+                            const newManager = prompt('Enter manager name:', current.managerName || '');
+                            if (newManager !== null) {
+                                await database.ref(`laliga/champions/${seasonKey}/managerName`).set(newManager.trim());
+                                closeModal();
+                                openChampionsModal();
+                            }
+                        };
+                    });
+                    document.getElementById('addChampionSeasonBtn').onclick = async () => {
+                        const seasonNum = prompt('Enter season number (e.g. 1):');
+                        if (!seasonNum) return;
+                        const key = `season_${seasonNum.trim()}`;
+                        if (championsData[key]) {
+                            alert('Season already exists.');
+                            return;
+                        }
+                        await database.ref(`laliga/champions/${key}`).set({ slideshow: [], teamName: '', managerName: '' });
+                        closeModal();
+                        openChampionsModal();
+                    };
+                }
+            };
+            await renderChampions();
+        }
+
+        // ─── openRecordsModal and openRecordForm ─── (ADDED)
+        async function openRecordsModal() {
+            const renderRecords = async () => {
+                const snap = await database.ref('laliga/records').once('value');
+                const recordsData = snap.val() || {};
+                const records = Object.entries(recordsData).map(([key, val]) => ({ id: key, ...val }));
+                records.sort((a, b) => {
+                    const aTime = a.updatedAt || a.createdAt || 0;
+                    const bTime = b.updatedAt || b.createdAt || 0;
+                    return bTime - aTime;
+                });
+                let html = `<h3>📊 Records</h3>`;
+                if (isAdminMode) {
+                    html += `<button class="add-btn-main" id="addRecordBtn" style="margin-bottom:20px;">➕ Add Record</button>`;
+                }
+                if (records.length === 0) {
+                    html += `<div class="empty-state"><div class="empty-icon">📊</div><p>No records yet.</p></div>`;
+                } else {
+                    html += `<div style="display:flex;flex-direction:column;gap:20px;">`;
+                    for (const rec of records) {
+                        const imageHtml = rec.imageUrl ? `<img src="${rec.imageUrl}" style="width:200px;height:200px;object-fit:cover;border-radius:16px;border:2px solid var(--laliga-red);">` : `<div style="width:200px;height:200px;background:rgba(233,16,46,0.15);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:4rem;color:rgba(255,255,255,0.3);border:2px solid var(--laliga-red);">📊</div>`;
+                        html += `
+                            <div style="background:rgba(233,16,46,0.08);border-radius:24px;padding:20px;border:1px solid var(--glass-border);display:flex;gap:20px;align-items:flex-start;">
+                                <div style="flex-shrink:0;width:200px;height:200px;">${imageHtml}</div>
+                                <div style="flex:1;">
+                                    <div style="font-weight:700;font-size:2rem;color:var(--laliga-white);margin-bottom:4px;">${escapeHtml(rec.title || 'Record')}</div>
+                                    <div style="font-family:'Bebas Neue',sans-serif;font-size:3.5rem;color:var(--laliga-red);">${escapeHtml(rec.quantity || '')}</div>
+                                    ${rec.playerName ? `<div style="color:rgba(255,255,255,0.8);font-size:1.4rem;">Player: ${escapeHtml(rec.playerName)}</div>` : ''}
+                                    <div style="color:rgba(255,255,255,0.6);font-size:1.4rem;">Manager: ${escapeHtml(rec.managerName || '')}</div>
+                                    <div style="color:rgba(255,255,255,0.4);font-size:1.1rem;">Season: ${escapeHtml(rec.season || '')}</div>
+                                    ${isAdminMode ? `<div style="margin-top:12px;display:flex;gap:8px;"><button class="btn-sm btn-edit edit-record-btn" data-id="${rec.id}" style="padding:6px 16px;font-size:1.1rem;">✏️ Edit</button><button class="btn-sm btn-delete delete-record-btn" data-id="${rec.id}" style="padding:6px 16px;font-size:1.1rem;">🗑️ Delete</button></div>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }
+                    html += `</div>`;
+                }
+                html += `<div class="modal-btns"><button class="modal-btn-cancel" id="closeRecordModal">Close</button></div>`;
+                showModal(html, true);
+                document.getElementById('closeRecordModal').onclick = closeModal;
+                if (isAdminMode) {
+                    document.getElementById('addRecordBtn').onclick = () => openRecordForm(null, renderRecords);
+                    document.querySelectorAll('.edit-record-btn').forEach(btn => {
+                        btn.onclick = () => {
+                            const rec = records.find(r => r.id === btn.dataset.id);
+                            if (rec) openRecordForm(rec, renderRecords);
+                        };
+                    });
+                    document.querySelectorAll('.delete-record-btn').forEach(btn => {
+                        btn.onclick = async () => {
+                            if (!confirm('Delete this record?')) return;
+                            await database.ref('laliga/records/' + btn.dataset.id).remove();
+                            closeModal();
+                            openRecordsModal();
+                        };
+                    });
+                }
+            };
+            await renderRecords();
+        }
+
+        function openRecordForm(record, refreshCallback) {
+            const isEdit = !!record;
+            showModal(`
+                <h3>${isEdit ? '✏️ Edit Record' : '➕ Add Record'}</h3>
+                <label>Title</label>
+                <input type="text" id="recordTitle" value="${escapeHtml(record?.title || '')}" placeholder="e.g. Most goals in a season">
+                <label>Quantity</label>
+                <input type="text" id="recordQuantity" value="${escapeHtml(record?.quantity || '')}" placeholder="e.g. 32">
+                <label>Manager Name</label>
+                <input type="text" id="recordManager" value="${escapeHtml(record?.managerName || '')}" placeholder="Manager">
+                <label>Season</label>
+                <input type="text" id="recordSeason" value="${escapeHtml(record?.season || '')}" placeholder="e.g. 2024/25">
+                <label>Player Name (optional)</label>
+                <input type="text" id="recordPlayerName" value="${escapeHtml(record?.playerName || '')}" placeholder="e.g. Lionel Messi">
+                <label>Image</label>
+                <div class="image-upload-area" id="recordImageArea">
+                    <div class="upload-icon">📸</div>
+                    <div class="upload-text" style="font-size:1.4rem;">${record?.imageUrl ? 'Change Image' : 'Upload Image'}</div>
+                    <input type="file" id="recordImageInput" accept="image/*" style="display:none;">
+                </div>
+                ${record?.imageUrl ? `<div style="margin:10px 0;"><img src="${record.imageUrl}" style="max-width:100%;max-height:200px;border-radius:12px;border:2px solid var(--laliga-red);"></div>` : ''}
+                <div id="recordImagePreview"></div>
+                <div id="recordFormStatus"></div>
+                <div class="modal-btns">
+                    <button class="modal-btn-primary" id="saveRecordBtn">💾 Save</button>
+                    <button class="modal-btn-cancel" id="cancelRecordForm">Cancel</button>
+                </div>
+            `);
+            document.getElementById('cancelRecordForm').onclick = closeModal;
+            const fileInput = document.getElementById('recordImageInput');
+            const area = document.getElementById('recordImageArea');
+            const preview = document.getElementById('recordImagePreview');
+            area.onclick = () => fileInput.click();
+            let uploadedImageUrl = record?.imageUrl || '';
+            fileInput.onchange = async () => {
+                const file = fileInput.files[0];
+                if (!file) return;
+                try {
+                    preview.innerHTML = '<div class="status-msg status-loading">Uploading...</div>';
+                    const url = await uploadToImgBB(file);
+                    uploadedImageUrl = url;
+                    preview.innerHTML = `<div class="status-msg status-success">Image uploaded</div><img src="${url}" style="max-width:100%;max-height:200px;border-radius:12px;border:2px solid var(--laliga-red);">`;
+                } catch (e) {
+                    preview.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                }
+            };
+            document.getElementById('saveRecordBtn').onclick = async () => {
+                const title = document.getElementById('recordTitle').value.trim();
+                const quantity = document.getElementById('recordQuantity').value.trim();
+                const managerName = document.getElementById('recordManager').value.trim();
+                const season = document.getElementById('recordSeason').value.trim();
+                const playerName = document.getElementById('recordPlayerName').value.trim();
+                if (!title || !quantity || !managerName || !season) {
+                    document.getElementById('recordFormStatus').innerHTML = '<div class="status-msg status-error">All fields except Player Name are required.</div>';
+                    return;
+                }
+                const data = {
+                    title,
+                    quantity,
+                    managerName,
+                    season,
+                    playerName: playerName || '',
+                    imageUrl: uploadedImageUrl || '',
+                    updatedAt: Date.now()
+                };
+                if (!isEdit) data.createdAt = Date.now();
+                const btn = document.getElementById('saveRecordBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+                try {
+                    if (isEdit) {
+                        await database.ref('laliga/records/' + record.id).update(data);
+                    } else {
+                        await database.ref('laliga/records').push(data);
+                    }
+                    closeModal();
+                    if (refreshCallback) refreshCallback();
+                    else openRecordsModal();
+                } catch (e) {
+                    document.getElementById('recordFormStatus').innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                    btn.disabled = false;
+                    btn.innerHTML = '💾 Save';
+                }
+            };
+        }
+
+        // ─── openManagerNamesModal ─── (ADDED)
+        async function openManagerNamesModal() {
+            const snap = await database.ref('laliga/managerNames').once('value');
+            const managerNamesData = snap.val() || {};
+            const teamNames = teamsData.map(t => t.name).sort();
+            let html = `<h3>👤 Manager Names</h3>
+                <p style="color:rgba(255,255,255,0.6);margin-bottom:20px;font-size:1.3rem;">Assign manager names to each team.</p>
+                <div style="display:flex;flex-direction:column;gap:12px;max-height:500px;overflow-y:auto;">`;
+            for (const teamName of teamNames) {
+                const currentManager = managerNamesData[teamName] || '';
+                const iconHtml = getTeamIconHtml(teamName, 'team-icon-sm');
+                html += `
+                    <div style="display:flex;align-items:center;gap:16px;background:rgba(233,16,46,0.08);border-radius:20px;padding:16px 20px;border:1px solid var(--glass-border);">
+                        ${iconHtml}
+                        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--laliga-white);min-width:200px;flex:1;">${escapeHtml(teamName)}</span>
+                        <input type="text" class="manager-name-input" data-team="${escapeHtml(teamName)}" value="${escapeHtml(currentManager)}" placeholder="Enter manager name" style="flex:2;padding:12px 18px;background:rgba(255,255,255,0.06);border:1px solid var(--laliga-red);border-radius:16px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.3rem;outline:none;">
+                        <button class="save-manager-name-btn btn-sm btn-edit" data-team="${escapeHtml(teamName)}" style="padding:10px 22px;font-size:1.1rem;white-space:nowrap;">💾 Save</button>
+                    </div>
+                `;
+            }
+            html += `</div>
+                <div id="managerNamesStatus" style="margin-top:12px;"></div>
+                <div class="modal-btns"><button class="modal-btn-cancel" id="closeManagerNamesBtn">Close</button></div>`;
+            showModal(html, true);
+            document.getElementById('closeManagerNamesBtn').onclick = closeModal;
+            document.querySelectorAll('.save-manager-name-btn').forEach(btn => {
+                btn.onclick = async () => {
+                    const team = btn.dataset.team;
+                    const input = document.querySelector(`.manager-name-input[data-team="${team}"]`);
+                    const managerName = input ? input.value.trim() : '';
+                    const statusEl = document.getElementById('managerNamesStatus');
+                    btn.disabled = true;
+                    btn.innerHTML = '⏳';
+                    try {
+                        await database.ref(`laliga/managerNames/${team}`).set(managerName);
+                        statusEl.innerHTML = `<div class="status-msg status-success">✅ Manager name saved for ${escapeHtml(team)}!</div>`;
+                        setTimeout(() => { statusEl.innerHTML = ''; }, 2000);
+                    } catch (e) {
+                        statusEl.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = '💾 Save';
+                    }
                 };
             });
         }
