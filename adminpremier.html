@@ -497,8 +497,7 @@
             position: sticky;
             left: 0;
             z-index: 25;
-            background: var(--glass-bg);
-            backdrop-filter: var(--glass-blur);
+            background: #0A2B5E;
             width: 64px;
             min-width: 64px;
         }
@@ -511,14 +510,13 @@
             position: sticky;
             left: 64px;
             z-index: 24;
-            background: var(--glass-bg);
-            backdrop-filter: var(--glass-blur);
-            box-shadow: 4px 0 12px 4px rgba(10, 43, 94, 0.98);
-            overflow: hidden;
+            background: #0A2B5E;
+            box-shadow: 4px 0 0 0 rgba(233, 0, 82, 0.35), 8px 0 16px 0 #0A2B5E;
             border-right: 2px solid rgba(233, 0, 82, 0.35);
+            overflow: hidden;
         }
         .stats-table thead th:nth-child(2) {
-            background: rgba(150, 60, 255, 0.3);
+            background: #1a1a5e;
             z-index: 30;
         }
         .stats-table tbody tr {
@@ -2464,6 +2462,7 @@
         <div class="menu-item" id="adminModeBtn">🔐 Admin Mode</div>
         <div class="menu-item" id="leagueRulesBtn">📋 League Rules</div>
         <div class="menu-item" id="championsBtn">🏆 Champions</div>
+        <div class="menu-item" id="managersBtn">👔 Managers</div>
         <div class="menu-item" id="recordsBtn">📊 Records</div>
         <div class="menu-item" id="debugInfoBtn">🐛 Debug Info</div>
     </div>
@@ -3027,30 +3026,8 @@
 
         // ─── Load assets ───
         async function loadNavbarLogo() {
-            // Check localStorage cache
-            const cached = localStorage.getItem('navbarLogoUrl');
-            if (cached) {
-                navbarLogoUrl = cached;
-                renderLogo();
-                // Still fetch in background to update
-                try {
-                    const snap = await database.ref('premier_league_navbar_logo').once('value');
-                    const url = snap.val() || '';
-                    if (url !== navbarLogoUrl) {
-                        navbarLogoUrl = url;
-                        localStorage.setItem('navbarLogoUrl', url);
-                        renderLogo();
-                    }
-                } catch (e) { /* ignore */ }
-                return;
-            }
             const snap = await database.ref('premier_league_navbar_logo').once('value');
             navbarLogoUrl = snap.val() || '';
-            localStorage.setItem('navbarLogoUrl', navbarLogoUrl);
-            renderLogo();
-        }
-
-        function renderLogo() {
             const c = document.getElementById('logoContainer');
             c.innerHTML = navbarLogoUrl ?
                 `<img src="${navbarLogoUrl}" class="navbar-logo" alt="PL Logo">` :
@@ -3700,15 +3677,16 @@
             <h3>🔑 Manage Manager Keys</h3>
             <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Keys allow managers to submit match results. Each key is linked to a team.</p>
 
-            <div class="key-create-form">
+            <div class="key-create-form" style="grid-template-columns:1fr 1fr auto;">
               <div>
                 <label>Key Value</label>
                 <input type="text" id="newKeyValue" placeholder="e.g. ABC123" style="font-family:'Inter',monospace;">
               </div>
               <div>
-                <label>Team</label>
-                <select id="newKeyTeam">
-                  <option value="">Select Team</option>
+                <label>Team (current season)</label>
+                <input type="text" id="teamSearchInput" placeholder="Search team..." autocomplete="off" style="margin-bottom:4px;">
+                <select id="newKeyTeam" size="4" style="width:100%;background:rgba(54,13,58,0.8);border:1px solid var(--razzmatazz);border-radius:12px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.1rem;padding:4px;">
+                  <option value="">-- Select Team --</option>
                   ${teamNames.map(t => `<option value="${t}">${escapeHtml(t)}</option>`).join('')}
                 </select>
               </div>
@@ -3727,6 +3705,15 @@
           `);
 
             document.getElementById('closeKeysModal').onclick = closeModal;
+
+            // Live search filter
+            document.getElementById('teamSearchInput').addEventListener('input', function() {
+                const q = this.value.toLowerCase();
+                const select = document.getElementById('newKeyTeam');
+                Array.from(select.options).forEach(opt => {
+                    opt.style.display = (!opt.value || opt.value.toLowerCase().includes(q)) ? '' : 'none';
+                });
+            });
 
             document.getElementById('createKeyBtn').onclick = async () => {
                 const keyVal = document.getElementById('newKeyValue').value.trim().toUpperCase();
@@ -4540,21 +4527,32 @@
                                     const snap = await database.ref(path).once('value');
                                     const existing = snap.val() || {};
                                     let updatedGoalScorers, updatedAssists;
+                                    let myTeam = homeTeam;
                                     if (existing.homeTeam === homeTeam) {
                                         updatedGoalScorers = { home: userScorersHome, away: existing.goalScorers?.away || [] };
                                         updatedAssists = { home: userAssistsHome, away: existing.userAssists?.away || [] };
+                                        myTeam = homeTeam;
                                     } else {
                                         updatedGoalScorers = { home: existing.goalScorers?.home || [], away: userScorersHome };
                                         updatedAssists = { home: existing.userAssists?.home || [], away: userAssistsHome };
+                                        myTeam = awayTeam;
                                     }
+                                    const existingImages = existing.images || [];
+                                    const newImageUrls = [];
+                                    for (const img of userImages) {
+                                        const url = await uploadToImgBB(img.file);
+                                        newImageUrls.push(url);
+                                    }
+                                    const mergedImages = [...existingImages, ...newImageUrls];
                                     await database.ref(path).update({
                                         goalScorers: updatedGoalScorers,
-                                        userAssists: updatedAssists
+                                        userAssists: updatedAssists,
+                                        images: mergedImages
                                     });
                                     await loadTopScorerData();
                                     await loadTopAssistantData();
-                                    if (userScorersHome.length) await applyScorersFromScan(userScorersHome, homeTeam);
-                                    if (userAssistsHome.length) await applyAssistsFromScan(userAssistsHome, homeTeam);
+                                    if (userScorersHome.length) await applyScorersFromScan(userScorersHome, myTeam);
+                                    if (userAssistsHome.length) await applyAssistsFromScan(userAssistsHome, myTeam);
                                 } else {
                                     incrementPending();
                                     await database.ref(getSeasonPath(currentSeasonId, 'results')).push(resultData);
@@ -4603,10 +4601,12 @@
                     scoreLocked = true;
                     existingResultKey = existing.key;
                     existingResultLocation = existing.location;
+                    // Always show from perspective of current manager (homeTeam = linkedTeam)
                     if (existing.data.homeTeam === homeTeam) {
                         homeScoreValue = existing.data.homeScore || 0;
                         awayScoreValue = existing.data.awayScore || 0;
                     } else {
+                        // Current manager is actually away in the stored result
                         homeScoreValue = existing.data.awayScore || 0;
                         awayScoreValue = existing.data.homeScore || 0;
                     }
@@ -4851,7 +4851,7 @@
             renderForfeitForm();
         }
 
-        // ─── CHANGE: openPendingResultsModal (fixed submittedSet logic) ───
+        // ─── CHANGE: openPendingResultsModal (corrected version) ───
         async function openPendingResultsModal() {
             const todayStr = getSASTToday();
             const yesterdayStr = getSASTYesterday();
@@ -4869,33 +4869,8 @@
                 return `<span style="color:${color};font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;" data-deadline="${deadline}">⏱ ${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}</span>`;
             }
 
-            async function autoApplyNoContests(fixtures, dateStr) {
+            async function autoApplyNoContests(fixtures) {
                 for (const fix of fixtures) {
-                    const key1 = `${fix.date}_${fix.home}_${fix.away}`;
-                    const key2 = `${fix.date}_${fix.away}_${fix.home}`;
-                    const existingSnap1 = await database.ref(getSeasonPath(currentSeasonId, 'results')).orderByChild('homeTeam').equalTo(fix.home).once('value');
-                    let alreadyExists = false;
-                    if (existingSnap1.exists()) {
-                        existingSnap1.forEach(child => {
-                            const r = child.val();
-                            if ((r.homeTeam === fix.home && r.awayTeam === fix.away && r.date === fix.date) ||
-                                (r.homeTeam === fix.away && r.awayTeam === fix.home && r.date === fix.date)) {
-                                alreadyExists = true;
-                            }
-                        });
-                    }
-                    if (alreadyExists) continue;
-                    const pendingSnap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
-                    if (pendingSnap.exists()) {
-                        pendingSnap.forEach(child => {
-                            const r = child.val();
-                            if ((r.homeTeam === fix.home && r.awayTeam === fix.away && r.date === fix.date) ||
-                                (r.homeTeam === fix.away && r.awayTeam === fix.home && r.date === fix.date)) {
-                                alreadyExists = true;
-                            }
-                        });
-                    }
-                    if (alreadyExists) continue;
                     const matchText = `${fix.home} F - F ${fix.away} (No Contest)`;
                     const resultData = {
                         matchText,
@@ -4922,9 +4897,9 @@
                 renderCurrentTab();
             }
 
+            // Get fixtures for today and yesterday from calendar
             const todayFixtures = [];
             const yesterdayFixtures = [];
-
             for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
                 if (dateStr !== todayStr && dateStr !== yesterdayStr) continue;
                 if (!eventData || !eventData.tournaments) continue;
@@ -4937,47 +4912,60 @@
                             if (fix.home && fix.away) {
                                 const entry = { date: dateStr, home: fix.home, away: fix.away };
                                 if (dateStr === todayStr) todayFixtures.push(entry);
-                                else if (dateStr === yesterdayStr) yesterdayFixtures.push(entry);
+                                else yesterdayFixtures.push(entry);
                             }
                         }
                     }
                 }
             }
 
-            // Build submittedSet using direct field comparison
-            const submittedSet = new Set();
-            // Check resultsData
+            // Build submittedSet: check results from past 3 days by team pair (both directions), ignore date
+            // Also check pending_results
+            const submittedPairs = new Set();
+            // "TeamA|TeamB" normalized both directions
             for (const r of resultsData) {
-                if (r.homeTeam && r.awayTeam && r.date) {
-                    submittedSet.add(`${r.date}_${r.homeTeam}_${r.awayTeam}`);
-                    submittedSet.add(`${r.date}_${r.awayTeam}_${r.homeTeam}`);
+                if (r.homeTeam && r.awayTeam) {
+                    const key1 = `${r.homeTeam.trim().toLowerCase()}|${r.awayTeam.trim().toLowerCase()}`;
+                    const key2 = `${r.awayTeam.trim().toLowerCase()}|${r.homeTeam.trim().toLowerCase()}`;
+                    submittedPairs.add(key1);
+                    submittedPairs.add(key2);
                 }
             }
-            // Check pending_results fresh
             const pendingSnap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
             const pendingData = pendingSnap.val() || {};
             for (const key in pendingData) {
                 const r = pendingData[key];
-                if (r.homeTeam && r.awayTeam && r.date) {
-                    submittedSet.add(`${r.date}_${r.homeTeam}_${r.awayTeam}`);
-                    submittedSet.add(`${r.date}_${r.awayTeam}_${r.homeTeam}`);
+                if (r.homeTeam && r.awayTeam) {
+                    const key1 = `${r.homeTeam.trim().toLowerCase()}|${r.awayTeam.trim().toLowerCase()}`;
+                    const key2 = `${r.awayTeam.trim().toLowerCase()}|${r.homeTeam.trim().toLowerCase()}`;
+                    submittedPairs.add(key1);
+                    submittedPairs.add(key2);
                 }
             }
 
-            const todayUnsubmitted = todayFixtures.filter(f => !submittedSet.has(`${f.date}_${f.home}_${f.away}`) && !submittedSet.has(`${f.date}_${f.away}_${f.home}`));
-            const yesterdayUnsubmitted = yesterdayFixtures.filter(f => !submittedSet.has(`${f.date}_${f.home}_${f.away}`) && !submittedSet.has(`${f.date}_${f.away}_${f.home}`));
+            function isPairSubmitted(home, away) {
+                const key1 = `${home.trim().toLowerCase()}|${away.trim().toLowerCase()}`;
+                return submittedPairs.has(key1);
+            }
 
-            // Auto-apply no contests for expired countdowns
+            const todayUnsubmitted = todayFixtures.filter(f => !isPairSubmitted(f.home, f.away));
+            const yesterdayUnsubmitted = yesterdayFixtures.filter(f => !isPairSubmitted(f.home, f.away));
+
             const yesterdayDeadline = new Date(yesterdayStr + 'T00:00:00+02:00').getTime() + (48 * 60 * 60 * 1000);
             const todayDeadline = new Date(todayStr + 'T00:00:00+02:00').getTime() + (48 * 60 * 60 * 1000);
+
             if (Date.now() > yesterdayDeadline && yesterdayUnsubmitted.length > 0) {
-                await autoApplyNoContests(yesterdayUnsubmitted, yesterdayStr);
+                await autoApplyNoContests(yesterdayUnsubmitted);
             }
             if (Date.now() > todayDeadline && todayUnsubmitted.length > 0) {
-                await autoApplyNoContests(todayUnsubmitted, todayStr);
+                await autoApplyNoContests(todayUnsubmitted);
             }
 
-            if (todayUnsubmitted.length === 0 && yesterdayUnsubmitted.length === 0) {
+            // Re-filter after auto-apply
+            const todayStillUnsubmitted = todayUnsubmitted.filter(f => Date.now() <= todayDeadline);
+            const yesterdayStillUnsubmitted = yesterdayUnsubmitted.filter(f => Date.now() <= yesterdayDeadline);
+
+            if (todayStillUnsubmitted.length === 0 && yesterdayStillUnsubmitted.length === 0) {
                 showModal(`
                     <h3>⏳ Pending Fixtures</h3>
                     <div class="empty-state"><div class="empty-icon">✅</div><p>No unsubmitted matches found for today or yesterday.</p></div>
@@ -4987,17 +4975,15 @@
                 return;
             }
 
-            function renderFixtureCard(fix, section) {
+            function renderFixtureCard(fix) {
                 const homeIcon = getTeamIconHtml(fix.home, 'team-icon-sm');
                 const awayIcon = getTeamIconHtml(fix.away, 'team-icon-sm');
                 return `
-                    <div class="pending-item" data-section="${section}" data-home="${escapeHtml(fix.home)}" data-away="${escapeHtml(fix.away)}" data-date="${escapeHtml(fix.date)}">
+                    <div class="pending-item" data-home="${escapeHtml(fix.home)}" data-away="${escapeHtml(fix.away)}" data-date="${escapeHtml(fix.date)}">
                         <div class="pi-teams">
-                            ${homeIcon}
-                            <span>${escapeHtml(fix.home)}</span>
+                            ${homeIcon}<span>${escapeHtml(fix.home)}</span>
                             <span style="color:var(--turquoise);font-weight:400;">vs</span>
-                            ${awayIcon}
-                            <span>${escapeHtml(fix.away)}</span>
+                            ${awayIcon}<span>${escapeHtml(fix.away)}</span>
                         </div>
                         <div class="pi-actions">
                             <button class="btn-sm btn-confirm no-contest-btn" style="padding:8px 20px;font-size:1.1rem;">🤝 No Contest</button>
@@ -5007,19 +4993,19 @@
                 `;
             }
 
-            let todayHtml = todayUnsubmitted.map(f => renderFixtureCard(f, 'today')).join('');
-            let yesterdayHtml = yesterdayUnsubmitted.map(f => renderFixtureCard(f, 'yesterday')).join('');
+            const todayHtml = todayStillUnsubmitted.map(renderFixtureCard).join('');
+            const yesterdayHtml = yesterdayStillUnsubmitted.map(renderFixtureCard).join('');
 
-            let html = `
+            const html = `
                 <h3>⏳ Pending Fixtures</h3>
                 <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;font-size:1.3rem;">Unsubmitted matches from today and yesterday.</p>
                 <div style="border-left:4px solid var(--turquoise);padding-left:16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-                    <h4 style="color:var(--turquoise);font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:1px;">📅 TODAY'S UNSUBMITTED</h4>
+                    <h4 style="color:var(--turquoise);font-family:'Bebas Neue',sans-serif;font-size:2rem;">📅 TODAY'S UNSUBMITTED</h4>
                     ${getCountdownHtml(todayStr)}
                 </div>
                 ${todayHtml || '<div style="color:rgba(255,255,255,0.3);padding:16px 0;font-size:1.2rem;">✅ All today\'s matches submitted.</div>'}
                 <div style="border-left:4px solid #f97316;padding-left:16px;margin-top:24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-                    <h4 style="color:#f97316;font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:1px;">📅 YESTERDAY'S UNSUBMITTED</h4>
+                    <h4 style="color:#f97316;font-family:'Bebas Neue',sans-serif;font-size:2rem;">📅 YESTERDAY'S UNSUBMITTED</h4>
                     ${getCountdownHtml(yesterdayStr)}
                 </div>
                 ${yesterdayHtml || '<div style="color:rgba(255,255,255,0.3);padding:16px 0;font-size:1.2rem;">✅ All yesterday\'s matches submitted.</div>'}
@@ -5029,7 +5015,6 @@
             showModal(html, true);
             document.getElementById('closePendingBtn').onclick = closeModal;
 
-            // Live countdown ticker
             const countdownEls = document.querySelectorAll('[data-deadline]');
             const ticker = setInterval(() => {
                 countdownEls.forEach(el => {
@@ -5054,7 +5039,6 @@
             document.querySelectorAll('.no-contest-btn').forEach(btn => {
                 btn.onclick = async () => {
                     const item = btn.closest('.pending-item');
-                    if (!item) return;
                     const homeTeam = item.dataset.home;
                     const awayTeam = item.dataset.away;
                     const date = item.dataset.date;
@@ -5064,10 +5048,19 @@
                     try {
                         const matchText = `${homeTeam} F - F ${awayTeam} (No Contest)`;
                         const resultData = {
-                            matchText, date, homeTeam, awayTeam, homeScore: 0, awayScore: 0,
-                            matchType: 'forfeit', forfeitType: 'no_contest',
-                            submittedBy: 'admin', submittedAt: Date.now(),
-                            status: 'approved', approvedAt: Date.now(), approvedBy: 'admin'
+                            matchText,
+                            date,
+                            homeTeam,
+                            awayTeam,
+                            homeScore: 0,
+                            awayScore: 0,
+                            matchType: 'forfeit',
+                            forfeitType: 'no_contest',
+                            submittedBy: 'admin',
+                            submittedAt: Date.now(),
+                            status: 'approved',
+                            approvedAt: Date.now(),
+                            approvedBy: 'admin'
                         };
                         incrementPending();
                         await database.ref(getSeasonPath(currentSeasonId, 'results')).push(resultData);
@@ -5075,9 +5068,7 @@
                         await applyResultToTable(homeTeam, awayTeam, 0, 0, 'no_contest');
                         await loadCurrentSeasonData();
                         renderCurrentTab();
-                        item.style.opacity = '0.3';
-                        item.style.transition = 'opacity 0.3s';
-                        setTimeout(() => { item.remove(); }, 400);
+                        item.remove();
                         showModal(`
                             <div style="text-align:center;padding:30px 0;">
                                 <div style="font-size:4rem;">🤝</div>
@@ -5097,11 +5088,7 @@
 
             document.querySelectorAll('.dismiss-btn').forEach(btn => {
                 btn.onclick = () => {
-                    const item = btn.closest('.pending-item');
-                    if (!item) return;
-                    item.style.opacity = '0.3';
-                    item.style.transition = 'opacity 0.3s';
-                    setTimeout(() => { item.remove(); }, 300);
+                    btn.closest('.pending-item')?.remove();
                 };
             });
         }
@@ -5434,7 +5421,6 @@
                 const url = await uploadToImgBB(file);
                 await database.ref('premier_league_navbar_logo').set(url);
                 navbarLogoUrl = url;
-                localStorage.setItem('navbarLogoUrl', url);
                 await loadNavbarLogo();
                 statusDiv.className = 'status-msg status-success';
                 statusDiv.textContent = 'Logo updated!';
@@ -5485,7 +5471,6 @@
                             parseInt(btn.dataset.idx);
                         slideshowImages.splice(idx, 1);
                         await database.ref('slideshow/images').set(slideshowImages);
-                        localStorage.setItem('slideshowCache', JSON.stringify({ images: slideshowImages, duration: slideshowDuration }));
                         await loadSlideshow();
                         refresh(); }; });
                 document.getElementById('uploadSlideBtn').onclick = async () => { const file = document
@@ -5496,7 +5481,6 @@
                         const url = await uploadToImgBB(file);
                         slideshowImages.push(url);
                         await database.ref('slideshow/images').set(slideshowImages);
-                        localStorage.setItem('slideshowCache', JSON.stringify({ images: slideshowImages, duration: slideshowDuration }));
                         await loadSlideshow();
                         refresh(); } catch (e) { statusDiv.innerHTML =
                             `<div class="status-msg status-error">Error: ${e.message}</div>`; } };
@@ -5505,7 +5489,6 @@
                     sec = Math.min(10, Math.max(1, sec));
                     await database.ref('slideshow/duration').set(sec * 1000);
                     slideshowDuration = sec * 1000;
-                    localStorage.setItem('slideshowCache', JSON.stringify({ images: slideshowImages, duration: slideshowDuration }));
                     await loadSlideshow();
                     document.getElementById('slideStatus').innerHTML =
                         '<div class="status-msg status-success">Duration saved!</div>';
@@ -5626,6 +5609,12 @@
             openChampionsModal();
         };
 
+        // ─── Managers menu item ───
+        document.getElementById('managersBtn').onclick = () => {
+            closeMenu();
+            openManagersPopup();
+        };
+
         // ─── Records menu item ───
         document.getElementById('recordsBtn').onclick = () => {
             closeMenu();
@@ -5660,10 +5649,7 @@
                     document.querySelector('.tab-btn.active')?.dataset.tab === 'topassists') renderTopAssistants(); });
             database.ref('calendarEvents').on('value', snap => { calendarEventsData = snap.val() || {}; if (document
                     .querySelector('.tab-btn.active')?.dataset.tab === 'fixtures') renderFixtures(); });
-            database.ref(getSeasonPath(currentSeasonId, 'managerHistory')).on('value', async () => {
-                await loadManagerHistory();
-                if (document.querySelector('.tab-btn.active')?.dataset.tab === 'table') renderTable();
-            });
+            // Removed managerHistory listener to prevent infinite render loops
         }
 
         // ─── TABLE RENDER (UPDATED: legend inside scroll-wrap) ───
@@ -6094,8 +6080,6 @@
                 return;
             }
             pendingRenderTab = null;
-            document.getElementById('contentCard').innerHTML =
-                '<div class="loading-spinner"><div class="spinner"></div><span>Loading…</span></div>';
             if (tab === 'table') renderTable();
             else if (tab === 'fixtures') renderFixtures();
             else if (tab === 'results') renderResults();
@@ -6513,65 +6497,25 @@
         }
 
         async function loadSlideshow() {
-            // Check localStorage cache
-            const cached = localStorage.getItem('slideshowCache');
-            if (cached) {
-                try {
-                    const parsed = JSON.parse(cached);
-                    slideshowImages = parsed.images || [];
-                    slideshowDuration = parsed.duration || 3000;
-                    if (slideshowImages.length) {
-                        currentSlideIdx = 0;
-                        updateSlide();
-                        if (slideInterval) clearInterval(slideInterval);
-                        slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx + 1) % slideshowImages.length;
-                            updateSlide(); }, slideshowDuration);
-                    } else {
-                        document.getElementById('slideshowImg').style.display = 'none';
-                    }
-                    // Still fetch in background
-                    try {
-                        const [imgSnap, durSnap] = await Promise.all([
-                            database.ref('slideshow/images').once('value'),
-                            database.ref('slideshow/duration').once('value'),
-                        ]);
-                        const newImages = imgSnap.val() || [];
-                        const newDuration = durSnap.val() || 3000;
-                        if (JSON.stringify(newImages) !== JSON.stringify(slideshowImages) || newDuration !== slideshowDuration) {
-                            slideshowImages = newImages;
-                            slideshowDuration = newDuration;
-                            localStorage.setItem('slideshowCache', JSON.stringify({ images: slideshowImages, duration: slideshowDuration }));
-                            if (slideInterval) clearInterval(slideInterval);
-                            if (slideshowImages.length) {
-                                document.getElementById('slideshowImg').style.display = 'block';
-                                currentSlideIdx = 0;
-                                updateSlide();
-                                slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx + 1) % slideshowImages.length;
-                                    updateSlide(); }, slideshowDuration);
-                            } else {
-                                document.getElementById('slideshowImg').style.display = 'none';
-                            }
-                        }
-                    } catch (e) { /* ignore */ }
-                    return;
-                } catch (e) { /* ignore */ }
-            }
             const [imgSnap, durSnap] = await Promise.all([
                 database.ref('slideshow/images').once('value'),
                 database.ref('slideshow/duration').once('value'),
             ]);
             slideshowImages = imgSnap.val() || [];
             slideshowDuration = durSnap.val() || 3000;
-            localStorage.setItem('slideshowCache', JSON.stringify({ images: slideshowImages, duration: slideshowDuration }));
             if (slideInterval) clearInterval(slideInterval);
             const imgEl = document.getElementById('slideshowImg');
             if (slideshowImages.length) {
                 imgEl.style.display = 'block';
                 currentSlideIdx = 0;
                 updateSlide();
-                slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx + 1) % slideshowImages.length;
-                    updateSlide(); }, slideshowDuration);
-            } else { imgEl.style.display = 'none'; }
+                slideInterval = setInterval(() => {
+                    currentSlideIdx = (currentSlideIdx + 1) % slideshowImages.length;
+                    updateSlide();
+                }, slideshowDuration);
+            } else {
+                imgEl.style.display = 'none';
+            }
         }
 
         function updateSlide() {
@@ -6619,8 +6563,8 @@
                         if (slideshow.length) {
                             slideHtml =
                                 `<div class="champion-slideshow" data-season="${seasonKey}" style="margin:16px 0;text-align:center;">
-                              <div class="slideshow-frame" style="max-width:400px;margin:0 auto;">
-                                <img src="${slideshow[0]}" class="champion-slide-img" style="width:100%;max-height:300px;object-fit:contain;border-radius:12px;">
+                              <div class="slideshow-frame" style="max-width:700px;margin:0 auto;">
+                                <img src="${slideshow[0]}" class="champion-slide-img" style="width:100%;max-height:480px;object-fit:contain;border-radius:20px;">
                               </div>
                               <div class="champion-dots" style="margin-top:8px;display:flex;gap:8px;justify-content:center;"></div>
                             </div>`;
@@ -6806,23 +6750,21 @@
                 if (records.length === 0) {
                     html += `<div class="empty-state"><div class="empty-icon">📊</div><p>No records yet.</p></div>`;
                 } else {
-                    html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;">`;
+                    html += `<div style="display:flex;flex-direction:column;gap:20px;">`;
                     for (const rec of records) {
-                        const imageHtml = rec.imageUrl ? `<img src="${rec.imageUrl}" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:20px;border:2px solid var(--razzmatazz);">` :
-                            `<div style="width:100%;aspect-ratio:1/1;background:rgba(150,60,255,0.2);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:4rem;color:rgba(255,255,255,0.3);">📊</div>`;
+                        const imageHtml = rec.imageUrl ? `<img src="${rec.imageUrl}" style="width:200px;height:200px;object-fit:cover;border-radius:16px;border:2px solid var(--razzmatazz);">` :
+                            `<div style="width:200px;height:200px;background:rgba(150,60,255,0.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:4rem;color:rgba(255,255,255,0.3);border:2px solid var(--razzmatazz);">📊</div>`;
                         html += `
-                          <div style="background:rgba(150,60,255,0.1);border-radius:24px;padding:20px;border:1px solid var(--glass-border);">
-                            ${imageHtml}
-                            <div style="font-weight:700;font-size:1.8rem;color:var(--white);margin-top:12px;">${escapeHtml(rec.title || 'Record')}</div>
-                            <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--turquoise);">${escapeHtml(rec.quantity || '')}</div>
-                            <div style="color:rgba(255,255,255,0.6);font-size:1.2rem;">Manager: ${escapeHtml(rec.managerName || '')}</div>
-                            <div style="color:rgba(255,255,255,0.4);font-size:1rem;">Season: ${escapeHtml(rec.season || '')}</div>
-                            ${isAdminMode ? `
-                              <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
-                                <button class="btn-sm btn-edit edit-record-btn" data-id="${rec.id}" style="padding:6px 16px;font-size:1.1rem;">✏️ Edit</button>
-                                <button class="btn-sm btn-delete delete-record-btn" data-id="${rec.id}" style="padding:6px 16px;font-size:1.1rem;">🗑️ Delete</button>
-                              </div>
-                            ` : ''}
+                          <div style="background:rgba(150,60,255,0.1);border-radius:24px;padding:20px;border:1px solid var(--glass-border);display:flex;gap:20px;align-items:flex-start;">
+                            <div style="flex-shrink:0;width:200px;height:200px;">${imageHtml}</div>
+                            <div style="flex:1;">
+                              <div style="font-weight:700;font-size:2rem;color:var(--white);margin-bottom:4px;">${escapeHtml(rec.title || 'Record')}</div>
+                              <div style="font-family:'Bebas Neue',sans-serif;font-size:3.5rem;color:var(--turquoise);">${escapeHtml(rec.quantity || '')}</div>
+                              ${rec.playerName ? `<div style="color:rgba(255,255,255,0.8);font-size:1.4rem;">Player: ${escapeHtml(rec.playerName)}</div>` : ''}
+                              <div style="color:rgba(255,255,255,0.6);font-size:1.4rem;">Manager: ${escapeHtml(rec.managerName || '')}</div>
+                              <div style="color:rgba(255,255,255,0.4);font-size:1.1rem;">Season: ${escapeHtml(rec.season || '')}</div>
+                              ${isAdminMode ? `<div style="margin-top:12px;display:flex;gap:8px;"><button class="btn-sm btn-edit edit-record-btn" data-id="${rec.id}" style="padding:6px 16px;font-size:1.1rem;">✏️ Edit</button><button class="btn-sm btn-delete delete-record-btn" data-id="${rec.id}" style="padding:6px 16px;font-size:1.1rem;">🗑️ Delete</button></div>` : ''}
+                            </div>
                           </div>
                         `;
                     }
@@ -6866,6 +6808,7 @@
             const quantity = record?.quantity || '';
             const managerName = record?.managerName || '';
             const season = record?.season || '';
+            const playerName = record?.playerName || '';
             const imageUrl = record?.imageUrl || '';
 
             showModal(`
@@ -6878,6 +6821,8 @@
               <input type="text" id="recordManager" value="${escapeHtml(managerName)}" placeholder="Manager">
               <label>Season</label>
               <input type="text" id="recordSeason" value="${escapeHtml(season)}" placeholder="e.g. 2024/25">
+              <label>Player Name (optional)</label>
+              <input type="text" id="recordPlayerName" value="${escapeHtml(playerName)}" placeholder="e.g. Lionel Messi">
               <label>Image</label>
               <div class="image-upload-area" id="recordImageArea">
                 <div class="upload-icon">📸</div>
@@ -6919,9 +6864,10 @@
                 const quantity = document.getElementById('recordQuantity').value.trim();
                 const managerName = document.getElementById('recordManager').value.trim();
                 const season = document.getElementById('recordSeason').value.trim();
+                const playerName = document.getElementById('recordPlayerName').value.trim();
                 if (!title || !quantity || !managerName || !season) {
                     document.getElementById('recordFormStatus').innerHTML =
-                        '<div class="status-msg status-error">All fields are required.</div>';
+                        '<div class="status-msg status-error">All fields except Player Name are required.</div>';
                     return;
                 }
                 const data = {
@@ -6929,6 +6875,7 @@
                     quantity,
                     managerName,
                     season,
+                    playerName: playerName || '',
                     imageUrl: uploadedImageUrl || '',
                     updatedAt: Date.now()
                 };
@@ -6948,6 +6895,217 @@
                     else openRecordsModal();
                 } catch (e) {
                     document.getElementById('recordFormStatus').innerHTML =
+                        `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                    btn.disabled = false;
+                    btn.innerHTML = '💾 Save';
+                }
+            };
+        }
+
+        // ─── MANAGERS POPUP ───
+        async function openManagersPopup() {
+            const snap = await database.ref('managersDirectory').once('value');
+            const data = snap.val() || {};
+            const managers = Object.entries(data).map(([key, val]) => ({ id: key, ...val }));
+            // Sort: ranked (points > 0) by rank asc, then unranked
+            const ranked = managers.filter(m => m.points && m.points > 0).sort((a, b) => (a.rank || 9999) - (b.rank || 9999));
+            const unranked = managers.filter(m => !m.points || m.points <= 0);
+            const sorted = [...ranked, ...unranked];
+            const teamNames = teamsData.map(t => t.name).sort();
+
+            let html = `
+                <div style="position:relative;padding:0;">
+                    <button id="closeMgrPopupBtn" style="position:absolute;top:0;right:0;background:transparent;border:none;color:var(--white);font-size:2.8rem;cursor:pointer;line-height:1;z-index:10;" onmouseover="this.style.color='var(--razzmatazz)'" onmouseout="this.style.color='var(--white)'">&#x2715;</button>
+                    <button id="rankCalcBtn" style="position:absolute;top:0;left:0;background:transparent;border:1px solid var(--razzmatazz);color:var(--white);font-size:1rem;padding:6px 14px;border-radius:20px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;z-index:10;">Rank Calculation</button>
+                    <h3 style="text-align:center;margin-top:48px;margin-bottom:24px;font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:3px;">👔 MANAGERS</h3>
+            `;
+
+            if (sorted.length === 0) {
+                html += `<div class="empty-state"><div class="empty-icon">👔</div><p>No managers added yet.</p></div>`;
+            } else {
+                for (const mgr of sorted) {
+                    const isRanked = mgr.points && mgr.points > 0;
+                    const teamLogoUrl = teamIconsCache[mgr.team] || '';
+                    const teamLogoHtml = teamLogoUrl ? `<img src="${teamLogoUrl}" style="width:64px;height:64px;object-fit:contain;margin:8px auto 0;display:block;" alt="${escapeHtml(mgr.team)}">` : '';
+                    const imageHtml = mgr.imageUrl ? `<img src="${mgr.imageUrl}" style="width:100%;max-height:480px;object-fit:cover;display:block;border-radius:0;" alt="${escapeHtml(mgr.name)}">` : '';
+                    html += `
+                        <div style="margin-bottom:0;border-bottom:2px solid rgba(233,0,82,0.2);">
+                            ${imageHtml}
+                            <div style="text-align:center;padding:16px 20px 20px;">
+                                ${isRanked ? `<div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:var(--razzmatazz);letter-spacing:2px;">RANK #${mgr.rank}</div>` : ''}
+                                <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:2rem;color:var(--white);">${escapeHtml(mgr.name || '')}, ${escapeHtml(mgr.team || '')}</div>
+                                ${teamLogoHtml}
+                            </div>
+                            ${isAdminMode ? `
+                                <div style="display:flex;gap:10px;justify-content:center;padding:0 20px 16px;">
+                                    <button class="edit-mgr-dir-btn btn-sm btn-edit" data-id="${mgr.id}" style="padding:6px 18px;font-size:1.1rem;">✏️ Edit</button>
+                                    <button class="delete-mgr-dir-btn btn-sm btn-delete" data-id="${mgr.id}" style="padding:6px 18px;font-size:1.1rem;">🗑️ Delete</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+            }
+
+            if (isAdminMode) {
+                html += `<div style="padding:20px;"><button class="add-btn-main" id="addMgrDirBtn" style="width:100%;">➕ Add Manager</button></div>`;
+            }
+            html += `</div>`;
+
+            showModal(html, false);
+
+            document.getElementById('closeMgrPopupBtn').onclick = closeModal;
+            document.getElementById('rankCalcBtn').onclick = () => openRankCalculationPopup();
+
+            if (isAdminMode) {
+                document.getElementById('addMgrDirBtn')?.onclick = () => openManagerDirForm(null);
+                document.querySelectorAll('.edit-mgr-dir-btn').forEach(btn => {
+                    btn.onclick = () => {
+                        const id = btn.dataset.id;
+                        const mgr = managers.find(m => m.id === id);
+                        if (mgr) openManagerDirForm(mgr);
+                    };
+                });
+                document.querySelectorAll('.delete-mgr-dir-btn').forEach(btn => {
+                    btn.onclick = async () => {
+                        if (!confirm('Delete this manager?')) return;
+                        await database.ref('managersDirectory/' + btn.dataset.id).remove();
+                        closeModal();
+                        openManagersPopup();
+                    };
+                });
+            }
+        }
+
+        function openRankCalculationPopup() {
+            showModal(`
+                <div style="position:relative;">
+                    <button id="closeRankCalcBtn" style="position:absolute;top:-10px;right:-10px;background:transparent;border:none;color:var(--white);font-size:2.4rem;cursor:pointer;line-height:1;" onmouseover="this.style.color='var(--razzmatazz)'" onmouseout="this.style.color='var(--white)'">&#x2715;</button>
+                    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:2px;margin-bottom:20px;">🏆 Rank Calculation</h3>
+                    <p style="color:var(--razzmatazz);font-weight:700;font-size:1.4rem;margin-bottom:20px;border-left:3px solid var(--razzmatazz);padding-left:12px;">Manager Must Have More Than 0 Points To Have A Ranking</p>
+                    <div style="color:var(--white);font-size:1.4rem;line-height:2;">
+                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--turquoise);margin:16px 0 8px;letter-spacing:2px;">TOURNAMENTS</div>
+                        <div>⚽ UEFA Europa League — <strong style="color:var(--razzmatazz);">1 point</strong></div>
+                        <div>🏆 Premier League — <strong style="color:var(--razzmatazz);">2 points</strong></div>
+                        <div>⭐ UEFA Champions League — <strong style="color:var(--razzmatazz);">3 points</strong></div>
+                        <div>🌍 UEFA Nations League — <strong style="color:var(--razzmatazz);">2 points</strong></div>
+                        <div>🇪🇺 UEFA European Championship — <strong style="color:var(--razzmatazz);">3 points</strong></div>
+                        <div>🌎 FIFA World Cup — <strong style="color:var(--razzmatazz);">5 points</strong></div>
+                        <div>🌐 FIFA Club World Cup — <strong style="color:var(--razzmatazz);">4 points</strong></div>
+                        <div>🏴 Emirates FA Cup — <strong style="color:var(--razzmatazz);">1 point</strong></div>
+                        <div>🇪🇸 Copa del Rey — <strong style="color:var(--razzmatazz);">1 point</strong></div>
+                        <div>🛡️ UEFA Super Cup — <strong style="color:var(--razzmatazz);">1 point</strong></div>
+                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--turquoise);margin:20px 0 8px;letter-spacing:2px;">INDIVIDUAL AWARDS</div>
+                        <div>👟 Golden Boot — <strong style="color:var(--razzmatazz);">0.5 points</strong></div>
+                        <div>🎯 Playmaker Award — <strong style="color:var(--razzmatazz);">0.5 points</strong></div>
+                        <div>🧤 Golden Glove — <strong style="color:var(--razzmatazz);">0.5 points</strong></div>
+                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--turquoise);margin:20px 0 8px;letter-spacing:2px;">RUNNER-UP</div>
+                        <div>🥈 League Runner-Up — <strong style="color:var(--razzmatazz);">0.5 points</strong></div>
+                        <div>🥈 Silver Medal — <strong style="color:var(--razzmatazz);">0.5 points</strong></div>
+                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--turquoise);margin:20px 0 8px;letter-spacing:2px;">HONOURS</div>
+                        <div>🏅 Ballon d'Or — <strong style="color:var(--razzmatazz);">3 points</strong></div>
+                        <div>🧤 Yashin Trophy — <strong style="color:var(--razzmatazz);">3 points</strong></div>
+                        <div>🌟 Kopa Trophy — <strong style="color:var(--razzmatazz);">1 point</strong></div>
+                    </div>
+                    <div class="modal-btns" style="margin-top:24px;">
+                        <button class="modal-btn-cancel" id="backFromRankCalc">← Back</button>
+                    </div>
+                </div>
+            `);
+
+            document.getElementById('closeRankCalcBtn').onclick = closeModal;
+            document.getElementById('backFromRankCalc').onclick = () => {
+                closeModal();
+                openManagersPopup();
+            };
+        }
+
+        function openManagerDirForm(mgr) {
+            const isEdit = !!mgr;
+            const teamNames = teamsData.map(t => t.name).sort();
+            let uploadedImageUrl = mgr?.imageUrl || '';
+
+            showModal(`
+                <h3>${isEdit ? '✏️ Edit Manager' : '➕ Add Manager'}</h3>
+                <label>Manager Name</label>
+                <input type="text" id="mgrDirName" value="${escapeHtml(mgr?.name || '')}" placeholder="Manager name">
+                <label>Team</label>
+                <input type="text" id="mgrDirTeamSearch" placeholder="Search team..." autocomplete="off" style="margin-bottom:4px;">
+                <select id="mgrDirTeam" size="4" style="width:100%;background:rgba(54,13,58,0.8);border:1px solid var(--razzmatazz);border-radius:12px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.1rem;padding:4px;margin-bottom:8px;">
+                    ${teamNames.map(t => `<option value="${t}" ${mgr?.team === t ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('')}
+                </select>
+                <label>Points</label>
+                <input type="number" id="mgrDirPoints" value="${mgr?.points || 0}" step="0.5" min="0" placeholder="Total points">
+                <label>Rank (leave 0 if unranked)</label>
+                <input type="number" id="mgrDirRank" value="${mgr?.rank || 0}" min="0" placeholder="Rank number">
+                <label>Manager Image (optional)</label>
+                <div class="image-upload-area" id="mgrDirImageArea">
+                    <div class="upload-icon">📸</div>
+                    <div class="upload-text">${uploadedImageUrl ? 'Change Image' : 'Upload Image'}</div>
+                    <input type="file" id="mgrDirImageInput" accept="image/*" style="display:none;">
+                </div>
+                ${uploadedImageUrl ? `<img src="${uploadedImageUrl}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;border:2px solid var(--razzmatazz);margin-top:8px;">` : ''}
+                <div id="mgrDirImagePreview"></div>
+                <div id="mgrDirStatus"></div>
+                <div class="modal-btns">
+                    <button class="modal-btn-primary" id="saveMgrDirBtn">💾 Save</button>
+                    <button class="modal-btn-cancel" id="cancelMgrDirBtn">Cancel</button>
+                </div>
+            `);
+
+            document.getElementById('cancelMgrDirBtn').onclick = () => {
+                closeModal();
+                openManagersPopup();
+            };
+
+            document.getElementById('mgrDirTeamSearch').addEventListener('input', function() {
+                const q = this.value.toLowerCase();
+                const select = document.getElementById('mgrDirTeam');
+                Array.from(select.options).forEach(opt => {
+                    opt.style.display = opt.value.toLowerCase().includes(q) ? '' : 'none';
+                });
+            });
+
+            const area = document.getElementById('mgrDirImageArea');
+            const fileInput = document.getElementById('mgrDirImageInput');
+            const preview = document.getElementById('mgrDirImagePreview');
+            area.onclick = () => fileInput.click();
+            fileInput.onchange = async () => {
+                const file = fileInput.files[0];
+                if (!file) return;
+                preview.innerHTML = '<div class="status-msg status-loading">Uploading...</div>';
+                try {
+                    const url = await uploadToImgBB(file);
+                    uploadedImageUrl = url;
+                    preview.innerHTML =
+                        `<div class="status-msg status-success">Image uploaded</div><img src="${url}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;border:2px solid var(--razzmatazz);margin-top:8px;">`;
+                } catch (e) {
+                    preview.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                }
+            };
+
+            document.getElementById('saveMgrDirBtn').onclick = async () => {
+                const name = document.getElementById('mgrDirName').value.trim();
+                const team = document.getElementById('mgrDirTeam').value;
+                const points = parseFloat(document.getElementById('mgrDirPoints').value) || 0;
+                const rank = parseInt(document.getElementById('mgrDirRank').value) || 0;
+                if (!name || !team) {
+                    document.getElementById('mgrDirStatus').innerHTML =
+                        '<div class="status-msg status-error">Name and team required.</div>';
+                    return;
+                }
+                const btn = document.getElementById('saveMgrDirBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+                const data = { name, team, points, rank, imageUrl: uploadedImageUrl, updatedAt: Date.now() };
+                if (!isEdit) data.createdAt = Date.now();
+                try {
+                    if (isEdit) await database.ref('managersDirectory/' + mgr.id).update(data);
+                    else await database.ref('managersDirectory').push(data);
+                    closeModal();
+                    openManagersPopup();
+                } catch (e) {
+                    document.getElementById('mgrDirStatus').innerHTML =
                         `<div class="status-msg status-error">Error: ${e.message}</div>`;
                     btn.disabled = false;
                     btn.innerHTML = '💾 Save';
