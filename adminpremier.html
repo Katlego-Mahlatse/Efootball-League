@@ -2587,6 +2587,8 @@
             addDebugLog('error', `Unhandled Promise Rejection: ${msg}`, stack);
         });
 
+        // ─── Team name mapping ─── (removed)
+
         const firebaseConfig = {
             apiKey: "AIzaSyBdo7Jg9-A6kjAfe84U1Z5r_B7a4fAGZK4",
             authDomain: "efootball-412.firebaseapp.com",
@@ -2600,6 +2602,7 @@
         const database = firebase.database();
 
         const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
+        // RMBG_KEY removed
 
         let isAdminMode = false;
         let currentSeasonId = 2;
@@ -2740,9 +2743,11 @@
 
         function showModal(html, wide = false) {
             const mc = document.getElementById('modalContent');
+            // Check if html already contains a close button (by looking for closeModal or modal-close-x)
             const hasClose = html.includes('modal-close-x') || html.includes('closeModal');
             mc.innerHTML = html;
             mc.className = wide ? 'modal-card modal-card-wide' : 'modal-card';
+            // Auto-inject close button if not present
             if (!hasClose) {
                 const closeBtn = document.createElement('button');
                 closeBtn.className = 'modal-close-x';
@@ -3185,11 +3190,13 @@
         }
 
         async function loadTeamIcons() {
+            // Check localStorage cache
             const cached = localStorage.getItem('teamIconsCache');
             if (cached) {
                 try {
                     const parsed = JSON.parse(cached);
                     teamIconsCache = parsed;
+                    // Still fetch in background to update
                     try {
                         const snapshot = await database.ref('teamIcons').once('value');
                         const data = snapshot.val() || {};
@@ -3699,6 +3706,7 @@
 
             document.getElementById('closeKeysModal').onclick = closeModal;
 
+            // Live search filter
             document.getElementById('teamSearchInput').addEventListener('input', function() {
                 const q = this.value.toLowerCase();
                 const select = document.getElementById('newKeyTeam');
@@ -4204,7 +4212,6 @@
             const awayTeam = prefilledOpponent;
             const matchDate = prefilledDate || getSASTToday();
 
-            // These arrays persist across renderForm calls
             let userScorersHome = [];
             let userAssistsHome = [];
             let userImages = [];
@@ -4224,10 +4231,8 @@
                     `<span class="scorer-badge">🎯 ${escapeHtml(a.player)} (${a.assists})<button class="remove-scorer" data-uside="homeAssist" data-uidx="${idx}">✖</button></span>`
                 ).join('');
 
-                const hsc = document.getElementById('uHomeScorerList');
-                const hasc = document.getElementById('uHomeAssistList');
-                if (hsc) hsc.innerHTML = homeScorersHtml;
-                if (hasc) hasc.innerHTML = homeAssistsHtml;
+                document.getElementById('uHomeScorerList').innerHTML = homeScorersHtml;
+                document.getElementById('uHomeAssistList').innerHTML = homeAssistsHtml;
 
                 // Attach remove events
                 document.querySelectorAll('.remove-scorer[data-uside="homeScorer"]').forEach(btn => {
@@ -4522,16 +4527,16 @@
                                     const snap = await database.ref(path).once('value');
                                     const existing = snap.val() || {};
                                     let updatedGoalScorers, updatedAssists;
+                                    let myTeam = homeTeam;
                                     if (existing.homeTeam === homeTeam) {
-                                        // Current manager is home in stored result — update home scorers
                                         updatedGoalScorers = { home: userScorersHome, away: existing.goalScorers?.away || [] };
                                         updatedAssists = { home: userAssistsHome, away: existing.userAssists?.away || [] };
+                                        myTeam = homeTeam;
                                     } else {
-                                        // Current manager is away in stored result — update away scorers
                                         updatedGoalScorers = { home: existing.goalScorers?.home || [], away: userScorersHome };
                                         updatedAssists = { home: existing.userAssists?.home || [], away: userAssistsHome };
+                                        myTeam = awayTeam;
                                     }
-                                    // Merge images
                                     const existingImages = existing.images || [];
                                     const newImageUrls = [];
                                     for (const img of userImages) {
@@ -4546,8 +4551,6 @@
                                     });
                                     await loadTopScorerData();
                                     await loadTopAssistantData();
-                                    // Apply scorers for the correct team
-                                    const myTeam = existing.homeTeam === homeTeam ? homeTeam : awayTeam;
                                     if (userScorersHome.length) await applyScorersFromScan(userScorersHome, myTeam);
                                     if (userAssistsHome.length) await applyAssistsFromScan(userAssistsHome, myTeam);
                                 } else {
@@ -4848,7 +4851,7 @@
             renderForfeitForm();
         }
 
-        // ─── CHANGE: openPendingResultsModal (fixed submittedSet logic) ───
+        // ─── CHANGE: openPendingResultsModal (corrected version) ───
         async function openPendingResultsModal() {
             const todayStr = getSASTToday();
             const yesterdayStr = getSASTYesterday();
@@ -4897,7 +4900,6 @@
             // Get fixtures for today and yesterday from calendar
             const todayFixtures = [];
             const yesterdayFixtures = [];
-
             for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
                 if (dateStr !== todayStr && dateStr !== yesterdayStr) continue;
                 if (!eventData || !eventData.tournaments) continue;
@@ -4920,6 +4922,7 @@
             // Build submittedSet: check results from past 3 days by team pair (both directions), ignore date
             // Also check pending_results
             const submittedPairs = new Set();
+            // "TeamA|TeamB" normalized both directions
             for (const r of resultsData) {
                 if (r.homeTeam && r.awayTeam) {
                     const key1 = `${r.homeTeam.trim().toLowerCase()}|${r.awayTeam.trim().toLowerCase()}`;
@@ -4928,7 +4931,6 @@
                     submittedPairs.add(key2);
                 }
             }
-
             const pendingSnap = await database.ref(getSeasonPath(currentSeasonId, 'pending_results')).once('value');
             const pendingData = pendingSnap.val() || {};
             for (const key in pendingData) {
@@ -5046,10 +5048,19 @@
                     try {
                         const matchText = `${homeTeam} F - F ${awayTeam} (No Contest)`;
                         const resultData = {
-                            matchText, date, homeTeam, awayTeam, homeScore: 0, awayScore: 0,
-                            matchType: 'forfeit', forfeitType: 'no_contest',
-                            submittedBy: 'admin', submittedAt: Date.now(),
-                            status: 'approved', approvedAt: Date.now(), approvedBy: 'admin'
+                            matchText,
+                            date,
+                            homeTeam,
+                            awayTeam,
+                            homeScore: 0,
+                            awayScore: 0,
+                            matchType: 'forfeit',
+                            forfeitType: 'no_contest',
+                            submittedBy: 'admin',
+                            submittedAt: Date.now(),
+                            status: 'approved',
+                            approvedAt: Date.now(),
+                            approvedBy: 'admin'
                         };
                         incrementPending();
                         await database.ref(getSeasonPath(currentSeasonId, 'results')).push(resultData);
@@ -6723,222 +6734,6 @@
             await renderChampions();
         }
 
-        // ─── MANAGERS POPUP ───
-        async function openManagersPopup() {
-            const snap = await database.ref('managersDirectory').once('value');
-            const data = snap.val() || {};
-            const managers = Object.entries(data).map(([key, val]) => ({ id: key, ...val }));
-            // Sort: ranked (points > 0) by rank asc, then unranked
-            const ranked = managers.filter(m => m.points && m.points > 0).sort((a, b) => (a.rank || 9999) - (b.rank || 9999));
-            const unranked = managers.filter(m => !m.points || m.points <= 0);
-            const sorted = [...ranked, ...unranked];
-            const teamNames = teamsData.map(t => t.name).sort();
-
-            let html = `
-                <div style="position:relative;padding:0;">
-                    <button id="closeMgrPopupBtn" style="position:absolute;top:0;right:0;background:transparent;border:none;color:var(--white);font-size:2.8rem;cursor:pointer;line-height:1;z-index:10;" onmouseover="this.style.color='var(--razzmatazz)'" onmouseout="this.style.color='var(--white)'">&#x2715;</button>
-                    <button id="rankCalcBtn" style="position:absolute;top:0;left:0;background:transparent;border:1px solid var(--razzmatazz);color:var(--white);font-size:1rem;padding:6px 14px;border-radius:20px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;z-index:10;">Rank Calculation</button>
-                    <h3 style="text-align:center;margin-top:48px;margin-bottom:24px;font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:3px;">👔 MANAGERS</h3>
-            `;
-
-            if (sorted.length === 0) {
-                html += `<div class="empty-state"><div class="empty-icon">👔</div><p>No managers added yet.</p></div>`;
-            } else {
-                for (const mgr of sorted) {
-                    const isRanked = mgr.points && mgr.points > 0;
-                    const teamLogoUrl = teamIconsCache[mgr.team] || '';
-                    const teamLogoHtml = teamLogoUrl ? `<img src="${teamLogoUrl}" style="width:64px;height:64px;object-fit:contain;margin:8px auto 0;display:block;" alt="${escapeHtml(mgr.team)}">` : '';
-                    const imageHtml = mgr.imageUrl ? `<img src="${mgr.imageUrl}" style="width:100%;max-height:480px;object-fit:cover;display:block;border-radius:0;" alt="${escapeHtml(mgr.name)}">` : '';
-                    html += `
-                        <div style="margin-bottom:0;border-bottom:2px solid rgba(233,0,82,0.2);">
-                            ${imageHtml}
-                            <div style="text-align:center;padding:16px 20px 20px;">
-                                ${isRanked ? `<div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:var(--razzmatazz);letter-spacing:2px;">RANK #${mgr.rank}</div>` : ''}
-                                <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:2rem;color:var(--white);">${escapeHtml(mgr.name || '')}, ${escapeHtml(mgr.team || '')}</div>
-                                ${teamLogoHtml}
-                            </div>
-                            ${isAdminMode ? `
-                                <div style="display:flex;gap:10px;justify-content:center;padding:0 20px 16px;">
-                                    <button class="edit-mgr-dir-btn btn-sm btn-edit" data-id="${mgr.id}" style="padding:6px 18px;font-size:1.1rem;">✏️ Edit</button>
-                                    <button class="delete-mgr-dir-btn btn-sm btn-delete" data-id="${mgr.id}" style="padding:6px 18px;font-size:1.1rem;">🗑️ Delete</button>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-                }
-            }
-
-            if (isAdminMode) {
-                html += `<div style="padding:20px;"><button class="add-btn-main" id="addMgrDirBtn" style="width:100%;">➕ Add Manager</button></div>`;
-            }
-            html += `</div>`;
-
-            showModal(html, false);
-
-            document.getElementById('closeMgrPopupBtn').onclick = closeModal;
-            document.getElementById('rankCalcBtn').onclick = () => openRankCalculationPopup();
-
-            if (isAdminMode) {
-                document.getElementById('addMgrDirBtn')?.onclick = () => openManagerDirForm(null);
-                document.querySelectorAll('.edit-mgr-dir-btn').forEach(btn => {
-                    btn.onclick = () => {
-                        const id = btn.dataset.id;
-                        const mgr = managers.find(m => m.id === id);
-                        if (mgr) openManagerDirForm(mgr);
-                    };
-                });
-                document.querySelectorAll('.delete-mgr-dir-btn').forEach(btn => {
-                    btn.onclick = async () => {
-                        if (!confirm('Delete this manager?')) return;
-                        await database.ref('managersDirectory/' + btn.dataset.id).remove();
-                        closeModal();
-                        openManagersPopup();
-                    };
-                });
-            }
-        }
-
-        function openRankCalculationPopup() {
-            showModal(`
-                <div style="position:relative;">
-                    <button id="closeRankCalcBtn" style="position:absolute;top:-10px;right:-10px;background:transparent;border:none;color:var(--white);font-size:2.4rem;cursor:pointer;line-height:1;" onmouseover="this.style.color='var(--razzmatazz)'" onmouseout="this.style.color='var(--white)'">&#x2715;</button>
-                    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:2px;margin-bottom:20px;">🏆 Rank Calculation</h3>
-                    <p style="color:var(--razzmatazz);font-weight:700;font-size:1.4rem;margin-bottom:20px;border-left:3px solid var(--razzmatazz);padding-left:12px;">Manager Must Have More Than 0 Points To Have A Ranking</p>
-                    <div style="color:var(--white);font-size:1.4rem;line-height:2;">
-                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--turquoise);margin:16px 0 8px;letter-spacing:2px;">TOURNAMENTS</div>
-                        <div>⚽ UEFA Europa League — <strong style="color:var(--razzmatazz);">1 point</strong></div>
-                        <div>🏆 Premier League — <strong style="color:var(--razzmatazz);">2 points</strong></div>
-                        <div>⭐ UEFA Champions League — <strong style="color:var(--razzmatazz);">3 points</strong></div>
-                        <div>🌍 UEFA Nations League — <strong style="color:var(--razzmatazz);">2 points</strong></div>
-                        <div>🇪🇺 UEFA European Championship — <strong style="color:var(--razzmatazz);">3 points</strong></div>
-                        <div>🌎 FIFA World Cup — <strong style="color:var(--razzmatazz);">5 points</strong></div>
-                        <div>🌐 FIFA Club World Cup — <strong style="color:var(--razzmatazz);">4 points</strong></div>
-                        <div>🏴 Emirates FA Cup — <strong style="color:var(--razzmatazz);">1 point</strong></div>
-                        <div>🇪🇸 Copa del Rey — <strong style="color:var(--razzmatazz);">1 point</strong></div>
-                        <div>🛡️ UEFA Super Cup — <strong style="color:var(--razzmatazz);">1 point</strong></div>
-                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--turquoise);margin:20px 0 8px;letter-spacing:2px;">INDIVIDUAL AWARDS</div>
-                        <div>👟 Golden Boot — <strong style="color:var(--razzmatazz);">0.5 points</strong></div>
-                        <div>🎯 Playmaker Award — <strong style="color:var(--razzmatazz);">0.5 points</strong></div>
-                        <div>🧤 Golden Glove — <strong style="color:var(--razzmatazz);">0.5 points</strong></div>
-                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--turquoise);margin:20px 0 8px;letter-spacing:2px;">RUNNER-UP</div>
-                        <div>🥈 League Runner-Up — <strong style="color:var(--razzmatazz);">0.5 points</strong></div>
-                        <div>🥈 Silver Medal — <strong style="color:var(--razzmatazz);">0.5 points</strong></div>
-                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--turquoise);margin:20px 0 8px;letter-spacing:2px;">HONOURS</div>
-                        <div>🏅 Ballon d'Or — <strong style="color:var(--razzmatazz);">3 points</strong></div>
-                        <div>🧤 Yashin Trophy — <strong style="color:var(--razzmatazz);">3 points</strong></div>
-                        <div>🌟 Kopa Trophy — <strong style="color:var(--razzmatazz);">1 point</strong></div>
-                    </div>
-                    <div class="modal-btns" style="margin-top:24px;">
-                        <button class="modal-btn-cancel" id="backFromRankCalc">← Back</button>
-                    </div>
-                </div>
-            `);
-            document.getElementById('closeRankCalcBtn').onclick = closeModal;
-            document.getElementById('backFromRankCalc').onclick = () => {
-                closeModal();
-                openManagersPopup();
-            };
-        }
-
-        function openManagerDirForm(mgr) {
-            const isEdit = !!mgr;
-            const teamNames = teamsData.map(t => t.name).sort();
-            let uploadedImageUrl = mgr?.imageUrl || '';
-
-            showModal(`
-                <h3>${isEdit ? '✏️ Edit Manager' : '➕ Add Manager'}</h3>
-                <label>Manager Name</label>
-                <input type="text" id="mgrDirName" value="${escapeHtml(mgr?.name || '')}" placeholder="Manager name">
-                <label>Team</label>
-                <input type="text" id="mgrDirTeamSearch" placeholder="Search team..." autocomplete="off" style="margin-bottom:4px;">
-                <select id="mgrDirTeam" size="4" style="width:100%;background:rgba(54,13,58,0.8);border:1px solid var(--razzmatazz);border-radius:12px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.1rem;padding:4px;margin-bottom:8px;">
-                    ${teamNames.map(t => `<option value="${t}" ${mgr?.team === t ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('')}
-                </select>
-                <label>Points</label>
-                <input type="number" id="mgrDirPoints" value="${mgr?.points || 0}" step="0.5" min="0" placeholder="Total points">
-                <label>Rank (leave 0 if unranked)</label>
-                <input type="number" id="mgrDirRank" value="${mgr?.rank || 0}" min="0" placeholder="Rank number">
-                <label>Manager Image (optional)</label>
-                <div class="image-upload-area" id="mgrDirImageArea">
-                    <div class="upload-icon">📸</div>
-                    <div class="upload-text">${uploadedImageUrl ? 'Change Image' : 'Upload Image'}</div>
-                    <input type="file" id="mgrDirImageInput" accept="image/*" style="display:none;">
-                </div>
-                ${uploadedImageUrl ? `<img src="${uploadedImageUrl}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;border:2px solid var(--razzmatazz);margin-top:8px;">` : ''}
-                <div id="mgrDirImagePreview"></div>
-                <div id="mgrDirStatus"></div>
-                <div class="modal-btns">
-                    <button class="modal-btn-primary" id="saveMgrDirBtn">💾 Save</button>
-                    <button class="modal-btn-cancel" id="cancelMgrDirBtn">Cancel</button>
-                </div>
-            `);
-
-            document.getElementById('cancelMgrDirBtn').onclick = () => {
-                closeModal();
-                openManagersPopup();
-            };
-
-            document.getElementById('mgrDirTeamSearch').addEventListener('input', function() {
-                const q = this.value.toLowerCase();
-                const select = document.getElementById('mgrDirTeam');
-                Array.from(select.options).forEach(opt => {
-                    opt.style.display = opt.value.toLowerCase().includes(q) ? '' : 'none';
-                });
-            });
-
-            const area = document.getElementById('mgrDirImageArea');
-            const fileInput = document.getElementById('mgrDirImageInput');
-            const preview = document.getElementById('mgrDirImagePreview');
-            area.onclick = () => fileInput.click();
-            fileInput.onchange = async () => {
-                const file = fileInput.files[0];
-                if (!file) return;
-                preview.innerHTML = '<div class="status-msg status-loading">Uploading...</div>';
-                try {
-                    const url = await uploadToImgBB(file);
-                    uploadedImageUrl = url;
-                    preview.innerHTML =
-                        `<div class="status-msg status-success">Image uploaded</div><img src="${url}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;border:2px solid var(--razzmatazz);margin-top:8px;">`;
-                } catch (e) {
-                    preview.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
-                }
-            };
-
-            document.getElementById('saveMgrDirBtn').onclick = async () => {
-                const name = document.getElementById('mgrDirName').value.trim();
-                const team = document.getElementById('mgrDirTeam').value;
-                const points = parseFloat(document.getElementById('mgrDirPoints').value) || 0;
-                const rank = parseInt(document.getElementById('mgrDirRank').value) || 0;
-                if (!name || !team) {
-                    document.getElementById('mgrDirStatus').innerHTML = '<div class="status-msg status-error">Name and team required.</div>';
-                    return;
-                }
-                const btn = document.getElementById('saveMgrDirBtn');
-                btn.disabled = true;
-                btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
-                const data = {
-                    name,
-                    team,
-                    points,
-                    rank,
-                    imageUrl: uploadedImageUrl,
-                    updatedAt: Date.now()
-                };
-                if (!isEdit) data.createdAt = Date.now();
-                try {
-                    if (isEdit) await database.ref('managersDirectory/' + mgr.id).update(data);
-                    else await database.ref('managersDirectory').push(data);
-                    closeModal();
-                    openManagersPopup();
-                } catch (e) {
-                    document.getElementById('mgrDirStatus').innerHTML =
-                        `<div class="status-msg status-error">Error: ${e.message}</div>`;
-                    btn.disabled = false;
-                    btn.innerHTML = '💾 Save';
-                }
-            };
-        }
-
         // ─── RECORDS MODAL ───
         async function openRecordsModal() {
             const renderRecords = async () => {
@@ -7103,6 +6898,217 @@
                     else openRecordsModal();
                 } catch (e) {
                     document.getElementById('recordFormStatus').innerHTML =
+                        `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                    btn.disabled = false;
+                    btn.innerHTML = '💾 Save';
+                }
+            };
+        }
+
+        // ─── MANAGERS POPUP ───
+        async function openManagersPopup() {
+            const snap = await database.ref('managersDirectory').once('value');
+            const data = snap.val() || {};
+            const managers = Object.entries(data).map(([key, val]) => ({ id: key, ...val }));
+            // Sort: ranked (points > 0) by rank asc, then unranked
+            const ranked = managers.filter(m => m.points && m.points > 0).sort((a, b) => (a.rank || 9999) - (b.rank || 9999));
+            const unranked = managers.filter(m => !m.points || m.points <= 0);
+            const sorted = [...ranked, ...unranked];
+            const teamNames = teamsData.map(t => t.name).sort();
+
+            let html = `
+                <div style="position:relative;padding:0;">
+                    <button id="closeMgrPopupBtn" style="position:absolute;top:0;right:0;background:transparent;border:none;color:var(--white);font-size:2.8rem;cursor:pointer;line-height:1;z-index:10;" onmouseover="this.style.color='var(--razzmatazz)'" onmouseout="this.style.color='var(--white)'">&#x2715;</button>
+                    <button id="rankCalcBtn" style="position:absolute;top:0;left:0;background:transparent;border:1px solid var(--razzmatazz);color:var(--white);font-size:1rem;padding:6px 14px;border-radius:20px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;z-index:10;">Rank Calculation</button>
+                    <h3 style="text-align:center;margin-top:48px;margin-bottom:24px;font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:3px;">👔 MANAGERS</h3>
+            `;
+
+            if (sorted.length === 0) {
+                html += `<div class="empty-state"><div class="empty-icon">👔</div><p>No managers added yet.</p></div>`;
+            } else {
+                for (const mgr of sorted) {
+                    const isRanked = mgr.points && mgr.points > 0;
+                    const teamLogoUrl = teamIconsCache[mgr.team] || '';
+                    const teamLogoHtml = teamLogoUrl ? `<img src="${teamLogoUrl}" style="width:64px;height:64px;object-fit:contain;margin:8px auto 0;display:block;" alt="${escapeHtml(mgr.team)}">` : '';
+                    const imageHtml = mgr.imageUrl ? `<img src="${mgr.imageUrl}" style="width:100%;max-height:480px;object-fit:cover;display:block;border-radius:0;" alt="${escapeHtml(mgr.name)}">` : '';
+                    html += `
+                        <div style="margin-bottom:0;border-bottom:2px solid rgba(233,0,82,0.2);">
+                            ${imageHtml}
+                            <div style="text-align:center;padding:16px 20px 20px;">
+                                ${isRanked ? `<div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:var(--razzmatazz);letter-spacing:2px;">RANK #${mgr.rank}</div>` : ''}
+                                <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:2rem;color:var(--white);">${escapeHtml(mgr.name || '')}, ${escapeHtml(mgr.team || '')}</div>
+                                ${teamLogoHtml}
+                            </div>
+                            ${isAdminMode ? `
+                                <div style="display:flex;gap:10px;justify-content:center;padding:0 20px 16px;">
+                                    <button class="edit-mgr-dir-btn btn-sm btn-edit" data-id="${mgr.id}" style="padding:6px 18px;font-size:1.1rem;">✏️ Edit</button>
+                                    <button class="delete-mgr-dir-btn btn-sm btn-delete" data-id="${mgr.id}" style="padding:6px 18px;font-size:1.1rem;">🗑️ Delete</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+            }
+
+            if (isAdminMode) {
+                html += `<div style="padding:20px;"><button class="add-btn-main" id="addMgrDirBtn" style="width:100%;">➕ Add Manager</button></div>`;
+            }
+            html += `</div>`;
+
+            showModal(html, false);
+
+            document.getElementById('closeMgrPopupBtn').onclick = closeModal;
+            document.getElementById('rankCalcBtn').onclick = () => openRankCalculationPopup();
+
+            if (isAdminMode) {
+                document.getElementById('addMgrDirBtn')?.onclick = () => openManagerDirForm(null);
+                document.querySelectorAll('.edit-mgr-dir-btn').forEach(btn => {
+                    btn.onclick = () => {
+                        const id = btn.dataset.id;
+                        const mgr = managers.find(m => m.id === id);
+                        if (mgr) openManagerDirForm(mgr);
+                    };
+                });
+                document.querySelectorAll('.delete-mgr-dir-btn').forEach(btn => {
+                    btn.onclick = async () => {
+                        if (!confirm('Delete this manager?')) return;
+                        await database.ref('managersDirectory/' + btn.dataset.id).remove();
+                        closeModal();
+                        openManagersPopup();
+                    };
+                });
+            }
+        }
+
+        function openRankCalculationPopup() {
+            showModal(`
+                <div style="position:relative;">
+                    <button id="closeRankCalcBtn" style="position:absolute;top:-10px;right:-10px;background:transparent;border:none;color:var(--white);font-size:2.4rem;cursor:pointer;line-height:1;" onmouseover="this.style.color='var(--razzmatazz)'" onmouseout="this.style.color='var(--white)'">&#x2715;</button>
+                    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:2px;margin-bottom:20px;">🏆 Rank Calculation</h3>
+                    <p style="color:var(--razzmatazz);font-weight:700;font-size:1.4rem;margin-bottom:20px;border-left:3px solid var(--razzmatazz);padding-left:12px;">Manager Must Have More Than 0 Points To Have A Ranking</p>
+                    <div style="color:var(--white);font-size:1.4rem;line-height:2;">
+                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--turquoise);margin:16px 0 8px;letter-spacing:2px;">TOURNAMENTS</div>
+                        <div>⚽ UEFA Europa League — <strong style="color:var(--razzmatazz);">1 point</strong></div>
+                        <div>🏆 Premier League — <strong style="color:var(--razzmatazz);">2 points</strong></div>
+                        <div>⭐ UEFA Champions League — <strong style="color:var(--razzmatazz);">3 points</strong></div>
+                        <div>🌍 UEFA Nations League — <strong style="color:var(--razzmatazz);">2 points</strong></div>
+                        <div>🇪🇺 UEFA European Championship — <strong style="color:var(--razzmatazz);">3 points</strong></div>
+                        <div>🌎 FIFA World Cup — <strong style="color:var(--razzmatazz);">5 points</strong></div>
+                        <div>🌐 FIFA Club World Cup — <strong style="color:var(--razzmatazz);">4 points</strong></div>
+                        <div>🏴 Emirates FA Cup — <strong style="color:var(--razzmatazz);">1 point</strong></div>
+                        <div>🇪🇸 Copa del Rey — <strong style="color:var(--razzmatazz);">1 point</strong></div>
+                        <div>🛡️ UEFA Super Cup — <strong style="color:var(--razzmatazz);">1 point</strong></div>
+                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--turquoise);margin:20px 0 8px;letter-spacing:2px;">INDIVIDUAL AWARDS</div>
+                        <div>👟 Golden Boot — <strong style="color:var(--razzmatazz);">0.5 points</strong></div>
+                        <div>🎯 Playmaker Award — <strong style="color:var(--razzmatazz);">0.5 points</strong></div>
+                        <div>🧤 Golden Glove — <strong style="color:var(--razzmatazz);">0.5 points</strong></div>
+                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--turquoise);margin:20px 0 8px;letter-spacing:2px;">RUNNER-UP</div>
+                        <div>🥈 League Runner-Up — <strong style="color:var(--razzmatazz);">0.5 points</strong></div>
+                        <div>🥈 Silver Medal — <strong style="color:var(--razzmatazz);">0.5 points</strong></div>
+                        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--turquoise);margin:20px 0 8px;letter-spacing:2px;">HONOURS</div>
+                        <div>🏅 Ballon d'Or — <strong style="color:var(--razzmatazz);">3 points</strong></div>
+                        <div>🧤 Yashin Trophy — <strong style="color:var(--razzmatazz);">3 points</strong></div>
+                        <div>🌟 Kopa Trophy — <strong style="color:var(--razzmatazz);">1 point</strong></div>
+                    </div>
+                    <div class="modal-btns" style="margin-top:24px;">
+                        <button class="modal-btn-cancel" id="backFromRankCalc">← Back</button>
+                    </div>
+                </div>
+            `);
+
+            document.getElementById('closeRankCalcBtn').onclick = closeModal;
+            document.getElementById('backFromRankCalc').onclick = () => {
+                closeModal();
+                openManagersPopup();
+            };
+        }
+
+        function openManagerDirForm(mgr) {
+            const isEdit = !!mgr;
+            const teamNames = teamsData.map(t => t.name).sort();
+            let uploadedImageUrl = mgr?.imageUrl || '';
+
+            showModal(`
+                <h3>${isEdit ? '✏️ Edit Manager' : '➕ Add Manager'}</h3>
+                <label>Manager Name</label>
+                <input type="text" id="mgrDirName" value="${escapeHtml(mgr?.name || '')}" placeholder="Manager name">
+                <label>Team</label>
+                <input type="text" id="mgrDirTeamSearch" placeholder="Search team..." autocomplete="off" style="margin-bottom:4px;">
+                <select id="mgrDirTeam" size="4" style="width:100%;background:rgba(54,13,58,0.8);border:1px solid var(--razzmatazz);border-radius:12px;color:white;font-family:'Rajdhani',sans-serif;font-size:1.1rem;padding:4px;margin-bottom:8px;">
+                    ${teamNames.map(t => `<option value="${t}" ${mgr?.team === t ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('')}
+                </select>
+                <label>Points</label>
+                <input type="number" id="mgrDirPoints" value="${mgr?.points || 0}" step="0.5" min="0" placeholder="Total points">
+                <label>Rank (leave 0 if unranked)</label>
+                <input type="number" id="mgrDirRank" value="${mgr?.rank || 0}" min="0" placeholder="Rank number">
+                <label>Manager Image (optional)</label>
+                <div class="image-upload-area" id="mgrDirImageArea">
+                    <div class="upload-icon">📸</div>
+                    <div class="upload-text">${uploadedImageUrl ? 'Change Image' : 'Upload Image'}</div>
+                    <input type="file" id="mgrDirImageInput" accept="image/*" style="display:none;">
+                </div>
+                ${uploadedImageUrl ? `<img src="${uploadedImageUrl}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;border:2px solid var(--razzmatazz);margin-top:8px;">` : ''}
+                <div id="mgrDirImagePreview"></div>
+                <div id="mgrDirStatus"></div>
+                <div class="modal-btns">
+                    <button class="modal-btn-primary" id="saveMgrDirBtn">💾 Save</button>
+                    <button class="modal-btn-cancel" id="cancelMgrDirBtn">Cancel</button>
+                </div>
+            `);
+
+            document.getElementById('cancelMgrDirBtn').onclick = () => {
+                closeModal();
+                openManagersPopup();
+            };
+
+            document.getElementById('mgrDirTeamSearch').addEventListener('input', function() {
+                const q = this.value.toLowerCase();
+                const select = document.getElementById('mgrDirTeam');
+                Array.from(select.options).forEach(opt => {
+                    opt.style.display = opt.value.toLowerCase().includes(q) ? '' : 'none';
+                });
+            });
+
+            const area = document.getElementById('mgrDirImageArea');
+            const fileInput = document.getElementById('mgrDirImageInput');
+            const preview = document.getElementById('mgrDirImagePreview');
+            area.onclick = () => fileInput.click();
+            fileInput.onchange = async () => {
+                const file = fileInput.files[0];
+                if (!file) return;
+                preview.innerHTML = '<div class="status-msg status-loading">Uploading...</div>';
+                try {
+                    const url = await uploadToImgBB(file);
+                    uploadedImageUrl = url;
+                    preview.innerHTML =
+                        `<div class="status-msg status-success">Image uploaded</div><img src="${url}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;border:2px solid var(--razzmatazz);margin-top:8px;">`;
+                } catch (e) {
+                    preview.innerHTML = `<div class="status-msg status-error">Error: ${e.message}</div>`;
+                }
+            };
+
+            document.getElementById('saveMgrDirBtn').onclick = async () => {
+                const name = document.getElementById('mgrDirName').value.trim();
+                const team = document.getElementById('mgrDirTeam').value;
+                const points = parseFloat(document.getElementById('mgrDirPoints').value) || 0;
+                const rank = parseInt(document.getElementById('mgrDirRank').value) || 0;
+                if (!name || !team) {
+                    document.getElementById('mgrDirStatus').innerHTML =
+                        '<div class="status-msg status-error">Name and team required.</div>';
+                    return;
+                }
+                const btn = document.getElementById('saveMgrDirBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="btn-spinner"></span> Saving...';
+                const data = { name, team, points, rank, imageUrl: uploadedImageUrl, updatedAt: Date.now() };
+                if (!isEdit) data.createdAt = Date.now();
+                try {
+                    if (isEdit) await database.ref('managersDirectory/' + mgr.id).update(data);
+                    else await database.ref('managersDirectory').push(data);
+                    closeModal();
+                    openManagersPopup();
+                } catch (e) {
+                    document.getElementById('mgrDirStatus').innerHTML =
                         `<div class="status-msg status-error">Error: ${e.message}</div>`;
                     btn.disabled = false;
                     btn.innerHTML = '💾 Save';
