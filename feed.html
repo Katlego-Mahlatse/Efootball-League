@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -153,6 +153,46 @@
             color: #555;
             padding: 40px 20px;
             font-size: 15px;
+        }
+
+        /* ----- NEW FULL-WIDTH LEAGUE BLOCK CSS ----- */
+        .league-block-wrap-full {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            cursor: pointer;
+            width: 100%;
+        }
+        .league-block-full {
+            width: 100%;
+            min-height: 160px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            transition: all 0.3s ease;
+            background-size: cover;
+            background-position: center;
+        }
+        .league-block-full:hover {
+            transform: scale(1.02);
+            border-color: #FFD700;
+            box-shadow: 0 4px 20px rgba(255,215,0,0.25);
+        }
+        .league-block-icon-large {
+            position: relative;
+            z-index: 2;
+            width: 90px;
+            height: 90px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
         }
 
         @media (max-width: 380px) {
@@ -441,6 +481,7 @@
                 </div>
             </div>
             <div class="menu-item" onclick="window.location.href='ranks.html'">Manager Ranks</div>
+            <div class="menu-item" onclick="window.location.href='ranking.html'">Rankings</div>
             <div class="menu-item" onclick="window.location.href='selection.html'">Team Selections</div>
             <div class="menu-item" onclick="window.location.href='awards.html'">eAwards</div>
             <div class="menu-item" id="editLeagueIconsMenuItem" style="display: none;" onclick="openEditLeagueIconsModal()">Edit League Backgrounds</div>
@@ -728,13 +769,15 @@
         // track which posts user has liked (session only)
         let userLikedPosts = new Set();
 
+        // ----- CHANGE 1: REPLACED defaultLeagues array -----
         const defaultLeagues = [
+            { id: 'efootball', name: 'eFootball League', url: 'efootball-league.html', color: '#FFD700' },
+            { id: 'ucl', name: 'UEFA Champions League', url: 'newchampion.html', color: '#003399' },
+            { id: 'wc', name: 'FIFA World Cup', url: 'fwc.html', color: '#d4a017' },
             { id: 'premier', name: 'Premier League', url: 'adminpremier.html', color: '#3d195b' },
             { id: 'laliga', name: 'La Liga', url: 'laliga.html', color: '#ee3524' },
             { id: 'uel', name: 'UEFA Europa League', url: 'neweuropa.html', color: '#f58220' },
-            { id: 'ucl', name: 'UEFA Champions League', url: 'newchampion.html', color: '#003399' },
             { id: 'cwc', name: 'FIFA Club World Cup', url: 'newclubworldcup.html', color: '#326295' },
-            { id: 'wc', name: 'FIFA World Cup', url: 'fwc.html', color: '#d4a017' },
             { id: 'supercup', name: 'UEFA Super Cup', url: 'newsupercup.html', color: '#0066cc' },
             { id: 'fsc', name: 'FIFA Super Cup', url: 'fsc.html', color: '#0057a8' },
             { id: 'uecl', name: 'UEFA Conference League', url: 'newconference.html', color: '#5db846' },
@@ -808,6 +851,8 @@
             await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${currentEditLikesPostId}.json`, { method: 'PATCH', body: JSON.stringify({ likes: val }) });
             const post = posts.find(p => p.id === currentEditLikesPostId);
             if (post) post.likes = val;
+            // invalidate cache
+            localStorage.setItem('cached_posts', JSON.stringify(posts));
             closeEditLikesModal();
             renderPosts();
         }
@@ -837,17 +882,28 @@
             }
         }
 
-        // ===== STORY CAROUSEL =====
+        // ----- CHANGE 6: loadStories with caching -----
         async function loadStories() {
+            const cached = localStorage.getItem('cached_stories');
+            if (cached) {
+                try {
+                    stories = JSON.parse(cached);
+                    renderStoryCarousel();
+                    startAutoSlide();
+                } catch(e) { stories = []; }
+            }
             try {
                 const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow.json`);
                 const data = await res.json();
-                if (data) stories = Object.keys(data).map(k => ({ id: k, ...data[k] })).sort((a,b) => (a.order||0) - (b.order||0));
-                else stories = [];
-                renderStoryCarousel();
-                startAutoSlide();
+                if (data) {
+                    stories = Object.keys(data).map(k => ({ id: k, ...data[k] })).sort((a,b) => (a.order||0) - (b.order||0));
+                    localStorage.setItem('cached_stories', JSON.stringify(stories));
+                    renderStoryCarousel();
+                    startAutoSlide();
+                }
             } catch(e) { console.error(e); }
         }
+
         function renderStoryCarousel() {
             const track = document.getElementById('storyTrackNew');
             if (!stories.length) { track.innerHTML = '<div style="color:#666; text-align:center; width:100%; padding:20px;">No stories yet</div>'; return; }
@@ -903,13 +959,21 @@
                 await fetch(`${FIREBASE_CONFIG.databaseURL}/slideshow/${storyId}.json`, { method: 'DELETE' });
                 stories = stories.filter(s => s.id !== storyId);
                 if (currentStoryIndex >= stories.length && stories.length) currentStoryIndex = 0;
+                localStorage.setItem('cached_stories', JSON.stringify(stories));
                 renderStoryCarousel();
                 startAutoSlide();
             } catch(e) { alert(e.message); }
         }
 
-        // ===== LEAGUES - FULL SCREEN PANEL =====
+        // ----- CHANGE 7: loadLeagues with caching -----
         async function loadLeagues() {
+            const cached = localStorage.getItem('cached_leagues');
+            if (cached) {
+                try {
+                    leaguesData = JSON.parse(cached);
+                    renderLeagueGrid(leaguesData, false);
+                } catch(e) { leaguesData = defaultLeagues.map(l => ({ ...l, icon: null, bgImage: null })); }
+            }
             try {
                 const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/leagues.json`);
                 const data = await res.json();
@@ -917,17 +981,39 @@
                     const saved = (data && data[league.id]) ? data[league.id] : {};
                     return { ...league, icon: saved.icon || null, bgImage: saved.bgImage || null };
                 });
+                localStorage.setItem('cached_leagues', JSON.stringify(leaguesData));
+                renderLeagueGrid(leaguesData, false);
             } catch(e) {
-                leaguesData = defaultLeagues.map(l => ({ ...l, icon: null, bgImage: null }));
+                if (!cached) {
+                    leaguesData = defaultLeagues.map(l => ({ ...l, icon: null, bgImage: null }));
+                    renderLeagueGrid(leaguesData, false);
+                }
             }
-            renderLeagueGrid(leaguesData, false);
         }
 
+        // ----- CHANGE 2: REPLACED renderLeagueGrid -----
         function renderLeagueGrid(leagues, isFiltered) {
             const grid = document.getElementById('leagueGrid');
             if (!leagues.length) {
                 grid.innerHTML = '<div class="league-no-results">No leagues found</div>';
                 return;
+            }
+
+            function buildBlockFull(league) {
+                const bgStyle = league.bgImage
+                    ? `background-image: url('${league.bgImage}'); background-size: cover; background-position: center;`
+                    : `background: #1a1a1a;`;
+                const iconHtml = league.icon
+                    ? `<img src="${league.icon}" alt="${league.name}" class="league-block-icon-large" onerror="this.style.display='none'">`
+                    : '';
+                return `
+                    <a class="league-block-wrap-full" href="${league.url}">
+                        <div class="league-block-full" style="${bgStyle}">
+                            ${iconHtml}
+                        </div>
+                        <div class="league-block-name">${league.name}</div>
+                    </a>
+                `;
             }
 
             function buildBlock(league) {
@@ -948,14 +1034,14 @@
             }
 
             if (isFiltered) {
-                grid.innerHTML = leagues.map(buildBlock).join('');
+                grid.innerHTML = leagues.slice(0, 3).map(buildBlockFull).join('') + leagues.slice(3).map(buildBlock).join('');
                 return;
             }
 
-            const primary = leagues.slice(0, 8);
-            const rest = leagues.slice(8);
+            const primary = leagues.slice(0, 3);
+            const rest = leagues.slice(3);
 
-            let html = primary.map(buildBlock).join('');
+            let html = primary.map(buildBlockFull).join('');
 
             if (rest.length) {
                 html += `<div class="see-more-wrap" style="grid-column:1/-1;display:flex;justify-content:center;padding:10px 0;">
@@ -1183,6 +1269,7 @@
                 const result = await res.json();
                 stories.push({ id: result.name, ...newStory });
                 currentStoryIndex = stories.length - 1;
+                localStorage.setItem('cached_stories', JSON.stringify(stories));
                 renderStoryCarousel();
                 closeStoryModal();
                 startAutoSlide();
@@ -1234,17 +1321,31 @@
             try {
                 await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, { method: 'DELETE' });
                 posts = posts.filter(p => p.id !== postId);
+                localStorage.setItem('cached_posts', JSON.stringify(posts));
                 renderDeletePostGrid();
                 renderPosts();
             } catch(e) { alert('Delete failed: ' + e.message); }
         }
 
+        // ----- CHANGE 5: loadPosts with caching -----
         async function loadPosts() {
+            const cached = localStorage.getItem('cached_posts');
+            if (cached) {
+                try {
+                    posts = JSON.parse(cached);
+                    renderPosts();
+                } catch(e) { posts = []; }
+            }
             try {
                 const res = await fetch(`${FIREBASE_CONFIG.databaseURL}/posts.json`);
                 const data = await res.json();
-                if (data) posts = Object.keys(data).map(k => ({ id: k, ...data[k] }));
-                renderPosts();
+                if (data) {
+                    posts = Object.keys(data).map(k => ({ id: k, ...data[k] }));
+                    localStorage.setItem('cached_posts', JSON.stringify(posts));
+                    renderPosts();
+                } else {
+                    if (!cached) renderPosts();
+                }
             } catch(e) { console.error(e); }
         }
 
@@ -1324,6 +1425,7 @@
             const post = posts.find(p => p.id === currentCommentPostId);
             if (!post.comments) post.comments = {};
             post.comments[result.name] = commentData;
+            localStorage.setItem('cached_posts', JSON.stringify(posts));
             renderPosts();
             document.getElementById('commentModal').classList.remove('active');
         };
@@ -1414,6 +1516,7 @@
             try {
                 await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, { method: 'DELETE' });
                 posts = posts.filter(p => p.id !== postId);
+                localStorage.setItem('cached_posts', JSON.stringify(posts));
                 renderPosts();
             } catch(e) { alert('Delete failed: ' + e.message); }
         }
@@ -1432,6 +1535,7 @@
             const newLikes = Math.min((post.likes || 0) + 1, 10000);
             await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${id}.json`, { method: 'PATCH', body: JSON.stringify({ likes: newLikes }) });
             post.likes = newLikes;
+            localStorage.setItem('cached_posts', JSON.stringify(posts));
             renderPosts();
         }
 
@@ -1446,6 +1550,7 @@
             const post = posts.find(p => p.id === postId);
             if (!post.comments) post.comments = {};
             post.comments[result.name] = commentData;
+            localStorage.setItem('cached_posts', JSON.stringify(posts));
             renderPosts();
             setTimeout(() => {
                 const cl = document.getElementById(`comments-${postId}`);
@@ -1459,6 +1564,7 @@
             if (!isAdminMode || !confirm('Delete comment?')) return;
             await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}/comments/${commentId}.json`, { method: 'DELETE' });
             delete posts.find(p => p.id === postId).comments[commentId];
+            localStorage.setItem('cached_posts', JSON.stringify(posts));
             renderPosts();
         }
 
@@ -1468,6 +1574,7 @@
             const newPinned = !post.pinned;
             await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${postId}.json`, { method: 'PATCH', body: JSON.stringify({ pinned: newPinned }) });
             post.pinned = newPinned;
+            localStorage.setItem('cached_posts', JSON.stringify(posts));
             renderPosts();
         }
 
@@ -1566,6 +1673,7 @@
                 await fetch(`${FIREBASE_CONFIG.databaseURL}/posts/${currentEditPostId}.json`, { method: 'PATCH', body: JSON.stringify(updateData) });
                 const post = posts.find(p => p.id === currentEditPostId);
                 Object.assign(post, updateData);
+                localStorage.setItem('cached_posts', JSON.stringify(posts));
                 const successDiv = document.getElementById('editFormSuccess');
                 successDiv.innerHTML = '<span style="font-size:24px;">✅</span> Changes saved!';
                 successDiv.style.display = 'flex';
@@ -1684,6 +1792,7 @@
                 const response = await fetch(`${FIREBASE_CONFIG.databaseURL}/posts.json`, { method: 'POST', body: JSON.stringify(postData) });
                 const result = await response.json();
                 posts.push({ id: result.name, ...postData });
+                localStorage.setItem('cached_posts', JSON.stringify(posts));
                 successDiv.innerHTML = '<span style="font-size:24px;">✅</span> Post uploaded successfully!';
                 successDiv.style.display = 'flex';
                 setTimeout(() => { renderPosts(); closePostModal(); }, 1500);
@@ -1714,4 +1823,4 @@
     </script>
 </body>
 </html>
-
+```
