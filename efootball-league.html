@@ -1,4 +1,4 @@
-``
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -217,22 +217,31 @@
         .slideshow-frame {
             width: 100%;
             max-width: 1100px;
+            height: 450px;
             border-radius: 32px;
             overflow: hidden;
             box-shadow: 0 8px 40px rgba(255, 215, 0, 0.25);
             border: 2px solid var(--efl-orange);
-            background: #000;
+            background: #1a1a2e;
             display: flex;
             justify-content: center;
             align-items: center;
+            position: relative;
+            flex-shrink: 0;
         }
         .slideshow-img {
             width: 100%;
-            height: auto;
-            max-height: 520px;
-            object-fit: contain;
+            height: 100%;
+            object-fit: cover;
             display: block;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.6s ease;
+        }
+        .slideshow-placeholder {
+            color: rgba(255, 255, 255, 0.2);
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            letter-spacing: 4px;
+            text-align: center;
         }
         .dots-container {
             margin-top: 20px;
@@ -2060,8 +2069,8 @@
     </div>
 
     <div class="slideshow-wrapper">
-        <div class="slideshow-frame">
-            <img id="slideshowImg" class="slideshow-img" src="" alt="Slideshow" style="display:none;">
+        <div class="slideshow-frame" id="slideshowFrame">
+            <img id="slideshowImg" class="slideshow-img" src="" alt="Slideshow">
         </div>
         <div class="dots-container" id="dotsContainer"></div>
     </div>
@@ -2192,6 +2201,13 @@
         const database = firebase.database();
 
         const IMGBB_API_KEY = "81c24f30884ec6dda1dbd2b39739e0c9";
+
+        // ─── DEFAULT SLIDESHOW IMAGES ───
+        const DEFAULT_SLIDESHOW_IMAGES = [
+            'https://picsum.photos/seed/efootball1/1200/600',
+            'https://picsum.photos/seed/efootball2/1200/600',
+            'https://picsum.photos/seed/efootball3/1200/600'
+        ];
 
         let isAdminMode = false;
         let currentSeasonId = 2;
@@ -3054,7 +3070,6 @@
                 if (!isNaN(id)) availableSeasons.push(id);
                 if (seasons[key].active === true) activeSeasonId = id;
             }
-            // Create season 1 if no seasons exist
             if (availableSeasons.length === 0) {
                 await database.ref('efl_seasons/season_1/table').set({});
                 await database.ref('efl_seasons/season_1/results').set({});
@@ -3074,7 +3089,6 @@
                 await database.ref('efl_seasons/season_1/active').set(false);
                 availableSeasons.push(1);
             }
-            // Migration check (skip old migration)
             const migrationFlag = await database.ref('efl_migrationDone').once('value');
             if (!migrationFlag.val()) {
                 await database.ref('efl_migrationDone').set(true);
@@ -6006,79 +6020,113 @@
             return "⚪";
         }
 
+        // ─── SLIDESHOW LOAD WITH FALLBACK ───
         async function loadSlideshow() {
             const cached = localStorage.getItem('efl_slideshowCache');
+            let imagesLoaded = false;
+
+            // Try cached first
             if (cached) {
                 try {
                     const parsed = JSON.parse(cached);
-                    slideshowImages = parsed.images || [];
-                    slideshowDuration = parsed.duration || 3000;
-                    if (slideshowImages.length) {
-                        currentSlideIdx = 0;
-                        updateSlide();
-                        if (slideInterval) clearInterval(slideInterval);
-                        slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx + 1) % slideshowImages.length;
-                            updateSlide(); }, slideshowDuration);
-                    } else {
-                        document.getElementById('slideshowImg').style.display = 'none';
+                    if (parsed.images && parsed.images.length > 0) {
+                        slideshowImages = parsed.images;
+                        slideshowDuration = parsed.duration || 3000;
+                        imagesLoaded = true;
                     }
-                    try {
-                        const [imgSnap, durSnap] = await Promise.all([
-                            database.ref('efl_slideshow/images').once('value'),
-                            database.ref('efl_slideshow/duration').once('value'),
-                        ]);
-                        const newImages = imgSnap.val() || [];
-                        const newDuration = durSnap.val() || 3000;
-                        if (JSON.stringify(newImages) !== JSON.stringify(slideshowImages) || newDuration !== slideshowDuration) {
-                            slideshowImages = newImages;
-                            slideshowDuration = newDuration;
-                            localStorage.setItem('efl_slideshowCache', JSON.stringify({ images: slideshowImages, duration: slideshowDuration }));
-                            if (slideInterval) clearInterval(slideInterval);
-                            if (slideshowImages.length) {
-                                document.getElementById('slideshowImg').style.display = 'block';
-                                currentSlideIdx = 0;
-                                updateSlide();
-                                slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx + 1) % slideshowImages.length;
-                                    updateSlide(); }, slideshowDuration);
-                            } else {
-                                document.getElementById('slideshowImg').style.display = 'none';
-                            }
-                        }
-                    } catch (e) { /* ignore */ }
-                    return;
                 } catch (e) { /* ignore */ }
             }
-            const [imgSnap, durSnap] = await Promise.all([
-                database.ref('efl_slideshow/images').once('value'),
-                database.ref('efl_slideshow/duration').once('value'),
-            ]);
-            slideshowImages = imgSnap.val() || [];
-            slideshowDuration = durSnap.val() || 3000;
-            localStorage.setItem('efl_slideshowCache', JSON.stringify({ images: slideshowImages, duration: slideshowDuration }));
+
+            // If no cached images, use defaults
+            if (!imagesLoaded) {
+                slideshowImages = [...DEFAULT_SLIDESHOW_IMAGES];
+                slideshowDuration = 3000;
+                // Save defaults to cache
+                localStorage.setItem('efl_slideshowCache', JSON.stringify({
+                    images: slideshowImages,
+                    duration: slideshowDuration
+                }));
+            }
+
+            // Always fetch from Firebase in the background to update
+            try {
+                const [imgSnap, durSnap] = await Promise.all([
+                    database.ref('efl_slideshow/images').once('value'),
+                    database.ref('efl_slideshow/duration').once('value'),
+                ]);
+                const fbImages = imgSnap.val() || [];
+                const fbDuration = durSnap.val() || 3000;
+
+                // If Firebase has images, use them
+                if (fbImages.length > 0) {
+                    slideshowImages = fbImages;
+                    slideshowDuration = fbDuration;
+                    localStorage.setItem('efl_slideshowCache', JSON.stringify({
+                        images: slideshowImages,
+                        duration: slideshowDuration
+                    }));
+                } else if (!cached) {
+                    // If no Firebase images and no cache, keep defaults
+                    localStorage.setItem('efl_slideshowCache', JSON.stringify({
+                        images: slideshowImages,
+                        duration: slideshowDuration
+                    }));
+                }
+            } catch (e) {
+                // If Firebase fails, use whatever we have
+                console.warn('Slideshow fetch failed, using fallback', e);
+            }
+
+            // Render the slideshow
             if (slideInterval) clearInterval(slideInterval);
             const imgEl = document.getElementById('slideshowImg');
-            if (slideshowImages.length) {
+            if (slideshowImages.length > 0) {
                 imgEl.style.display = 'block';
                 currentSlideIdx = 0;
                 updateSlide();
-                slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx + 1) % slideshowImages.length;
-                    updateSlide(); }, slideshowDuration);
-            } else { imgEl.style.display = 'none'; }
+                slideInterval = setInterval(() => {
+                    currentSlideIdx = (currentSlideIdx + 1) % slideshowImages.length;
+                    updateSlide();
+                }, slideshowDuration);
+            } else {
+                imgEl.style.display = 'none';
+                // Show placeholder text in the frame
+                document.getElementById('slideshowFrame').innerHTML =
+                    `<div class="slideshow-placeholder">⚽ eFOOTBALL LEAGUE</div>`;
+            }
         }
 
         function updateSlide() {
             const img = document.getElementById('slideshowImg');
-            img.src = slideshowImages[currentSlideIdx];
+            if (slideshowImages.length > 0 && slideshowImages[currentSlideIdx]) {
+                img.src = slideshowImages[currentSlideIdx];
+                img.style.display = 'block';
+                // Remove any placeholder
+                const frame = document.getElementById('slideshowFrame');
+                const placeholder = frame.querySelector('.slideshow-placeholder');
+                if (placeholder) placeholder.remove();
+                // Ensure img is in the frame
+                if (!frame.contains(img)) {
+                    frame.innerHTML = '';
+                    frame.appendChild(img);
+                }
+            }
             const dots = document.getElementById('dotsContainer');
             dots.innerHTML = '';
             slideshowImages.forEach((_, i) => {
                 const d = document.createElement('span');
                 d.className = 'dot' + (i === currentSlideIdx ? ' active' : '');
-                d.onclick = () => { currentSlideIdx = i;
-                    updateSlide(); if (slideInterval) { clearInterval(slideInterval);
-                        slideInterval = setInterval(() => { currentSlideIdx = (currentSlideIdx + 1) % slideshowImages
-                                .length;
-                            updateSlide(); }, slideshowDuration); } };
+                d.onclick = () => {
+                    currentSlideIdx = i;
+                    updateSlide();
+                    if (slideInterval) {
+                        clearInterval(slideInterval);
+                        slideInterval = setInterval(() => {
+                            currentSlideIdx = (currentSlideIdx + 1) % slideshowImages.length;
+                            updateSlide();
+                        }, slideshowDuration);
+                    }
+                };
                 dots.appendChild(d);
             });
         }
@@ -6458,4 +6506,3 @@
     </script>
 </body>
 </html>
-```
