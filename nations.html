@@ -1424,6 +1424,101 @@
             margin-bottom: 36px;
         }
 
+        /* ── KNOCKOUT RESULT CARDS ── */
+        .knockout-result-card {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            padding: 28px 40px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .knockout-result-card .match-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 32px;
+        }
+        .knockout-result-card .team-side {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            text-align: center;
+        }
+        .knockout-result-card .team-name-big {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 2.4rem;
+            color: white;
+        }
+        .knockout-result-card .match-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            min-width: 160px;
+        }
+        .knockout-result-card .score-display {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3.8rem;
+            color: white;
+            letter-spacing: 4px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 32px;
+            border-radius: 60px;
+            border: 2px solid rgba(0, 180, 216, 0.25);
+        }
+        .knockout-result-card .match-meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+            justify-content: center;
+        }
+        .knockout-result-card .meta-tag {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: white;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 8px 20px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .knockout-result-card .admin-row {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 18px;
+        }
+
+        /* ── BRACKET IMAGE ── */
+        .bracket-image-container {
+            width: 100%;
+            border-radius: 24px;
+            overflow: hidden;
+            margin-bottom: 24px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .bracket-image-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .bracket-placeholder {
+            padding: 60px 20px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 1.6rem;
+        }
+        .bracket-placeholder .bp-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
         /* ── MODAL ── */
         .modal-overlay {
             position: fixed;
@@ -1821,7 +1916,12 @@
         let tempScorersHome = [],
             tempScorersAway = [];
         let activeFixtureSubTab = 'group-stage';
-        let currentMatchday = 1;
+
+        // ─── Knockout state ───
+        let knockoutResults = [];
+        let knockoutBracketImage = '';
+        let activeFixturesView = 'group-stage';
+        let activeResultsStage = 'group';
 
         // State from EUROs
         const RENDER_URL = 'https://efootball-league.onrender.com';
@@ -1864,7 +1964,7 @@
             fd.append('image_file', file);
             fd.append('size', 'auto');
             const res = await fetch('https://api.remove.bg/v1.0/removebg', { method: 'POST', headers: { 'X-Api-Key': RMBG_KEY },
-                body: fd });
+                    body: fd });
             if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.errors?.[0]?.title ||
                     'remove.bg failed'); }
             return await res.blob();
@@ -2028,7 +2128,7 @@
                 leaguePhaseSettings = { knockoutCutoff: ko, playoffCutoff: po };
                 await db.ref(`${basePath}/settings/leaguePhase`).set(leaguePhaseSettings);
                 document.getElementById('leaguePhaseStatus').innerHTML =
-                '<div class="status-msg status-success">✅ Saved!</div>';
+                    '<div class="status-msg status-success">✅ Saved!</div>';
                 setTimeout(closeModal, 800);
             };
         }
@@ -2365,7 +2465,7 @@
                     let barClass = 'vbar-red';
                     let rowClass = '';
                     if (pos <= koCutoff) { barClass = 'vbar-blue'; if (pos === koCutoff) rowClass =
-                        'dashed-sep-blue'; } else if (pos <= poCutoff) { barClass = 'vbar-orange'; if (pos ===
+                            'dashed-sep-blue'; } else if (pos <= poCutoff) { barClass = 'vbar-orange'; if (pos ===
                             poCutoff) rowClass = 'dashed-sep-orange'; }
                     const iconHtml = getTeamIconHtml(team.name);
                     const gd = team.gd || 0;
@@ -2397,7 +2497,7 @@
                     });
                     card.querySelectorAll('.edit-team-btn').forEach(btn => {
                         const team = sorted.find(t => t.key === btn.dataset.key && t.groupId === btn
-                        .dataset.gid);
+                            .dataset.gid);
                         if (team) btn.onclick = () => openTeamForm(btn.dataset.gid, btn.dataset.key, team);
                     });
                     card.querySelectorAll('.del-team-btn').forEach(btn => {
@@ -2573,84 +2673,307 @@
         // ─── RENDER FIXTURES ───
         function renderFixtures() {
             const card = document.getElementById('contentCard');
-            const subTabsHtml = `<div class="sub-tabs-row">
-            <button class="sub-tab-btn ${activeFixtureSubTab==='group-stage'?'active':''}" data-subtab="group-stage">Group Stage</button>
-            <button class="sub-tab-btn ${activeFixtureSubTab==='knockout'?'active':''}" data-subtab="knockout">Knockout</button>
-          </div>`;
-            if (activeFixtureSubTab === 'knockout') {
-                card.innerHTML = subTabsHtml +
-                    `<div class="coming-soon"><div class="cs-icon">🏆</div><h2>Knockout Round Coming Soon</h2><p>The knockout stage fixtures will be available shortly.</p></div>`;
-                card.querySelectorAll('.sub-tab-btn').forEach(btn => btn.addEventListener('click', () => {
-                    activeFixtureSubTab = btn.dataset.subtab;
-                    renderFixtures();
-                }));
+
+            // ─── Sub-tabs ───
+            const subTabsHtml = `
+              <div class="sub-tabs-row">
+                <button class="sub-tab-btn ${activeFixturesView === 'group-stage' ? 'active' : ''}" data-subtab="group-stage">Group Stage</button>
+                <button class="sub-tab-btn ${activeFixturesView === 'knockout' ? 'active' : ''}" data-subtab="knockout">Knockout</button>
+              </div>
+            `;
+
+            // ─── Knockout view ───
+            if (activeFixturesView === 'knockout') {
+                let bracketHtml = '';
+                if (knockoutBracketImage) {
+                    bracketHtml =
+                        `<div class="bracket-image-container"><img src="${knockoutBracketImage}" alt="Knockout Bracket"></div>`;
+                } else {
+                    bracketHtml =
+                        `<div class="bracket-image-container"><div class="bracket-placeholder"><div class="bp-icon">🏆</div>No bracket image uploaded</div></div>`;
+                }
+                if (isAdmin) {
+                    bracketHtml +=
+                        `<div style="text-align:center;margin-bottom:20px;"><button class="add-btn" id="uploadBracketFixturesBtn">📤 Upload Bracket Image</button></div>`;
+                }
+
+                // ─── Build fixtures from calendarEventsData (filtered for Nations League) ───
+                const allFixtures = [];
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
+                    if (eventData.season !== currentSeasonId) continue;
+                    const tournaments = eventData.tournaments || [];
+                    for (const tourn of tournaments) {
+                        if (!tourn.name || !tourn.name.toLowerCase().includes('nations league')) continue;
+                        for (const fix of (tourn.fixtures || [])) {
+                            allFixtures.push({
+                                date: dateStr,
+                                tournament: tourn.name || 'Nations League',
+                                home: fix.home || '',
+                                away: fix.away || '',
+                            });
+                        }
+                    }
+                }
+
+                allFixtures.sort((a, b) => {
+                    const da = new Date(a.date),
+                        db2 = new Date(b.date);
+                    const af = da >= today,
+                        bf = db2 >= today;
+                    if (af && bf) return da - db2;
+                    if (!af && !bf) return da - db2;
+                    return af ? -1 : 1;
+                });
+
+                const allTeams = [...new Set(allFixtures.map(f => [f.home, f.away]).flat().filter(Boolean))].sort();
+                const allMonths = [...new Set(allFixtures.map(f => f.date.substring(0, 7)))].sort();
+
+                const ML = { '01': 'January', '02': 'February', '03': 'March', '04': 'April', '05': 'May', '06': 'June',
+                    '07': 'July', '08': 'August', '09': 'September', '10': 'October', '11': 'November', '12': 'December' };
+
+                let filtered = [...allFixtures];
+
+                const grouped = {};
+                for (const fix of filtered) {
+                    if (!grouped[fix.date]) grouped[fix.date] = [];
+                    grouped[fix.date].push(fix);
+                }
+                const sortedDates = Object.keys(grouped).sort((a, b) => {
+                    const da = new Date(a),
+                        db2 = new Date(b),
+                        af = da >= today,
+                        bf = db2 >= today;
+                    if (af && bf) return da - db2;
+                    if (!af && !bf) return da - db2;
+                    return af ? -1 : 1;
+                });
+
+                let fixturesHtml = subTabsHtml + bracketHtml;
+
+                fixturesHtml += `<div class="filters-bar">
+                  <div class="filter-group"><label>Team</label><select id="fixTeamFilterKO"><option value="all">All Teams</option>${allTeams.map(t=>`<option value="${t}">${t}</option>`).join('')}</select></div>
+                  <div class="filter-group"><label>Month</label><select id="fixMonthFilterKO"><option value="all">All Months</option>${allMonths.map(m=>{const[y,mo]=m.split('-');return`<option value="${m}">${ML[mo]||mo} ${y}</option>`;}).join('')}</select></div>
+                  <div class="filter-group"><button id="clearFixBtnKO">Clear Filters</button></div>
+                  <div class="filter-stats" id="fixFilterStatsKO">${filtered.length} fixture${filtered.length!==1?'s':''} found</div>
+                  <a href="manager-calendar.html" class="view-calendar-btn">📅 View Calendar</a>
+                </div>`;
+
+                if (!sortedDates.length) {
+                    fixturesHtml +=
+                    '<div class="empty-state"><div class="empty-icon">📅</div><p>No fixtures found</p></div>';
+                } else {
+                    for (const dateStr of sortedDates) {
+                        const d = new Date(dateStr);
+                        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                        const [y, mo] = dateStr.split('-');
+                        const isPast = d < today;
+                        fixturesHtml += `<div class="fixture-date-group">
+                      <div class="fixture-date-label">${days[d.getDay()]}, ${d.getDate()} ${ML[mo]||mo} ${y}${isPast?' · Played':''}</div>`;
+                        for (const fix of grouped[dateStr]) {
+                            const hIco = getTeamIconHtml(fix.home, 'team-icon-lg');
+                            const aIco = getTeamIconHtml(fix.away, 'team-icon-lg');
+                            fixturesHtml += `<div class="fixture-card">
+                        <div class="fixture-tournament-label">${escapeHtml(fix.tournament)}</div>
+                        <div class="fixture-match-row">
+                          <div class="fixture-team-side">${hIco}<span class="fixture-team-name">${escapeHtml(fix.home)}</span></div>
+                          <div class="fixture-vs">VS</div>
+                          <div class="fixture-team-side">${aIco}<span class="fixture-team-name">${escapeHtml(fix.away)}</span></div>
+                        </div>
+                      </div>`;
+                        }
+                        fixturesHtml += `</div>`;
+                    }
+                }
+
+                card.innerHTML = fixturesHtml;
+
+                // Sub-tab switching
+                card.querySelectorAll('.sub-tab-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        activeFixturesView = btn.dataset.subtab;
+                        renderFixtures();
+                    });
+                });
+
+                // Upload bracket image
+                if (isAdmin) {
+                    document.getElementById('uploadBracketFixturesBtn')?.addEventListener('click', uploadBracketImage);
+                }
+
+                // Filters for knockout fixtures
+                function applyFixtureFiltersKO() {
+                    const tf = document.getElementById('fixTeamFilterKO')?.value || 'all';
+                    const mf = document.getElementById('fixMonthFilterKO')?.value || 'all';
+                    let f = [...allFixtures];
+                    if (tf !== 'all') f = f.filter(x => x.home === tf || x.away === tf);
+                    if (mf !== 'all') f = f.filter(x => x.date.startsWith(mf));
+                    document.getElementById('fixFilterStatsKO').textContent =
+                        `${f.length} fixture${f.length!==1?'s':''} found`;
+                    const grp = {};
+                    for (const fix of f) {
+                        if (!grp[fix.date]) grp[fix.date] = [];
+                        grp[fix.date].push(fix);
+                    }
+                    card.querySelectorAll('.fixture-date-group').forEach(el => el.remove());
+                    const filtersBar = card.querySelector('.filters-bar');
+                    const sortedD = Object.keys(grp).sort((a, b) => {
+                        const da = new Date(a),
+                            db2 = new Date(b),
+                            af = da >= today,
+                            bf = db2 >= today;
+                        if (af && bf) return da - db2;
+                        if (!af && !bf) return da - db2;
+                        return af ? -1 : 1;
+                    });
+                    if (!sortedD.length) {
+                        const emp = document.createElement('div');
+                        emp.className = 'empty-state';
+                        emp.innerHTML = '<div class="empty-icon">📅</div><p>No fixtures found</p>';
+                        filtersBar.after(emp);
+                    } else {
+                        let insertAfter = filtersBar;
+                        for (const dateStr of sortedD) {
+                            const d = new Date(dateStr);
+                            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
+                                'Saturday'
+                            ];
+                            const [y, mo] = dateStr.split('-');
+                            const isPast = d < today;
+                            const dateGroup = document.createElement('div');
+                            dateGroup.className = 'fixture-date-group';
+                            let dgHtml =
+                                `<div class="fixture-date-label">${days[d.getDay()]}, ${d.getDate()} ${ML[mo]||mo} ${y}${isPast?' · Played':''}</div>`;
+                            for (const fix of grp[dateStr]) {
+                                const hIco = getTeamIconHtml(fix.home, 'team-icon-lg');
+                                const aIco = getTeamIconHtml(fix.away, 'team-icon-lg');
+                                dgHtml += `<div class="fixture-card">
+                          <div class="fixture-tournament-label">${escapeHtml(fix.tournament)}</div>
+                          <div class="fixture-match-row">
+                            <div class="fixture-team-side">${hIco}<span class="fixture-team-name">${escapeHtml(fix.home)}</span></div>
+                            <div class="fixture-vs">VS</div>
+                            <div class="fixture-team-side">${aIco}<span class="fixture-team-name">${escapeHtml(fix.away)}</span></div>
+                          </div>
+                        </div>`;
+                            }
+                            dateGroup.innerHTML = dgHtml;
+                            insertAfter.after(dateGroup);
+                            insertAfter = dateGroup;
+                        }
+                    }
+                }
+
+                document.getElementById('fixTeamFilterKO')?.addEventListener('change', applyFixtureFiltersKO);
+                document.getElementById('fixMonthFilterKO')?.addEventListener('change', applyFixtureFiltersKO);
+                document.getElementById('clearFixBtnKO')?.addEventListener('click', () => {
+                    document.getElementById('fixTeamFilterKO').value = 'all';
+                    document.getElementById('fixMonthFilterKO').value = 'all';
+                    applyFixtureFiltersKO();
+                });
+
                 return;
             }
+
+            // ─── GROUP STAGE FIXTURES (original) ───
             const allFixtures = [];
             const today = new Date();
             today.setHours(0, 0, 0, 0);
+
             for (const [dateStr, eventData] of Object.entries(calendarEventsData)) {
                 if (eventData.season !== currentSeasonId) continue;
                 const tournaments = eventData.tournaments || [];
                 for (const tourn of tournaments) {
-                    if (!tourn.name || !tourn.name.toLowerCase().match(/uefa nations league|nations league/)) continue;
+                    if (!tourn.name || !tourn.name.toLowerCase().includes('nations league')) continue;
                     for (const fix of (tourn.fixtures || [])) {
-                        allFixtures.push({ date: dateStr, tournament: tourn.name || 'UEFA Nations League', home: fix
-                                .home || '', away: fix.away || '' });
+                        allFixtures.push({
+                            date: dateStr,
+                            tournament: tourn.name || 'Nations League',
+                            home: fix.home || '',
+                            away: fix.away || '',
+                        });
                     }
                 }
             }
-            allFixtures.sort((a, b) => { const da = new Date(a.date),
-                    db2 = new Date(b.date),
-                    af = da >= today,
-                    bf = db2 >= today; if (af && bf) return da - db2; if (!af && !bf) return da - db2; return af ? -1 :
-                    1; });
+
+            allFixtures.sort((a, b) => {
+                const da = new Date(a.date),
+                    db2 = new Date(b.date);
+                const af = da >= today,
+                    bf = db2 >= today;
+                if (af && bf) return da - db2;
+                if (!af && !bf) return da - db2;
+                return af ? -1 : 1;
+            });
+
             const allTeams = [...new Set(allFixtures.map(f => [f.home, f.away]).flat().filter(Boolean))].sort();
             const allMonths = [...new Set(allFixtures.map(f => f.date.substring(0, 7)))].sort();
+
             const ML = { '01': 'January', '02': 'February', '03': 'March', '04': 'April', '05': 'May', '06': 'June',
                 '07': 'July', '08': 'August', '09': 'September', '10': 'October', '11': 'November', '12': 'December' };
+
+            let filtered = [...allFixtures];
+
             const grouped = {};
-            for (const fix of allFixtures) { if (!grouped[fix.date]) grouped[fix.date] = [];
-                grouped[fix.date].push(fix); }
-            const sortedDates = Object.keys(grouped).sort((a, b) => { const da = new Date(a),
+            for (const fix of filtered) {
+                if (!grouped[fix.date]) grouped[fix.date] = [];
+                grouped[fix.date].push(fix);
+            }
+            const sortedDates = Object.keys(grouped).sort((a, b) => {
+                const da = new Date(a),
                     db2 = new Date(b),
                     af = da >= today,
-                    bf = db2 >= today; if (af && bf) return da - db2; if (!af && !bf) return da - db2; return af ? -1 :
-                    1; });
-            let html = subTabsHtml + `<div class="filters-bar">
-            <div class="filter-group"><label>Team</label><select id="fixTeamFilter"><option value="all">All Teams</option>${allTeams.map(t=>`<option value="${t}">${t}</option>`).join('')}</select></div>
-            <div class="filter-group"><label>Month</label><select id="fixMonthFilter"><option value="all">All Months</option>${allMonths.map(m=>{const[y,mo]=m.split('-');return`<option value="${m}">${ML[mo]||mo} ${y}</option>`;}).join('')}</select></div>
-            <div class="filter-group"><button id="clearFixBtn">Clear Filters</button></div>
-            <div class="filter-stats" id="fixFilterStats">${allFixtures.length} fixture${allFixtures.length!==1?'s':''} found</div>
-            <a href="manager-calendar.html" class="view-calendar-btn">📅 View Calendar</a>
-          </div>`;
-            if (!sortedDates.length) { html +=
-                    '<div class="empty-state"><div class="empty-icon">📅</div><p>No fixtures found</p></div>'; } else {
+                    bf = db2 >= today;
+                if (af && bf) return da - db2;
+                if (!af && !bf) return da - db2;
+                return af ? -1 : 1;
+            });
+
+            let html = subTabsHtml;
+
+            html += `<div class="filters-bar">
+              <div class="filter-group"><label>Team</label><select id="fixTeamFilter"><option value="all">All Teams</option>${allTeams.map(t=>`<option value="${t}">${t}</option>`).join('')}</select></div>
+              <div class="filter-group"><label>Month</label><select id="fixMonthFilter"><option value="all">All Months</option>${allMonths.map(m=>{const[y,mo]=m.split('-');return`<option value="${m}">${ML[mo]||mo} ${y}</option>`;}).join('')}</select></div>
+              <div class="filter-group"><button id="clearFixBtn">Clear Filters</button></div>
+              <div class="filter-stats" id="fixFilterStats">${filtered.length} fixture${filtered.length!==1?'s':''} found</div>
+              <a href="manager-calendar.html" class="view-calendar-btn">📅 View Calendar</a>
+            </div>`;
+
+            if (!sortedDates.length) {
+                html += '<div class="empty-state"><div class="empty-icon">📅</div><p>No fixtures found</p></div>';
+            } else {
                 for (const dateStr of sortedDates) {
                     const d = new Date(dateStr);
                     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                     const [y, mo] = dateStr.split('-');
                     const isPast = d < today;
-                    html +=
-                        `<div class="fixture-date-group"><div class="fixture-date-label">${days[d.getDay()]}, ${d.getDate()} ${ML[mo]||mo} ${y}${isPast?' · Played':''}</div>`;
+                    html += `<div class="fixture-date-group">
+                  <div class="fixture-date-label">${days[d.getDay()]}, ${d.getDate()} ${ML[mo]||mo} ${y}${isPast?' · Played':''}</div>`;
                     for (const fix of grouped[dateStr]) {
                         const hIco = getTeamIconHtml(fix.home, 'team-icon-lg');
                         const aIco = getTeamIconHtml(fix.away, 'team-icon-lg');
-                        html += `<div class="fixture-card"><div class="fixture-tournament-label">${escapeHtml(fix.tournament)}</div>
-                  <div class="fixture-match-row">
-                    <div class="fixture-team-side">${hIco}<span class="fixture-team-name">${escapeHtml(fix.home)}</span></div>
-                    <div class="fixture-vs">VS</div>
-                    <div class="fixture-team-side">${aIco}<span class="fixture-team-name">${escapeHtml(fix.away)}</span></div>
-                  </div></div>`;
+                        html += `<div class="fixture-card">
+                    <div class="fixture-tournament-label">${escapeHtml(fix.tournament)}</div>
+                    <div class="fixture-match-row">
+                      <div class="fixture-team-side">${hIco}<span class="fixture-team-name">${escapeHtml(fix.home)}</span></div>
+                      <div class="fixture-vs">VS</div>
+                      <div class="fixture-team-side">${aIco}<span class="fixture-team-name">${escapeHtml(fix.away)}</span></div>
+                    </div>
+                  </div>`;
                     }
                     html += `</div>`;
                 }
             }
+
             card.innerHTML = html;
-            card.querySelectorAll('.sub-tab-btn').forEach(btn => btn.addEventListener('click', () => {
-                activeFixtureSubTab = btn.dataset.subtab;
-                renderFixtures();
-            }));
+
+            card.querySelectorAll('.sub-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeFixturesView = btn.dataset.subtab;
+                    renderFixtures();
+                });
+            });
 
             function applyFixtureFilters() {
                 const tf = document.getElementById('fixTeamFilter')?.value || 'all';
@@ -2660,46 +2983,57 @@
                 if (mf !== 'all') f = f.filter(x => x.date.startsWith(mf));
                 document.getElementById('fixFilterStats').textContent =
                     `${f.length} fixture${f.length!==1?'s':''} found`;
+                const grp = {};
+                for (const fix of f) {
+                    if (!grp[fix.date]) grp[fix.date] = [];
+                    grp[fix.date].push(fix);
+                }
                 card.querySelectorAll('.fixture-date-group').forEach(el => el.remove());
                 const filtersBar = card.querySelector('.filters-bar');
-                const grp = {};
-                for (const fix of f) { if (!grp[fix.date]) grp[fix.date] = [];
-                    grp[fix.date].push(fix); }
-                const sD = Object.keys(grp).sort((a, b) => { const da = new Date(a),
+                const sortedD = Object.keys(grp).sort((a, b) => {
+                    const da = new Date(a),
                         db2 = new Date(b),
                         af = da >= today,
-                        bf = db2 >= today; if (af && bf) return da - db2; if (!af && !bf) return da - db2; return af ?
-                        -1 : 1; });
-                if (!sD.length) { const emp = document.createElement('div');
+                        bf = db2 >= today;
+                    if (af && bf) return da - db2;
+                    if (!af && !bf) return da - db2;
+                    return af ? -1 : 1;
+                });
+                if (!sortedD.length) {
+                    const emp = document.createElement('div');
                     emp.className = 'empty-state';
                     emp.innerHTML = '<div class="empty-icon">📅</div><p>No fixtures found</p>';
-                    filtersBar.after(emp); } else {
-                    let ins = filtersBar;
-                    for (const dateStr of sD) {
+                    filtersBar.after(emp);
+                } else {
+                    let insertAfter = filtersBar;
+                    for (const dateStr of sortedD) {
                         const d = new Date(dateStr);
                         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                         const [y, mo] = dateStr.split('-');
                         const isPast = d < today;
-                        const dg = document.createElement('div');
-                        dg.className = 'fixture-date-group';
+                        const dateGroup = document.createElement('div');
+                        dateGroup.className = 'fixture-date-group';
                         let dgHtml =
                             `<div class="fixture-date-label">${days[d.getDay()]}, ${d.getDate()} ${ML[mo]||mo} ${y}${isPast?' · Played':''}</div>`;
                         for (const fix of grp[dateStr]) {
                             const hIco = getTeamIconHtml(fix.home, 'team-icon-lg');
                             const aIco = getTeamIconHtml(fix.away, 'team-icon-lg');
-                            dgHtml += `<div class="fixture-card"><div class="fixture-tournament-label">${escapeHtml(fix.tournament)}</div>
-                        <div class="fixture-match-row">
-                          <div class="fixture-team-side">${hIco}<span class="fixture-team-name">${escapeHtml(fix.home)}</span></div>
-                          <div class="fixture-vs">VS</div>
-                          <div class="fixture-team-side">${aIco}<span class="fixture-team-name">${escapeHtml(fix.away)}</span></div>
-                        </div></div>`;
+                            dgHtml += `<div class="fixture-card">
+                      <div class="fixture-tournament-label">${escapeHtml(fix.tournament)}</div>
+                      <div class="fixture-match-row">
+                        <div class="fixture-team-side">${hIco}<span class="fixture-team-name">${escapeHtml(fix.home)}</span></div>
+                        <div class="fixture-vs">VS</div>
+                        <div class="fixture-team-side">${aIco}<span class="fixture-team-name">${escapeHtml(fix.away)}</span></div>
+                      </div>
+                    </div>`;
                         }
-                        dg.innerHTML = dgHtml;
-                        ins.after(dg);
-                        ins = dg;
+                        dateGroup.innerHTML = dgHtml;
+                        insertAfter.after(dateGroup);
+                        insertAfter = dateGroup;
                     }
                 }
             }
+
             document.getElementById('fixTeamFilter')?.addEventListener('change', applyFixtureFilters);
             document.getElementById('fixMonthFilter')?.addEventListener('change', applyFixtureFilters);
             document.getElementById('clearFixBtn')?.addEventListener('click', () => {
@@ -2711,6 +3045,139 @@
 
         // ─── RENDER RESULTS ───
         async function renderResults() {
+            const card = document.getElementById('contentCard');
+
+            // ─── Sub-tabs ───
+            const subTabsHtml = `
+              <div class="sub-tabs-row">
+                <button class="sub-tab-btn ${activeResultsStage === 'group' ? 'active' : ''}" data-stage="group">Group Stage</button>
+                <button class="sub-tab-btn ${activeResultsStage === 'knockout' ? 'active' : ''}" data-stage="knockout">Knockout Stage</button>
+              </div>
+            `;
+
+            // ─── KNOCKOUT RESULTS ───
+            if (activeResultsStage === 'knockout') {
+                await loadKnockoutResults();
+
+                let bracketHtml = '';
+                if (knockoutBracketImage) {
+                    bracketHtml =
+                        `<div class="bracket-image-container"><img src="${knockoutBracketImage}" alt="Knockout Bracket"></div>`;
+                } else {
+                    bracketHtml =
+                        `<div class="bracket-image-container"><div class="bracket-placeholder"><div class="bp-icon">🏆</div>No bracket image uploaded</div></div>`;
+                }
+                if (isAdmin) {
+                    bracketHtml +=
+                        `<div style="text-align:center;margin-bottom:20px;"><button class="add-btn" id="uploadBracketResultsBtn">📤 Upload Bracket Image</button></div>`;
+                }
+
+                const mdFilter = document.getElementById('koMdFilter')?.value || 'all';
+                const teamFilter = document.getElementById('koTeamFilter')?.value || 'all';
+
+                const allMds = [...new Set(knockoutResults.map(r => r.md).filter(m => m != null))].sort((a, b) => a - b);
+                const allTeams = [...new Set(knockoutResults.map(r => [r.homeTeam, r.awayTeam]).flat().filter(Boolean))]
+                .sort();
+
+                let filtered = [...knockoutResults];
+                if (mdFilter !== 'all') filtered = filtered.filter(r => r.md == mdFilter);
+                if (teamFilter !== 'all') filtered = filtered.filter(r => r.homeTeam === teamFilter || r.awayTeam ===
+                    teamFilter);
+                filtered.sort((a, b) => (b.md || 0) - (a.md || 0));
+
+                let html = subTabsHtml + bracketHtml;
+
+                html += `<div class="filters-bar">
+                  <div class="filter-group"><label>Matchday</label><select id="koMdFilter"><option value="all">All</option>${allMds.map(m=>`<option value="${m}" ${mdFilter==m?'selected':''}>MD ${m}</option>`).join('')}</select></div>
+                  <div class="filter-group"><label>Team</label><select id="koTeamFilter"><option value="all">All Teams</option>${allTeams.map(t=>`<option value="${t}" ${teamFilter===t?'selected':''}>${t}</option>`).join('')}</select></div>
+                  <div class="filter-group"><button id="clearKoResultsBtn">Clear Filters</button></div>
+                  <div class="filter-stats">${filtered.length} match${filtered.length!==1?'es':''} found</div>
+                  ${isAdmin ? `<button class="add-result-top-btn" id="addKoResultBtn">+ Add Knockout Result</button>` : ''}
+                </div>`;
+
+                if (!filtered.length) {
+                    html +=
+                    '<div class="empty-state"><div class="empty-icon">🏆</div><p>No knockout results</p></div>';
+                } else {
+                    html += '<div class="matches-list">';
+                    filtered.forEach((r, i) => {
+                        const forfeit = r.forfeitType || 'none';
+                        let scoreHtml = '';
+                        if (forfeit === 'no_contest') {
+                            scoreHtml =
+                                `<div class="forfeit-display">F — F</div><div class="aggregate-text">No Contest</div>`;
+                        } else if (forfeit === 'forfeit' || forfeit === 'forfeit_no_reply' || forfeit ===
+                            'forfeit_agreement') {
+                            scoreHtml =
+                                `<div class="score-display">${r.homeScore??'?'} — ${r.awayScore??'?'}</div><div class="aggregate-text">Forfeit</div>`;
+                        } else {
+                            scoreHtml = `<div class="score-display">${r.homeScore??'?'} — ${r.awayScore??'?'}</div>`;
+                        }
+                        const hIco = getTeamIconHtml(r.homeTeam, 'team-icon-lg');
+                        const aIco = getTeamIconHtml(r.awayTeam, 'team-icon-lg');
+                        html += `<div class="knockout-result-card" style="animation-delay:${i*0.05}s">
+                    <div class="match-row">
+                      <div class="team-side">${hIco}<span class="team-name-big">${escapeHtml(r.homeTeam||'')}</span></div>
+                      <div class="match-center">${scoreHtml}</div>
+                      <div class="team-side">${aIco}<span class="team-name-big">${escapeHtml(r.awayTeam||'')}</span></div>
+                    </div>
+                    <div class="match-meta">
+                      ${r.md ? `<span class="meta-tag">MD ${r.md}</span>` : ''}
+                      ${r.round ? `<span class="meta-tag">${escapeHtml(r.round)}</span>` : ''}
+                      ${r.date ? `<span class="meta-tag">${escapeHtml(r.date)}</span>` : ''}
+                      ${r.venue ? `<span class="meta-tag">${escapeHtml(r.venue)}</span>` : ''}
+                      ${r.aggregate ? `<span class="meta-tag">${escapeHtml(r.aggregate)}</span>` : ''}
+                    </div>
+                    ${isAdmin ? `<div class="admin-row">
+                      <button class="btn-sm btn-edit ko-edit-btn" data-key="${r.key}">Edit</button>
+                      <button class="btn-sm btn-delete ko-del-btn" data-key="${r.key}">Delete</button>
+                    </div>` : ''}
+                  </div>`;
+                    });
+                    html += '</div>';
+                }
+
+                card.innerHTML = html;
+
+                // Sub-tab switching
+                card.querySelectorAll('.sub-tab-btn[data-stage]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        activeResultsStage = btn.dataset.stage;
+                        renderResults();
+                    });
+                });
+
+                document.getElementById('koMdFilter')?.addEventListener('change', () => renderResults());
+                document.getElementById('koTeamFilter')?.addEventListener('change', () => renderResults());
+                document.getElementById('clearKoResultsBtn')?.addEventListener('click', () => {
+                    document.getElementById('koMdFilter').value = 'all';
+                    document.getElementById('koTeamFilter').value = 'all';
+                    renderResults();
+                });
+                document.getElementById('addKoResultBtn')?.addEventListener('click', () => openKnockoutResultForm(null));
+                document.getElementById('uploadBracketResultsBtn')?.addEventListener('click', uploadBracketImage);
+
+                if (isAdmin) {
+                    card.querySelectorAll('.ko-edit-btn').forEach(btn => {
+                        btn.onclick = () => {
+                            const r = knockoutResults.find(x => x.key === btn.dataset.key);
+                            if (r) openKnockoutResultForm(r);
+                        };
+                    });
+                    card.querySelectorAll('.ko-del-btn').forEach(btn => {
+                        btn.onclick = async () => {
+                            if (!confirm('Delete this knockout result?')) return;
+                            await db.ref(sp(currentSeasonId, `knockout_results/${btn.dataset.key}`))
+                                .remove();
+                            renderResults();
+                        };
+                    });
+                }
+
+                return;
+            }
+
+            // ─── GROUP STAGE RESULTS ───
             const allResults = [];
             for (const gid in groupsData) {
                 const rSnap = await db.ref(sp(currentSeasonId, `groups/${gid}/results`)).once('value');
@@ -2719,62 +3186,79 @@
                     allResults.push({ key, groupId: gid, groupName: groupsData[gid]?.name || gid, ...val });
                 }
             }
-            const genSnap = await db.ref(sp(currentSeasonId, 'general_results')).once('value');
-            const genData = genSnap.val() || {};
-            for (const [key, val] of Object.entries(genData)) {
-                allResults.push({ key, groupId: null, groupName: 'League Phase', ...val });
-            }
+
             const mdFilter = document.getElementById('mdResultFilter')?.value || 'all';
             const teamFilter = document.getElementById('teamResultFilter')?.value || 'all';
+
             const allMds = [...new Set(allResults.map(r => r.md).filter(m => m != null))].sort((a, b) => a - b);
             const allTeams = [...new Set(allResults.map(r => [r.homeTeam, r.awayTeam]).flat().filter(Boolean))].sort();
+
             let filtered = [...allResults];
             if (mdFilter !== 'all') filtered = filtered.filter(r => r.md == mdFilter);
             if (teamFilter !== 'all') filtered = filtered.filter(r => r.homeTeam === teamFilter || r.awayTeam ===
-            teamFilter);
+                teamFilter);
             filtered.sort((a, b) => (b.md || 0) - (a.md || 0));
-            let html =
-                `<div class="filters-bar">
-            <div class="filter-group"><label>Matchday</label><select id="mdResultFilter"><option value="all">All Matchdays</option>${allMds.map(m=>`<option value="${m}" ${mdFilter==m?'selected':''}>Matchday ${m}</option>`).join('')}</select></div>
-            <div class="filter-group"><label>Team</label><select id="teamResultFilter"><option value="all">All Teams</option>${allTeams.map(t=>`<option value="${t}" ${teamFilter===t?'selected':''}>${t}</option>`).join('')}</select></div>
-            <div class="filter-group"><button id="clearResultsBtn">Clear Filters</button></div>
-            <div class="filter-stats">${filtered.length} match${filtered.length!==1?'es':''} found</div>
-            ${isAdmin?`<button class="add-result-top-btn" id="addResultBtn">+ Add Result</button>`:''}
-          </div>`;
-            if (!filtered.length) { html +=
-                '<div class="empty-state"><div class="empty-icon">📋</div><p>No results found</p></div>'; } else {
+
+            let html = subTabsHtml;
+
+            html += `<div class="filters-bar">
+              <div class="filter-group"><label>Matchday</label><select id="mdResultFilter"><option value="all">All Matchdays</option>${allMds.map(m=>`<option value="${m}" ${mdFilter==m?'selected':''}>Matchday ${m}</option>`).join('')}</select></div>
+              <div class="filter-group"><label>Team</label><select id="teamResultFilter"><option value="all">All Teams</option>${allTeams.map(t=>`<option value="${t}" ${teamFilter===t?'selected':''}>${t}</option>`).join('')}</select></div>
+              <div class="filter-group"><button id="clearResultsBtn">Clear Filters</button></div>
+              <div class="filter-stats">${filtered.length} match${filtered.length!==1?'es':''} found</div>
+              ${isAdmin ? `<button class="add-result-top-btn" id="addResultBtn">+ Add Result</button>` : ''}
+            </div>`;
+
+            if (!filtered.length) {
+                html += '<div class="empty-state"><div class="empty-icon">📋</div><p>No results found</p></div>';
+            } else {
                 html += '<div class="matches-list">';
                 filtered.forEach((r, i) => {
                     const forfeit = r.forfeitType || 'none';
                     let scoreHtml = '';
-                    if (forfeit === 'no_contest') scoreHtml =
-                        `<div class="forfeit-display">F — F</div><div class="aggregate-text">No Contest</div>`;
-                    else if (forfeit === 'forfeit' || forfeit === 'forfeit_no_reply' || forfeit ===
-                        'forfeit_agreement') scoreHtml =
-                        `<div class="score-display">${r.homeScore??'?'} — ${r.awayScore??'?'}</div><div class="aggregate-text">Forfeit</div>`;
-                    else scoreHtml =
-                    `<div class="score-display">${r.homeScore??'?'} — ${r.awayScore??'?'}</div>`;
+                    if (forfeit === 'no_contest') {
+                        scoreHtml =
+                            `<div class="forfeit-display">F — F</div><div class="aggregate-text">No Contest</div>`;
+                    } else if (forfeit === 'forfeit' || forfeit === 'forfeit_no_reply' || forfeit ===
+                        'forfeit_agreement') {
+                        scoreHtml =
+                            `<div class="score-display">${r.homeScore??'?'} — ${r.awayScore??'?'}</div><div class="aggregate-text">Forfeit</div>`;
+                    } else {
+                        scoreHtml = `<div class="score-display">${r.homeScore??'?'} — ${r.awayScore??'?'}</div>`;
+                    }
                     const hIco = getTeamIconHtml(r.homeTeam, 'team-icon-lg');
                     const aIco = getTeamIconHtml(r.awayTeam, 'team-icon-lg');
                     html += `<div class="match-card" style="animation-delay:${i*0.05}s">
-                <div class="match-row">
-                  <div class="team-side">${hIco}<span class="team-name-big">${escapeHtml(r.homeTeam||'')}</span></div>
-                  <div class="match-center">${scoreHtml}</div>
-                  <div class="team-side">${aIco}<span class="team-name-big">${escapeHtml(r.awayTeam||'')}</span></div>
-                </div>
-                <div class="match-meta">
-                  ${r.md?`<span class="meta-tag">MD ${r.md}</span>`:''}
-                  <span class="meta-tag">${escapeHtml(r.groupName)}</span>
-                </div>
-                ${isAdmin?`<div class="admin-row">
-                  <button class="btn-sm btn-edit" data-gid="${r.groupId}" data-key="${r.key}">Edit</button>
-                  <button class="btn-sm btn-delete" data-gid="${r.groupId}" data-key="${r.key}">Delete</button>
-                </div>`:''}
-              </div>`;
+                  <div class="match-row">
+                    <div class="team-side">${hIco}<span class="team-name-big">${escapeHtml(r.homeTeam||'')}</span></div>
+                    <div class="match-center">${scoreHtml}</div>
+                    <div class="team-side">${aIco}<span class="team-name-big">${escapeHtml(r.awayTeam||'')}</span></div>
+                  </div>
+                  <div class="match-meta">
+                    ${r.md ? `<span class="meta-tag">MD ${r.md}</span>` : ''}
+                    <span class="meta-tag">${escapeHtml(r.groupName)}</span>
+                    ${r.date ? `<span class="meta-tag">${escapeHtml(r.date)}</span>` : ''}
+                    ${r.venue ? `<span class="meta-tag">${escapeHtml(r.venue)}</span>` : ''}
+                    ${r.aggregate ? `<span class="meta-tag">${escapeHtml(r.aggregate)}</span>` : ''}
+                  </div>
+                  ${isAdmin ? `<div class="admin-row">
+                    <button class="btn-sm btn-edit" data-gid="${r.groupId}" data-key="${r.key}">Edit</button>
+                    <button class="btn-sm btn-delete" data-gid="${r.groupId}" data-key="${r.key}">Delete</button>
+                  </div>` : ''}
+                </div>`;
                 });
                 html += '</div>';
             }
-            document.getElementById('contentCard').innerHTML = html;
+
+            card.innerHTML = html;
+
+            card.querySelectorAll('.sub-tab-btn[data-stage]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeResultsStage = btn.dataset.stage;
+                    renderResults();
+                });
+            });
+
             document.getElementById('mdResultFilter')?.addEventListener('change', () => renderResults());
             document.getElementById('teamResultFilter')?.addEventListener('change', () => renderResults());
             document.getElementById('clearResultsBtn')?.addEventListener('click', () => {
@@ -2783,11 +3267,12 @@
                 renderResults();
             });
             document.getElementById('addResultBtn')?.addEventListener('click', () => openResultForm(null));
+
             if (isAdmin) {
                 document.querySelectorAll('#contentCard .btn-edit[data-key]').forEach(btn => {
                     btn.onclick = async () => {
-                        const rSnap = await db.ref(sp(currentSeasonId, `groups/${btn.dataset.gid}/results/${
-                            btn.dataset.key}`)).once('value');
+                        const rSnap = await db.ref(sp(currentSeasonId, `groups/${btn.dataset.gid}/results/${btn
+                            .dataset.key}`)).once('value');
                         const r = rSnap.val();
                         if (r) openResultForm({ key: btn.dataset.key, groupId: btn.dataset.gid, ...r });
                     };
@@ -2803,16 +3288,11 @@
             }
         }
 
-        // ─── ADMIN RESULT FORM — REMOVE GROUP SELECTOR, USE FLAT TEAM LIST ───
-        let editingResultKey = null,
-            editingResultGroupId = null;
+        // ─── KNOCKOUT RESULT FORM ───
+        let editingKoKey = null;
 
-        async function openResultForm(r) {
-            editingResultKey = r?.key || null;
-            editingResultGroupId = r?.groupId || null;
-            tempScorersHome = r?.goalScorers?.home ? [...r.goalScorers.home] : [];
-            tempScorersAway = r?.goalScorers?.away ? [...r.goalScorers.away] : [];
-
+        function openKnockoutResultForm(r) {
+            editingKoKey = r?.key || null;
             const allTeams = [];
             for (const gid in groupsData) {
                 const teams = groupsData[gid]?.teams || {};
@@ -2822,57 +3302,257 @@
             }
             const uniqueTeams = [...new Set(allTeams)].sort();
 
-            let selectedHome = r?.homeTeam || '';
-            let selectedAway = r?.awayTeam || '';
-            let hsVal = r?.homeScore ?? 0;
-            let asVal = r?.awayScore ?? 0;
-            let forfeitVal = r?.forfeitType || 'none';
-            let mdVal = r?.md || '';
+            const forfeitOpts = ['none', 'no_contest', 'forfeit', 'forfeit_no_reply', 'forfeit_agreement'].map(f =>
+                `<option value="${f}" ${r?.forfeitType===f?'selected':''}>${f}</option>`
+            ).join('');
 
-            const renderResultForm = () => {
-                const homeOpts = uniqueTeams.map(t =>
-                    `<option value="${t}" ${selectedHome===t?'selected':''}>${t}</option>`
-                ).join('');
-                const awayOpts = uniqueTeams.map(t =>
-                    `<option value="${t}" ${selectedAway===t?'selected':''}>${t}</option>`
-                ).join('');
-                const hsh = tempScorersHome.map((s, i) =>
-                    `<div class="scorer-badge">${escapeHtml(s.player)} (${s.goals})<button class="remove-scorer" data-side="home" data-idx="${i}">x</button></div>`
-                ).join('');
-                const ash = tempScorersAway.map((s, i) =>
-                    `<div class="scorer-badge">${escapeHtml(s.player)} (${s.goals})<button class="remove-scorer" data-side="away" data-idx="${i}">x</button></div>`
-                ).join('');
+            const homeScorers = r?.goalScorers?.home || [];
+            const awayScorers = r?.goalScorers?.away || [];
+            tempScorersHome = [...homeScorers];
+            tempScorersAway = [...awayScorers];
 
-                showModal(`
-              <h3>${r?'Edit Result':'Add Result'}</h3>
-              <label>Home Team</label><select id="rHome"><option value="">Select Home Team</option>${homeOpts}</select>
-              <label>Away Team</label><select id="rAway"><option value="">Select Away Team</option>${awayOpts}</select>
-              <label>Home Score</label><input id="rHS" type="number" value="${hsVal}">
-              <label>Away Score</label><input id="rAS" type="number" value="${asVal}">
+            const renderScorers = (side) => {
+                const list = side === 'home' ? tempScorersHome : tempScorersAway;
+                return list.map((s, idx) =>
+                    `<div class="scorer-badge">${escapeHtml(s.player)} (${s.goals}) <button class="remove-scorer" data-side="${side}" data-idx="${idx}">x</button></div>`
+                ).join('');
+            };
+
+            showModal(`
+              <h3>${r ? 'Edit' : 'Add'} Knockout Result</h3>
+              <label>Home Team</label>
+              <select id="koHomeTeam">
+                <option value="">Select</option>
+                ${uniqueTeams.map(t=>`<option value="${t}" ${r?.homeTeam===t?'selected':''}>${t}</option>`).join('')}
+              </select>
+              <label>Away Team</label>
+              <select id="koAwayTeam">
+                <option value="">Select</option>
+                ${uniqueTeams.map(t=>`<option value="${t}" ${r?.awayTeam===t?'selected':''}>${t}</option>`).join('')}
+              </select>
+              <label>Home Score</label>
+              <input id="koHomeScore" type="number" value="${r?.homeScore ?? 0}">
+              <label>Away Score</label>
+              <input id="koAwayScore" type="number" value="${r?.awayScore ?? 0}">
+              <label>Forfeit Type</label>
+              <select id="koForfeit">${forfeitOpts}</select>
+              <label>Matchday / Round</label>
+              <input id="koRound" type="text" value="${escapeHtml(r?.round || r?.md || '')}" placeholder="e.g. Quarter Final">
+              <label>Date</label>
+              <input id="koDate" type="text" value="${escapeHtml(r?.date || '')}" placeholder="YYYY-MM-DD">
+              <label>Venue</label>
+              <input id="koVenue" type="text" value="${escapeHtml(r?.venue || '')}">
+              <label>Aggregate</label>
+              <input id="koAggregate" type="text" value="${escapeHtml(r?.aggregate || '')}" placeholder="e.g. 3-2 on agg">
+
+              <div class="scorer-section">
+                <h4>Home Scorers</h4>
+                <div style="display:flex;gap:10px;margin-bottom:10px;">
+                  <input type="text" id="koHomeScorerName" placeholder="Player name" style="flex:2;">
+                  <input type="number" id="koHomeScorerGoals" placeholder="Goals" value="1" style="width:90px;">
+                  <button id="koAddHomeScorer" class="modal-btn-primary" style="padding:10px 20px;flex-shrink:0;">Add</button>
+                </div>
+                <div id="koHomeScorerList" class="scorer-list">${renderScorers('home')}</div>
+              </div>
+              <div class="scorer-section">
+                <h4>Away Scorers</h4>
+                <div style="display:flex;gap:10px;margin-bottom:10px;">
+                  <input type="text" id="koAwayScorerName" placeholder="Player name" style="flex:2;">
+                  <input type="number" id="koAwayScorerGoals" placeholder="Goals" value="1" style="width:90px;">
+                  <button id="koAddAwayScorer" class="modal-btn-primary" style="padding:10px 20px;flex-shrink:0;">Add</button>
+                </div>
+                <div id="koAwayScorerList" class="scorer-list">${renderScorers('away')}</div>
+              </div>
+
+              <div class="modal-btns">
+                <button class="modal-btn-primary" id="saveKoResultBtn">Save</button>
+                <button class="modal-btn-cancel" id="cancelKoResultBtn">Cancel</button>
+              </div>
+            `);
+
+            document.getElementById('koAddHomeScorer').onclick = () => {
+                const name = document.getElementById('koHomeScorerName').value.trim();
+                const goals = parseInt(document.getElementById('koHomeScorerGoals').value) || 1;
+                if (!name) return;
+                tempScorersHome.push({ player: name, goals });
+                document.getElementById('koHomeScorerName').value = '';
+                document.getElementById('koHomeScorerGoals').value = '1';
+                renderKoScorers('home');
+            };
+            document.getElementById('koAddAwayScorer').onclick = () => {
+                const name = document.getElementById('koAwayScorerName').value.trim();
+                const goals = parseInt(document.getElementById('koAwayScorerGoals').value) || 1;
+                if (!name) return;
+                tempScorersAway.push({ player: name, goals });
+                document.getElementById('koAwayScorerName').value = '';
+                document.getElementById('koAwayScorerGoals').value = '1';
+                renderKoScorers('away');
+            };
+            document.getElementById('cancelKoResultBtn').onclick = closeModal;
+
+            document.getElementById('saveKoResultBtn').onclick = async () => {
+                const home = document.getElementById('koHomeTeam').value;
+                const away = document.getElementById('koAwayTeam').value;
+                const hs = parseInt(document.getElementById('koHomeScore').value) || 0;
+                const as2 = parseInt(document.getElementById('koAwayScore').value) || 0;
+                const forfeit = document.getElementById('koForfeit').value;
+                const round = document.getElementById('koRound').value.trim();
+                const date = document.getElementById('koDate').value.trim();
+                const venue = document.getElementById('koVenue').value.trim();
+                const aggregate = document.getElementById('koAggregate').value.trim();
+
+                if (!home || !away) { alert('Select both teams'); return; }
+                if (home === away) { alert('Teams cannot be the same'); return; }
+
+                const matchText = formatResultText(home, hs, away, as2, forfeit);
+
+                const data = {
+                    matchText,
+                    homeTeam: home,
+                    awayTeam: away,
+                    homeScore: hs,
+                    awayScore: as2,
+                    forfeitType: forfeit,
+                    md: parseInt(round) || 0,
+                    round: round,
+                    date: date,
+                    venue: venue,
+                    aggregate: aggregate,
+                    goalScorers: { home: tempScorersHome, away: tempScorersAway }
+                };
+
+                const path = sp(currentSeasonId, 'knockout_results');
+                if (editingKoKey) await db.ref(`${path}/${editingKoKey}`).set(data);
+                else await db.ref(path).push(data);
+
+                closeModal();
+                renderResults();
+            };
+        }
+
+        function renderKoScorers(side) {
+            const list = side === 'home' ? tempScorersHome : tempScorersAway;
+            const container = document.getElementById(`ko${side.charAt(0).toUpperCase()+side.slice(1)}ScorerList`);
+            if (!container) return;
+            container.innerHTML = list.map((s, idx) =>
+                `<div class="scorer-badge">${escapeHtml(s.player)} (${s.goals}) <button class="remove-scorer" data-side="${side}" data-idx="${idx}">x</button></div>`
+            ).join('');
+            container.querySelectorAll('.remove-scorer').forEach(btn => {
+                btn.onclick = () => {
+                    const idx = parseInt(btn.dataset.idx);
+                    if (btn.dataset.side === 'home') tempScorersHome.splice(idx, 1);
+                    else tempScorersAway.splice(idx, 1);
+                    renderKoScorers(btn.dataset.side);
+                };
+            });
+        }
+
+        // ─── UPLOAD BRACKET IMAGE ───
+        async function uploadBracketImage() {
+            const file = await pickFile('image/*');
+            if (!file) return;
+            showModal(
+                `<h3>Uploading…</h3><div class="loading-spinner"><div class="spinner"></div><span>Please wait</span></div>`
+                );
+            try {
+                const url = await uploadToImgBB(file);
+                await db.ref(`${basePath}/settings/knockoutBracketImage`).set(url);
+                knockoutBracketImage = url;
+                closeModal();
+                renderFixtures();
+                alert('Bracket image updated!');
+            } catch (e) { closeModal();
+                alert('Upload failed: ' + e.message); }
+        }
+
+        // ─── LOAD KNOCKOUT DATA ───
+        async function loadKnockoutBracketImage() {
+            const snap = await db.ref(`${basePath}/settings/knockoutBracketImage`).once('value');
+            knockoutBracketImage = snap.val() || '';
+        }
+
+        async function loadKnockoutResults() {
+            const snap = await db.ref(sp(currentSeasonId, 'knockout_results')).once('value');
+            const data = snap.val() || {};
+            knockoutResults = Object.entries(data).map(([k, v]) => ({ key: k, ...v }));
+        }
+
+        // ─── Result Form ───
+        let editingResultKey = null,
+            editingResultGroupId = null;
+
+        async function openResultForm(r) {
+            editingResultKey = r?.key || null;
+            editingResultGroupId = r?.groupId || null;
+            tempScorersHome = r?.goalScorers?.home ? [...r.goalScorers.home] : [];
+            tempScorersAway = r?.goalScorers?.away ? [...r.goalScorers.away] : [];
+
+            const groupOpts = Object.entries(groupsData).map(([gid, g]) =>
+                `<option value="${gid}" ${editingResultGroupId===gid?'selected':''}>${escapeHtml(g.name||gid)}</option>`
+            ).join('');
+
+            let homeOpts = '<option value="">Home Team</option>';
+            let awayOpts = '<option value="">Away Team</option>';
+            if (editingResultGroupId && groupsData[editingResultGroupId]) {
+                const teams = Object.values(groupsData[editingResultGroupId].teams || {}).map(t => t.name).sort();
+                teams.forEach(t => {
+                    homeOpts += `<option value="${t}" ${r?.homeTeam===t?'selected':''}>${t}</option>`;
+                    awayOpts += `<option value="${t}" ${r?.awayTeam===t?'selected':''}>${t}</option>`;
+                });
+            }
+
+            const renderScorers = (side) => {
+                const list = side === 'home' ? tempScorersHome : tempScorersAway;
+                return list.map((s, idx) =>
+                    `<div class="scorer-badge">${escapeHtml(s.player)} (${s.goals}) <button class="remove-scorer" data-side="${side}" data-idx="${idx}">x</button></div>`
+                ).join('');
+            };
+
+            showModal(`
+              <h3>${r ? 'Edit Result' : 'Add Result'}</h3>
+              <label>Group</label>
+              <select id="rGroup"><option value="">Select Group</option>${groupOpts}</select>
+              <label>Home Team</label>
+              <select id="rHome">${homeOpts}</select>
+              <label>Away Team</label>
+              <select id="rAway">${awayOpts}</select>
+              <label>Home Score</label>
+              <input id="rHS" type="number" value="${r?.homeScore ?? 0}">
+              <label>Away Score</label>
+              <input id="rAS" type="number" value="${r?.awayScore ?? 0}">
               <label>Forfeit Type</label>
               <select id="rForfeit">
-                <option value="none" ${forfeitVal==='none'?'selected':''}>Normal Result</option>
-                <option value="no_contest" ${forfeitVal==='no_contest'?'selected':''}>No Contest (F-F)</option>
-                <option value="forfeit_no_reply" ${forfeitVal==='forfeit_no_reply'?'selected':''}>Forfeit Win</option>
+                <option value="none"       ${(!r?.forfeitType||r.forfeitType==='none')?'selected':''}>Normal Result</option>
+                <option value="no_contest" ${r?.forfeitType==='no_contest'?'selected':''}>No Contest (F-F)</option>
+                <option value="forfeit"    ${r?.forfeitType==='forfeit'?'selected':''}>Forfeit</option>
+                <option value="forfeit_no_reply" ${r?.forfeitType==='forfeit_no_reply'?'selected':''}>Forfeit - No Reply</option>
+                <option value="forfeit_agreement" ${r?.forfeitType==='forfeit_agreement'?'selected':''}>Forfeit - Agreement</option>
               </select>
-              <label>Matchday</label><input id="rMd" type="number" value="${mdVal}">
+              <label>Matchday</label>
+              <input id="rMd" type="number" value="${r?.md || ''}">
+              <label>Date</label>
+              <input id="rDate" type="text" value="${escapeHtml(r?.date || '')}" placeholder="YYYY-MM-DD">
+              <label>Venue</label>
+              <input id="rVenue" type="text" value="${escapeHtml(r?.venue || '')}">
+              <label>Aggregate</label>
+              <input id="rAggregate" type="text" value="${escapeHtml(r?.aggregate || '')}" placeholder="e.g. 3-2 on agg">
               <div class="scorer-section">
                 <h4>Home Scorers</h4>
                 <div style="display:flex;gap:10px;margin-bottom:10px;">
                   <input type="text" id="homeScorerName" placeholder="Player name" style="flex:2;">
-                  <input type="number" id="homeScorerGoals" value="1" style="width:90px;">
-                  <button id="addHomeScorer" class="modal-btn-primary" style="padding:10px 20px;">Add</button>
+                  <input type="number" id="homeScorerGoals" placeholder="Goals" value="1" style="width:90px;">
+                  <button id="addHomeScorer" class="modal-btn-primary" style="padding:10px 20px;flex-shrink:0;">Add</button>
                 </div>
-                <div id="homeScorerList" class="scorer-list">${hsh}</div>
+                <div id="homeScorerList" class="scorer-list">${renderScorers('home')}</div>
               </div>
               <div class="scorer-section">
                 <h4>Away Scorers</h4>
                 <div style="display:flex;gap:10px;margin-bottom:10px;">
                   <input type="text" id="awayScorerName" placeholder="Player name" style="flex:2;">
-                  <input type="number" id="awayScorerGoals" value="1" style="width:90px;">
-                  <button id="addAwayScorer" class="modal-btn-primary" style="padding:10px 20px;">Add</button>
+                  <input type="number" id="awayScorerGoals" placeholder="Goals" value="1" style="width:90px;">
+                  <button id="addAwayScorer" class="modal-btn-primary" style="padding:10px 20px;flex-shrink:0;">Add</button>
                 </div>
-                <div id="awayScorerList" class="scorer-list">${ash}</div>
+                <div id="awayScorerList" class="scorer-list">${renderScorers('away')}</div>
               </div>
               <div class="modal-btns">
                 <button class="modal-btn-primary" id="saveResultBtn">Save</button>
@@ -2880,98 +3560,101 @@
               </div>
             `);
 
-                document.getElementById('rHome').addEventListener('change', e => { selectedHome = e.target.value; });
-                document.getElementById('rAway').addEventListener('change', e => { selectedAway = e.target.value; });
-                document.getElementById('rHS').addEventListener('input', e => { hsVal = parseInt(e.target.value) || 0; });
-                document.getElementById('rAS').addEventListener('input', e => { asVal = parseInt(e.target.value) || 0; });
-                document.getElementById('rForfeit').addEventListener('change', e => { forfeitVal = e.target.value; });
-                document.getElementById('rMd').addEventListener('input', e => { mdVal = parseInt(e.target.value) || 0; });
+            renderScorerList('home');
+            renderScorerList('away');
 
-                document.getElementById('addHomeScorer').onclick = () => {
-                    const name = document.getElementById('homeScorerName').value.trim();
-                    const goals = parseInt(document.getElementById('homeScorerGoals').value) || 1;
-                    if (!name) return;
-                    tempScorersHome.push({ player: name, goals });
-                    renderResultForm();
-                };
-                document.getElementById('addAwayScorer').onclick = () => {
-                    const name = document.getElementById('awayScorerName').value.trim();
-                    const goals = parseInt(document.getElementById('awayScorerGoals').value) || 1;
-                    if (!name) return;
-                    tempScorersAway.push({ player: name, goals });
-                    renderResultForm();
-                };
-                document.querySelectorAll('.remove-scorer[data-side]').forEach(btn => {
-                    btn.onclick = () => {
-                        const idx = parseInt(btn.dataset.idx);
-                        if (btn.dataset.side === 'home') tempScorersHome.splice(idx, 1);
-                        else tempScorersAway.splice(idx, 1);
-                        renderResultForm();
-                    };
-                });
-                document.getElementById('cancelResultBtn').onclick = closeModal;
-                document.getElementById('saveResultBtn').onclick = async () => {
-                    if (!selectedHome || !selectedAway) { alert('Select both teams'); return; }
-                    if (selectedHome === selectedAway) { alert('Teams cannot be the same'); return; }
-                    const hs = hsVal;
-                    const as2 = asVal;
-                    const forfeit = forfeitVal;
-                    const md = parseInt(mdVal) || 0;
-                    let matchText = `${selectedHome} ${hs} - ${as2} ${selectedAway}`;
-                    if (forfeit === 'no_contest') matchText =
-                    `${selectedHome} F - F ${selectedAway} (No Contest)`;
-                    else if (forfeit === 'forfeit_no_reply') matchText += ` (Forfeited - No Reply)`;
+            document.getElementById('rGroup').addEventListener('change', e => {
+                const gid = e.target.value;
+                const teams = gid && groupsData[gid] ? Object.values(groupsData[gid].teams || {}).map(t => t.name)
+                    .sort() : [];
+                const opts = '<option value="">Select</option>' + teams.map(t =>
+                    `<option value="${t}">${t}</option>`).join('');
+                document.getElementById('rHome').innerHTML = opts;
+                document.getElementById('rAway').innerHTML = opts;
+                editingResultGroupId = gid;
+            });
 
-                    const resultObj = {
-                        matchText,
-                        homeTeam: selectedHome,
-                        awayTeam: selectedAway,
-                        homeScore: hs,
-                        awayScore: as2,
-                        forfeitType: forfeit,
-                        md,
-                        goalScorers: { home: tempScorersHome, away: tempScorersAway }
-                    };
-
-                    let detectedGid = null;
-                    for (const gid in groupsData) {
-                        const teams = groupsData[gid]?.teams || {};
-                        let hasHome = false,
-                            hasAway = false;
-                        for (const k in teams) {
-                            if (teams[k]?.name === selectedHome) hasHome = true;
-                            if (teams[k]?.name === selectedAway) hasAway = true;
-                        }
-                        if (hasHome && hasAway) { detectedGid = gid; break; }
-                    }
-
-                    if (detectedGid) {
-                        const path = sp(currentSeasonId, `groups/${detectedGid}/results`);
-                        if (editingResultKey) await db.ref(`${path}/${editingResultKey}`).set(resultObj);
-                        else {
-                            await db.ref(path).push(resultObj);
-                            await updateGroupTeamStats(detectedGid, selectedHome, selectedAway, hs, as2, forfeit);
-                        }
-                    } else {
-                        const path = sp(currentSeasonId, 'general_results');
-                        if (editingResultKey) await db.ref(`${path}/${editingResultKey}`).set(resultObj);
-                        else await db.ref(path).push(resultObj);
-                    }
-
-                    await applyScorersFromScan(tempScorersHome, selectedHome);
-                    await applyScorersFromScan(tempScorersAway, selectedAway);
-                    await applyAssistsFromScan([], selectedHome);
-                    await applyAssistsFromScan([], selectedAway);
-
-                    closeModal();
-                    await loadCurrentSeasonData();
-                    renderResults();
-                };
+            document.getElementById('addHomeScorer').onclick = () => {
+                const name = document.getElementById('homeScorerName').value.trim();
+                const goals = parseInt(document.getElementById('homeScorerGoals').value) || 1;
+                if (!name) return;
+                tempScorersHome.push({ player: name, goals });
+                renderScorerList('home');
+                document.getElementById('homeScorerName').value = '';
+                document.getElementById('homeScorerGoals').value = '1';
             };
-            renderResultForm();
+            document.getElementById('addAwayScorer').onclick = () => {
+                const name = document.getElementById('awayScorerName').value.trim();
+                const goals = parseInt(document.getElementById('awayScorerGoals').value) || 1;
+                if (!name) return;
+                tempScorersAway.push({ player: name, goals });
+                renderScorerList('away');
+                document.getElementById('awayScorerName').value = '';
+                document.getElementById('awayScorerGoals').value = '1';
+            };
+
+            document.getElementById('cancelResultBtn').onclick = closeModal;
+            document.getElementById('saveResultBtn').onclick = async () => {
+                const gid = document.getElementById('rGroup').value || editingResultGroupId;
+                const home = document.getElementById('rHome').value;
+                const away = document.getElementById('rAway').value;
+                const hs = parseInt(document.getElementById('rHS').value) || 0;
+                const as2 = parseInt(document.getElementById('rAS').value) || 0;
+                const forfeit = document.getElementById('rForfeit').value;
+                const md = parseInt(document.getElementById('rMd').value) || 0;
+                const date = document.getElementById('rDate').value.trim();
+                const venue = document.getElementById('rVenue').value.trim();
+                const aggregate = document.getElementById('rAggregate').value.trim();
+
+                if (!gid) { alert('Select a group'); return; }
+                if (!home || !away) { alert('Select both teams'); return; }
+                if (home === away) { alert('Teams cannot be the same'); return; }
+
+                const matchText = formatResultText(home, hs, away, as2, forfeit);
+
+                const resultObj = {
+                    matchText,
+                    homeTeam: home,
+                    awayTeam: away,
+                    homeScore: hs,
+                    awayScore: as2,
+                    forfeitType: forfeit,
+                    md,
+                    date,
+                    venue,
+                    aggregate,
+                    goalScorers: { home: tempScorersHome, away: tempScorersAway },
+                };
+
+                const path = sp(currentSeasonId, `groups/${gid}/results`);
+                if (editingResultKey) await db.ref(`${path}/${editingResultKey}`).set(resultObj);
+                else await db.ref(path).push(resultObj);
+
+                if (!editingResultKey) await updateGroupTeamStats(gid, home, away, hs, as2, forfeit);
+
+                closeModal();
+                await loadCurrentSeasonData();
+                renderResults();
+            };
         }
 
-        // ─── UPDATE GROUP TEAM STATS ───
+        function renderScorerList(side) {
+            const list = side === 'home' ? tempScorersHome : tempScorersAway;
+            const container = document.getElementById(`${side}ScorerList`);
+            if (!container) return;
+            container.innerHTML = list.map((s, idx) =>
+                `<div class="scorer-badge">${escapeHtml(s.player)} (${s.goals}) <button class="remove-scorer" data-side="${side}" data-idx="${idx}">x</button></div>`
+            ).join('');
+            container.querySelectorAll('.remove-scorer').forEach(btn => {
+                btn.onclick = () => {
+                    const idx = parseInt(btn.dataset.idx);
+                    if (btn.dataset.side === 'home') tempScorersHome.splice(idx, 1);
+                    else tempScorersAway.splice(idx, 1);
+                    renderScorerList(btn.dataset.side);
+                };
+            });
+        }
+
         async function updateGroupTeamStats(gid, homeTeam, awayTeam, hScore, aScore, forfeit) {
             const ref = db.ref(sp(currentSeasonId, `groups/${gid}/teams`));
             const snap = await ref.once('value');
@@ -2988,129 +3671,40 @@
             }
             if (!hData) hData = { name: homeTeam, p: 0, w: 0, d: 0, l: 0, gs: 0, gc: 0, gd: 0, pts: 0 };
             if (!aData) aData = { name: awayTeam, p: 0, w: 0, d: 0, l: 0, gs: 0, gc: 0, gd: 0, pts: 0 };
-
+            hData.p = (hData.p || 0) + 1;
+            aData.p = (aData.p || 0) + 1;
             if (forfeit === 'no_contest') {
-                hData.p = (hData.p || 0) + 1;
-                aData.p = (aData.p || 0) + 1;
+                // no stat change
             } else if (forfeit === 'forfeit' || forfeit === 'forfeit_no_reply' || forfeit === 'forfeit_agreement') {
-                // Winner = home team (they submitted the forfeit win, homeScore is always 3, awayScore 0)
-                // Winner gets: P+1, W+1, Pts+3. No GS/GC/GD changes.
-                // Loser gets: P+1, L+1, GC+3, GD-3. No GS change.
-                hData.p = (hData.p || 0) + 1;
-                hData.w = (hData.w || 0) + 1;
-                hData.pts = (hData.pts || 0) + 3;
-                aData.p = (aData.p || 0) + 1;
-                aData.l = (aData.l || 0) + 1;
-                aData.gc = (aData.gc || 0) + 3;
-                aData.gd = (aData.gd || 0) - 3;
+                if (hScore > aScore) { hData.pts += 3;
+                    hData.w++;
+                    aData.l++;
+                    aData.gd = (aData.gd || 0) - 3;
+                    aData.gc = (aData.gc || 0) + 3; } else if (aScore > hScore) { aData.pts += 3;
+                    aData.w++;
+                    hData.l++;
+                    hData.gd = (hData.gd || 0) - 3;
+                    hData.gc = (hData.gc || 0) + 3; }
             } else {
-                hData.p = (hData.p || 0) + 1;
-                aData.p = (aData.p || 0) + 1;
                 hData.gs = (hData.gs || 0) + hScore;
                 hData.gc = (hData.gc || 0) + aScore;
                 aData.gs = (aData.gs || 0) + aScore;
                 aData.gc = (aData.gc || 0) + hScore;
-                hData.gd = (hData.gd || 0) + (hScore - aScore);
-                aData.gd = (aData.gd || 0) + (aScore - hScore);
-                if (hScore > aScore) {
-                    hData.pts = (hData.pts || 0) + 3;
-                    hData.w = (hData.w || 0) + 1;
-                    aData.l = (aData.l || 0) + 1;
-                } else if (aScore > hScore) {
-                    aData.pts = (aData.pts || 0) + 3;
-                    aData.w = (aData.w || 0) + 1;
-                    hData.l = (hData.l || 0) + 1;
-                } else {
-                    hData.pts = (hData.pts || 0) + 1;
-                    aData.pts = (aData.pts || 0) + 1;
-                    hData.d = (hData.d || 0) + 1;
-                    aData.d = (aData.d || 0) + 1;
-                }
+                hData.gd = hData.gs - hData.gc;
+                aData.gd = aData.gs - aData.gc;
+                if (hScore > aScore) { hData.pts += 3;
+                    hData.w++;
+                    aData.l++; } else if (aScore > hScore) { aData.pts += 3;
+                    aData.w++;
+                    hData.l++; } else { hData.pts += 1;
+                    aData.pts += 1;
+                    hData.d++;
+                    aData.d++; }
             }
-
             if (!hKey) hKey = ref.push().key;
             if (!aKey) aKey = ref.push().key;
             await db.ref(sp(currentSeasonId, `groups/${gid}/teams/${hKey}`)).set(hData);
             await db.ref(sp(currentSeasonId, `groups/${gid}/teams/${aKey}`)).set(aData);
-        }
-
-        // ─── SCORERS & ASSISTS AUTO-MERGE ───
-        async function applyScorersFromScan(scorers, team) {
-            if (!scorers || !scorers.length) return;
-            const listRef = db.ref(`${basePath}/topScorer/list`);
-            const snap = await listRef.once('value');
-            const existing = snap.val() || {};
-
-            for (const s of scorers) {
-                const name = s.player?.trim();
-                const goals = s.goals || 1;
-                if (!name) continue;
-                let foundKey = null;
-                let foundData = null;
-                for (const [key, val] of Object.entries(existing)) {
-                    if (val.name === name && val.team === team) {
-                        foundKey = key;
-                        foundData = val;
-                        break;
-                    }
-                }
-                if (foundKey && foundData) {
-                    const newCount = (foundData.count || 0) + goals;
-                    await db.ref(`${basePath}/topScorer/list/${foundKey}`).set({
-                        ...foundData,
-                        count: newCount,
-                        name: foundData.name,
-                        team: foundData.team,
-                        imageUrl: foundData.imageUrl || ''
-                    });
-                } else {
-                    await listRef.push({
-                        name: name,
-                        team: team,
-                        count: goals,
-                        imageUrl: ''
-                    });
-                }
-            }
-        }
-
-        async function applyAssistsFromScan(assists, team) {
-            if (!assists || !assists.length) return;
-            const listRef = db.ref(`${basePath}/topAssistant/list`);
-            const snap = await listRef.once('value');
-            const existing = snap.val() || {};
-
-            for (const a of assists) {
-                const name = a.player?.trim();
-                const count = a.assists || 1;
-                if (!name) continue;
-                let foundKey = null;
-                let foundData = null;
-                for (const [key, val] of Object.entries(existing)) {
-                    if (val.name === name && val.team === team) {
-                        foundKey = key;
-                        foundData = val;
-                        break;
-                    }
-                }
-                if (foundKey && foundData) {
-                    const newCount = (foundData.count || 0) + count;
-                    await db.ref(`${basePath}/topAssistant/list/${foundKey}`).set({
-                        ...foundData,
-                        count: newCount,
-                        name: foundData.name,
-                        team: foundData.team,
-                        imageUrl: foundData.imageUrl || ''
-                    });
-                } else {
-                    await listRef.push({
-                        name: name,
-                        team: team,
-                        count: count,
-                        imageUrl: ''
-                    });
-                }
-            }
         }
 
         // ─── TOP SCORERS ───
@@ -3125,12 +3719,12 @@
                     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
                     const teamUrl = teamIconsCache[p.team] || '';
                     html += `<div class="top3-block">
-                ${isAdmin?`<div class="edit-block-btn scorer-edit" data-key="${p.key}">✏️</div>`:''}
+                ${isAdmin ? `<div class="edit-block-btn scorer-edit" data-key="${p.key}">✏️</div>` : ''}
                 <div class="player-image-wrapper">
                   <div class="medal-badge">${medal}</div>
                   <img class="player-img" src="${p.imageUrl||'https://via.placeholder.com/320x320?text=No+Image'}" alt="${escapeHtml(p.name||'')}" onerror="this.src='https://via.placeholder.com/320x320?text=No+Image'">
                   <div class="player-name-overlay">${escapeHtml(p.name||'')}</div>
-                  ${teamUrl?`<div class="team-icon-overlay"><img src="${teamUrl}" alt="${escapeHtml(p.team||'')}"></div>`:''}
+                  ${teamUrl ? `<div class="team-icon-overlay"><img src="${teamUrl}" alt="${escapeHtml(p.team||'')}"></div>` : ''}
                 </div>
                 <div class="top3-count">${p.count||0} Goals</div>
               </div>`;
@@ -3139,13 +3733,16 @@
             }
             if (rest.length) {
                 html += `<div class="rest-table-wrapper"><table class="stats-list">
-              <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Goals</th>${isAdmin?'<th>Actions</th>':''} </tr></thead><tbody>`;
+              <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Goals</th>${isAdmin?'<th>Actions</th>':''}</tr></thead><tbody>`;
                 rest.forEach((p, i) => {
                     const ico = getTeamIconHtml(p.team, 'team-icon-sm');
-                    html += `<tr><td>${i+4}</td><td style="font-size:1.5rem;">${escapeHtml(p.name||'')}</td>
+                    html += `<tr>
+                <td>${i+4}</td>
+                <td style="font-size:1.5rem;">${escapeHtml(p.name||'')}</td>
                 <td><div class="stat-team-cell">${ico}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td>
                 <td><span class="count-badge">${p.count||0}</span></td>
-                ${isAdmin?`<td><button class="btn-sm btn-edit scorer-edit" data-key="${p.key}">Edit</button> <button class="btn-sm btn-delete scorer-del" data-key="${p.key}">Delete</button></td>`:''}</tr>`;
+                ${isAdmin?`<td><button class="btn-sm btn-edit scorer-edit" data-key="${p.key}">Edit</button> <button class="btn-sm btn-delete scorer-del" data-key="${p.key}">Delete</button></td>`:''}
+              </tr>`;
                 });
                 html += '</tbody></table></div>';
             }
@@ -3180,12 +3777,12 @@
                     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
                     const teamUrl = teamIconsCache[p.team] || '';
                     html += `<div class="top3-block">
-                ${isAdmin?`<div class="edit-block-btn assist-edit" data-key="${p.key}">✏️</div>`:''}
+                ${isAdmin ? `<div class="edit-block-btn assist-edit" data-key="${p.key}">✏️</div>` : ''}
                 <div class="player-image-wrapper">
                   <div class="medal-badge">${medal}</div>
                   <img class="player-img" src="${p.imageUrl||'https://via.placeholder.com/320x320?text=No+Image'}" alt="${escapeHtml(p.name||'')}" onerror="this.src='https://via.placeholder.com/320x320?text=No+Image'">
                   <div class="player-name-overlay">${escapeHtml(p.name||'')}</div>
-                  ${teamUrl?`<div class="team-icon-overlay"><img src="${teamUrl}" alt="${escapeHtml(p.team||'')}"></div>`:''}
+                  ${teamUrl ? `<div class="team-icon-overlay"><img src="${teamUrl}" alt="${escapeHtml(p.team||'')}"></div>` : ''}
                 </div>
                 <div class="top3-count">${p.count||0} Assists</div>
               </div>`;
@@ -3194,13 +3791,16 @@
             }
             if (rest.length) {
                 html += `<div class="rest-table-wrapper"><table class="stats-list">
-              <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Assists</th>${isAdmin?'<th>Actions</th>':''} </tr></thead><tbody>`;
+              <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Assists</th>${isAdmin?'<th>Actions</th>':''}</tr></thead><tbody>`;
                 rest.forEach((p, i) => {
                     const ico = getTeamIconHtml(p.team, 'team-icon-sm');
-                    html += `<tr><td>${i+4}</td><td style="font-size:1.5rem;">${escapeHtml(p.name||'')}</td>
+                    html += `<tr>
+                <td>${i+4}</td>
+                <td style="font-size:1.5rem;">${escapeHtml(p.name||'')}</td>
                 <td><div class="stat-team-cell">${ico}<span style="font-size:1.5rem;">${escapeHtml(p.team||'')}</span></div></td>
                 <td><span class="count-badge">${p.count||0}</span></td>
-                ${isAdmin?`<td><button class="btn-sm btn-edit assist-edit" data-key="${p.key}">Edit</button> <button class="btn-sm btn-delete assist-del" data-key="${p.key}">Delete</button></td>`:''}</tr>`;
+                ${isAdmin?`<td><button class="btn-sm btn-edit assist-edit" data-key="${p.key}">Edit</button> <button class="btn-sm btn-delete assist-del" data-key="${p.key}">Delete</button></td>`:''}
+              </tr>`;
                 });
                 html += '</tbody></table></div>';
             }
@@ -3460,7 +4060,7 @@
                 orbitDuration = sec * 1000;
                 renderOrbitFlags();
                 document.getElementById('slideStatus').innerHTML =
-                '<div class="status-msg status-success">Speed saved!</div>';
+                    '<div class="status-msg status-success">Speed saved!</div>';
             };
         }
 
@@ -3552,7 +4152,7 @@
                     const file = document.getElementById('newFlagFile').files[0];
                     const sd = document.getElementById('flagsStatus');
                     if (!file) { sd.innerHTML =
-                    '<div class="status-msg status-error">Select a file</div>'; return; }
+                            '<div class="status-msg status-error">Select a file</div>'; return; }
                     sd.innerHTML = '<div class="status-msg status-loading">Uploading…</div>';
                     try {
                         const url = await uploadToImgBB(file);
@@ -3564,7 +4164,7 @@
                         sd.innerHTML = '<div class="status-msg status-success">Flag added!</div>';
                         refresh();
                     } catch (e) { sd.innerHTML =
-                        `<div class="status-msg status-error">Error: ${e.message}</div>`; }
+                            `<div class="status-msg status-error">Error: ${e.message}</div>`; }
                 };
                 document.getElementById('saveOrbitSpeedBtn').onclick = async () => {
                     let sec = parseFloat(document.getElementById('orbitSpeedInput').value);
@@ -3617,7 +4217,7 @@
                     const file = document.getElementById('newCenterFile').files[0];
                     const sd = document.getElementById('centerStatus');
                     if (!file) { sd.innerHTML =
-                    '<div class="status-msg status-error">Select a file</div>'; return; }
+                            '<div class="status-msg status-error">Select a file</div>'; return; }
                     sd.innerHTML = '<div class="status-msg status-loading">Uploading…</div>';
                     try {
                         const url = await uploadToImgBB(file);
@@ -3629,7 +4229,7 @@
                         sd.innerHTML = '<div class="status-msg status-success">Image added!</div>';
                         refresh();
                     } catch (e) { sd.innerHTML =
-                        `<div class="status-msg status-error">Error: ${e.message}</div>`; }
+                            `<div class="status-msg status-error">Error: ${e.message}</div>`; }
                 };
                 document.getElementById('saveCenterDurBtn').onclick = async () => {
                     let sec = parseFloat(document.getElementById('centerDurInput').value);
@@ -3859,7 +4459,7 @@
                 const key = document.getElementById('keyEntryInput').value.trim();
                 const statusEl = document.getElementById('keyEntryStatus');
                 if (!key) { statusEl.innerHTML =
-                '<div class="status-msg status-error">Enter your key.</div>'; return; }
+                    '<div class="status-msg status-error">Enter your key.</div>'; return; }
                 statusEl.innerHTML = '<div class="status-msg status-loading">Verifying…</div>';
                 try {
                     await loadManagerKeys();
@@ -4040,10 +4640,10 @@
             const renderScoresheetForm = () => {
                 const scorersHtml = scoresheetScorers.map((s, i) =>
                     `<span class="scorer-badge">⚽ ${escapeHtml(s.player)} (${s.goals})<button class="remove-scorer" data-sside="scorer" data-sidx="${i}">✖</button></span>`
-                    ).join('');
+                ).join('');
                 const assistsHtml = scoresheetAssists.map((a, i) =>
                     `<span class="scorer-badge">🎯 ${escapeHtml(a.player)} (${a.assists})<button class="remove-scorer" data-sside="assist" data-sidx="${i}">✖</button></span>`
-                    ).join('');
+                ).join('');
                 showModal(`<h3>📝 Scoresheet — ${escapeHtml(result.homeTeam)} vs ${escapeHtml(result.awayTeam)}</h3>
               <p style="color:rgba(255,255,255,0.6);">Add scorers and assists for your team (${escapeHtml(managerLinkedTeam)}).</p>
               <div class="scorer-section">
@@ -4098,7 +4698,7 @@
                     const statusEl = document.getElementById('ssStatus');
                     if (!scoresheetScorers.length && !scoresheetAssists.length) {
                         statusEl.innerHTML =
-                        '<div class="status-msg status-error">Add at least one scorer or assist.</div>';
+                            '<div class="status-msg status-error">Add at least one scorer or assist.</div>';
                         return;
                     }
                     statusEl.innerHTML = '<div class="status-msg status-loading">Submitting…</div>';
@@ -4147,7 +4747,7 @@
             }
             const uniqueTeams = [...new Set(allTeams)].sort();
             const mdForResult = overrideMD || (dateStr === getSASTYesterday() ? Math.max(1, currentMatchday - 1) :
-            currentMatchday);
+                currentMatchday);
 
             let selectedOpponent = editEntry?.awayTeam || '';
             let homeScoreValue = editEntry?.homeScore || 0;
@@ -4170,16 +4770,16 @@
                 ).join('');
                 const hsh = userScorersHome.map((s, i) =>
                     `<span class="scorer-badge">⚽ ${escapeHtml(s.player)} (${s.goals})<button class="remove-scorer" data-uside="hs" data-uidx="${i}">✖</button></span>`
-                    ).join('');
+                ).join('');
                 const ash = userScorersAway.map((s, i) =>
                     `<span class="scorer-badge">⚽ ${escapeHtml(s.player)} (${s.goals})<button class="remove-scorer" data-uside="as" data-uidx="${i}">✖</button></span>`
-                    ).join('');
+                ).join('');
                 const hah = userAssistsHome.map((a, i) =>
                     `<span class="scorer-badge">🎯 ${escapeHtml(a.player)} (${a.assists})<button class="remove-scorer" data-uside="ha" data-uidx="${i}">✖</button></span>`
-                    ).join('');
+                ).join('');
                 const aah = userAssistsAway.map((a, i) =>
                     `<span class="scorer-badge">🎯 ${escapeHtml(a.player)} (${a.assists})<button class="remove-scorer" data-uside="aa" data-uidx="${i}">✖</button></span>`
-                    ).join('');
+                ).join('');
                 const imgThumbs = managerUploadedImages.map((img, i) => {
                     const src = img.isUrl ? img.dataUrl : img.dataUrl;
                     return `<div style="position:relative;width:100px;height:100px;"><img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;border:2px solid rgba(255,255,255,0.2);"><button style="position:absolute;top:-8px;right:-8px;background:#ef4444;color:white;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-weight:bold;" data-uimgidx="${i}">✕</button></div>`;
@@ -4443,7 +5043,7 @@
             }
             const uniqueTeams = [...new Set(allTeams)].sort();
             const mdForResult = overrideMD || (dateStr === getSASTYesterday() ? Math.max(1, currentMatchday - 1) :
-            currentMatchday);
+                currentMatchday);
             managerUploadedImages = [];
             const typeLabel = forfeitType === 'no_contest' ? 'No Contest (F - F)' : 'Forfeit Win';
             const typeDesc = forfeitType === 'no_contest' ?
@@ -4819,6 +5419,64 @@
             });
         }
 
+        // ─── Scorers & Assists Auto-Merge ───
+        async function applyScorersFromScan(scorers, team) {
+            if (!scorers || !scorers.length) return;
+            const path = `${basePath}/topScorer/list`;
+            const snap = await db.ref(path).once('value');
+            const data = snap.val() || {};
+
+            for (const scorer of scorers) {
+                const name = normalizeName(scorer.player);
+                if (!name) continue;
+                const goals = parseInt(scorer.goals) || 1;
+                let found = false;
+                for (const key in data) {
+                    const entry = data[key];
+                    if (entry.team === team && normalizeName(entry.name) === name) {
+                        await db.ref(`${path}/${key}/count`).set((entry.count || 0) + goals);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    await db.ref(path).push({ name: name, team: team, count: goals, imageUrl: '' });
+                }
+            }
+            await loadTopScorerData();
+        }
+
+        async function applyAssistsFromScan(assists, team) {
+            if (!assists || !assists.length) return;
+            const path = `${basePath}/topAssistant/list`;
+            const snap = await db.ref(path).once('value');
+            const data = snap.val() || {};
+
+            for (const assist of assists) {
+                const name = normalizeName(assist.player);
+                if (!name) continue;
+                const count = parseInt(assist.assists) || 1;
+                let found = false;
+                for (const key in data) {
+                    const entry = data[key];
+                    if (entry.team === team && normalizeName(entry.name) === name) {
+                        await db.ref(`${path}/${key}/count`).set((entry.count || 0) + count);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    await db.ref(path).push({ name: name, team: team, count: count, imageUrl: '' });
+                }
+            }
+            await loadTopAssistantData();
+        }
+
+        function normalizeName(name) {
+            if (!name) return '';
+            return name.trim().toLowerCase().replace(/\s+/g, ' ');
+        }
+
         // ─── Init ───
         async function init() {
             await loadBgSettings();
@@ -4833,6 +5491,7 @@
             await loadLeaguePhaseSettings();
             await loadManagerNames();
             await loadCurrentMatchday();
+            await loadKnockoutBracketImage();
             renderCurrentTab();
         }
         init();
